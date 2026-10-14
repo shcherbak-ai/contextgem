@@ -27,6 +27,7 @@ import json
 import os
 import re
 import types
+import warnings
 from decimal import Decimal
 from typing import Any, cast
 from unittest.mock import patch
@@ -42,7 +43,7 @@ from litellm.types.decisions import (
 from contextgem.internal.base import llms as llms_module
 from contextgem.internal.base import models as models_module
 from contextgem.internal.base.concepts import _Concept
-from contextgem.internal.data_models import _ModelCost, _ModelUsage
+from contextgem.internal.data_models import _ModelCall, _ModelCost, _ModelUsage
 from contextgem.internal.exceptions import ModelAPIError
 from contextgem.internal.loggers import logger
 from contextgem.internal.utils import _get_llm_cache_token_counts
@@ -899,6 +900,115 @@ class TestUsageAndCost(BaseTest):
         for key in ["cache_read_per_1m_tokens", "cache_write_per_1m_tokens"]:
             assert pricing_dict.pop(key) is None
         assert ModelPricing.from_dict(pricing_dict) == pricing
+
+    def test_auto_pricing_follows_assigned_params(self):
+        """
+        Tests that the automatic pricing of a model follows the values assigned to
+        its `model` and `auto_pricing` params after the model is created: the costs
+        are calculated with the prices of the current model, as for a model created
+        with the same params, for LLMs and decision models.
+        """
+
+        def get_cost_of_call(model: DocumentLLM | DocumentDecisionModel) -> Decimal:
+            """
+            Records the usage of one call of 1M input and 1M output tokens for
+            the model, and returns the total cost of the model.
+            """
+            model.reset_usage_and_cost()
+            call = _ModelCall(
+                prompt_kwargs={}, prompt="Prompt", response="Response", timestamp_sent=0
+            )
+            call._input_tokens = 1_000_000
+            call._output_tokens = 1_000_000
+            with warnings.catch_warnings():
+                # The costs of a model without prices are skipped with a warning
+                warnings.simplefilter("ignore")
+                model._increment_cost(
+                    _ModelUsage(input=1_000_000, output=1_000_000, calls=[call])
+                )
+            return model.get_cost()[0].cost.total
+
+        def get_warning_messages(
+            caught_warnings: list[warnings.WarningMessage],
+        ) -> list[str]:
+            """
+            Returns the messages of the caught warnings.
+            """
+            return [str(caught_warning.message) for caught_warning in caught_warnings]
+
+        def create_llm(model: str, **kwargs: Any) -> DocumentLLM:
+            """
+            Creates an LLM with a dummy API key.
+            """
+            return DocumentLLM(model=model, api_key="test_api_key", **kwargs)
+
+        with pytest.warns(UserWarning, match="not be 100% accurate"):
+            llm = create_llm("openai/gpt-6-luna", auto_pricing=True)
+        cost_of_model = get_cost_of_call(llm)
+        with pytest.warns(UserWarning, match="not be 100% accurate"):
+            other_llm = create_llm("openai/gpt-5.6-luna", auto_pricing=True)
+        cost_of_other_model = get_cost_of_call(other_llm)
+        assert Decimal("0") < cost_of_model != cost_of_other_model
+
+        # === The model is changed ===
+        # The costs are calculated with the prices of the new model, which are
+        # looked up without the warning on the accuracy of the prices again
+        with warnings.catch_warnings(record=True) as caught_warnings:
+            warnings.simplefilter("always")
+            llm.model = "openai/gpt-5.6-luna"
+        assert not any(
+            "100% accurate" in message
+            for message in get_warning_messages(caught_warnings)
+        )
+        assert llm._auto_pricing_model_ref == "gpt-5.6-luna"
+        assert get_cost_of_call(llm) == cost_of_other_model
+        # ... and are not calculated with the prices of the previous model, if
+        # there are no prices for the new one
+        with pytest.warns(UserWarning, match="Unable to fetch pricing data"):
+            llm.model = "openai/model-without-prices"
+        assert get_cost_of_call(llm) == Decimal("0")
+        # The prices are not looked up again when another param is assigned
+        with warnings.catch_warnings(record=True) as caught_warnings:
+            warnings.simplefilter("always")
+            llm.timeout = 60
+        assert not any(
+            "pricing data" in message
+            for message in get_warning_messages(caught_warnings)
+        )
+
+        # === The automatic pricing is enabled and disabled ===
+        llm = create_llm("openai/gpt-6-luna")
+        assert llm._auto_pricing_provider_id is None
+        assert get_cost_of_call(llm) == Decimal("0")
+        with pytest.warns(UserWarning, match="not be 100% accurate"):
+            llm.auto_pricing = True
+        assert get_cost_of_call(llm) == cost_of_model
+        llm.auto_pricing = False
+        assert llm._auto_pricing_provider_id is None
+        assert llm._auto_pricing_model_ref is None
+        assert get_cost_of_call(llm) == Decimal("0")
+        # ... also when the model is changed while it is disabled
+        llm.model = "openai/gpt-5.6-luna"
+        with pytest.warns(UserWarning, match="not be 100% accurate"):
+            llm.auto_pricing = True
+        assert get_cost_of_call(llm) == cost_of_other_model
+
+        # === A decision model ===
+        with pytest.warns(UserWarning, match="not be 100% accurate"):
+            decision_model = DocumentDecisionModel(
+                model="typesafe/jev-latest", api_key="test_api_key", auto_pricing=True
+            )
+        cost_of_decision_model = get_cost_of_call(decision_model)
+        decision_model.model = "perplexity/pplx-decider-v1-27b"
+        with pytest.warns(UserWarning, match="not be 100% accurate"):
+            other_decision_model = DocumentDecisionModel(
+                model="perplexity/pplx-decider-v1-27b",
+                api_key="test_api_key",
+                auto_pricing=True,
+            )
+        cost_of_other_decision_model = get_cost_of_call(other_decision_model)
+        assert cost_of_other_decision_model != cost_of_decision_model
+        assert get_cost_of_call(decision_model) == cost_of_other_decision_model
 
     @pytest.mark.vcr
     def test_auto_pricing(self):

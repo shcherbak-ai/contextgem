@@ -105,6 +105,15 @@ _SELF_HOSTED_DECISION_MODEL_PROVIDERS = [
     "strands_decider/",
 ]
 
+# Providers of decision models whose decision requests genai-prices prices under
+# a provider of their own, by the IDs of these providers in genai-prices. Under
+# the provider in the identifier of the model, genai-prices has the prices of
+# the chat requests to the model of the same name, and it looks up the prices of
+# the decision requests only under the ID that is given for them
+_DECISION_PRICING_PROVIDER_IDS = {
+    "openai": "openai-decisions",
+}
+
 # Module of litellm that prepares the requests to its Decisions API, and the name
 # of the function in it that returns the providers of decision models that
 # litellm supports
@@ -484,13 +493,16 @@ class _DocumentDecisionModel(_DocumentModel):
         that include a price of output tokens are therefore the prices of the chat
         requests to a model of the same name, e.g. of a model that is served both
         as an LLM and as a decision model, which differ from the prices of
-        the decision requests.
+        the decision requests. The prices are looked up as they are for the costs,
+        i.e. under the provider of the decision requests where genai-prices has
+        one (see `_get_auto_pricing_provider_id()`).
 
         :return: True if the prices found for the model include a price of output
             tokens. False if they do not, or if no prices are found for the model.
         :rtype: bool
         """
-        provider_id, _, model_ref = self.model.partition("/")
+        provider, _, model_ref = self.model.partition("/")
+        provider_id = self._get_auto_pricing_provider_id(provider)
         try:
             price_data = _calc_auto_price(
                 _GPUsage(input_tokens=0, output_tokens=1_000_000),
@@ -529,6 +541,24 @@ class _DocumentDecisionModel(_DocumentModel):
                 f"provide explicit `pricing_details` to get the costs calculated."
             )
         return None
+
+    def _get_auto_pricing_provider_id(self, provider: str) -> str:
+        """
+        Returns the ID of the provider under which genai-prices has the prices
+        of the decision requests to the model.
+
+        For a provider whose decision requests genai-prices prices under
+        a provider of their own, e.g. OpenAI, which serves the same models for
+        chat and for decisions, this is the ID of that provider: the prices under
+        the provider in the identifier of the model are those of the chat requests.
+
+        :param provider: The provider in the identifier of the model, i.e. the part
+            of `model` before the first "/".
+        :type provider: str
+        :return: The ID of the provider for genai-prices.
+        :rtype: str
+        """
+        return _DECISION_PRICING_PROVIDER_IDS.get(provider, provider)
 
     def _set_provider_and_model_for_auto_pricing(self) -> None:
         """

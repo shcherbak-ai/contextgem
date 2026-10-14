@@ -98,14 +98,17 @@ class DocumentDecisionModel(_DocumentDecisionModel):
         the price of the output tokens is to be set to ``0.0``. Defaults to None.
     :vartype pricing_details: ModelPricing | None
     :ivar auto_pricing: Enable automatic cost calculation using genai-prices. Cannot be
-        set together with ``pricing_details``. Not supported for a model for which
-        genai-prices has the prices of a text-generating model, i.e. a price of
-        output tokens, which are the prices of the chat requests to the model
-        (e.g. ``gpt-6-luna``), and for self-hosted models (``strands_decider/``):
-        set ``pricing_details`` for them instead. For a model that genai-prices
-        has no prices for, e.g. a model deployed in Microsoft Foundry, a warning
-        is issued and the costs stay at zero: ``pricing_details`` is to be set
-        instead for such a model too. Defaults to ``False``.
+        set together with ``pricing_details``. For an OpenAI model (``openai/``),
+        the prices of the decision requests are used, which genai-prices has apart
+        from the prices of the chat requests to the model. Not supported for
+        a model for which genai-prices has the prices of a text-generating model,
+        i.e. a price of output tokens, which are the prices of the chat requests
+        to the model (e.g. ``openrouter/openai/gpt-6-luna``), and for self-hosted
+        models (``strands_decider/``): set ``pricing_details`` for them instead.
+        For a model that genai-prices has no prices for, e.g. a model deployed in
+        Microsoft Foundry, a warning is issued and the costs stay at zero:
+        ``pricing_details`` is to be set instead for such a model too. Defaults to
+        ``False``.
     :vartype auto_pricing: bool
     :ivar auto_pricing_refresh: Whether genai-prices should auto-refresh its cached
         pricing data, e.g. to price a recently released model that the bundled

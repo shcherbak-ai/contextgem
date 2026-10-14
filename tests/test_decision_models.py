@@ -141,6 +141,12 @@ _OTHER_LLM_MODEL = "openai/gpt-5.6-luna"
 # the deployment was given
 _FOUNDRY_DECISION_MODEL = "azure_ai/ms-decision-model"
 
+# Prices of 1M input tokens of the decision models whose costs are calculated
+# automatically in the recorded tests, as the providers list them for requests
+# of the recorded size: the costs are checked against these prices, not against
+# the pricing data that they are calculated with
+_RECORDED_AUTO_PRICED_INPUT_PRICES = {"openai/gpt-6-luna": "0.10"}
+
 # Text of the document used in the tests, and the texts expected to be sent
 # to a decision model for it: the cleaned text of the document for the concepts
 # of the document, and the texts of the paragraphs for the concepts of an aspect
@@ -2408,7 +2414,9 @@ class TestDecisionModels(BaseTest):
         """
         Tests the pricing params of a decision model: the automatic pricing is
         rejected for the models whose decision requests cannot be priced
-        automatically, when the model is created and when the params are assigned.
+        automatically, when the model is created and when the params are assigned,
+        and the prices of the decision requests are used for an OpenAI model,
+        which genai-prices has apart from the prices of its chat requests.
         """
         pricing_details = ModelPricing(
             input_per_1m_tokens=0.10, output_per_1m_tokens=0.0
@@ -2420,14 +2428,8 @@ class TestDecisionModels(BaseTest):
 
         for model, error_match in [
             # genai-prices has the chat prices of the model, i.e. a price of
-            # output tokens, which a decision model is not billed for
-            (
-                "openai/gpt-6-luna",
-                "not supported for decision model `openai/gpt-6-luna`.*"
-                "has a price of output tokens.*"
-                "prices of the chat requests.*provide explicit `pricing_details`",
-            ),
-            # ... also when the model is served by another provider
+            # output tokens, which a decision model is not billed for: it has
+            # the prices of the decision requests to the model for OpenAI only
             (
                 "openrouter/openai/gpt-6-luna",
                 "not supported for decision model `openrouter/openai/gpt-6-luna`.*"
@@ -2496,6 +2498,25 @@ class TestDecisionModels(BaseTest):
         )
         assert input_cost > 0
         assert output_cost == Decimal("0")
+        # For an OpenAI model, the prices of the decision requests are looked up
+        # under the provider that genai-prices has for them, and not the prices of
+        # the chat requests, which it has under the provider of the model
+        with pytest.warns(UserWarning, match="Auto-pricing"):
+            openai_decision_model = _create_decision_model(
+                "openai/gpt-6-luna", auto_pricing=True
+            )
+        assert openai_decision_model._auto_pricing_provider_id == "openai-decisions"
+        assert openai_decision_model._auto_pricing_model_ref == "gpt-6-luna"
+        # ... with the input tokens read from the cache priced as the other input
+        # tokens, and no price of output tokens
+        assert openai_decision_model._calculate_auto_pricing_costs(
+            1_000, 100, cache_read_tokens=200
+        ) == (Decimal("0.0001"), Decimal("0"))
+        # ... while an LLM of the same name gets the prices of the chat requests
+        with pytest.warns(UserWarning, match="Auto-pricing"):
+            llm = _create_llm("openai/gpt-6-luna", auto_pricing=True)
+        assert llm._auto_pricing_provider_id == "openai"
+        assert llm._calculate_auto_pricing_costs(0, 1_000_000)[1] > 0
         # A model that genai-prices has no prices for is accepted as well, with
         # a warning that its costs are not calculated, as for an LLM: e.g. a model
         # deployed in Microsoft Foundry, which is identified by the name that
@@ -2513,9 +2534,14 @@ class TestDecisionModels(BaseTest):
         )
         # ... until the model is changed to a model that it is rejected for
         with pytest.raises(ValueError, match="not supported for decision model"):
-            decision_model.model = "openai/gpt-6-luna"
+            decision_model.model = "openrouter/openai/gpt-6-luna"
         assert decision_model.model == _DECISION_MODEL
         assert decision_model.auto_pricing is True
+        # ... while it is priced under the provider of the decision requests
+        # when it is changed to an OpenAI model
+        decision_model.model = "openai/gpt-6-luna"
+        assert decision_model._auto_pricing_provider_id == "openai-decisions"
+        assert decision_model._auto_pricing_model_ref == "gpt-6-luna"
 
     def test_extract_concepts_from_document_with_decision_model(self):
         """
@@ -7042,7 +7068,9 @@ class TestDecisionModels(BaseTest):
         decision_model_dict["fallback_models"][0]["role"] = "another_role"
         with pytest.raises(ValueError, match="must have the same role"):
             DocumentDecisionModel.from_dict(decision_model_dict)
-        decision_model_dict = _create_decision_model("openai/gpt-6-luna").to_dict()
+        decision_model_dict = _create_decision_model(
+            "openrouter/openai/gpt-6-luna"
+        ).to_dict()
         decision_model_dict["auto_pricing"] = True
         with pytest.raises(ValueError, match="not supported for decision model"):
             DocumentDecisionModel.from_dict(decision_model_dict)
@@ -13958,21 +13986,28 @@ class TestDecisionModels(BaseTest):
     def _check_cost_of_recorded_tests(decision_model: DocumentDecisionModel) -> None:
         """
         Checks that the cost of the decision model is the cost of its input tokens,
-        as reported by its API, at the price set for the model, or zero if no
-        price is set for the model.
+        as reported by its API, at the price set for the model, or at the price
+        that the provider lists for it if its costs are calculated automatically,
+        or zero if no price is set for the model.
 
         :param decision_model: The decision model.
         :type decision_model: DocumentDecisionModel
         """
         usage = decision_model.get_usage()[0].usage
         cost = decision_model.get_cost()[0].cost
-        if decision_model.pricing_details is None:
+        if decision_model.auto_pricing:
+            input_price = Decimal(
+                _RECORDED_AUTO_PRICED_INPUT_PRICES[decision_model.model]
+            )
+        elif decision_model.pricing_details is None:
             assert (cost.input, cost.output, cost.total) == (0, 0, 0)
             return
+        else:
+            input_price = Decimal(
+                str(decision_model.pricing_details.input_per_1m_tokens)
+            )
         expected_cost = (
-            Decimal(usage.input)
-            * Decimal(str(decision_model.pricing_details.input_per_1m_tokens))
-            / Decimal(1_000_000)
+            Decimal(usage.input) * input_price / Decimal(1_000_000)
         ).quantize(_COST_QUANT, rounding=ROUND_HALF_UP)
         assert cost.input == expected_cost
         assert cost.output == 0
@@ -14168,15 +14203,16 @@ class TestDecisionModels(BaseTest):
         Tests the extraction of concepts of each supported type from a document
         with a decision model of OpenAI, with the requests sent to its Decisions
         API: the only provider whose API takes the requests in the format that
-        they are sent to litellm in, without a conversion.
+        they are sent to litellm in, without a conversion. The costs are calculated
+        automatically, from the usage that the API reports, with the prices of
+        the decision requests of OpenAI.
         """
-        decision_model = DocumentDecisionModel(
-            model="openai/gpt-6-luna",
-            api_key=os.getenv("CONTEXTGEM_OPENAI_API_KEY"),
-            pricing_details=ModelPricing(
-                input_per_1m_tokens=0.10, output_per_1m_tokens=0.0
-            ),
-        )
+        with pytest.warns(UserWarning, match="not be 100% accurate"):
+            decision_model = DocumentDecisionModel(
+                model="openai/gpt-6-luna",
+                api_key=os.getenv("CONTEXTGEM_OPENAI_API_KEY"),
+                auto_pricing=True,
+            )
         document = Document(raw_text=_RECORDED_CONCEPTS_DOCUMENT_TEXT)
         document.concepts = self._create_concepts_for_recorded_tests()
 

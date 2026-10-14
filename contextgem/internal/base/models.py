@@ -3883,9 +3883,12 @@ class _DocumentModel(_GenericModelProcessor):
         description="Allow genai-prices to auto-refresh cached pricing data.",
     )
 
-    # Derived automatically from `model`
+    # Derived automatically from `model`, while the automatic pricing is enabled
     _auto_pricing_provider_id: str | None = PrivateAttr(default=None)
     _auto_pricing_model_ref: str | None = PrivateAttr(default=None)
+    # The `model` that the two attributes above were derived from, i.e. None while
+    # the automatic pricing is disabled
+    _auto_pricing_source_model: str | None = PrivateAttr(default=None)
     _auto_pricing_refresh_attempted: bool = PrivateAttr(
         default=False
     )  # update pricing only once to avoid redundant updates during extraction
@@ -3945,8 +3948,7 @@ class _DocumentModel(_GenericModelProcessor):
     @_post_init_method
     def _post_init(self, __context: Any):
         """
-        Post-initialization method that logs model information and API configuration,
-        as well as emits warnings for specific model configurations.
+        Post-initialization method that logs model information and API configuration.
 
         :param __context: Pydantic context (unused).
         :type __context: Any
@@ -3959,16 +3961,6 @@ class _DocumentModel(_GenericModelProcessor):
 
         # Log the information that applies to the specific kind of the model
         self._log_kind_specific_info()
-
-        # Warn about auto-pricing accuracy limitations
-        if self.auto_pricing:
-            warnings.warn(
-                "Auto-pricing: these prices will not be 100% accurate. "
-                "The price data cannot be exactly correct because model providers do not provide "
-                "exact price information for their APIs in a format which can be reliably processed. "
-                "See Pydantic's genai-prices https://github.com/pydantic/genai-prices for more details.",
-                stacklevel=2,
-            )
 
     def _log_kind_specific_info(self) -> None:
         """
@@ -3995,8 +3987,6 @@ class _DocumentModel(_GenericModelProcessor):
 
         # Set the private attributes that only the specific kind of the model has
         self._set_kind_specific_private_attrs()
-        if self.auto_pricing:
-            self._set_provider_and_model_for_auto_pricing()
 
         self._private_attrs_initialized = True
 
@@ -4386,6 +4376,10 @@ class _DocumentModel(_GenericModelProcessor):
         # Update the state derived from the params of the specific kind of the model,
         # and emit the warnings on these params, now that all the checks have passed
         self._finish_kind_specific_validation()
+
+        # Update what the prices of the model are looked up by, in case `model` or
+        # `auto_pricing` has changed
+        self._update_auto_pricing_ids()
 
         return self
 
@@ -4850,6 +4844,60 @@ class _DocumentModel(_GenericModelProcessor):
             "or disabling auto-pricing."
         )
 
+    def _update_auto_pricing_ids(self) -> None:
+        """
+        Updates the provider and the model by which genai-prices looks up the prices
+        of the model, after the params of the model are validated, i.e. when
+        the model is created and when a value is assigned to its param.
+
+        They are derived from `model` when the automatic pricing is enabled, and
+        derived again when `model` is changed, so that the costs are calculated with
+        the prices of the current model. They are unset when the automatic pricing
+        is disabled. When another param is assigned, they are left as they are,
+        i.e. the pricing data is not looked up, and its absence not warned about,
+        again.
+
+        :return: None
+        :rtype: None
+        """
+        if not self.auto_pricing:
+            self._auto_pricing_provider_id = None
+            self._auto_pricing_model_ref = None
+            self._auto_pricing_source_model = None
+            return
+        if self._auto_pricing_source_model == self.model:
+            return
+
+        if self._auto_pricing_source_model is None:
+            # Warn about auto-pricing accuracy limitations when it is enabled
+            warnings.warn(
+                "Auto-pricing: these prices will not be 100% accurate. "
+                "The price data cannot be exactly correct because model providers do not provide "
+                "exact price information for their APIs in a format which can be reliably processed. "
+                "See Pydantic's genai-prices https://github.com/pydantic/genai-prices for more details.",
+                stacklevel=2,
+            )
+
+        # Not left from the previous model if they cannot be derived from this one
+        self._auto_pricing_provider_id = None
+        self._auto_pricing_model_ref = None
+        self._auto_pricing_source_model = self.model
+        self._set_provider_and_model_for_auto_pricing()
+
+    def _get_auto_pricing_provider_id(self, provider: str) -> str:
+        """
+        Returns the ID of the provider under which genai-prices has the prices
+        of the model.
+
+        :param provider: The provider in the identifier of the model, i.e. the part
+            of `model` before the first "/".
+        :type provider: str
+        :return: The ID of the provider for genai-prices, which is the provider
+            in the identifier of the model.
+        :rtype: str
+        """
+        return provider
+
     def _set_provider_and_model_for_auto_pricing(self) -> None:
         """
         Sets (provider_id, model_ref) pair for genai-prices from `model` field.
@@ -4878,7 +4926,7 @@ class _DocumentModel(_GenericModelProcessor):
             )
             return
 
-        provider_id = parts[0]
+        provider_id = self._get_auto_pricing_provider_id(parts[0])
         model_ref = parts[1]
         self._auto_pricing_provider_id = provider_id
         self._auto_pricing_model_ref = model_ref
