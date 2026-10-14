@@ -1,14 +1,14 @@
-.. 
+..
    ContextGem
-   
+
    Copyright 2025 Shcherbak AI AS. All rights reserved. Developed by Sergii Shcherbak.
-   
+
    Licensed under the Apache License, Version 2.0 (the "License");
    you may not use this file except in compliance with the License.
    You may obtain a copy of the License at
-   
+
        http://www.apache.org/licenses/LICENSE-2.0
-   
+
    Unless required by applicable law or agreed to in writing, software
    distributed under the License is distributed on an "AS IS" BASIS,
    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -73,7 +73,7 @@ The :class:`~contextgem.public.documents.Document` class accepts the following p
    * - ``sat_model_id``
      - ``SaTModelId``
      - ``"sat-3l-sm"``
-     - SaT model ID for paragraph/sentence segmentation or a local path to a SaT model. See `wtpsplit models <https://github.com/segment-any-text/wtpsplit>`_ for available options.
+     - SaT model ID for paragraph/sentence segmentation or a local path to a SaT model. See `wtpsplit models <https://github.com/segment-any-text/wtpsplit>`_ for available options. A model given by its ID is downloaded from Hugging Face (``huggingface.co``, ``hf.co`` and their subdomains) when it is first used, and cached; a local path needs no network access.
    * - ``pre_segment_sentences``
      - ``bool``
      - ``False``

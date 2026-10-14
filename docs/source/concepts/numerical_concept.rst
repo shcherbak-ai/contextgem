@@ -1,14 +1,14 @@
-.. 
+..
    ContextGem
-   
+
    Copyright 2025 Shcherbak AI AS. All rights reserved. Developed by Sergii Shcherbak.
-   
+
    Licensed under the Apache License, Version 2.0 (the "License");
    you may not use this file except in compliance with the License.
    You may obtain a copy of the License at
-   
+
        http://www.apache.org/licenses/LICENSE-2.0
-   
+
    Unless required by applicable law or agreed to in writing, software
    distributed under the License is distributed on an "AS IS" BASIS,
    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -30,7 +30,7 @@ NumericalConcept
 
 * **Direct extraction**: retrieving explicitly stated values like prices, percentages, or measurements
 * **Calculated values**: computing sums, averages, growth rates, or other derived metrics
-* **Quantitative assessments**: determining counts, frequencies, totals, or numerical scores 
+* **Quantitative assessments**: determining counts, frequencies, totals, or numerical scores
 
 
 💻 Usage Example
@@ -38,7 +38,7 @@ NumericalConcept
 
 Here's a simple example of how to use :class:`~contextgem.public.concepts.NumericalConcept` to extract a price from a document:
 
-.. literalinclude:: ../../../dev/usage_examples/docs/concepts/numerical_concept/numerical_concept.py    
+.. literalinclude:: ../../../dev/usage_examples/docs/concepts/numerical_concept/numerical_concept.py
    :language: python
 
 ⚙️ Parameters
@@ -152,11 +152,11 @@ Here are some best practices to optimize your use of :class:`~contextgem.public.
 
 - Provide a clear and specific description that helps the LLM understand exactly what numerical values to extract, using precise and unambiguous language in your concept names and descriptions. For numerical concepts, be explicit about the exact values you're seeking (e.g., *"the total contract value in USD"* rather than just *"contract value"*). Avoid vague terms that could lead to incorrect extractions—for example, use *"quarterly revenue figures in millions"* instead of *"revenue numbers"* to ensure consistent and accurate extractions.
 - Use the appropriate ``numeric_type`` based on what you expect to extract or calculate:
-  
+
   - Use ``"int"`` for counts, quantities, or whole numbers
   - Use ``"float"`` for prices, measurements, or values that may have decimal points
   - Use ``"any"`` when you're not sure or need to extract both types
-  
+
 - Break down complex numerical extractions into multiple simpler numerical concepts when appropriate. Instead of one concept extracting *"all financial metrics,"* consider separate concepts for *"revenue figures,"* *"expense amounts,"* and *"profit margins."* This provides more structured data and makes it easier to process the results for specific purposes.
 - Enable justifications (using ``add_justifications=True``) when you need to understand the reasoning behind the LLM's numerical extractions, especially when calculations or conversions are involved.
 - Enable references (using ``add_references=True``) when you need to trace back to specific parts of the document that contained the numerical values or were used to calculate derived values.

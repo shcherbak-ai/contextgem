@@ -1,14 +1,14 @@
-.. 
+..
    ContextGem
-   
+
    Copyright 2025 Shcherbak AI AS. All rights reserved. Developed by Sergii Shcherbak.
-   
+
    Licensed under the Apache License, Version 2.0 (the "License");
    you may not use this file except in compliance with the License.
    You may obtain a copy of the License at
-   
+
        http://www.apache.org/licenses/LICENSE-2.0
-   
+
    Unless required by applicable law or agreed to in writing, software
    distributed under the License is distributed on an "AS IS" BASIS,
    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -31,13 +31,13 @@ Small language models (e.g. 8B parameter models) often struggle with ContextGem'
 
 **"LLM did not return valid JSON" Error**
     Small models frequently fail to follow the precise JSON schema required by ContextGem's internal prompts. This manifests as:
-    
+
     - ``Error when validating parsed JSON: parsed_json is None``
     - ``LLM did not return valid JSON``
 
 **Inconsistent Results**
     Small models may produce:
-    
+
     - Empty extraction results
     - Incomplete or partial extractions
     - Inconsistent formatting across multiple calls
@@ -48,11 +48,11 @@ Small language models (e.g. 8B parameter models) often struggle with ContextGem'
 
 **Minimum Recommended Performance**
     ContextGem is tested with ``openai/gpt-6-luna`` as the baseline model. For reliable structured extraction, your model should:
-    
+
     - Be able to follow detailed JSON schema instructions consistently
     - Have a sufficient context window to ingest the detailed prompt and the document content
     - Maintain attention across long prompts with complex instructions
- 
+
 
 🛠️ Mitigation Strategies for Small Models
 -------------------------------------------
@@ -90,7 +90,7 @@ Instead of generic aspects/concepts:
 
     # ❌ Too generic - may confuse small models
     Aspect(
-        name="Contract Terms", 
+        name="Contract Terms",
         description="Contractual/legal details"
     )
 
@@ -100,11 +100,11 @@ Use targeted ones:
 
     # ✅ More specific - easier for small models
     Aspect(
-        name="Termination Terms", 
+        name="Termination Terms",
         description="Provisions on contract termination"
     ),
     Aspect(
-        name="Payment Terms", 
+        name="Payment Terms",
         description="Provisions on payment schedules and amounts"
     )
 
@@ -115,15 +115,15 @@ For extracting document sections by topic, use **Aspects API** instead of **Conc
 .. code-block:: python
 
     # ✅ Aspects API is designed specifically for extracting document sections by topic,
-    # while Concepts API is designed for extracting/inferring specific values or entities 
+    # while Concepts API is designed for extracting/inferring specific values or entities
     # from a document or a specific section.
     from contextgem import Aspect
-    
+
     project_scope = Aspect(
         name="Project Scope",
         description="Details about the scope of work"
     )
-    
+
     # Paragraph references are automatically added to the extracted aspects
     results = llm.extract_aspects_from_document(document)
 
@@ -131,11 +131,11 @@ Instead of:
 
 .. code-block:: python
 
-    # ❌ Concepts API's core purpose is to extract/infer specific values or entities 
-    # from a document or a specific section, rather than extracting document sections 
+    # ❌ Concepts API's core purpose is to extract/infer specific values or entities
+    # from a document or a specific section, rather than extracting document sections
     # by topic.
     from contextgem import StringConcept
-    
+
     project_scope = StringConcept(
         name="Project Scope",
         description="Details about the scope of work",
@@ -166,12 +166,12 @@ To see what your LLM is supposed to return, you can inspect the prompt and the m
 
     # Make an extraction call
     results = llm.extract_aspects_from_document(document)
-    
+
     # Inspect the actual prompt sent to the LLM
     prompt = llm.get_usage()[0].usage.calls[-1].prompt
     print("Prompt sent to LLM:")
     print(prompt)
-    
+
     # Check the raw response (if available)
     response = llm.get_usage()[0].usage.calls[-1].response
     print("LLM response:")

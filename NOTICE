@@ -10,7 +10,7 @@ you may not use this file except in compliance with the License.
 You may obtain a copy of the License at
 
      http://www.apache.org/licenses/LICENSE-2.0
- 
+
 Unless required by applicable law or agreed to in writing, software
 distributed under the License is distributed on an "AS IS" BASIS,
 WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -37,7 +37,6 @@ Core Dependencies:
 - pydantic: Data validation
 - python-ulid: ULID generation
 - tenacity: Retry library for Python
-- tethered: Runtime network egress control; used to constrain SaT model downloads (HuggingFace) and genai-prices refresh (raw.githubusercontent.com) to known hosts, and to enforce egress policy in tests
 - wtpsplit-lite: Lightweight version of wtpsplit that only retains accelerated ONNX inference of SaT models with minimal dependencies
 
 Development Dependencies:
@@ -49,7 +48,6 @@ Development Dependencies:
 - hypothesis: Property-based testing library used for invariant tests of pure utility functions
 - interrogate: Python docstring coverage checker
 - licenseal: License compatibility checker for the dependencies (used for the license audit in LICENSES.md)
-- nest-asyncio: Patch for asyncio to allow nested event loops (used for VCR test compatibility)
 - pre-commit: Pre-commit hooks
 - ty: Static type checker for Python
 - pytest: Testing framework
@@ -58,16 +56,17 @@ Development Dependencies:
 - python-dotenv: Environment variable management
 - ruff: Fast Python linter and formatter
 - sphinx: Documentation generator
-- sphinx-autobuild: Live-reloading docs builder for Sphinx 
+- sphinx-autobuild: Live-reloading docs builder for Sphinx
 - sphinx-autodoc-typehints: Type annotation support for Sphinx
 - sphinx-book-theme: Book-like theme for Sphinx
 - sphinx-copybutton: Adds copy button to code blocks in Sphinx docs
 - sphinx-design: Component library for Sphinx documentation
 - sphinx-sitemap: Generates XML sitemaps for Sphinx documentation
 - sphinxext-opengraph: OpenGraph metadata support for Sphinx documentation
+- tethered: Network egress control (used to enforce the egress policy of the tests)
 - twine: PyPI package metadata validator (used by the package-check pre-commit hook)
 
-Each of these components may have their own licenses. Users should refer to the 
+Each of these components may have their own licenses. Users should refer to the
 respective project repositories for detailed license information.
 
-============================================================================== 
+==============================================================================

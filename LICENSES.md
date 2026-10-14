@@ -1,6 +1,6 @@
 # License Analysis Report
 
-**Project license:** Apache-2.0
+**Project license:** Apache-2.0 (from [pyproject.toml](pyproject.toml))
 
 |Package|Ecosystem|Group|Source|License|Risk|Status|
 |---------|-----------|-------|--------|---------|------|--------|
@@ -54,7 +54,7 @@
 |  └─ [packaging (26.3.0)](https://pypi.org/project/packaging/) (also: onnxruntime, wtpsplit-lite)|python|prod||[Apache-2.0](https://spdx.org/licenses/Apache-2.0.html) OR [BSD-2-Clause](https://spdx.org/licenses/BSD-2-Clause.html)|permissive|✓|
 |  └─ [propcache (0.5.4)](https://pypi.org/project/propcache/)|python|prod||[Apache-2.0](https://spdx.org/licenses/Apache-2.0.html)|permissive|✓|
 |  └─ [pydantic-settings (2.15.0)](https://pypi.org/project/pydantic-settings/)|python|prod||[MIT](https://spdx.org/licenses/MIT.html)|permissive|✓|
-|  └─ [python-dateutil (2.9.0.post0)](https://pypi.org/project/python-dateutil/)|python|prod||[Apache-2.0](https://spdx.org/licenses/Apache-2.0.html)|permissive|✓|
+|  └─ [python-dateutil (2.9.0.post0)](https://pypi.org/project/python-dateutil/)|python|prod||[Apache-2.0](https://spdx.org/licenses/Apache-2.0.html) OR [BSD-3-Clause](https://spdx.org/licenses/BSD-3-Clause.html)|permissive|✓|
 |  └─ [pyyaml (6.0.3)](https://pypi.org/project/pyyaml/) (also: wtpsplit-lite)|python|prod||[MIT](https://spdx.org/licenses/MIT.html)|permissive|✓|
 |  └─ [referencing (0.37.0)](https://pypi.org/project/referencing/)|python|prod||[MIT](https://spdx.org/licenses/MIT.html)|permissive|✓|
 |  └─ [regex (2026.9.29)](https://pypi.org/project/regex/)|python|prod||[Apache-2.0](https://spdx.org/licenses/Apache-2.0.html) AND [CNRI-Python](https://spdx.org/licenses/CNRI-Python.html)|unknown|?|
@@ -80,10 +80,9 @@
 |[python-dotenv (1.2.4)](https://pypi.org/project/python-dotenv/)|python|prod|[pyproject.toml](pyproject.toml)|[BSD-3-Clause](https://spdx.org/licenses/BSD-3-Clause.html)|permissive|✓|
 |[python-ulid (3.2.1)](https://pypi.org/project/python-ulid/)|python|prod|[pyproject.toml](pyproject.toml)|[MIT](https://spdx.org/licenses/MIT.html)|permissive|✓|
 |[tenacity (9.2.1)](https://pypi.org/project/tenacity/)|python|prod|[pyproject.toml](pyproject.toml)|[Apache-2.0](https://spdx.org/licenses/Apache-2.0.html)|permissive|✓|
-|[tethered (0.5.3)](https://pypi.org/project/tethered/)|python|prod|[pyproject.toml](pyproject.toml)|[MIT](https://spdx.org/licenses/MIT.html)|permissive|✓|
 |[wtpsplit-lite (0.2.0)](https://pypi.org/project/wtpsplit-lite/)|python|prod|[pyproject.toml](pyproject.toml)|[MIT](https://spdx.org/licenses/MIT.html)|permissive|✓|
 
-**Summary:** 0 violations, 2 warnings, 1 unknown, 75 ok (of which 4 reviewed)
+**Summary:** 0 violations, 2 warnings, 1 unknown, 74 ok (of which 5 reviewed)
 
 ## Details
 
@@ -97,6 +96,7 @@
 |---------|----------|----------|----|
 |[certifi (2026.7.22)](https://pypi.org/project/certifi/)|MPL-2.0|[MPL-2.0](https://spdx.org/licenses/MPL-2.0.html)|Apache-2.0 library distributed via PyPI; certifi is an unmodified upstream dependency used with dynamic linkage. MPL-2.0 is file-level weak copyleft that only triggers on modification of the MPL-licensed files — no modifications, so the obligation is dormant.|
 |[regex (2026.9.29)](https://pypi.org/project/regex/)|Apache-2.0 AND CNRI-Python|[Apache-2.0](https://spdx.org/licenses/Apache-2.0.html) AND [CNRI-Python](https://spdx.org/licenses/CNRI-Python.html)|Flagged UNKNOWN only because licenseal cannot classify the compound expression. CNRI-Python is an OSI-approved permissive license (the historical Python license) and is compatible with Apache-2.0; regex is used unmodified with dynamic linkage. Detection-classification override.|
+|[tiktoken (0.14.0)](https://pypi.org/project/tiktoken/)|UNKNOWN|[MIT](https://spdx.org/licenses/MIT.html)|PyPI metadata gives the license as free text ("License: MIT License"), not as an SPDX expression (hence UNKNOWN); the wheel ships the MIT LICENSE file, and GitHub's license-detection API reports MIT for the openai/tiktoken repo (spdx_id MIT). Detection override — MIT is permissive and compatible with Apache-2.0.|
 |[tqdm (4.70.1)](https://pypi.org/project/tqdm/)|MIT AND MPL-2.0|[MIT](https://spdx.org/licenses/MIT.html) AND [MPL-2.0](https://spdx.org/licenses/MPL-2.0.html)|Same rationale as certifi: unmodified upstream dependency, dynamic linkage. The MPL-2.0 portion is file-level weak copyleft and does not trigger absent modification of the MPL-licensed files.|
 |[wtpsplit-lite (0.2.0)](https://pypi.org/project/wtpsplit-lite/)|UNKNOWN|[MIT](https://spdx.org/licenses/MIT.html)|PyPI package ships no license metadata (hence UNKNOWN); the repository LICENSE file is MIT, confirmed via GitHub's license-detection API for the superlinear-ai/wtpsplit-lite repo (spdx_id MIT). Detection override — MIT is permissive and compatible with Apache-2.0.|
 

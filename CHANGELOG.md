@@ -6,15 +6,49 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 - **Refactor**: Code reorganization that doesn't change functionality but improves structure or maintainability
 
-## [1.0.0](https://github.com/shcherbak-ai/contextgem/releases/tag/v1.0.0) - 2026-10-06
+## [1.0.0] - 2026-10-06
+
+ContextGem 1.0 adds **decision models** next to LLMs. A decision model answers typed questions about a text (yes/no, pick one option, rate on a scale) with the probability of each possible answer, and generates no text. It extracts aspects, and Boolean, label and rating concepts, on its own, in a model group together with LLMs, or in a fallback chain, so that each aspect and concept can go to the model that suits it. The names in the API that are not specific to LLMs now refer to models in general, which is one of the breaking changes of this release: see the [migration guide](https://contextgem.dev/migration_v1/) before you upgrade.
+
+### Breaking changes
+
+See the [migration guide](https://contextgem.dev/migration_v1/) for updating the code and the serialized data.
+
+- Renamed the classes, parameters, and attributes that are not specific to LLMs, so that their names refer to models in general. `DocumentLLM` and `LLMToolLoopLimitError` keep their names. The old names are removed, and using them raises an error. See the [migration guide](https://contextgem.dev/migration_v1/) for updating the code and the serialized data.
+  - `DocumentLLMGroup` is renamed to `DocumentModelGroup`, and its `llms` parameter and attribute to `models`.
+  - The `llm_role` parameter and attribute of aspects and concepts is renamed to `model_role`, as is the `llm_role` argument of `get_usage()`, `get_cost()`, and `reset_usage_and_cost()` of `DocumentModelGroup`.
+  - The `llm_roles` property of documents, pipelines, and aspects is renamed to `model_roles`.
+  - `LLMPricing` is renamed to `ModelPricing`.
+  - `LLMAPIError` is renamed to `ModelAPIError`, and `LLMExtractionError` to `ModelExtractionError`.
+- Serialized data uses the new names: the `model_role` key of aspects and concepts, the `models` key and the `DocumentModelGroup` class name of model groups, the `ModelPricing` class name of pricing details, and the class names of the usage and cost containers stored in serialized LLMs (always empty, as the usage and cost statistics are not serialized). Aspects, concepts, LLMs, and model groups serialized by earlier versions, as well as the documents and pipelines that have aspects or concepts, can no longer be deserialized as is. Update the serialized data as described in the [migration guide](https://contextgem.dev/migration_v1/).
+- Model roles are now free-form labels. The `role` parameter of `DocumentLLM` and the `model_role` parameter of aspects and concepts accept any label of up to 64 printable characters (the surrounding whitespace is removed; line breaks, tabs, and other control or invisible characters are not allowed) and default to `None` (no role), instead of one of the six predefined role names (`"extractor_text"`, `"reasoner_text"`, `"extractor_vision"`, `"reasoner_vision"`, `"extractor_multimodal"`, `"reasoner_multimodal"`; for aspects, one of the two `*_text` names), with `"extractor_text"` as the default. A role only routes aspects and concepts to the models of a `DocumentModelGroup`: an aspect or concept is extracted by the model with the `role` equal to its `model_role`, and an aspect or concept without `model_role` is extracted by the model without `role`. A role no longer implies the capabilities of the model or the content it can process, so the same model no longer needs to be added to a group several times, with different roles, to process both text and images. Each model in a group must still have a unique role, i.e. only one model in a group can have no role. The predefined role names have no special meaning anymore: if still used, they are treated as any other role labels, and no longer determine the content a concept is extracted from. See the [migration guide](https://contextgem.dev/migration_v1/) for updating the code and the serialized data.
+- A `DocumentLLM` used on its own (not in a group) now extracts all the aspects and concepts it is given, regardless of their `model_role`. Previously, it skipped the aspects and concepts with a `model_role` different from its `role`, with a warning. To extract only some of the aspects or concepts with a single LLM, use the `from_aspects` / `from_concepts` parameters of the extraction methods.
+- A `DocumentModelGroup` now raises `ValueError` if an aspect or concept to be extracted has a `model_role` that no model in the group has. This is checked before sending any requests for that extraction method, including for the nested aspects and concepts that the method processes. Previously, such aspects and concepts were skipped: with a warning in `extract_all()`, and silently in the other extraction methods. Set the `model_role` of each aspect and concept to the `role` of a model in the group, or leave it unset for the model without a role.
+- The content a concept is extracted from is now determined by the `modality` of the concept instead of the role of the LLM. Concepts with different modalities can be extracted by the same LLM, in separate calls. Set `modality` on the concepts to be extracted from images, as described in the [migration guide](https://contextgem.dev/migration_v1/).
+- The `model_role` argument of `get_usage()`, `get_cost()`, and `reset_usage_and_cost()` of `DocumentModelGroup` is now validated in the same way as the roles assigned to models: the surrounding whitespace is removed, and an invalid role, e.g. an empty string, raises `ValueError`. Previously, the argument was compared as passed, an empty string selected all LLMs, and the model without a role was selected with `"extractor_text"`. The model without a role cannot be selected with `model_role`, as `None` selects all models: filter the returned entries by `role is None`, or call the method on that model.
+- The `model_roles` property of documents, pipelines, and aspects now also includes the roles assigned to sub-aspects and their concepts, and contains `None` if there are aspects or concepts without a role, where it contained `"extractor_text"` before. Code that expects a set of strings, e.g. sorts the roles, has to handle `None`.
+- The `list_roles` property of `DocumentLLM` and `DocumentModelGroup`, and the `role` of the entries returned by `get_usage()` and `get_cost()`, are now `None` for a model without a role. Previously, they were `"extractor_text"` for an LLM created without a role. Check for `None` where code compares these roles with `"extractor_text"`.
+- Serialized `DocumentLLM` data now stores fallback models under the `fallback_models` key instead of the `fallback_llm` key. An LLM or model group serialized by earlier versions has the `fallback_llm` key in each LLM, even if no fallback LLM was assigned, and can no longer be deserialized as is. Update the serialized data as described in the [migration guide](https://contextgem.dev/migration_v1/), or create the LLMs anew.
+- A tool for chat is now defined in a single way: as a function decorated with `@register_tool`, which is passed to `tools` of `DocumentLLM`. `tools` no longer accepts tool definitions as dictionaries in the OpenAI-compatible schema, and `llm.tools` returns the functions instead of the tool schemas. The schema of a tool is always generated from the function. To update the tools defined with dictionaries, see the [migration guide](https://contextgem.dev/migration_v1/).
+- `@register_tool` now raises an error for a function that has no docstring, or that accepts `*args` or `**kwargs`. A parameter without a type hint is now reported when the function is decorated, rather than when the LLM is created. Previously, such a function was accepted: a tool without a docstring was sent to the LLM without a description, and `*args` and `**kwargs` were ignored. Give each tool function a docstring, and parameters with names and type hints.
+- Tools with the same name are now rejected when they are set on an LLM. Previously, the last of them silently replaced the others. Give each tool of an LLM a name of its own.
+- A fallback LLM must now have the same `system_message` as the primary LLM, which is checked when the fallback LLMs are set and when the system message of the primary LLM is changed. If the primary LLM is created with `system_message`, e.g. with an empty string to disable it for a chat, pass the same value to each of its fallback LLMs. Previously, a fallback LLM could have another system message: a fallback LLM created without `system_message` used the default system message, which is written for extraction, also in a chat for which the primary LLM had another system message or none. In a chat with a `ChatSession`, a fallback LLM was sent the system message of the session instead of its own, or, if the session had none, added its own system message to the session, which was then sent with the later requests of the primary LLM as well. See the [migration guide](https://contextgem.dev/migration_v1/).
+- In chat, an empty response of an LLM is now handled as a failure of that LLM: the next fallback LLM is tried, and `ModelAPIError` is raised if there is no fallback LLM left to try. Previously, a response without a text was passed to the fallback LLM or raised `RuntimeError`, while a response with an empty text was returned as the answer, or failed with a validation error when a chat session was used. Where code handled an empty answer, catch `ModelAPIError` instead.
+- A function used as a tool in chat must return a non-empty string: for an empty string, `ValueError` is now raised from `chat()`. Previously, an empty string failed the request with a validation error reported as `ModelAPIError`. Return a text from a tool that has nothing to report, e.g. `"No results"`.
+- The output tokens of a response are now limited by a single parameter of `DocumentLLM`, `max_tokens`, which applies to all models and is not set by default: no limit is sent with the requests, and the default of the model applies, which for most providers is the maximum output of the model. Previously, `max_tokens` (4096 by default) applied to the models without reasoning support, and `max_completion_tokens` (16000 by default, removed in this version, see below) to reasoning (CoT-capable) models, while the other of the two parameters was ignored. A `max_tokens` value set for a reasoning model, which was ignored before, now limits the output of the model, including its reasoning tokens. `max_tokens` is checked against the maximum output of the model only if it is set, so the default no longer raises `ValueError` for the models with a maximum output below the previous default limits. See the [migration guide](https://contextgem.dev/migration_v1/).
+- A response cut off at the max output tokens is no longer requested again during extraction, as the same request would be cut off in the same way: the next fallback model is tried, and `ModelAPIError` is raised if there is no fallback model left to try, with a message telling that the response was cut off and how to get a complete one (or a warning is issued, if `raise_exception_on_extraction_error=False` is passed). Previously, such a response was handled as invalid data: it was requested again up to `max_retries_invalid_data` times, and the extraction failed with `ModelExtractionError` reporting invalid JSON. To get a complete response, increase `max_tokens` or leave it unset, as the message says, or catch `ModelAPIError` where `ModelExtractionError` was caught for it.
+- The `temperature` of `DocumentLLM` is no longer set by default: the parameter is not sent, and the default of the model applies. Previously, it defaulted to 0.3, which was sent to the models without reasoning support only. To keep the previous behavior for such a model, e.g. a local model, set `temperature=0.3`. See the [migration guide](https://contextgem.dev/migration_v1/).
+- `DocumentModelGroup` is moved from the `contextgem.public.llms` module to the new `contextgem.public.models` module, as a model group is not specific to LLMs. It can no longer be imported from `contextgem.public.llms`. Importing it from `contextgem` works as before. Serialized data is not affected, as it stores the class names without the module paths. See the [migration guide](https://contextgem.dev/migration_v1/).
+- Removed the `fallback_llm` parameter and attribute of `DocumentLLM`. Passing `fallback_llm` to `DocumentLLM`, or reading or assigning the attribute, now raises an error. Use `fallback_models` instead, e.g. `fallback_models=[fallback_llm]`.
+- Removed `DocumentPipeline`, deprecated since v0.14.1. Use `ExtractionPipeline` instead, which has the same parameters and methods. A pipeline serialized as `DocumentPipeline` can no longer be deserialized as is: replace the class name in the serialized data, as described in the [migration guide](https://contextgem.dev/migration_v1/).
+- Removed `RatingScale`, deprecated since v0.10.0. Pass the rating scale of a `RatingConcept` as a tuple of `(start, end)` integers instead, e.g. `rating_scale=(1, 5)`. Documents, pipelines, aspects, and concepts serialized with a rating scale defined as a `RatingScale` object can no longer be deserialized as is: update the serialized data as described in the [migration guide](https://contextgem.dev/migration_v1/).
+- Removed `DocxConverter`, deprecated since v0.22.0, together with the DOCX converter exceptions (`DocxConverterError` and its subclasses). Use a dedicated document conversion library (e.g. [Docling](https://github.com/docling-project/docling), [MarkItDown](https://github.com/microsoft/markitdown)) to convert files to text, then pass the result to `Document(raw_text=...)`.
+- Removed the Markdown text that `DocxConverter` attached to documents and paragraphs and that was sent to the LLM instead of the plain text. Text is now always extracted from `raw_text`. Documents converted from DOCX and serialized by earlier versions need no update for this removal: when they are deserialized, their Markdown text is ignored, and it is not kept when they are serialized again, while the additional context of their paragraphs is preserved.
+- Removed the `max_completion_tokens` parameter and attribute of `DocumentLLM`. Use `max_tokens` instead, which now applies to all models (see above). Passing `max_completion_tokens` to `DocumentLLM`, or reading or assigning the attribute, now raises an error. An LLM or model group serialized by earlier versions has the `max_completion_tokens` key in each LLM, and can no longer be deserialized as is: update the serialized data as described in the [migration guide](https://contextgem.dev/migration_v1/).
+- Removed support for Python 3.10, which has reached its end of life. ContextGem now requires Python 3.11–3.14. The `onnxruntime<1.24.0` constraint, which applied to Python 3.10 only, is removed as well. On Python 3.10, package installers such as `pip` and `uv` do not install this version, and resolve to the latest earlier one: upgrade to Python 3.11 or later to use it.
 
 ### Added
 
-- Added the `modality` parameter to concepts, which sets the document content a concept is extracted from: `"text"` (default), `"image"`, or `"multimodal"` (text and/or images, whichever the document has). `"image"` and `"multimodal"` are supported for document-level concepts only. Previously, the content was determined by the role of the LLM (see "Changed").
-- Added the `fallback_models` parameter to `DocumentLLM`, which accepts a list of fallback models and replaces the `fallback_llm` parameter, which accepted a single one (see "Removed"). Fallback LLMs are tried in the given order until one of them succeeds, for both extraction and chat, e.g. to fall back across several providers during an outage. Each fallback LLM must have `is_fallback=True` and the same role, output language, system message, and tool configuration as the primary LLM, must differ in configuration from the primary LLM and from the other fallback LLMs, and cannot have fallback models of its own. Usage and cost are tracked for the primary LLM and each of its fallback models.
-- Added tracking of cached input tokens. The usage returned by `get_usage()` now includes `cache_read` and `cache_write`: the number of input tokens that the LLM provider reports as read from, and written to, its prompt cache. Both are a part of the `input` token count, and are zero if the provider does not report such tokens.
-- Added the optional `cache_read_per_1m_tokens` and `cache_write_per_1m_tokens` parameters to `ModelPricing` (previously `LLMPricing`, see "Changed"), which set the prices of the input tokens read from and written to the prompt cache of the LLM provider. If a cache price is not set, such tokens are priced as regular input tokens, as before. Serialized `ModelPricing` data now includes these keys.
-- Added support for `Annotated` type hints in the functions used as tools in chat. A string in `Annotated`, or pydantic's `Field(description=...)`, describes a parameter and takes precedence over the description in the docstring. The constraints set with `Field` (`gt`, `ge`, `lt`, `le`, `multiple_of` for numbers; `min_length`, `max_length` for strings and collections; `pattern` for strings) are added to the tool schema sent to the LLM, and are enforced when the LLM calls the tool: for an invalid value, the tool is not called, and the LLM receives the validation error. `Annotated` is also supported for the items of collections and the fields of a `TypedDict`.
 - Added `DocumentDecisionModel`, a class for decision models, next to `DocumentLLM`. A decision model takes a text and typed questions (yes/no, pick one option, rate on a scale) and returns the probabilities of the answers; it generates no text. A `DocumentDecisionModel` extracts `BooleanConcept`, `LabelConcept`, and `RatingConcept`, from a document or from an aspect: the questions of the concepts extracted in one call are sent in one request, with the text of the document or of the paragraphs of the aspect. It also extracts aspects, including sub-aspects: each paragraph is sent in a request of its own, with one yes/no question per aspect, and becomes an extracted item of each aspect that it belongs to with a probability of the decision threshold (0.5 by default) or more. For an aspect with `reference_depth="sentences"`, the sentences of the paragraphs that belong to the aspect are then asked about in the same way, and the sentences that belong to the aspect become its extracted items (see below). It has the extraction methods of `DocumentLLM` and no `chat()`, and can be used on its own, in a `DocumentModelGroup`, and in fallback chains together with LLMs (see "Changed"). Requests are sent through the Decisions API of `litellm`, which serves OpenAI, TypeSafe, Microsoft Foundry (as `azure_ai/<deployment name>`, with the endpoint of the Foundry resource as `api_base`), Perplexity, OpenRouter, Cloudflare, and local or self-hosted servers: such as Ollama and LM Studio under the `strands_decider/` prefix, and vLLM under the `hosted_vllm/` prefix, with the address of the server as `api_base`. `ValueError` is raised before any requests are sent for what a decision model cannot extract: concepts with open values (`StringConcept`, `NumericalConcept`, `DateConcept`, `JsonObjectConcept`), concepts with the `"image"` or `"multimodal"` modality, justifications, references for concepts, and concepts with more labels or rating levels than `litellm` accepts in a question. A model of a provider that `litellm` serves no decision models of is rejected when the decision model is created. Failed requests are retried as for LLMs. A response that cannot be used, e.g. with a refused answer to a question of a concept, is not requested again: the next fallback model is tried, and `ModelExtractionError` is raised if there is no fallback model left to try. In aspect extraction, a paragraph or a sentence that the model refuses to answer on is not included in the aspect, and a warning names the aspect and what was refused: the call fails only if the model refuses to answer on every paragraph for an aspect. Usage and cost are tracked as for LLMs. `auto_pricing` works for the models whose prices of decision requests `genai-prices` has (e.g. the TypeSafe, Perplexity and Cloudflare models), and is rejected for a decision model for which `genai-prices` has the prices of a text-generating model, i.e. a price of output tokens (e.g. `gpt-6-luna`, for which the prices found under its provider are the chat prices, whichever provider serves it), and for self-hosted ones (`strands_decider/`): set `pricing_details` to get their costs calculated. Set it also for a model deployed in Microsoft Foundry, which `genai-prices` has no prices for. See the [documentation](https://contextgem.dev/decision_models/decision_models/).
 - Added `decision_threshold`, the lowest probability of "yes" with which a decision model takes a yes/no question as answered "yes": a paragraph or a sentence belongs to an aspect, a `BooleanConcept` is `True`, a label of a multi-label `LabelConcept` is selected. It is a parameter of `DocumentDecisionModel` (0.5 by default), which applies to everything that the model extracts, and of `Aspect`, `BooleanConcept` and `LabelConcept` (not set by default), where it applies instead of the threshold of the decision model. It must be above 0 and not above 1. It does not apply to single-label and rating concepts, for which the most probable option is taken, and cannot be set for a `LabelConcept` with `classification_type="multi_class"`. A sub-aspect does not get the threshold of its aspect. It does not change the `probabilities` of the extracted items, and is ignored when an LLM extracts the aspect or the concept. The serialized data of aspects, `BooleanConcept` and `LabelConcept` now includes the `decision_threshold` key (`null` if not set); data serialized by earlier versions has no such key, which needs no update.
 - `max_paragraphs_to_analyze_per_call` applies to the concepts that a `DocumentDecisionModel` extracts. When it is set and the text has more paragraphs, the paragraphs are split into consecutive parts of at most that many paragraphs, as for an LLM, and one request is sent for each part, so that a long document can be used with a model that has a small context, e.g. a local one. Each concept gets one extracted item for each part, in the order of the parts, each with its own `probabilities`: the answers are not merged across the parts, i.e. combining them is up to the calling code, and a multi-label `LabelConcept` gets no item for a part in which no label reaches the decision threshold. With `use_concurrency=True`, the requests for the parts are sent concurrently, at the rate of the `async_limiter` of the model. Without the parameter, the text is sent as a whole in one request. For aspects, the parameter changes nothing, as each paragraph is sent in a request of its own.
@@ -22,49 +56,29 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 - When a `DocumentDecisionModel` extracts aspects, including sub-aspects, a paragraph that has `additional_context` is sent with it, as an LLM is given it: the text of the request has the paragraph and its additional context, each with a label, and the question says that the paragraph is what is to be judged. A paragraph without additional context is sent as its text alone. Concepts are not affected.
 - A `DocumentDecisionModel` extracts aspects with `reference_depth="sentences"`, including sub-aspects, in two stages. First, each paragraph is sent in a request of its own, as for `reference_depth="paragraphs"`. Then, each sentence of each paragraph that belongs to the aspect is sent in a request of its own, with the sentence, the paragraph that it is from as its context, and the `additional_context` of the sentence and of the paragraph, if set. A sentence with a probability of the decision threshold or more becomes an extracted item, with the sentence in `reference_sentences`, its paragraph in `reference_paragraphs`, and the `probabilities` of the sentence: the same threshold applies at both stages. A paragraph that belongs to the aspect while none of its sentences does gives no items. The number of requests is the number of paragraphs plus the number of sentences in the paragraphs that belong to the aspect.
 - Added the `probabilities` attribute to extracted items: a dictionary that maps each possible answer to its probability, as returned by a decision model. The keys are the answers as they appear as item values: `True` and `False` for an item of a `BooleanConcept` and for an item of an aspect (whether the paragraph, or the sentence for an aspect with `reference_depth="sentences"`, belongs to the aspect), the labels for an item of a `LabelConcept`, and the integers of the rating scale for an item of a `RatingConcept`. For a multi-label `LabelConcept`, each label has the probability of its own yes/no question, so the probabilities do not sum to 1. `probabilities` is `None` for every item extracted by an LLM. Two items that differ only in their probabilities are not equal.
+- Added the `modality` parameter to concepts, which sets the document content a concept is extracted from: `"text"` (default), `"image"`, or `"multimodal"` (text and/or images, whichever the document has). `"image"` and `"multimodal"` are supported for document-level concepts only. Previously, the content was determined by the role of the LLM (see "Breaking changes").
+- Added the `fallback_models` parameter to `DocumentLLM`, which accepts a list of fallback models and replaces the `fallback_llm` parameter, which accepted a single one (see "Breaking changes"). Fallback LLMs are tried in the given order until one of them succeeds, for both extraction and chat, e.g. to fall back across several providers during an outage. Each fallback LLM must have `is_fallback=True` and the same role, output language, system message, and tool configuration as the primary LLM, must differ in configuration from the primary LLM and from the other fallback LLMs, and cannot have fallback models of its own. Usage and cost are tracked for the primary LLM and each of its fallback models.
+- Added tracking of cached input tokens. The usage returned by `get_usage()` now includes `cache_read` and `cache_write`: the number of input tokens that the LLM provider reports as read from, and written to, its prompt cache. Both are a part of the `input` token count, and are zero if the provider does not report such tokens.
+- Added the optional `cache_read_per_1m_tokens` and `cache_write_per_1m_tokens` parameters to `ModelPricing` (previously `LLMPricing`, see "Changed"), which set the prices of the input tokens read from and written to the prompt cache of the LLM provider. If a cache price is not set, such tokens are priced as regular input tokens, as before. Serialized `ModelPricing` data now includes these keys.
+- Added support for `Annotated` type hints in the functions used as tools in chat. A string in `Annotated`, or pydantic's `Field(description=...)`, describes a parameter and takes precedence over the description in the docstring. The constraints set with `Field` (`gt`, `ge`, `lt`, `le`, `multiple_of` for numbers; `min_length`, `max_length` for strings and collections; `pattern` for strings) are added to the tool schema sent to the LLM, and are enforced when the LLM calls the tool: for an invalid value, the tool is not called, and the LLM receives the validation error. `Annotated` is also supported for the items of collections and the fields of a `TypedDict`.
 - Added `ModelAPIError`, `ModelExtractionError` and `LLMToolLoopLimitError` to the public API: the exceptions can now be imported from `contextgem`, and are documented in the API reference. Previously, they could be imported only from the internal `contextgem.internal.exceptions` module, which still works.
 
 ### Changed
 
-- **Breaking:** Renamed the classes, parameters, and attributes that are not specific to LLMs, so that their names refer to models in general. `DocumentLLM` and `LLMToolLoopLimitError` keep their names. The old names are removed, and using them raises an error. See the [migration guide](https://contextgem.dev/migration_v1/) for updating the code and the serialized data.
-  - `DocumentLLMGroup` is renamed to `DocumentModelGroup`, and its `llms` parameter and attribute to `models`.
-  - The `llm_role` parameter and attribute of aspects and concepts is renamed to `model_role`, as is the `llm_role` argument of `get_usage()`, `get_cost()`, and `reset_usage_and_cost()` of `DocumentModelGroup`.
-  - The `llm_roles` property of documents, pipelines, and aspects is renamed to `model_roles`.
-  - `LLMPricing` is renamed to `ModelPricing`.
-  - `LLMAPIError` is renamed to `ModelAPIError`, and `LLMExtractionError` to `ModelExtractionError`.
-- **Breaking:** Serialized data uses the new names: the `model_role` key of aspects and concepts, the `models` key and the `DocumentModelGroup` class name of model groups, the `ModelPricing` class name of pricing details, and the class names of the usage and cost containers stored in serialized LLMs (always empty, as the usage and cost statistics are not serialized). Aspects, concepts, LLMs, and model groups serialized by earlier versions, as well as the documents and pipelines that have aspects or concepts, can no longer be deserialized as is. Update the serialized data as described in the [migration guide](https://contextgem.dev/migration_v1/).
-- **Breaking:** Model roles are now free-form labels. The `role` parameter of `DocumentLLM` and the `model_role` parameter of aspects and concepts accept any label of up to 64 printable characters (the surrounding whitespace is removed; line breaks, tabs, and other control or invisible characters are not allowed) and default to `None` (no role), instead of one of the six predefined role names (`"extractor_text"`, `"reasoner_text"`, `"extractor_vision"`, `"reasoner_vision"`, `"extractor_multimodal"`, `"reasoner_multimodal"`; for aspects, one of the two `*_text` names), with `"extractor_text"` as the default. A role only routes aspects and concepts to the models of a `DocumentModelGroup`: an aspect or concept is extracted by the model with the `role` equal to its `model_role`, and an aspect or concept without `model_role` is extracted by the model without `role`. A role no longer implies the capabilities of the model or the content it can process, so the same model no longer needs to be added to a group several times, with different roles, to process both text and images. Each model in a group must still have a unique role, i.e. only one model in a group can have no role. The predefined role names have no special meaning anymore: if still used, they are treated as any other role labels, and no longer determine the content a concept is extracted from. See the [migration guide](https://contextgem.dev/migration_v1/) for updating the code and the serialized data.
-- **Breaking:** A `DocumentLLM` used on its own (not in a group) now extracts all the aspects and concepts it is given, regardless of their `model_role`. Previously, it skipped the aspects and concepts with a `model_role` different from its `role`, with a warning. To extract only some of the aspects or concepts with a single LLM, use the `from_aspects` / `from_concepts` parameters of the extraction methods.
-- **Breaking:** A `DocumentModelGroup` now raises `ValueError` if an aspect or concept to be extracted has a `model_role` that no model in the group has. This is checked before sending any requests for that extraction method, including for the nested aspects and concepts that the method processes. Previously, such aspects and concepts were skipped: with a warning in `extract_all()`, and silently in the other extraction methods.
-- **Breaking:** The content a concept is extracted from is now determined by the `modality` of the concept instead of the role of the LLM. Concepts with different modalities can be extracted by the same LLM, in separate calls.
 - Vision and reasoning capabilities of a model are no longer checked against the role of the LLM when the LLM is created, i.e. the related warnings are no longer issued. Instead, `ValueError` is raised before any requests are sent, if the LLM that is to extract concepts from images, or any of its fallback LLMs, is not detected as vision-capable (unless `_supports_vision=True` is set on the LLM). The same applies to the fallback LLMs when images are passed to `chat()`. Previously, such error was raised only when the images were sent to the model, i.e. for a fallback LLM only after the primary LLM failed. As before, the reasoning-specific prompt instructions are used based on the detected reasoning support of the model. The warning about the `ollama_chat/` prefix not supporting image inputs is now issued when images are sent to such a model, instead of when the LLM is created.
-- **Breaking:** The `model_role` argument of `get_usage()`, `get_cost()`, and `reset_usage_and_cost()` of `DocumentModelGroup` is now validated in the same way as the roles assigned to models: the surrounding whitespace is removed, and an invalid role, e.g. an empty string, raises `ValueError`. Previously, the argument was compared as passed, and an empty string selected all LLMs. The model without a role cannot be selected with `model_role`, as `None` selects all models: filter the returned entries by `role is None`, or call the method on that model. Previously, it was selected with `"extractor_text"`.
-- **Breaking:** The `model_roles` property of documents, pipelines, and aspects now also includes the roles assigned to sub-aspects and their concepts, and contains `None` if there are aspects or concepts without a role, where it contained `"extractor_text"` before. Code that expects a set of strings, e.g. sorts the roles, has to handle `None`.
-- **Breaking:** The `list_roles` property of `DocumentLLM` and `DocumentModelGroup`, and the `role` of the entries returned by `get_usage()` and `get_cost()`, are now `None` for a model without a role. Previously, they were `"extractor_text"` for an LLM created without a role.
 - Serialized concept data now includes the `modality` key. Documents and pipelines serialized by earlier versions store the predefined role names and no modality, and need to be updated as described in the [migration guide](https://contextgem.dev/migration_v1/).
-- **Breaking:** Serialized `DocumentLLM` data now stores fallback models under the `fallback_models` key instead of the `fallback_llm` key. An LLM or model group serialized by earlier versions has the `fallback_llm` key in each LLM, even if no fallback LLM was assigned, and can no longer be deserialized as is. Update the serialized data as described in the [migration guide](https://contextgem.dev/migration_v1/), or create the LLMs anew.
 - Failed LLM API requests are now retried by ContextGem instead of litellm, with `num_retries_failed_request` keeping its meaning. Only transient errors (request timeout, rate limit, server or connection error) are retried; non-transient errors (e.g. invalid request, failed authentication, exceeded context window) fail right away or are passed to a fallback model, instead of being retried as before. Retries are performed with exponential backoff and jitter (about 1, 2, 4, 8 seconds, capped at 10 seconds, each randomly shortened by up to a half); previously, only rate limit errors were retried with a backoff, without jitter, and other errors were retried immediately.
 - `ModelAPIError.retry_count`, as well as the corresponding warning messages, now report the number of retries actually attempted for the failed request, rather than the configured number of retries.
 - The warning issued when the pricing data of a model is not found with `auto_pricing=True` now also suggests setting `auto_pricing_refresh=True`, unless it is already set, as the pricing data bundled with `genai-prices` may not include a recently released model.
 - Upgraded pinned dependency versions: `litellm==1.105.0`, `genai-prices==0.1.10`. Versions remain pinned to maintain stability and avoid occasional breaking changes and API inconsistencies observed in previous unpinned releases. `openai` remains pinned to `2.54.0`, the latest version supported by `litellm`. As of this version, `litellm` installs `boto3` as a required dependency.
-- **Breaking:** A tool for chat is now defined in a single way: as a function decorated with `@register_tool`, which is passed to `tools` of `DocumentLLM`. `tools` no longer accepts tool definitions as dictionaries in the OpenAI-compatible schema, and `llm.tools` returns the functions instead of the tool schemas. The schema of a tool is always generated from the function. To update the tools defined with dictionaries, see the [migration guide](https://contextgem.dev/migration_v1/).
-- **Breaking:** `@register_tool` now raises an error for a function that has no docstring, or that accepts `*args` or `**kwargs`. Previously, such a function was accepted: a tool without a docstring was sent to the LLM without a description, and `*args` and `**kwargs` were ignored. A parameter without a type hint is now reported when the function is decorated, rather than when the LLM is created.
 - Functions decorated with `@register_tool` can now be assigned to the `tools` of an existing `DocumentLLM` (`llm.tools = [my_tool]`), as a list or a tuple. Previously, functions were accepted only when the LLM was created.
-- **Breaking:** Tools with the same name are now rejected when they are set on an LLM. Previously, the last of them silently replaced the others.
-- **Breaking:** A fallback LLM must now have the same `system_message` as the primary LLM, which is checked when the fallback LLMs are set and when the system message of the primary LLM is changed. If the primary LLM is created with `system_message`, e.g. with an empty string to disable it for a chat, pass the same value to each of its fallback LLMs. Previously, a fallback LLM could have another system message: a fallback LLM created without `system_message` used the default system message, which is written for extraction, also in a chat for which the primary LLM had another system message or none. In a chat with a `ChatSession`, a fallback LLM was sent the system message of the session instead of its own, or, if the session had none, added its own system message to the session, which was then sent with the later requests of the primary LLM as well. See the [migration guide](https://contextgem.dev/migration_v1/).
 - A prompt that is found to exceed the context window of an LLM before the request is sent is now handled as any other non-transient failure of that LLM: the next fallback LLM, which may have a larger context window, is tried, and `ValueError` is raised only if there is no fallback LLM left to try. Previously, `ValueError` was raised right away, and the fallback LLMs were not tried. This applies to both extraction and chat.
 - In chat, the request parameters of the fallback LLMs are now checked before any request is sent: `ValueError` is raised if `parallel_tool_calls` is set for a fallback LLM that is not detected as supporting parallel tool calls, or if the max output tokens of a fallback LLM exceed the limit of its model. Previously, this was checked only when the fallback LLM was to be used, i.e. after the primary LLM failed.
-- **Breaking:** In chat, an empty response of an LLM is now handled as a failure of that LLM: the next fallback LLM is tried, and `ModelAPIError` is raised if there is no fallback LLM left to try. Previously, a response without a text was passed to the fallback LLM or raised `RuntimeError`, while a response with an empty text was returned as the answer, or failed with a validation error when a chat session was used.
 - A fallback LLM can now have the same tools as the primary LLM in a different order. Previously, it was rejected as having a different tool configuration.
-- **Breaking:** A function used as a tool in chat must return a non-empty string: for an empty string, `ValueError` is now raised from `chat()`. Previously, an empty string failed the request with a validation error reported as `ModelAPIError`.
-- **Breaking:** The output tokens of a response are now limited by a single parameter of `DocumentLLM`, `max_tokens`, which applies to all models and is not set by default: no limit is sent with the requests, and the default of the model applies, which for most providers is the maximum output of the model. Previously, `max_tokens` (4096 by default) applied to the models without reasoning support, and `max_completion_tokens` (16000 by default, see "Removed") to reasoning (CoT-capable) models, while the other of the two parameters was ignored. A `max_tokens` value set for a reasoning model, which was ignored before, now limits the output of the model, including its reasoning tokens. `max_tokens` is checked against the maximum output of the model only if it is set, so the default no longer raises `ValueError` for the models with a maximum output below the previous default limits. See the [migration guide](https://contextgem.dev/migration_v1/).
-- **Breaking:** A response cut off at the max output tokens is no longer requested again during extraction, as the same request would be cut off in the same way: the next fallback model is tried, and `ModelAPIError` is raised if there is no fallback model left to try, with a message telling that the response was cut off and how to get a complete one (or a warning is issued, if `raise_exception_on_extraction_error=False` is passed). Previously, such a response was handled as invalid data: it was requested again up to `max_retries_invalid_data` times, and the extraction failed with `ModelExtractionError` reporting invalid JSON.
 - In chat, a response cut off at the max output tokens is now returned with a warning. If such a response has no text, the `ModelAPIError` raised for the empty response tells that the response was cut off. Previously, a cut-off response was returned without a warning.
-- **Breaking:** The `temperature` of `DocumentLLM` is no longer set by default: the parameter is not sent, and the default of the model applies. Previously, it defaulted to 0.3, which was sent to the models without reasoning support only. To keep the previous behavior for such a model, e.g. a local model, set `temperature=0.3`. See the [migration guide](https://contextgem.dev/migration_v1/).
 - `temperature` and `top_p` are now sent to any model if they are set, including reasoning (CoT-capable) models, for which they were ignored before. Whether a value is supported for the model is left to `litellm` and the LLM provider: if `litellm` reports a parameter as not supported for the model (e.g. a temperature for OpenAI's GPT-5 and GPT-6 models, which accept only their default one), the request is sent without it. The message logged in this case is now a warning instead of an error.
 - The default `timeout` of `DocumentLLM` is raised from 120 to 600 seconds. Responses are not streamed, so a response has to be received in full within the timeout, and a long response of a reasoning model may take more than 120 seconds. A request that times out is retried as a transient error, so a request to an unresponsive endpoint now takes longer to fail, unless a lower `timeout` is set.
 - The default `async_limiter` of `DocumentLLM`, which paces the requests sent with `use_concurrency=True`, now allows 10 requests per 10 seconds instead of 3. Set the limiter explicitly if this exceeds the rate limits of your LLM provider account.
-- **Breaking:** `DocumentModelGroup` is moved from the `contextgem.public.llms` module to the new `contextgem.public.models` module, as a model group is not specific to LLMs. It can no longer be imported from `contextgem.public.llms`. Importing it from `contextgem` works as before. Serialized data is not affected, as it stores the class names without the module paths. See the [migration guide](https://contextgem.dev/migration_v1/).
 - The `models` of a `DocumentModelGroup` and the `fallback_models` of a `DocumentLLM` now accept decision models (`DocumentDecisionModel`) as well as LLMs. In a group, aspects and concepts are routed to a decision model by its role in the same way as to an LLM, and the `output_language` of the group applies to its LLMs only. An LLM can have a decision model as a fallback only if the decision model can extract everything that is given or routed to the LLM, which is checked when an extraction method is called, before any requests are sent. A decision model can always have an LLM as a fallback. The requirement that a fallback LLM has the same output language, system message, and tool configuration as the primary LLM applies between two LLMs. In `chat()`, a decision model among the fallback models of an LLM is skipped.
 - Serialized data of extracted items now includes the `probabilities` key: a list of `[answer, probability]` pairs, or `null` for an item without probabilities. Data serialized by earlier versions has no such key, which needs no update: its items are loaded with `probabilities=None`. Data serialized by this version cannot be loaded by earlier versions.
 - The parameters that `DocumentLLM` has in common with other kinds of models (`model`, `api_key`, `api_base`, `role`, `num_retries_failed_request`, `timeout`, the pricing and the fallback parameters) now come first in the `repr()` of an LLM and in the key order of its serialized data. Serialized data is loaded regardless of the order of its keys.
@@ -74,20 +88,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ### Removed
 
-See the [migration guide](https://contextgem.dev/migration_v1/) for updating the code and the serialized data affected by the removals.
-
-- **Breaking:** Removed the `fallback_llm` parameter and attribute of `DocumentLLM`. Use `fallback_models` instead, e.g. `fallback_models=[fallback_llm]`. Passing `fallback_llm` to `DocumentLLM`, or reading or assigning the attribute, now raises an error.
-- **Breaking:** Removed `DocumentPipeline`, deprecated since v0.14.1. Use `ExtractionPipeline` instead, which has the same parameters and methods. A pipeline serialized as `DocumentPipeline` can no longer be deserialized as is.
-- **Breaking:** Removed `RatingScale`, deprecated since v0.10.0. Pass the rating scale of a `RatingConcept` as a tuple of `(start, end)` integers instead, e.g. `rating_scale=(1, 5)`. Documents, pipelines, aspects, and concepts serialized with a rating scale defined as a `RatingScale` object can no longer be deserialized as is.
-- **Breaking:** Removed `DocxConverter`, deprecated since v0.22.0, together with the DOCX converter exceptions (`DocxConverterError` and its subclasses). Use a dedicated document conversion library (e.g. [Docling](https://github.com/docling-project/docling), [MarkItDown](https://github.com/microsoft/markitdown)) to convert files to text, then pass the result to `Document(raw_text=...)`.
-- **Breaking:** Removed the Markdown text that `DocxConverter` attached to documents and paragraphs and that was sent to the LLM instead of the plain text. Text is now always extracted from `raw_text`. Documents converted from DOCX and serialized by earlier versions need no update for this removal: when they are deserialized, their Markdown text is ignored, and it is not kept when they are serialized again, while the additional context of their paragraphs is preserved.
 - Removed the `lxml` dependency, which was used only by the DOCX converter.
 - Removed the special handling of system messages for the retired OpenAI `o1-preview` and `o1-mini` models, for which the system message was left out of the request, with a warning. The system message is now sent to any model.
 - Removed the warning issued when `parallel_tool_calls=True` was set for a model with the `openai/gpt-5` or `azure/gpt-5` name prefix. The warning was hardcoded for the first GPT-5 models, and was also issued for the later models with the same prefix.
-- **Breaking:** Removed the `max_completion_tokens` parameter and attribute of `DocumentLLM`. Use `max_tokens` instead, which now applies to all models (see "Changed"). Passing `max_completion_tokens` to `DocumentLLM`, or reading or assigning the attribute, now raises an error. An LLM or model group serialized by earlier versions has the `max_completion_tokens` key in each LLM, and can no longer be deserialized as is.
-- **Breaking:** Removed support for Python 3.10, which has reached its end of life. ContextGem now requires Python 3.11–3.14. On Python 3.10, package installers such as `pip` and `uv` do not install this version, and resolve to the latest earlier one. The `onnxruntime<1.24.0` constraint, which applied to Python 3.10 only, is removed as well.
 - Removed the `typing-extensions` dependency, which was used only for the typing features that are in the standard library as of Python 3.11.
 - Removed the Colab notebooks generated from the usage examples (`dev/notebooks/`), together with the "Open in Colab" links in the README and in the documentation. The examples are shown in full on the documentation pages, and their sources are in `dev/usage_examples/`. Links to the notebooks in the `main` branch no longer work once this version is released.
+- Removed the `tethered` dependency, together with the network egress scopes around the download of SaT models and around the refresh of the pricing data of `genai-prices`. Neither scope applied to the requests it was meant for: `genai-prices` refreshes its data in a thread of its own, which a scope does not follow, and `huggingface_hub` downloads the model files through `hf_xet`, outside Python's sockets. ContextGem connects to the same hosts as before: if your application or network restricts outbound connections, allow Hugging Face (`huggingface.co`, `hf.co` and their subdomains) for the SaT models, and `raw.githubusercontent.com` for `auto_pricing_refresh=True`. If your code imports `tethered`, declare it as a dependency of your own.
 
 ### Fixed
 
@@ -143,7 +149,7 @@ See the [migration guide](https://contextgem.dev/migration_v1/) for updating the
 - With the logger disabled (`CONTEXTGEM_LOGGER_LEVEL=OFF`), the non-actionable log messages of `litellm` are now hidden, as they are at any other level. Previously, the filter that hides them was installed only when the logger was enabled, so with the logger disabled before ContextGem was imported such messages were shown, e.g. a warning of `litellm` on each call of a sync method after the first one.
 - `CONTEXTGEM_SUPPRESS_LITELLM_NOISE=0`, which disables the filter that hides the non-actionable log messages of `litellm`, now also takes effect when it is set after ContextGem was imported and `reload_logger_settings()` is called: the filter is removed, and is installed again once the variable is no longer set to `0`. Previously, the variable only kept the filter from being installed, and a filter that was already installed stayed.
 
-## [0.27.0](https://github.com/shcherbak-ai/contextgem/releases/tag/v0.27.0) - 2026-08-13
+## [0.27.0] - 2026-08-13
 
 ### Added
 
@@ -153,7 +159,7 @@ See the [migration guide](https://contextgem.dev/migration_v1/) for updating the
 
 - Upgraded pinned dependency versions: `litellm==1.96.2`, `openai==2.54.0`, `genai-prices==0.1.2`. Versions remain pinned to maintain stability and avoid occasional breaking changes and API inconsistencies observed in previous unpinned releases.
 
-## [0.26.0](https://github.com/shcherbak-ai/contextgem/releases/tag/v0.26.0) - 2026-07-28
+## [0.26.0] - 2026-07-28
 
 ### Added
 
@@ -169,7 +175,7 @@ See the [migration guide](https://contextgem.dev/migration_v1/) for updating the
 - Fixed missing quotes in the aspect extraction prompt's JSON answer format. (PR [#96](https://github.com/shcherbak-ai/contextgem/pull/96))
 - `top_p` now defaults to `None` (only `temperature` is sent) for compatibility with providers that reject requests setting both `temperature` and `top_p` (e.g. Claude 4.x models). (PR [#97](https://github.com/shcherbak-ai/contextgem/pull/97))
 
-## [0.25.1](https://github.com/shcherbak-ai/contextgem/releases/tag/v0.25.1) - 2026-06-06
+## [0.25.1] - 2026-06-06
 
 ### Added
 
@@ -182,14 +188,14 @@ See the [migration guide](https://contextgem.dev/migration_v1/) for updating the
 - Fixed stale aspect nesting levels when reusing a sub-aspect as a document-level aspect via construction, assignment, `add_aspects()`, or pipeline assignment.
 - Fixed deserialization paths that restored private attributes directly and could bypass property validation or validation that depends on restored private state.
 
-## [0.25.0](https://github.com/shcherbak-ai/contextgem/releases/tag/v0.25.0) - 2026-05-07
+## [0.25.0] - 2026-05-07
 
 ### Changed
 
 - Concurrent fan-out for sub-aspect/sub-concept extraction and failed-chunk retries: when `use_concurrency=True`, these now run via `asyncio.gather` instead of awaiting per item, reducing wall-clock latency for documents whose aspects contain sub-aspect groups, and for retry batches when several chunks return invalid data at once.
 - Upgraded pinned dependency version: `genai-prices==0.0.59`. Versions remain pinned to maintain stability and avoid occasional breaking changes and API inconsistencies observed in previous unpinned releases.
 
-## [0.24.0](https://github.com/shcherbak-ai/contextgem/releases/tag/v0.24.0) - 2026-05-05
+## [0.24.0] - 2026-05-05
 
 ### Added
 
@@ -199,7 +205,7 @@ See the [migration guide](https://contextgem.dev/migration_v1/) for updating the
 
 - Promoted `tethered` from a development-only dependency to a runtime dependency to support the production scopes above.
 
-## [0.23.0](https://github.com/shcherbak-ai/contextgem/releases/tag/v0.23.0) - 2026-05-04
+## [0.23.0] - 2026-05-04
 
 ### Changed
 
@@ -209,7 +215,7 @@ See the [migration guide](https://contextgem.dev/migration_v1/) for updating the
 
 - Updated docs.
 
-## [0.22.0](https://github.com/shcherbak-ai/contextgem/releases/tag/v0.22.0) - 2026-03-16
+## [0.22.0] - 2026-03-16
 
 ### Added
 
@@ -228,7 +234,7 @@ See the [migration guide](https://contextgem.dev/migration_v1/) for updating the
 - Removed `llms.txt` generation (build script, pre-commit hook, and Sphinx integration). Use `AGENTS.md` and `CLAUDE.md` for AI assistant context instead.
 - Removed `tests/url_security.py` cassette URL validation — replaced by tethered egress control.
 
-## [0.21.0](https://github.com/shcherbak-ai/contextgem/releases/tag/v0.21.0) - 2026-02-22
+## [0.21.0] - 2026-02-22
 
 ### Added
 
@@ -239,7 +245,7 @@ See the [migration guide](https://contextgem.dev/migration_v1/) for updating the
 - Fixed `Union.__getitem__()` incompatibility on Python 3.14, which caused `JsonObjectConcept` structure validation to fail when using complex union/optional type annotations (e.g., `Optional[Literal[...] | Literal[...]]`).
 - Fixed incomplete `types.UnionType` detection in type normalization and validation, ensuring union types created with the `|` operator (Python 3.10+) are handled consistently across Python 3.10–3.14.
 
-## [0.20.0](https://github.com/shcherbak-ai/contextgem/releases/tag/v0.20.0) - 2026-02-22
+## [0.20.0] - 2026-02-22
 
 ### Added
 
@@ -261,7 +267,7 @@ See the [migration guide](https://contextgem.dev/migration_v1/) for updating the
 - Simplified quickstart tools example using the new `@register_tool` function-passing syntax.
 - Updated `CONTRIBUTING.md` with AI assistant guidance and Fabric commands.
 
-## [0.19.4](https://github.com/shcherbak-ai/contextgem/releases/tag/v0.19.4) - 2025-12-19
+## [0.19.4] - 2025-12-19
 
 ### Fixed
 
@@ -275,7 +281,7 @@ See the [migration guide](https://contextgem.dev/migration_v1/) for updating the
 
 - Upgraded pinned dependency versions: `litellm==1.80.10`, `openai==2.13.0`, `genai-prices==0.0.49`. Versions remain pinned to maintain stability and avoid occasional breaking changes and API inconsistencies observed in previous unpinned releases.
 
-## [0.19.3](https://github.com/shcherbak-ai/contextgem/releases/tag/v0.19.3) - 2025-11-16
+## [0.19.3] - 2025-11-16
 
 ### Changed
 
@@ -285,56 +291,56 @@ See the [migration guide](https://contextgem.dev/migration_v1/) for updating the
 
 - The litellm 1.80.0 upgrade introduces Pydantic serialization warnings during async cleanup phases. These warnings are non-actionable and do not affect functionality. This is a known upstream issue tracked at [litellm PR #16299](https://github.com/BerriAI/litellm/pull/16299). ContextGem suppresses these warnings within its execution contexts; warnings may appear only during cleanup phases after operations complete.
 
-## [0.19.2](https://github.com/shcherbak-ai/contextgem/releases/tag/v0.19.2) - 2025-09-30
+## [0.19.2] - 2025-09-30
 
 ### Fixed
 
 - Logging system refactored to use Python's standard library logging with namespaced logger (`contextgem`) for production-ready integration. Eliminates global state pollution, prevents conflicts with host application logging, and enables independent configuration. Replaced Loguru with colorlog for colored output.
 
-## [0.19.1](https://github.com/shcherbak-ai/contextgem/releases/tag/v0.19.1) - 2025-09-19
+## [0.19.1] - 2025-09-19
 
 ### Changed
 
 - Enhanced documentation with pretty URLs (removing `.html` extensions) for improved SEO and user experience
 - Added official documentation source notice to prevent confusion with unauthorized copies or mirrors
 
-## [0.19.0](https://github.com/shcherbak-ai/contextgem/releases/tag/v0.19.0) - 2025-09-08
+## [0.19.0] - 2025-09-08
 
 ### Added
 
 - Tool calling support in `DocumentLLM.chat(...)`.
 
-## [0.18.0](https://github.com/shcherbak-ai/contextgem/releases/tag/v0.18.0) - 2025-09-01
+## [0.18.0] - 2025-09-01
 
 ### Added
 
 - Chat: Added optional `chat_session` parameter (accepts a `ChatSession`) to preserve message history across turns in `DocumentLLM.chat(...)`. When this parameter is omitted, chat is single-turn, without message history.
 
-## [0.17.1](https://github.com/shcherbak-ai/contextgem/releases/tag/v0.17.1) - 2025-08-26
+## [0.17.1] - 2025-08-26
 
 ### Changed
 
 - `DocxConverter`: Conversion speed improved by ~2X, significantly reducing processing time for DOCX files.
 
-## [0.17.0](https://github.com/shcherbak-ai/contextgem/releases/tag/v0.17.0) - 2025-08-24
+## [0.17.0] - 2025-08-24
 
 ### Added
 
 - Multimodal LLM roles (`"extractor_multimodal"` and `"reasoner_multimodal"`) to support extraction of multimodal document-level concepts from both text and images. Previously, only text and vision roles were supported, requiring choosing either text or image context for extraction, not both.
 
-## [0.16.1](https://github.com/shcherbak-ai/contextgem/releases/tag/v0.16.1) - 2025-08-19
+## [0.16.1] - 2025-08-19
 
 ### Fixed
 
 - Added support for `"minimal"` reasoning effort for gpt-5 models.
 
-## [0.16.0](https://github.com/shcherbak-ai/contextgem/releases/tag/v0.16.0) - 2025-08-19
+## [0.16.0] - 2025-08-19
 
 ### Added
 
 - Reasoning-aware extraction prompts: Automatically enables private chain-of-thought guidance on models that support reasoning, yielding higher-quality outputs (no change for other models).
 
-## [0.15.0](https://github.com/shcherbak-ai/contextgem/releases/tag/v0.15.0) - 2025-08-14
+## [0.15.0] - 2025-08-14
 
 ### Added
 
@@ -349,25 +355,25 @@ See the [migration guide](https://contextgem.dev/migration_v1/) for updating the
 
 - Added guidance for configuring auto-pricing for LLMs.
 
-## [0.14.4](https://github.com/shcherbak-ai/contextgem/releases/tag/v0.14.4) - 2025-08-08
+## [0.14.4] - 2025-08-08
 
 ### Fixed
 
 - Suppressed noisy LiteLLM proxy missing-dependency error logs (prompting to install `litellm[proxy]`) emitted by `litellm>=1.75.2` during LLM API calls. ContextGem does not require LiteLLM proxy features. Suppression is scoped to LiteLLM loggers.
 
-## [0.14.3](https://github.com/shcherbak-ai/contextgem/releases/tag/v0.14.3) - 2025-08-08
+## [0.14.3] - 2025-08-08
 
 ### Fixed
 
 - Enabled `reasoning_effort` parameter for gpt-5 models by explicitly forwarding it via `allowed_openai_params`, since `litellm.get_supported_openai_params()` does not yet include this parameter for gpt-5 models.
 
-## [0.14.2](https://github.com/shcherbak-ai/contextgem/releases/tag/v0.14.2) - 2025-08-06
+## [0.14.2] - 2025-08-06
 
 ### Added
 
 - Added warning for `gpt-oss` models used with `lm_studio/` provider due to performance issues (according to tests), with a recommendation to use Ollama as a working alternative (e.g., `ollama_chat/gpt-oss:20b`).
 
-## [0.14.1](https://github.com/shcherbak-ai/contextgem/releases/tag/v0.14.1) - 2025-08-06
+## [0.14.1] - 2025-08-06
 
 ### Added
 
@@ -379,7 +385,7 @@ See the [migration guide](https://contextgem.dev/migration_v1/) for updating the
 - Renamed `DocumentPipeline` to `ExtractionPipeline` to better reflect its purpose and scope. `DocumentPipeline` is maintained as a deprecated wrapper class for backwards compatibility until v1.0.0.
 - Simplified logging config to use a single environment variable.
 
-## [0.14.0](https://github.com/shcherbak-ai/contextgem/releases/tag/v0.14.0) - 2025-08-02
+## [0.14.0] - 2025-08-02
 
 ### Added
 
@@ -390,7 +396,7 @@ See the [migration guide](https://contextgem.dev/migration_v1/) for updating the
 - Updated `image_to_base64()` utility function to accept more image source types (file-like objects and raw bytes) in addition to file paths.
 - Made `temperature` and `top_p` parameters for DocumentLLM optional.
 
-## [0.13.0](https://github.com/shcherbak-ai/contextgem/releases/tag/v0.13.0) - 2025-07-30
+## [0.13.0] - 2025-07-30
 
 ### Changed
 
@@ -401,7 +407,7 @@ See the [migration guide](https://contextgem.dev/migration_v1/) for updating the
 
 - Fixed a bug where LabelConcept with multi-class classification type did not always return a label, as expected for multi-class classification tasks.
 
-## [0.12.1](https://github.com/shcherbak-ai/contextgem/releases/tag/v0.12.1) - 2025-07-27
+## [0.12.1] - 2025-07-27
 
 ### Added
 
@@ -412,7 +418,7 @@ See the [migration guide](https://contextgem.dev/migration_v1/) for updating the
 
 - Updated documentation to address vision capability detection issues and provide guidance on manual overrides.
 
-## [0.12.0](https://github.com/shcherbak-ai/contextgem/releases/tag/v0.12.0) - 2025-07-22
+## [0.12.0] - 2025-07-22
 
 ### Fixed
 
@@ -422,19 +428,19 @@ See the [migration guide](https://contextgem.dev/migration_v1/) for updating the
 
 - Enhanced documentation: Added more details to parameter tables for Aspects API, Concepts API, and LLM config documentation.
 
-## [0.11.1](https://github.com/shcherbak-ai/contextgem/releases/tag/v0.11.1) - 2025-07-11
+## [0.11.1] - 2025-07-11
 
 ### Fixed
 
 - Allow disabling system message (e.g. for basic chat interactions): Added support for omitting system messages in DocumentLLM by allowing empty strings, which prevents sending any system message to the LLM. Introduced a warning in `llm.chat()/llm.chat_async()` when the default system message (optimized for extraction tasks) is used. Updated initialization to set default system message only when needed, ensuring flexibility for basic chat without a system message.
 
-## [0.11.0](https://github.com/shcherbak-ai/contextgem/releases/tag/v0.11.0) - 2025-07-10
+## [0.11.0] - 2025-07-10
 
 ### Added
 
 - Support for litellm versions >1.71.1: ContextGem now supports newer litellm versions that were previously incompatible with tests due to underlying transport changes (removal of httpx-aiohttp dependency) introduced after v1.71.1, which affected VCR recording used in testing.
 
-## [0.10.0](https://github.com/shcherbak-ai/contextgem/releases/tag/v0.10.0) - 2025-07-07
+## [0.10.0] - 2025-07-07
 
 ### Added
 
@@ -444,31 +450,31 @@ See the [migration guide](https://contextgem.dev/migration_v1/) for updating the
 
 - RatingScale class is deprecated and will be removed in v1.0.0. Use tuple format `(start, end)` instead for rating scales in RatingConcept.
 
-## [0.9.0](https://github.com/shcherbak-ai/contextgem/releases/tag/v0.9.0) - 2025-07-02
+## [0.9.0] - 2025-07-02
 
 ### Added
 
 - New exception handling for LLM extraction methods: Added `raise_exception_on_extraction_error` parameter (default is True) to LLM extraction methods. Controls whether to raise an exception when LLM returns invalid data (`LLMExtractionError`) or when there is an error calling LLM API (`LLMAPIError`). When False, warnings are issued and no extracted items are returned.
 
-## [0.8.2](https://github.com/shcherbak-ai/contextgem/releases/tag/v0.8.2) - 2025-06-25
+## [0.8.2] - 2025-06-25
 
 ### Changed
 
 - Improved prompts
 
-## [0.8.1](https://github.com/shcherbak-ai/contextgem/releases/tag/v0.8.1) - 2025-06-23
+## [0.8.1] - 2025-06-23
 
 ### Added
 
 - Documentation on troubleshooting issues with small models.
 
-## [0.8.0](https://github.com/shcherbak-ai/contextgem/releases/tag/v0.8.0) - 2025-06-22
+## [0.8.0] - 2025-06-22
 
 ### Changed
 
 - Deferred SaT segmentation: SaT segmentation is now performed only when actually needed, improving both document initialization and extraction performance, as some extraction workflows may not require SaT segmentation.
 
-## [0.7.0](https://github.com/shcherbak-ai/contextgem/releases/tag/v0.7.0) - 2025-06-16
+## [0.7.0] - 2025-06-16
 
 ### Added
 
@@ -479,19 +485,19 @@ See the [migration guide](https://contextgem.dev/migration_v1/) for updating the
 
 - Updated documentation to reflect the above changes.
 
-## [0.6.1](https://github.com/shcherbak-ai/contextgem/releases/tag/v0.6.1) - 2025-06-04
+## [0.6.1] - 2025-06-04
 
 ### Changed
 
 - Updated documentation for LM Studio models to clarify dummy API key requirement
 
-## [0.6.0](https://github.com/shcherbak-ai/contextgem/releases/tag/v0.6.0) - 2025-06-03
+## [0.6.0] - 2025-06-03
 
 ### Added
 
 - LabelConcept - a classification concept type that categorizes content using predefined labels.
 
-## [0.5.0](https://github.com/shcherbak-ai/contextgem/releases/tag/v0.5.0) - 2025-05-29
+## [0.5.0] - 2025-05-29
 
 ### Fixed
 
@@ -501,25 +507,25 @@ See the [migration guide](https://contextgem.dev/migration_v1/) for updating the
 
 - Migrated to wtpsplit-lite - a lightweight version of wtpsplit that only retains accelerated ONNX inference of SaT models with minimal dependencies.
 
-## [0.4.1](https://github.com/shcherbak-ai/contextgem/releases/tag/v0.4.1) - 2025-05-26
+## [0.4.1] - 2025-05-26
 
 ### Added
 
 - Comprehensive docs on extracting aspects, extracting concepts, and LLM extraction methods
 
-## [0.4.0](https://github.com/shcherbak-ai/contextgem/releases/tag/v0.4.0) - 2025-05-20
+## [0.4.0] - 2025-05-20
 
 ### Added
 
 - Support for local SaT model paths in Document's `sat_model_id` parameter
 
-## [0.3.0](https://github.com/shcherbak-ai/contextgem/releases/tag/v0.3.0) - 2025-05-19
+## [0.3.0] - 2025-05-19
 
 ### Added
 
 - Expanded JsonObjectConcept to support nested class hierarchies, nested dictionary structures, lists containing objects, and literal types.
 
-## [0.2.4](https://github.com/shcherbak-ai/contextgem/releases/tag/v0.2.4) - 2025-05-09
+## [0.2.4] - 2025-05-09
 
 ### Fixed
 
@@ -529,26 +535,75 @@ See the [migration guide](https://contextgem.dev/migration_v1/) for updating the
 
 - Documentation for cloud/local LLMs and LLM configuration guide
 
-## [0.2.3](https://github.com/shcherbak-ai/contextgem/releases/tag/v0.2.3) - 2025-05-04
+## [0.2.3] - 2025-05-04
 
 ### Changed
 
 - Updated litellm dependency version after encoding bug has been fixed upstream
 
-## [0.2.2](https://github.com/shcherbak-ai/contextgem/releases/tag/v0.2.2) - 2025-05-02
+## [0.2.2] - 2025-05-02
 
 ### Refactor
 
 - Refactored DOCX converter internals for better maintainability
 
-## [0.2.1](https://github.com/shcherbak-ai/contextgem/releases/tag/v0.2.1) - 2023-04-30
+## [0.2.1] - 2025-04-30
 
 ### Fixed
 
 - Fixed litellm dependency issue, pinning to version ==1.67.1 to avoid encoding bug in newer versions of litellm
 
-## [0.2.0](https://github.com/shcherbak-ai/contextgem/releases/tag/v0.2.0) - 2023-04-21
+## [0.2.0] - 2025-04-21
 
 ### Added
 
 - Added DocxConverter for converting DOCX files into ContextGem Document objects
+
+[1.0.0]: https://github.com/shcherbak-ai/contextgem/compare/v0.27.0...v1.0.0
+[0.27.0]: https://github.com/shcherbak-ai/contextgem/compare/v0.26.0...v0.27.0
+[0.26.0]: https://github.com/shcherbak-ai/contextgem/compare/v0.25.1...v0.26.0
+[0.25.1]: https://github.com/shcherbak-ai/contextgem/compare/v0.25.0...v0.25.1
+[0.25.0]: https://github.com/shcherbak-ai/contextgem/compare/v0.24.0...v0.25.0
+[0.24.0]: https://github.com/shcherbak-ai/contextgem/compare/v0.23.0...v0.24.0
+[0.23.0]: https://github.com/shcherbak-ai/contextgem/compare/v0.22.0...v0.23.0
+[0.22.0]: https://github.com/shcherbak-ai/contextgem/compare/v0.21.0...v0.22.0
+[0.21.0]: https://github.com/shcherbak-ai/contextgem/compare/v0.20.0...v0.21.0
+[0.20.0]: https://github.com/shcherbak-ai/contextgem/compare/v0.19.4...v0.20.0
+[0.19.4]: https://github.com/shcherbak-ai/contextgem/compare/v0.19.3...v0.19.4
+[0.19.3]: https://github.com/shcherbak-ai/contextgem/compare/v0.19.2...v0.19.3
+[0.19.2]: https://github.com/shcherbak-ai/contextgem/compare/v0.19.1...v0.19.2
+[0.19.1]: https://github.com/shcherbak-ai/contextgem/compare/v0.19.0...v0.19.1
+[0.19.0]: https://github.com/shcherbak-ai/contextgem/compare/v0.18.0...v0.19.0
+[0.18.0]: https://github.com/shcherbak-ai/contextgem/compare/v0.17.1...v0.18.0
+[0.17.1]: https://github.com/shcherbak-ai/contextgem/compare/v0.17.0...v0.17.1
+[0.17.0]: https://github.com/shcherbak-ai/contextgem/compare/v0.16.1...v0.17.0
+[0.16.1]: https://github.com/shcherbak-ai/contextgem/compare/v0.16.0...v0.16.1
+[0.16.0]: https://github.com/shcherbak-ai/contextgem/compare/v0.15.0...v0.16.0
+[0.15.0]: https://github.com/shcherbak-ai/contextgem/compare/v0.14.4...v0.15.0
+[0.14.4]: https://github.com/shcherbak-ai/contextgem/compare/v0.14.3...v0.14.4
+[0.14.3]: https://github.com/shcherbak-ai/contextgem/compare/v0.14.2...v0.14.3
+[0.14.2]: https://github.com/shcherbak-ai/contextgem/compare/v0.14.1...v0.14.2
+[0.14.1]: https://github.com/shcherbak-ai/contextgem/compare/v0.14.0...v0.14.1
+[0.14.0]: https://github.com/shcherbak-ai/contextgem/compare/v0.13.0...v0.14.0
+[0.13.0]: https://github.com/shcherbak-ai/contextgem/compare/v0.12.1...v0.13.0
+[0.12.1]: https://github.com/shcherbak-ai/contextgem/compare/v0.12.0...v0.12.1
+[0.12.0]: https://github.com/shcherbak-ai/contextgem/compare/v0.11.1...v0.12.0
+[0.11.1]: https://github.com/shcherbak-ai/contextgem/compare/v0.11.0...v0.11.1
+[0.11.0]: https://github.com/shcherbak-ai/contextgem/compare/v0.10.0...v0.11.0
+[0.10.0]: https://github.com/shcherbak-ai/contextgem/compare/v0.9.0...v0.10.0
+[0.9.0]: https://github.com/shcherbak-ai/contextgem/compare/v0.8.2...v0.9.0
+[0.8.2]: https://github.com/shcherbak-ai/contextgem/compare/v0.8.1...v0.8.2
+[0.8.1]: https://github.com/shcherbak-ai/contextgem/compare/v0.8.0...v0.8.1
+[0.8.0]: https://github.com/shcherbak-ai/contextgem/compare/v0.7.0...v0.8.0
+[0.7.0]: https://github.com/shcherbak-ai/contextgem/compare/v0.6.1...v0.7.0
+[0.6.1]: https://github.com/shcherbak-ai/contextgem/compare/v0.6.0...v0.6.1
+[0.6.0]: https://github.com/shcherbak-ai/contextgem/compare/v0.5.0...v0.6.0
+[0.5.0]: https://github.com/shcherbak-ai/contextgem/compare/v0.4.1...v0.5.0
+[0.4.1]: https://github.com/shcherbak-ai/contextgem/compare/v0.4.0...v0.4.1
+[0.4.0]: https://github.com/shcherbak-ai/contextgem/compare/v0.3.0...v0.4.0
+[0.3.0]: https://github.com/shcherbak-ai/contextgem/compare/v0.2.4...v0.3.0
+[0.2.4]: https://github.com/shcherbak-ai/contextgem/compare/v0.2.3...v0.2.4
+[0.2.3]: https://github.com/shcherbak-ai/contextgem/compare/v0.2.2...v0.2.3
+[0.2.2]: https://github.com/shcherbak-ai/contextgem/compare/v0.2.1...v0.2.2
+[0.2.1]: https://github.com/shcherbak-ai/contextgem/compare/v0.2.0...v0.2.1
+[0.2.0]: https://github.com/shcherbak-ai/contextgem/compare/v0.1.2...v0.2.0

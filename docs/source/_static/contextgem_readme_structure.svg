@@ -1,0 +1,71 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 832 300" width="832" height="300" role="img" aria-labelledby="title desc" font-family="ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Consolas, 'Liberation Mono', 'DejaVu Sans Mono', monospace" font-size="13">
+  <title id="title">ContextGem - a document, its aspects and its concepts</title>
+  <desc id="desc">A tree of what is defined for a document, a consultancy contract, and what is extracted. The aspect "Payment terms" gives 3 paragraphs of the document. Two concepts are extracted from these paragraphs: "Payment deadline, days", a numerical concept, gives 30, and "Late fees apply", a Boolean concept, gives True. The aspect "Liability" gives 2 paragraphs, and its concept "Liability cap", a string concept, gives "12 months of fees". The concept "Contract type" of the document as a whole, a label concept, gives "Consultancy".</desc>
+
+  <!-- A ground of its own, so that the picture reads the same in the light
+       and the dark theme: a window, with what it shows on its tab -->
+  <path d="M0.5 28.5H831.5V299.5H0.5Z" fill="#111113" stroke="#2c2c30"/>
+  <path d="M0.5 29V0.5H98.5V29" fill="#111113" stroke="#2c2c30"/>
+  <path d="M1 28.5H98" stroke="#111113"/>
+  <text x="16" y="18.5" font-size="11" fill="#9ca3af">document</text>
+
+  <!-- The columns -->
+  <g font-size="10.5" letter-spacing="1.4" fill="#6b7280">
+    <text x="28" y="62">YOU DEFINE</text>
+    <text x="396" y="62">TYPE</text>
+    <text x="580" y="62">YOU GET</text>
+  </g>
+
+  <!-- The tree: the document, its aspects, and the concepts of each -->
+  <g fill="none" stroke="#ffffff" stroke-opacity="0.2">
+    <path d="M33.5 100V256.5H50"/>
+    <path d="M33.5 116.5H50"/>
+    <path d="M33.5 200.5H50"/>
+    <path d="M65.5 126V172.5H82"/>
+    <path d="M65.5 144.5H82"/>
+    <path d="M65.5 210V228.5H82"/>
+  </g>
+
+  <!-- The document: a sheet -->
+  <path d="M28.5 80.5H36.5L40.5 84.5V95.5H28.5Z" fill="none" stroke="#ffffff" stroke-opacity="0.45"/>
+
+  <g fill="#f3f4f6">
+    <text x="52" y="93">Consultancy contract</text>
+    <text x="60" y="121">Payment terms</text>
+    <text x="92" y="149">Payment deadline, days</text>
+    <text x="92" y="177">Late fees apply</text>
+    <text x="60" y="205">Liability</text>
+    <text x="92" y="233">Liability cap</text>
+    <text x="60" y="261">Contract type</text>
+  </g>
+  <g fill="#6b7280">
+    <text x="396" y="93">Document</text>
+    <text x="396" y="121">Aspect</text>
+    <text x="396" y="149">NumericalConcept</text>
+    <text x="396" y="177">BooleanConcept</text>
+    <text x="396" y="205">Aspect</text>
+    <text x="396" y="233">StringConcept</text>
+    <text x="396" y="261">LabelConcept</text>
+  </g>
+
+  <!-- What is extracted: paragraphs of the document for an aspect, a value
+       of its type for a concept -->
+  <g fill="#38bdf8">
+    <rect x="580" y="111" width="12" height="2"/>
+    <rect x="580" y="115" width="12" height="2"/>
+    <rect x="580" y="119" width="8" height="2"/>
+    <rect x="580" y="195" width="12" height="2"/>
+    <rect x="580" y="199" width="12" height="2"/>
+    <rect x="580" y="203" width="8" height="2"/>
+  </g>
+  <g fill="#9ca3af">
+    <text x="602" y="121">3 paragraphs</text>
+    <text x="602" y="205">2 paragraphs</text>
+  </g>
+  <g fill="#f3f4f6">
+    <text x="580" y="149">30</text>
+    <text x="580" y="177">True</text>
+    <text x="580" y="233">"12 months of fees"</text>
+    <text x="580" y="261">"Consultancy"</text>
+  </g>
+</svg>

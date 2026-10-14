@@ -1,14 +1,14 @@
-.. 
+..
    ContextGem
-   
+
    Copyright 2025 Shcherbak AI AS. All rights reserved. Developed by Sergii Shcherbak.
-   
+
    Licensed under the Apache License, Version 2.0 (the "License");
    you may not use this file except in compliance with the License.
    You may obtain a copy of the License at
-   
+
        http://www.apache.org/licenses/LICENSE-2.0
-   
+
    Unless required by applicable law or agreed to in writing, software
    distributed under the License is distributed on an "AS IS" BASIS,
    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -117,7 +117,7 @@ The :class:`~contextgem.public.llms.DocumentLLM` class accepts the following par
    * - ``auto_pricing_refresh``
      - ``bool``
      - ``False``
-     - When ``auto_pricing`` is enabled, allow ``genai-prices`` to auto-refresh its cached pricing data at runtime. Enable it if the pricing data of a recently released model is not found, as the pricing data bundled with ``genai-prices`` may not include such a model yet.
+     - When ``auto_pricing`` is enabled, allow ``genai-prices`` to auto-refresh its cached pricing data at runtime. Enable it if the pricing data of a recently released model is not found, as the pricing data bundled with ``genai-prices`` may not include such a model yet. The data is fetched from ``raw.githubusercontent.com``.
    * - ``is_fallback``
      - ``bool``
      - ``False``

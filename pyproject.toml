@@ -4,7 +4,7 @@ version = "0.27.0"
 description = "Effortless LLM extraction from documents"
 authors = [{ name = "shcherbak-ai", email = "sergii@shcherbak.ai" }]
 requires-python = ">=3.11,<3.15"
-readme = "README.md"
+readme = "PYPI.md"
 license = { text = "Apache-2.0" }
 maintainers = [{ name = "shcherbak-ai", email = "sergii@shcherbak.ai" }]
 keywords = [
@@ -66,7 +66,7 @@ keywords = [
     "zero-shot",
 ]
 classifiers = [
-    "Development Status :: 4 - Beta",
+    "Development Status :: 5 - Production/Stable",
     "Intended Audience :: Developers",
     "Intended Audience :: Education",
     "Intended Audience :: Financial and Insurance Industry",
@@ -103,7 +103,6 @@ dependencies = [
     "pydantic (>=2.10.6,<3.0.0)",
     "python-ulid (>=3.0.0,<4.0.0)",
     "tenacity (>=9.1.2,<10.0.0)", # required by litellm for retry logic
-    "tethered (>=0.5.1,<1.0.0)",
     "wtpsplit-lite (>=0.2.0,<0.3.0)",
     "onnxruntime (>=1.24.0) ; python_version >= '3.14'", # 3.14 wheels only available from 1.24+
 ]
@@ -123,7 +122,6 @@ dev = [
     "fabric (>=3.2.0,<4.0.0)",
     "hypothesis (>=6.122.0,<7.0.0)",
     "interrogate (>=1.7.0,<2.0.0)",
-    "nest-asyncio (>=1.6.0,<2.0.0)",
     "pre-commit (>=4.1.0,<5.0.0)",
     "ty (==0.0.35)", # pinned to the last fully-clean ty release; newer ones surface issues here; unpin when issues are fixed
     "pytest (>=8.3.4,<9.0.0)",
@@ -139,6 +137,7 @@ dev = [
     "sphinx-design (>=0.6.1,<1.0.0)",
     "sphinx-sitemap (>=2.6.0,<3.0.0)",
     "sphinxext-opengraph (>=0.9.1,<1.0.0)",
+    "tethered (>=1.0.1,<2.0.0)",
     "twine>=6.2.0",
     "licenseal>=0.1.1",
 ]
@@ -150,7 +149,7 @@ build-backend = "hatchling.build"
 [tool.hatch.build.targets.sdist]
 include = [
     "/contextgem",
-    "/README.md",
+    "/PYPI.md",
     "/LICENSE",
     "/NOTICE",
     "/pyproject.toml",
@@ -213,9 +212,13 @@ version_files = [
 ]
 tag_format = "v$version"
 annotated_tag = true
+# The hooks run after the version fields are rewritten and before the commit.
+# The last one stops a bump whose release date was not written into
+# CITATION.cff: the changelog heading of the new version has to name the same day.
 pre_bump_hooks = [
     "uv lock --no-upgrade",
     "git add uv.lock",
+    "uv run pytest tests/test_changelog.py -q -p no:cacheprovider",
 ]
 
 [tool.deptry]

@@ -7,38 +7,45 @@ on:
     branches: [ main, dev ]
   workflow_dispatch:
 
+permissions:
+  contents: read
+
 env:
   PYTHONUTF8: "1"
   PYTHONIOENCODING: "utf-8"
   # Give HuggingFace Hub downloads more headroom before timing out, so a slow
   # CDN response is retried rather than failing the cold-cache model fetch.
   HF_HUB_DOWNLOAD_TIMEOUT: "30"
+  UV_VERSION: "0.13.0"
 
 jobs:
 
-  package-check:
-    # Pure-Python build: one runner is sufficient — sdist + wheel are
-    # platform- and Python-version-independent.
+  lint:
+    # The checks of the pre-commit hooks, which read the versions of the tools
+    # from uv.lock, as they do locally. Among them the package check (uv build
+    # + twine check).
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     steps:
       - name: Check out repository
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd  # v6
 
-      - name: Set up Python
-        uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405  # v6.2.0
-        with:
-          python-version: "3.13"
-
       - name: Install uv
         uses: astral-sh/setup-uv@37802adc94f370d6bfd71619e3f0bf239e1f3b78  # v7
         with:
+          version: ${{ env.UV_VERSION }}
           enable-cache: true
 
-      - name: Install dependencies
-        run: uv sync --all-groups
+      - name: Set up Python from .python-version
+        run: uv python install
 
-      - name: Build and validate distribution
-        run: uv run python dev/check_package.py
+      # --locked: fail when uv.lock does not match pyproject.toml, where a
+      # plain sync would resolve again and run other versions of the tools.
+      - name: Install dependencies
+        run: uv sync --locked --all-groups
+
+      - name: Run pre-commit checks
+        run: uv run pre-commit run --all-files
 
   prefetch-models:
     # Download the SaT model ONCE on a single runner and publish the warmed
@@ -49,24 +56,24 @@ jobs:
     # cold downloads from one runner IP pool is exactly what trips HF's 429 and
     # aborts pytest collection. Serializing the download here removes that race.
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     steps:
       - name: Check out repository
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd  # v6
 
-      - name: Set up Python
-        uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405  # v6.2.0
-        with:
-          python-version: "3.13"
-
       - name: Install uv
         uses: astral-sh/setup-uv@37802adc94f370d6bfd71619e3f0bf239e1f3b78  # v7
         with:
+          version: ${{ env.UV_VERSION }}
           enable-cache: true
+
+      - name: Set up Python from .python-version
+        run: uv python install
 
       - name: Install dependencies
         # wtpsplit-lite + onnxruntime are core deps, so the default sync is
         # enough to import contextgem and load the SaT model.
-        run: uv sync
+        run: uv sync --locked
 
       - name: Cache HuggingFace models
         uses: actions/cache@0400d5f644dc74513175e3cd8d07132dd4860809  # v4.2.4
@@ -106,25 +113,35 @@ jobs:
         shell: bash
 
     runs-on: ${{ matrix.os }}
+    timeout-minutes: 30
+
+    env:
+      # .python-version pins the development interpreter. Without this, a
+      # plain `uv run` rebuilds the environment on that pin, and every cell
+      # of the matrix tests the same Python.
+      UV_PYTHON: ${{ matrix.python-version }}
 
     steps:
 
       - name: Check out repository
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd  # v6
 
-      - name: Set up Python ${{ matrix.python-version }}
-        id: setup-python
-        uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405  # v6.2.0
-        with:
-          python-version: ${{ matrix.python-version }}
-
       - name: Install uv
         uses: astral-sh/setup-uv@37802adc94f370d6bfd71619e3f0bf239e1f3b78  # v7
         with:
+          version: ${{ env.UV_VERSION }}
           enable-cache: true
-      
+
+      - name: Set up Python ${{ matrix.python-version }}
+        run: uv python install ${{ matrix.python-version }}
+
       - name: Install dependencies
-        run: uv sync --all-groups
+        run: uv sync --locked --all-groups --python ${{ matrix.python-version }}
+
+      # Fails the cell when .python-version, not the matrix, chose the
+      # interpreter the tests run on.
+      - name: Check the tests run on Python ${{ matrix.python-version }}
+        run: uv run python -c "import sys; found = '%d.%d' % sys.version_info[:2]; assert found == '${{ matrix.python-version }}', found"
 
       - name: Restore HuggingFace models cache
         # Restore the cache warmed by the `prefetch-models` job (same key). With
@@ -157,48 +174,12 @@ jobs:
           echo "::error::Failed to pre-download SaT model after 5 attempts."
           exit 1
 
-      - name: Code formatting and linting checks
-        run: |
-          uv run ruff check contextgem dev tests
-          uv run ruff format --check contextgem dev tests
-
-      - name: Type checking
-        run: |
-          uv run ty check
-
-      - name: Security check (bandit)
-        run: |
-          uv run bandit -r contextgem
-          uv run bandit -r tests dev --skip B101
-
-      - name: Dependency health check
-        run: |
-          uv run deptry .
-
-      - name: Docstring coverage check
-        run: |
-          uv run interrogate
-
       - name: Run coverage (with VCR)
         run: |
           uv run coverage run --source contextgem -m pytest --maxfail=1 --disable-warnings -v
           uv run coverage report -m
           uv run coverage xml -o coverage_quick.xml
 
-      - name: Extract coverage
-        id: get_coverage
-        run: |
-          COVERAGE=$(python -c "import xml.etree.ElementTree as ET; print(round(float(ET.parse('coverage_quick.xml').getroot().attrib['line-rate'])*100))")
-          echo "percentage=$COVERAGE" >> $GITHUB_OUTPUT
-          # Determine badge color based on coverage percentage
-          if [ $COVERAGE -ge 80 ]; then
-            echo "color=success" >> $GITHUB_OUTPUT
-          elif [ $COVERAGE -ge 60 ]; then
-            echo "color=yellow" >> $GITHUB_OUTPUT
-          else
-            echo "color=critical" >> $GITHUB_OUTPUT
-          fi
-          
       - name: Upload coverage artifact
         if: matrix.os == 'ubuntu-latest' && matrix.python-version == '3.14'
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a  # v7.0.1
@@ -211,13 +192,14 @@ jobs:
   update-badge:
     needs: tests-with-vcr
     runs-on: ubuntu-latest
+    timeout-minutes: 5
     if: github.ref == 'refs/heads/main'
     steps:
       - name: Download coverage artifact
         uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c  # v8.0.1
         with:
           name: coverage-data
-          
+
       - name: Extract coverage
         id: get_coverage
         run: |
@@ -231,7 +213,7 @@ jobs:
           else
             echo "color=critical" >> $GITHUB_OUTPUT
           fi
-          
+
       - name: Update coverage badge
         uses: schneegans/dynamic-badges-action@0e50b8bad39e7e1afd3e4e9c2b7dd145fad07501  # v1.8.0
         with:

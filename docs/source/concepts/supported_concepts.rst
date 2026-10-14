@@ -1,14 +1,14 @@
-.. 
+..
    ContextGem
-   
+
    Copyright 2025 Shcherbak AI AS. All rights reserved. Developed by Sergii Shcherbak.
-   
+
    Licensed under the Apache License, Version 2.0 (the "License");
    you may not use this file except in compliance with the License.
    You may obtain a copy of the License at
-   
+
        http://www.apache.org/licenses/LICENSE-2.0
-   
+
    Unless required by applicable law or agreed to in writing, software
    distributed under the License is distributed on an "AS IS" BASIS,
    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -18,7 +18,7 @@
 Supported Concepts
 ===================
 
-In ContextGem, Concepts are building blocks for defining the structured data you want to extract from documents. 
+In ContextGem, Concepts are building blocks for defining the structured data you want to extract from documents.
 Each concept type is designed for different kinds of information, allowing you to build complex extraction schemas.
 
 Available Concept Types

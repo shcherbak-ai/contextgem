@@ -18,10 +18,7 @@ To sign the agreement:
 
 ## 🤖 Using AI Coding Assistants
 
-This repository is **AI agent-friendly** and includes configuration files to help AI coding assistants understand the codebase:
-
-- **[AGENTS.md](AGENTS.md)** - Project overview, architecture patterns, coding conventions, and workflow guidelines for AI assistants ([agents.md standard](https://agents.md))
-- **[CLAUDE.md](CLAUDE.md)** - Configuration for [Claude Code](https://docs.anthropic.com/en/docs/claude-code/overview)
+This repository is **AI agent-friendly**: **[AGENTS.md](AGENTS.md)** gives AI coding assistants the project overview, architecture patterns, coding conventions, and workflow guidelines ([agents.md standard](https://agents.md)), and a directory with rules of its own has an `AGENTS.md` too (e.g. `dev/evals/`). Claude Code, Codex, Cursor and other assistants read these files.
 
 When using AI assistants (Claude Code, Cursor, etc.) to contribute:
 
@@ -55,10 +52,11 @@ When using AI assistants (Claude Code, Cursor, etc.) to contribute:
 2. **⚙️ Set up the development environment**:
 
     ```bash
-    # Install uv if you don't have it
-    pip install uv
+    # Install uv if you don't have it:
+    # https://docs.astral.sh/uv/getting-started/installation/
 
-    # Install dependencies, as locked in uv.lock, and pre-commit hooks
+    # Install dependencies, as locked in uv.lock, and pre-commit hooks.
+    # The Python version of the environment is the one in .python-version
     uv run fab setup
 
     # Or manually:
@@ -79,6 +77,7 @@ uv run fab lint            # Run pre-commit checks on all files
 uv run fab docs            # Build documentation
 uv run fab docs-live       # Start live documentation server
 uv run fab readme          # Regenerate README.md from template
+uv run fab social-preview  # Render social/github-social-preview.png from its SVG
 uv run fab install-hooks   # Install pre-commit hooks
 ```
 
@@ -94,7 +93,7 @@ contextgem/
 │   ├── internal/                 # 🔧 Core implementation (start here for new features)
 │   │   ├── base/                 #   - Core abstractions & business logic
 │   │   │   ├── concepts.py       #     - Internal concept implementations
-│   │   │   ├── aspects.py        #     - Internal aspect implementations  
+│   │   │   ├── aspects.py        #     - Internal aspect implementations
 │   │   │   ├── documents.py      #     - Internal document processing
 │   │   │   ├── llms.py           #     - Internal LLM functionality
 │   │   │   ├── models.py         #     - Internal model processing logic & model groups
@@ -105,7 +104,7 @@ contextgem/
 │   │
 │   └── public/                   # 🎯 User-facing API (thin facades exposing internals)
 │       ├── concepts.py           #   - Public concept facades
-│       ├── aspects.py            #   - Public aspect facades 
+│       ├── aspects.py            #   - Public aspect facades
 │       ├── documents.py          #   - Public document facades
 │       ├── pipelines.py          #   - Public pipeline facades
 │       ├── llms.py               #   - Public LLM facades
@@ -131,7 +130,9 @@ contextgem/
 │   ├── readme.template.md        # ✏️ Edit this, not README.md
 │   └── ...                       # 🛠️ Development scripts
 │
+├── assets/                       # 🖼️ Images of the README only
 ├── pyproject.toml                # ⚙️ Dependencies & project config
+├── PYPI.md                       # 📦 Package description shown on PyPI
 └── README.md                     # 🤖 Auto-generated (don't edit)
 ```
 
@@ -184,9 +185,9 @@ contextgem/
     - **uv lock check**: To verify that `uv.lock` is in sync with `pyproject.toml`
     - **Commitizen**: For the format of commit messages (see below)
     - **licenseal**: For license compatibility of the dependencies (in CI)
-    - **Pre-commit hooks**: To automatically check and format code before commits
+    - **Pre-commit hooks**: To automatically check and format code before commits, together with checks for trailing whitespace and the ends of files (except in the files whose bytes go into the requests recorded in the VCR cassettes: the package, the tests, the usage examples and the evaluation cases)
 
-    The pre-commit hooks check and format your code when you commit. Some of them run with the Python of the project environment, so commit through uv (`uv run cz commit`, see below) or with `.venv` activated.
+    The pre-commit hooks check and format your code when you commit. They run the tools through `uv run`, at the versions locked in `uv.lock`, and CI runs the same hooks (`uv run pre-commit run --all-files`), so a check that passes locally passes in CI.
 
     - **If a hook modifies files** (e.g. Ruff formatting, the README): review the changes, add the modified files to the staging area, and commit again.
     - **If a hook reports a problem** (e.g. a Bandit finding or a type error): fix it, add the fixed files to the staging area, and commit again.
@@ -312,7 +313,7 @@ When you add an example, add it to one of the lists: a test fails for an example
 ### 📏 Testing Guidelines
 
 - Write tests for new features or bug fixes
-- Make sure all tests pass before submitting a PR
+- Make sure all tests pass before submitting a PR. For a substantial change, run them on every supported Python version, as CI does: `uv run --isolated --python 3.11 pytest` runs them on Python 3.11 and leaves the environment of the project as it is
 - Maintain code coverage above **80%**
 - Check code coverage by running:
 
@@ -400,13 +401,13 @@ Based on the test results and your changes, you'll fall into one of these four s
 
    ```bash
    # Only include the variables for LLM APIs your tests actually call
-   
+
    # For OpenAI API tests
    CONTEXTGEM_OPENAI_API_KEY=your_openai_api_key
-   
+
    # For TypeSafe API tests (decision models)
    CONTEXTGEM_TYPESAFE_API_KEY=your_typesafe_api_key
-   
+
    # For Microsoft Foundry API tests (decision models)
    CONTEXTGEM_AZURE_AI_API_KEY=your_foundry_api_key
    CONTEXTGEM_AZURE_AI_API_BASE=https://your-resource.services.ai.azure.com
@@ -478,7 +479,7 @@ Based on the test results and your changes, you'll fall into one of these four s
    ```bash
    # On Unix/Linux/Mac
    rm tests/cassettes/*.yaml
-   
+
    # On Windows
    del tests\cassettes\*.yaml
    ```
@@ -541,16 +542,7 @@ The host of TypeSafe (`api.typesafe.ai`) is on the list of the hosts allowed whi
 
 #### Network Egress Control
 
-ContextGem uses [tethered](https://github.com/shcherbak-ai/tethered) for network egress control in **two complementary places**:
-
-**1. Production code (`tethered.scope`)** — the two non-LLM paths the framework controls are wrapped with `tethered.scope`, which can only narrow (intersection-only) egress and never widens a host application's policy:
-
-- `contextgem/internal/utils.py::_load_sat_model` — restricted to HuggingFace hosts (`_SAT_MODEL_DOWNLOAD_HOSTS`)
-- `contextgem/internal/base/models.py::_calculate_auto_pricing_costs` — restricted to `raw.githubusercontent.com` (`_GENAI_PRICES_REFRESH_HOSTS`)
-
-LLM API calls are deliberately **not** scoped — endpoints are user-configured (Azure custom domains, OpenAI-compatible proxies, self-hosted, etc.) and are left to the host application's own egress policy.
-
-**2. Test suite (`tethered.activate`)** — the `_tethered_network_guard` fixture in `tests/conftest.py` enforces egress control at the socket level during every test:
+The test suite uses [tethered](https://github.com/shcherbak-ai/tethered), a development dependency, for network egress control: the `_tethered_network_guard` fixture in `tests/conftest.py` enforces it at the socket level during every test:
 
 - **Tests without `@pytest.mark.vcr`**: all outbound connections are blocked, including the ones to localhost
 - **VCR-marked tests, replay mode** (cassette exists): blocks all outbound connections except HuggingFace (for SaT model downloads not captured by VCR)
@@ -560,7 +552,7 @@ The fixture activates tethered in **hardened mode** (`locked=True` with a privat
 
 The policy above applies while a test runs. Before the tests start, the `_warm_token_encodings` session fixture counts tokens once, so that the token encodings used by `litellm` are available during the tests. On Windows, this downloads the encodings if `tiktoken` rejects the bundled ones (see the Windows note in [Running Tests](#-running-tests)). The download is wrapped with `tethered.scope` that allows a single host (`openaipublic.blob.core.windows.net`), which is deliberately not a part of the replay and recording allowlists, and `tiktoken` verifies each downloaded encoding against the hash pinned in its package.
 
-The host allowlists in `tests/conftest.py` are sourced from the production constants (`_SAT_MODEL_DOWNLOAD_HOSTS`, `_GENAI_PRICES_REFRESH_HOSTS`) so the test allowlist cannot drift from the per-call production scopes. If you add tests that connect to new endpoints (other than these two), update the `_TETHERED_RECORDING_ALLOW` list in `tests/conftest.py`.
+If you add tests that connect to new endpoints, update the `_TETHERED_RECORDING_ALLOW` list in `tests/conftest.py`.
 
 ---
 
@@ -672,6 +664,22 @@ If you need to test the README generation manually:
 ```bash
 uv run fab readme
 ```
+
+**Links and images.** The README is shown on GitHub. In the template, link to the documentation site for anything it documents, and use relative paths for the files of the repository. Images come from `docs/source/_static/` (shared with the documentation site) or `assets/` (the README's own), by relative paths, so that they render in a local preview of `README.md` and on any branch:
+
+```markdown
+[Contributing](CONTRIBUTING.md)
+![Description of the image](docs/source/_static/example.svg)
+```
+
+Give images descriptive alt text, and check them at their README display size on light and dark backgrounds. Label fictional examples as illustrative.
+
+- `docs/source/_static/contextgem_wordmark.svg` is pixel art, 144 by 18 pixels, in one palette for both GitHub themes. Show it at a whole multiple of that size (`width="576"`), so that its pixels stay square. Its gem catches the light once, when the image is loaded.
+- `assets/licenseal-wordmark.svg` and `assets/tethered-wordmark.svg` are the sibling projects' pixel names, drawn at twice their size in transparent images of one size (336 by 80), so that the two share a baseline. Show them at that width.
+- The figures (`contextgem_readme_extraction.svg`, `contextgem_readme_structure.svg`) are drawn on their own dark ground, so one file serves both GitHub themes. Draw a new one in their style: hairlines, monospace labels, grey, and the blue of the gem only for what is extracted.
+- Do not delete an image that a released version of the README loads from `https://contextgem.dev/_static/`.
+
+**Package description.** PyPI shows [PYPI.md](PYPI.md) (`project.readme` in `pyproject.toml`), not the README. Keep it short, without images, with absolute HTTPS links, and update it when the summary, the install command or the feature list changes.
 
 ## ❓ Questions & Support
 

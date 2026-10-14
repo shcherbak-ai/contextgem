@@ -8,21 +8,9 @@ config:
   line-length: false
   first-line-heading: false
   table-column-style: false
+  # The README switches the rule off around its HTML blocks (the header, the
+  # figures, the tables): a line break in a cell of a Markdown table is the
+  # HTML allowed anywhere.
   no-inline-html:
     allowed_elements:
-      - a
       - br
-      - div
-      - h1
-      - i
-      - img
-      - p
-      - strong
-      - sub
-      - sup
-      - table
-      - tbody
-      - td
-      - th
-      - thead
-      - tr

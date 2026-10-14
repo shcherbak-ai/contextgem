@@ -10,9 +10,13 @@ on:
 permissions:
   contents: read
 
+env:
+  UV_VERSION: "0.13.0"
+
 jobs:
   licenseal:
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     steps:
       - name: Check out repository
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd  # v6
@@ -20,10 +24,16 @@ jobs:
       - name: Install uv
         uses: astral-sh/setup-uv@37802adc94f370d6bfd71619e3f0bf239e1f3b78  # v7
         with:
+          version: ${{ env.UV_VERSION }}
           enable-cache: true
+
+      - name: Set up Python from .python-version
+        run: uv python install
 
       # Strict by default: warnings/unknowns fail CI unless an explicit,
       # documented override exists in licenseal.review.toml (picked up
-      # automatically from the repository root).
+      # automatically from the repository root). The dependencies of the
+      # package only: the dev dependencies are not distributed with it.
+      # licenseal is the version in uv.lock, as locally.
       - name: Check dependency license compatibility
-        run: uvx licenseal check
+        run: uv run --locked licenseal check

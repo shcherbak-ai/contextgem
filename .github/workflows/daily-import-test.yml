@@ -5,21 +5,33 @@ on:
     - cron: '0 0 * * *'  # Run daily at midnight UTC
   workflow_dispatch:  # Allow manual triggering
 
+permissions:
+  contents: read
+
 jobs:
   import-test:
+    # The latest release with the latest versions of its dependencies, as a new
+    # install gets them: on one Python version, read from .python-version.
     runs-on: ubuntu-latest
-    
+    timeout-minutes: 10
+
     steps:
-      - name: Set up Python 3.13
+      - name: Check out .python-version
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd  # v6
+        with:
+          sparse-checkout: .python-version
+          sparse-checkout-cone-mode: false
+
+      - name: Set up Python from .python-version
         uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405  # v6.2.0
         with:
-          python-version: '3.13'
-          
+          python-version-file: .python-version
+
       - name: Install contextgem from PyPI
         run: |
           python -m pip install --upgrade pip
           pip install contextgem
-          
+
       - name: Test import
         run: |
-          python -c "import contextgem; print(f'Successfully imported contextgem version {contextgem.__version__}')" 
+          python -c "import contextgem; print(f'Successfully imported contextgem version {contextgem.__version__}')"

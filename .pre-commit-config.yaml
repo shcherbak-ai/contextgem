@@ -2,44 +2,48 @@ repos:
   - repo: https://github.com/pre-commit/pre-commit-hooks
     rev: 3e8a8703264a2f4a69428a0aa4dcb512790b2c8c  # v6.0.0
     hooks:
-      # trailing-whitespace and end-of-file-fixer are intentionally NOT enabled:
-      # they would silently rewrite Jinja2 prompt templates and test fixtures,
-      # which invalidates VCR cassettes (request-body match is byte-exact).
+      # Not on what goes into the requests that the VCR cassettes match byte
+      # for byte (the prompt templates of the package, the test documents, the
+      # usage examples, the evaluation cases), nor on the signed contributor
+      # agreements, which are kept verbatim.
+      - id: trailing-whitespace
+        exclude: ^(contextgem|tests|dev/usage_examples|dev/evals|\.github/contributors)/
+      - id: end-of-file-fixer
+        exclude: ^(contextgem|tests|dev/usage_examples|dev/evals|\.github/contributors)/
       - id: check-yaml
       - id: check-toml
 
-  - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: 0839f92796ae388643a08a21640a029b322be5c2  # v0.15.2
-    hooks:
-      - id: ruff-check
-        args: [--fix]
-      - id: ruff-format
-
-  - repo: https://github.com/DavidAnson/markdownlint-cli2
-    rev: 5387279b3b4c24822c0f86d4df4f28b37e3e8992  # v0.21.0
-    hooks:
-      - id: markdownlint-cli2
-
-  - repo: https://github.com/PyCQA/bandit
-    rev: ea0d187d78b2e6365e35f676d2eb9b1be264c091  # 1.9.2
-    hooks:
-      - id: bandit
-        name: bandit (contextgem)
-        args: ["-r", "contextgem"]
-        pass_filenames: false
-      - id: bandit
-        name: bandit (tests/dev)
-        args: ["-r", "tests", "dev", "--skip", "B101"]
-        pass_filenames: false
-
-  - repo: https://github.com/commitizen-tools/commitizen
-    rev: 7179a42b3544e953e3683a670056ad385892365d  # v4.13.8
-    hooks:
-      - id: commitizen
-        stages: [commit-msg]
-
+  # These run from the project environment: uv.lock is their only version pin.
   - repo: local
     hooks:
+      - id: ruff-check
+        name: ruff check
+        entry: uv run ruff check --force-exclude --fix
+        language: system
+        types_or: [python, pyi, jupyter]
+        require_serial: true
+
+      - id: ruff-format
+        name: ruff format
+        entry: uv run ruff format --force-exclude
+        language: system
+        types_or: [python, pyi, jupyter]
+        require_serial: true
+
+      - id: bandit
+        name: bandit (contextgem)
+        entry: uv run bandit -r contextgem
+        language: system
+        types: [python]
+        pass_filenames: false
+
+      - id: bandit
+        name: bandit (tests/dev)
+        entry: uv run bandit -r tests dev --skip B101
+        language: system
+        types: [python]
+        pass_filenames: false
+
       - id: ty
         name: ty
         entry: uv run ty check
@@ -49,15 +53,17 @@ repos:
 
       - id: interrogate
         name: interrogate
-        entry: uv run interrogate --generate-badge docs/source/_static/interrogate-badge.svg --badge-format svg
+        entry: uv run interrogate
         language: system
         types: [python]
         pass_filenames: false
 
+      # Imports against declared dependencies, so a change to either runs it.
       - id: deptry
         name: deptry
         entry: uv run deptry .
         language: system
+        types_or: [python, toml]
         pass_filenames: false
 
       - id: uv-lock
@@ -68,14 +74,25 @@ repos:
 
       - id: update-readme
         name: Update README.md
-        entry: python dev/populate_project_readme.py
+        entry: uv run python dev/populate_project_readme.py
         language: system
         pass_filenames: false
         always_run: true
 
       - id: package-check
         name: package check (uv build + twine check)
-        entry: python dev/check_package.py
+        entry: uv run python dev/check_package.py
         language: system
         pass_filenames: false
         always_run: true
+
+      - id: commitizen
+        name: commitizen check
+        entry: uv run cz check --allow-abort --commit-msg-file
+        language: system
+        stages: [commit-msg]
+
+  - repo: https://github.com/DavidAnson/markdownlint-cli2
+    rev: 5387279b3b4c24822c0f86d4df4f28b37e3e8992  # v0.21.0
+    hooks:
+      - id: markdownlint-cli2

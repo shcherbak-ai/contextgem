@@ -26,29 +26,32 @@ for running ContextGem tests, including VCR cassette handling.
 from __future__ import annotations
 
 import asyncio
+import contextvars
+import functools
 import os
+from collections.abc import Callable
+from concurrent.futures import ThreadPoolExecutor
+from typing import Any
 from unittest.mock import patch
 from urllib.parse import urlsplit
 
-import nest_asyncio
 import pytest
 import tethered
 from vcr.stubs import httpx_stubs
 
-from contextgem.internal.base.models import _GENAI_PRICES_REFRESH_HOSTS
 from contextgem.internal.loggers import LOGGER_LEVEL_ENV_VAR_NAME, logger
 from contextgem.internal.suppressions import _suppress_litellm_warnings_context
-from contextgem.internal.utils import _SAT_MODEL_DOWNLOAD_HOSTS
 from contextgem.public.utils import reload_logger_settings
 
 
-# Apply nest_asyncio to allow nested event loops
-# This allows the sync litellm.completion() call in the acompletion patch below
-# to run its internal event loop while already inside a running loop
-nest_asyncio.apply()
-
 with _suppress_litellm_warnings_context():
     import litellm
+
+# The thread that the VCR-marked tests send the sync calls of litellm from (see
+# `vcr_compatible_acompletion`). VCR runs such a call with `asyncio.run()`,
+# which cannot be done in a thread with a running event loop. A single thread
+# sends the calls one at a time, in the order they are made.
+_VCR_SYNC_CALLS = ThreadPoolExecutor(max_workers=1, thread_name_prefix="vcr-sync")
 
 
 # Patch VCR's _deserialize_response to handle string bodies correctly
@@ -176,11 +179,15 @@ def _cassette_exists(cassette_path: str) -> bool:
     return os.path.exists(cassette_path)
 
 
+# Hosts that SaT models are downloaded from (HuggingFace)
+_SAT_MODEL_DOWNLOAD_HOSTS = ("huggingface.co", "*.huggingface.co", "hf.co", "*.hf.co")
+
+# Host that genai-prices refreshes its pricing data from
+_GENAI_PRICES_REFRESH_HOSTS = ("raw.githubusercontent.com",)
+
 # Approved network destinations for tethered egress control.
 # During replay: only HuggingFace (SaT model downloads not captured by VCR).
 # During recording: LLM API endpoints + HuggingFace + genai-prices refresh.
-# Host constants are sourced from production code so the test allowlist
-# cannot drift from the per-call `tethered.scope` allowlists.
 _TETHERED_REPLAY_ALLOW = list(_SAT_MODEL_DOWNLOAD_HOSTS)
 
 _TETHERED_RECORDING_ALLOW = [
@@ -307,28 +314,21 @@ def _tethered_network_guard(request):
     tethered.deactivate(lock_token=_TETHERED_LOCK)
 
 
-def _run_tasks_left_on_event_loop() -> None:
+async def _call_in_vcr_thread(func: Callable[..., Any], *args, **kwargs) -> Any:
     """
-    Runs the tasks that are left pending on the event loop of the thread, if any.
+    Runs a sync call of litellm in the thread for such calls, and returns its
+    result. The event loop that awaits the call keeps running meanwhile.
 
-    With nest_asyncio applied, ``asyncio.run()`` neither cancels the tasks that
-    a coroutine leaves pending nor closes the event loop, which the next call
-    uses again. The sync ``litellm.completion()``, which the VCR-marked tests
-    route ``acompletion()`` to, reports the timing of the call in a task of
-    the running loop. The task of the last call of a test stays pending until
-    the next test runs the loop, or, if no test does, e.g. when the test is run
-    on its own, until the interpreter exits, which then prints
-    "Task was destroyed but it is pending!".
+    :param func: The sync function of litellm to call
+    :param args: Arguments to pass to the function
+    :param kwargs: Keyword arguments to pass to the function
+    :return: The result of the call
     """
-    try:
-        loop = asyncio.get_event_loop()
-    except RuntimeError:
-        # No event loop in the thread, i.e. nothing was run
-        return
-    if loop.is_closed() or loop.is_running():
-        return
-    if asyncio.all_tasks(loop):
-        loop.run_until_complete(asyncio.sleep(0))
+    loop = asyncio.get_running_loop()
+    context = contextvars.copy_context()
+    return await loop.run_in_executor(
+        _VCR_SYNC_CALLS, functools.partial(context.run, func, *args, **kwargs)
+    )
 
 
 @pytest.fixture(autouse=True)
@@ -342,8 +342,9 @@ def vcr_compatible_acompletion(request):
     The patch is applied for both recording AND replay modes because
     VCR.py cannot intercept httpx async requests made by litellm's acompletion.
 
-    With nest_asyncio applied at module level, we can safely call sync
-    litellm.completion() from async context.
+    The sync litellm.completion() is called in a thread of its own (see
+    `_call_in_vcr_thread`), as VCR runs it with `asyncio.run()`, which cannot
+    be done in the thread of the running event loop.
 
     The same applies to adecisions(), the async call of the Decisions API that
     decision models are requested through: it is routed to the sync
@@ -370,17 +371,13 @@ def vcr_compatible_acompletion(request):
             VCR-compatible wrapper for litellm.acompletion().
 
             Uses sync litellm.completion() which VCR can properly intercept.
-            With nest_asyncio applied, VCR's internal async handling works correctly
-            even when called from nested event loops.
 
             :param args: Arguments to pass to litellm.completion
             :param kwargs: Keyword arguments to pass to litellm.completion
             :return: Completion response from litellm
             """
             logger.debug("Using monkey-patched acompletion()")
-            # Call sync completion directly - nest_asyncio handles nested loops
-            # and VCR's patched _run_async_function uses asyncio.run() safely
-            return litellm.completion(*args, **kwargs)
+            return await _call_in_vcr_thread(litellm.completion, *args, **kwargs)
 
         async def vcr_compatible_adecisions_fn(*args, **kwargs):
             """
@@ -394,14 +391,12 @@ def vcr_compatible_acompletion(request):
             :return: Decisions response from litellm
             """
             logger.debug("Using monkey-patched adecisions()")
-            return litellm.decisions(*args, **kwargs)
+            return await _call_in_vcr_thread(litellm.decisions, *args, **kwargs)
 
         with (
             patch.object(litellm, "acompletion", vcr_compatible_acompletion_fn),
             patch.object(litellm, "adecisions", vcr_compatible_adecisions_fn),
         ):
             yield
-        # The sync calls leave tasks of litellm on the event loop
-        _run_tasks_left_on_event_loop()
     else:
         yield

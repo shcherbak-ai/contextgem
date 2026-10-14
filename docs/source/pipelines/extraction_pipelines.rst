@@ -1,14 +1,14 @@
-.. 
+..
    ContextGem
-   
+
    Copyright 2025 Shcherbak AI AS. All rights reserved. Developed by Sergii Shcherbak.
-   
+
    Licensed under the Apache License, Version 2.0 (the "License");
    you may not use this file except in compliance with the License.
    You may obtain a copy of the License at
-   
+
        http://www.apache.org/licenses/LICENSE-2.0
-   
+
    Unless required by applicable law or agreed to in writing, software
    distributed under the License is distributed on an "AS IS" BASIS,
    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -55,18 +55,18 @@ Once created, a pipeline is assigned to documents with :meth:`~contextgem.public
 .. code-block:: python
 
    from contextgem import Document, ExtractionPipeline
-   
+
    # Create your pipeline
    my_pipeline = ExtractionPipeline(aspects=[...], concepts=[...])
-   
+
    # Create documents
    doc1 = Document(raw_text="First document content...")
    doc2 = Document(raw_text="Second document content...")
-   
+
    # Assign the same pipeline to multiple documents
    doc1.assign_pipeline(my_pipeline)
    doc2.assign_pipeline(my_pipeline)
-   
+
    # Now both documents have the same extraction configuration
 
 ``assign_pipeline()`` raises ``RuntimeError`` if the document already has aspects or concepts, unless ``overwrite_existing=True`` is passed:

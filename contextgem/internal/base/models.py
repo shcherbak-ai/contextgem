@@ -35,7 +35,6 @@ from collections.abc import Sequence
 from decimal import ROUND_HALF_UP, Decimal
 from typing import TYPE_CHECKING, Any, Literal, Self, cast
 
-import tethered
 from aiolimiter import AsyncLimiter
 from genai_prices import UpdatePrices as _GPUpdatePrices
 from genai_prices import Usage as _GPUsage
@@ -129,11 +128,6 @@ _LOCAL_MODEL_PROVIDERS = [
 
 # Rounding precision for reporting model costs (quantize on access only)
 _COST_QUANT = Decimal("0.00001")
-
-# Network destinations required by genai-prices to refresh cached pricing data.
-# Used by `tethered.scope` to constrain egress in `_calculate_auto_pricing_costs`,
-# and imported by tests/conftest.py to keep the test allowlist in sync.
-_GENAI_PRICES_REFRESH_HOSTS: tuple[str, ...] = ("raw.githubusercontent.com",)
 
 # Name of the kind of the models in the messages on the models of different kinds
 _ANY_KIND_NAME = "model"
@@ -4628,18 +4622,6 @@ class _DocumentModel(_GenericModelProcessor):
             llm._usage = _ModelUsage()
             llm._cost = _ModelCost()
 
-    @tethered.scope(
-        allow=list(_GENAI_PRICES_REFRESH_HOSTS),
-        label="contextgem._calculate_auto_pricing_costs",
-        hint=(
-            "ContextGem refreshes model pricing data from raw.githubusercontent.com "
-            "via genai-prices when a model has auto_pricing_refresh=True. "
-            "If your app uses tethered.activate(), allow raw.githubusercontent.com "
-            "— or set auto_pricing_refresh=False to use bundled pricing data, "
-            "or set pricing_details=ModelPricing(...) to bypass genai-prices entirely. "
-            "See https://contextgem.dev/llms/llm_config/"
-        ),
-    )
     def _calculate_auto_pricing_costs(
         self,
         input_tokens: int,

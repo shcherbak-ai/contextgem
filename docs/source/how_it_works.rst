@@ -1,14 +1,14 @@
-.. 
+..
    ContextGem
-   
+
    Copyright 2025 Shcherbak AI AS. All rights reserved. Developed by Sergii Shcherbak.
-   
+
    Licensed under the Apache License, Version 2.0 (the "License");
    you may not use this file except in compliance with the License.
    You may obtain a copy of the License at
-   
+
        http://www.apache.org/licenses/LICENSE-2.0
-   
+
    Unless required by applicable law or agreed to in writing, software
    distributed under the License is distributed on an "AS IS" BASIS,
    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -50,7 +50,7 @@ ContextGem's main elements are documents, aspects, and concepts:
     - *Contract aspects*: payment terms, parties involved, or termination clauses.
     - *Invoice aspects*: due dates, line-item breakdowns, or tax details.
     - *CV aspects*: work experience, education, or skills.
-    
+
 Aspects may have sub-aspects, for more granular extraction with nested context. This hierarchical structure allows for progressive refinement of focus areas, enabling precise extraction of information from complex documents while maintaining the contextual relationships between different levels of content.
 
 
@@ -71,7 +71,7 @@ Multiple concept types are supported: :class:`~contextgem.public.concepts.String
    :header-rows: 1
    :widths: 15 20 20 20 20
 
-   * - 
+   * -
      - Document
      - Aspect
      - Sub-aspect
@@ -152,7 +152,7 @@ See :class:`~contextgem.public.models.DocumentModelGroup` and :ref:`model-roles-
    :header-rows: 1
    :widths: 15 20 20 20
 
-   * - 
+   * -
      - LLM 1 (no role)
      - LLM 2 (``role="reasoner"``)
      - Decision model (``role="decide"``)

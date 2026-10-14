@@ -1,303 +1,145 @@
-![ContextGem](https://contextgem.dev/_static/contextgem_readme_header.png "ContextGem - Effortless LLM extraction from documents")
+<!-- markdownlint-disable MD033 -->
+<p align="center">
+  <a href="https://contextgem.dev"><img src="docs/source/_static/contextgem_wordmark.svg" alt="ContextGem" width="576"></a>
+</p>
 
-# ContextGem: Effortless LLM extraction from documents
+<h1 align="center">Effortless LLM extraction from documents</h1>
 
-|          |        |
-|----------|--------|
-| **Package** | [![PyPI](https://img.shields.io/pypi/v/contextgem?logo=pypi&label=PyPi&logoColor=gold&style=flat-square)](https://pypi.org/project/contextgem/) [![PyPI Downloads](https://static.pepy.tech/badge/contextgem/month)](https://pepy.tech/projects/contextgem) [![Python Versions](https://img.shields.io/badge/python-3.11%20%7C%203.12%20%7C%203.13%20%7C%203.14-blue?logo=python&logoColor=gold&style=flat-square)](https://www.python.org/downloads/) [![License](https://img.shields.io/badge/License-Apache_2.0-blue?style=flat-square)](https://opensource.org/licenses/Apache-2.0) |
-| **Quality** | [![tests](https://img.shields.io/github/actions/workflow/status/shcherbak-ai/contextgem/ci-tests.yml?branch=main&style=flat-square&label=tests)](https://github.com/shcherbak-ai/contextgem/actions/workflows/ci-tests.yml) [![Coverage](https://img.shields.io/endpoint?url=https://gist.githubusercontent.com/SergiiShcherbak/daaee00e1dfff7a29ca10a922ec3becd/raw/coverage.json&style=flat-square)](https://github.com/shcherbak-ai/contextgem/actions) [![CodeQL](https://img.shields.io/github/actions/workflow/status/shcherbak-ai/contextgem/codeql.yml?branch=main&style=flat-square&label=CodeQL)](https://github.com/shcherbak-ai/contextgem/actions/workflows/codeql.yml) [![license compatibility](https://img.shields.io/github/actions/workflow/status/shcherbak-ai/contextgem/licenseal.yml?branch=main&style=flat-square&label=licenses)](https://github.com/shcherbak-ai/contextgem/actions/workflows/licenseal.yml) [![security: bandit](https://img.shields.io/badge/security-bandit-yellow.svg?style=flat-square)](https://github.com/PyCQA/bandit) [![OpenSSF Best Practices](https://www.bestpractices.dev/projects/10489/badge?1)](https://www.bestpractices.dev/projects/10489) |
-| **Tools** | [![uv](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/uv/main/assets/badge/v0.json&style=flat-square)](https://github.com/astral-sh/uv) [![Ruff](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/ruff/main/assets/badge/v2.json&style=flat-square)](https://github.com/astral-sh/ruff) [![Pydantic v2](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/pydantic/pydantic/main/docs/badge/v2.json&style=flat-square)](https://pydantic.dev) [![ty](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/ty/main/assets/badge/v0.json&style=flat-square)](https://github.com/astral-sh/ty) [![pre-commit](https://img.shields.io/badge/pre--commit-enabled-blue?logo=pre-commit&logoColor=white&style=flat-square)](https://github.com/pre-commit/pre-commit) [![deptry](https://img.shields.io/badge/deptry-checked-blue?style=flat-square)](https://github.com/osprey-oss/deptry) [![egress: tethered](https://img.shields.io/badge/egress-tethered-orange?labelColor=4B8BBE)](https://github.com/shcherbak-ai/tethered) [![Hatch project](https://img.shields.io/badge/%F0%9F%A5%9A-Hatch-4051b5.svg?style=flat-square)](https://github.com/pypa/hatch) |
-| **Docs** | [![docs](https://img.shields.io/github/actions/workflow/status/shcherbak-ai/contextgem/docs.yml?branch=main&style=flat-square&label=docs)](https://github.com/shcherbak-ai/contextgem/actions/workflows/docs.yml) [![documentation](https://img.shields.io/badge/docs-latest-blue?style=flat-square)](https://contextgem.dev/) ![Docstring Coverage](https://contextgem.dev/_static/interrogate-badge.svg) [![DeepWiki](https://img.shields.io/static/v1?label=DeepWiki&message=Chat%20with%20Code&labelColor=%23283593&color=%237E57C2&style=flat-square)](https://deepwiki.com/shcherbak-ai/contextgem) |
-| **Community** | [![Contributor Covenant](https://img.shields.io/badge/Contributor%20Covenant-2.1-4baaaa?style=flat-square)](CODE_OF_CONDUCT.md) [![GitHub issues closed](https://img.shields.io/github/issues-closed/shcherbak-ai/contextgem?style=flat-square)](https://github.com/shcherbak-ai/contextgem/issues?q=is%3Aissue+is%3Aclosed) [![GitHub latest commit](https://img.shields.io/github/last-commit/shcherbak-ai/contextgem?label=latest%20commit&style=flat-square)](https://github.com/shcherbak-ai/contextgem/commits/main) |
+<p align="center">
+  Minimal code · Automated prompts · Multi-model
+</p>
 
-<div align="center">
-<img src="https://contextgem.dev/_static/tab_solid.png" alt="ContextGem: 2nd Product of the week" width="250">
-</div>
-<br/><br/>
+<p align="center">
+  <a href="https://pypi.org/project/contextgem/"><img src="https://img.shields.io/pypi/v/contextgem?style=flat-square&labelColor=18181b&color=38bdf8" alt="PyPI version"></a>
+  <a href="https://pypi.org/project/contextgem/"><img src="https://img.shields.io/pypi/pyversions/contextgem?style=flat-square&labelColor=18181b&color=38bdf8" alt="Python versions"></a>
+  <a href="https://pypi.org/project/contextgem/"><img src="https://img.shields.io/pypi/dm/contextgem?style=flat-square&labelColor=18181b&color=38bdf8&label=downloads" alt="Downloads per month"></a>
+  <a href="https://github.com/shcherbak-ai/contextgem/actions/workflows/ci-tests.yml"><img src="https://img.shields.io/github/actions/workflow/status/shcherbak-ai/contextgem/ci-tests.yml?branch=main&style=flat-square&labelColor=18181b&label=CI" alt="CI"></a>
+  <a href="https://github.com/shcherbak-ai/contextgem/actions/workflows/ci-tests.yml"><img src="https://img.shields.io/endpoint?url=https://gist.githubusercontent.com/SergiiShcherbak/daaee00e1dfff7a29ca10a922ec3becd/raw/coverage.json&style=flat-square&labelColor=18181b&color=38bdf8" alt="Coverage"></a>
+</p>
 
-ContextGem is a free, open-source LLM framework that makes it radically easier to extract structured data and insights from documents — with minimal code.
+<p align="center">
+  <a href="https://contextgem.dev/quickstart/"><strong>Quickstart</strong></a> ·
+  <a href="https://contextgem.dev/how_it_works/"><strong>How it works</strong></a> ·
+  <a href="CHANGELOG.md"><strong>Changelog</strong></a> ·
+  <a href="https://contextgem.dev/"><strong>Documentation</strong></a>
+</p>
 
----
+<p align="center">
+  <img src="docs/source/_static/contextgem_readme_extraction.svg" alt="You write a concept in plain language and make one call. You get every extracted fact with the line of the document it was taken from." width="832"><br>
+  <sup>An illustrative contract. Every extracted fact is traced back to its source.</sup>
+</p>
+<!-- markdownlint-enable MD033 -->
 
-## 💎 Why ContextGem?
+ContextGem is a free, open-source LLM framework that makes it radically easier to extract structured data and insights from documents — with minimal code. You describe *what* to extract, and ContextGem handles *how*: the prompts, the data models, the source references and the justifications.
 
-Reliable structured extraction from documents typically involves writing extraction prompts, designing validation models, mapping outputs back to source references, orchestrating multi-step pipelines, and tracking usage across LLMs. ContextGem handles all of this through powerful abstractions — you describe *what* to extract in natural language, and the framework handles *how*.
+## Why ContextGem
 
-The result: structured data with precise paragraph- and sentence-level references, automatic justifications, hierarchical multi-aspect extraction, and a unified, serializable document storage model — all from minimal code.
+Reliable extraction from documents usually means writing prompts, designing validation models, mapping outputs back to the source, orchestrating multi-step pipelines and tracking usage across models. ContextGem has all of this built in, in one declarative pipeline that you can reuse and serialize.
 
-📖 Read more on the project [motivation](https://contextgem.dev/motivation/) in the documentation.
-
-## ⭐ Key features
-
+<!-- markdownlint-disable MD033 -->
 <table>
 <tr>
-<td width="33%" align="left">✨ <strong>Automated dynamic prompts</strong></td>
-<td width="33%" align="left">📐 <strong>Automated data modelling</strong></td>
-<td width="34%" align="left">📍 <strong>Granular reference mapping</strong></td>
+<td width="33%"><strong>No prompts to write</strong><br>Prompts are generated from your descriptions of what to extract.</td>
+<td width="33%"><strong>Typed, validated output</strong><br>Text, numbers, dates, booleans, labels, ratings and JSON objects.</td>
+<td width="34%"><strong>Every fact traced to its source</strong><br>Items map back to their paragraphs or sentences, with the reasoning on request.</td>
 </tr>
 <tr>
-<td align="left">💭 <strong>Built-in justifications</strong></td>
-<td align="left">🪆 <strong>Nested context extraction</strong></td>
-<td align="left">🔗 <strong>Unified declarative pipeline</strong></td>
+<td><strong>Nested context</strong><br>Aspects, sub-aspects and concepts focus the model on the text that matters.</td>
+<td><strong>The right model for each question</strong><br>An LLM where it takes reasoning, a decision model where a fast, low-cost answer is enough.</td>
+<td><strong>Answers with probabilities</strong><br>A decision model gives the probability of each possible answer, and you set the threshold.</td>
 </tr>
 </table>
+<!-- markdownlint-enable MD033 -->
 
-## 💡 What you can build
+Read more on the [motivation](https://contextgem.dev/motivation/) behind ContextGem.
 
-With **minimal code**, you can:
-
-- **Extract structured data** from documents (text, images)
-- **Identify and analyze key aspects** (topics, themes, categories) within documents ([learn more](https://contextgem.dev/aspects/aspects/))
-- **Extract specific concepts** (entities, facts, conclusions, assessments) from documents ([learn more](https://contextgem.dev/concepts/supported_concepts/))
-- **Create multi-level extraction pipelines** (aspects containing concepts, hierarchical aspects)
-
-<br/>
-
-![ContextGem extraction example](https://contextgem.dev/_static/readme_code_snippet.png "ContextGem extraction example")
-
-## 📦 Installation
-
-Using [uv](https://github.com/astral-sh/uv) (recommended):
+## Quick start
 
 ```bash
-uv add contextgem
+uv add contextgem  # or: pip install -U contextgem
 ```
 
-Or using pip:
-
-```bash
-pip install -U contextgem
-```
-
-## 🚀 Quick start
-
-The following example demonstrates how to use ContextGem to extract **anomalies** from a legal document - a complex concept that requires contextual understanding. Unlike traditional RAG approaches that might miss subtle inconsistencies, ContextGem analyzes the entire document context to identify content that doesn't belong, complete with source references and justifications.
+The example below extracts **anomalies** from a contract: a concept that takes the context of the whole document, which retrieval-based approaches can miss. Each anomaly comes back with a justification and with the sentences it was found in.
 
 ```python
 {{QUICKSTART_CONCEPT}}
 ```
 
----
+More examples: [aspects](https://contextgem.dev/quickstart/#aspect-extraction-from-document), [sub-aspects](https://contextgem.dev/quickstart/#extracting-aspect-with-sub-aspects), [concepts of an aspect](https://contextgem.dev/quickstart/#concept-extraction-from-aspect), [concepts from images](https://contextgem.dev/quickstart/#concept-extraction-from-document-vision), [aspects containing concepts](https://contextgem.dev/advanced_usage/#extracting-aspects-containing-concepts), [multi-model pipelines](https://contextgem.dev/advanced_usage/#using-a-multi-llm-pipeline-to-extract-data-from-several-documents) and a [chat interface with tool calling](https://contextgem.dev/quickstart/#lightweight-llm-chat-interface).
 
-## 🧠 How it works
+## How it works
 
-### 📝 Step 1: Define extraction context
+<!-- markdownlint-disable MD033 -->
+<p align="center">
+  <img src="docs/source/_static/contextgem_readme_structure.svg" alt="A document with two aspects and four concepts, the type of each, and what is extracted: paragraphs for an aspect, and a typed value for a concept." width="832"><br>
+  <sup>An illustrative contract: what you define, and what is extracted.</sup>
+</p>
+<!-- markdownlint-enable MD033 -->
 
+1. **Wrap your content in a [Document](https://contextgem.dev/documents/document_config/)**: text, images, or both.
+2. **Say what to extract.** [Aspects](https://contextgem.dev/aspects/aspects/) pull out the parts of the document on a topic, as paragraphs or sentences. [Concepts](https://contextgem.dev/concepts/supported_concepts/) extract typed values from the whole document or from an aspect, with optional references and justifications. Keep a set of both as a reusable [extraction pipeline](https://contextgem.dev/pipelines/extraction_pipelines/).
+3. **Run a model.** One call to an [LLM](https://contextgem.dev/llms/llm_extraction_methods/) extracts everything. A [model group](https://contextgem.dev/llms/llm_config/#model-groups) routes aspects and concepts to different models by role, e.g. the closed questions to a [decision model](https://contextgem.dev/decision_models/decision_models/), and each model can have fallbacks.
+
+Read more on [how ContextGem works](https://contextgem.dev/how_it_works/) in the documentation.
+
+## Models
+
+ContextGem works with two kinds of models, and routes each aspect and concept to the one that suits it: an LLM where it takes reasoning, a decision model where a fast, low-cost answer with a probability is enough.
+
+**LLMs.** Any cloud or local LLM through [LiteLLM](https://github.com/BerriAI/litellm): OpenAI, Anthropic, Google, Azure OpenAI, xAI, Ollama, LM Studio and more, with or without reasoning capabilities, behind one interface. See the [supported LLMs](https://contextgem.dev/llms/supported_llms/), the [LLM configuration](https://contextgem.dev/llms/llm_config/) and the [extraction methods](https://contextgem.dev/llms/llm_extraction_methods/).
+
+**Decision models.** A decision model (e.g. TypeSafe Jev, OpenAI Decisions API, Microsoft Foundry) answers typed questions about a text (yes/no, pick one option, rate on a scale) with probabilities, and generates no text. It extracts aspects, and Boolean, label and rating concepts, on its own, in a model group next to an LLM, or in a fallback chain. Each extracted item has the probabilities of all the possible answers, and a decision threshold sets what counts as a "yes". Concepts with open values, justifications, references for concepts and extraction from images require an LLM. See [decision models](https://contextgem.dev/decision_models/decision_models/).
+
+> **Choosing a model.** For reliable extraction, use a model at least as capable as `gpt-6-luna`. Smaller models (such as 8B parameter models) may struggle with the detailed extraction instructions: see the [troubleshooting guide](https://contextgem.dev/optimizations/optimization_small_llm_troubleshooting/).
+
+## Whole documents, not fragments
+
+ContextGem is built for in-depth analysis of individual documents. It gives the model the whole document, using the long context windows of LLMs, instead of retrieving fragments of it. This avoids the retrieval inconsistencies that make RAG [struggle with complex concepts and nuanced insights](https://www.linkedin.com/pulse/raging-contracts-pitfalls-rag-contract-review-shcherbak-ai-ptg3f), and it benefits from growing context windows, more capable LLMs and falling costs.
+
+The trade-off: ContextGem does not support cross-document querying or corpus-wide retrieval. For these, RAG frameworks (e.g. LlamaIndex, Haystack) remain more appropriate.
+
+## Documentation
+
+Full documentation: **[contextgem.dev](https://contextgem.dev)**
+
+| Get started | Define what to extract | Run models | Optimize |
+|-------------|------------------------|------------|----------|
+| [Installation](https://contextgem.dev/installation/)<br>[Quickstart](https://contextgem.dev/quickstart/)<br>[Advanced usage](https://contextgem.dev/advanced_usage/)<br>[How it works](https://contextgem.dev/how_it_works/)<br>[Migrating to v1.0](https://contextgem.dev/migration_v1/) | [Documents](https://contextgem.dev/documents/document_config/)<br>[Aspects](https://contextgem.dev/aspects/aspects/)<br>[Concepts](https://contextgem.dev/concepts/supported_concepts/)<br>[Extraction pipelines](https://contextgem.dev/pipelines/extraction_pipelines/)<br>[Serialization](https://contextgem.dev/serialization/) | [Supported LLMs](https://contextgem.dev/llms/supported_llms/)<br>[LLM configuration](https://contextgem.dev/llms/llm_config/)<br>[Extraction methods](https://contextgem.dev/llms/llm_extraction_methods/)<br>[Decision models](https://contextgem.dev/decision_models/decision_models/)<br>[Chat with tools](https://contextgem.dev/llms/chat_with_tools/) | [Accuracy](https://contextgem.dev/optimizations/optimization_accuracy/)<br>[Speed](https://contextgem.dev/optimizations/optimization_speed/)<br>[Cost](https://contextgem.dev/optimizations/optimization_cost/)<br>[Long documents](https://contextgem.dev/optimizations/optimization_long_docs/)<br>[Choosing the right LLM(s)](https://contextgem.dev/optimizations/optimization_choosing_llm/) |
+
+For visual architecture maps and natural language Q&A on the codebase, see [DeepWiki](https://deepwiki.com/shcherbak-ai/contextgem).
+
+## Community
+
+- **Need help or want to discuss?** Start a thread in [GitHub Discussions](https://github.com/shcherbak-ai/contextgem/discussions/new/).
+- **Found a bug or have a feature request?** [Open an issue](https://github.com/shcherbak-ai/contextgem/issues/new).
+- **Want to contribute?** Contributions are welcome, from a fixed typo to a new feature: see the [Contributor Guidelines](CONTRIBUTING.md).
+- **Security.** The project is scanned with [CodeQL](https://codeql.github.com/) and [Bandit](https://github.com/PyCQA/bandit), and with [Snyk](https://snyk.io) as needed: see the [security policy](SECURITY.md).
+
+## Acknowledgements
+
+ContextGem relies on these excellent open-source packages: [aiolimiter](https://github.com/mjpieters/aiolimiter), [colorlog](https://github.com/borntyping/python-colorlog), [docstring-parser](https://github.com/rr-/docstring_parser), [fastjsonschema](https://github.com/horejsek/python-fastjsonschema), [genai-prices](https://github.com/pydantic/genai-prices), [Jinja2](https://github.com/pallets/jinja), [litellm](https://github.com/BerriAI/litellm), [pillow](https://github.com/python-pillow/Pillow), [pydantic](https://github.com/pydantic/pydantic), [python-ulid](https://github.com/mdomke/python-ulid), [tenacity](https://github.com/jd/tenacity) and [wtpsplit-lite](https://github.com/superlinear-ai/wtpsplit-lite).
+
+## License
+
+Apache 2.0 License - see the [LICENSE](LICENSE) and [NOTICE](NOTICE) files for details.
+
+© 2025 [Shcherbak AI AS](https://shcherbak.ai) — Enterprise AI Engineering. We build AI agents that transform how enterprises operate.
+
+## More from shcherbak_ai
+
+<!-- markdownlint-disable MD033 -->
 <table>
-<thead>
-<tr>
-<th width="100%" align="left">📄 <strong>Document</strong></th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>Create a Document that contains text and/or visual content representing your document (contract, invoice, report, CV, etc.), from which a model extracts information (aspects and/or concepts). <a href="https://contextgem.dev/documents/document_config/">Learn more</a></td>
-</tr>
-</tbody>
+  <tr>
+    <td width="50%" align="center" valign="top">
+      <a href="https://github.com/shcherbak-ai/licenseal"><img src="assets/licenseal-wordmark.svg" alt="licenseal" width="336"></a><br>
+      License compatibility checks for dependency trees, fast enough for CI.
+    </td>
+    <td width="50%" align="center" valign="top">
+      <a href="https://github.com/shcherbak-ai/tethered"><img src="assets/tethered-wordmark.svg" alt="tethered" width="336"></a><br>
+      Network egress control for CLI tools and agent workflows.
+    </td>
+  </tr>
 </table>
+<!-- markdownlint-enable MD033 -->
 
-```python
-document = Document(raw_text="Non-Disclosure Agreement...")
-```
-
-### 🎯 Step 2: Define what to extract
-
-<table>
-<thead>
-<tr>
-<th width="50%" align="left">🔍 <strong>Aspects</strong></th>
-<th width="50%" align="left">💡 <strong>Concepts</strong></th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>Define Aspects to extract text segments from the document (sections, topics, themes). You can organize content hierarchically and combine with concepts for comprehensive analysis. <a href="https://contextgem.dev/aspects/aspects/">Learn more</a></td>
-<td>Define Concepts to extract specific data points with intelligent inference: entities, insights, structured objects, classifications, numerical calculations, dates, ratings, and assessments. <a href="https://contextgem.dev/concepts/supported_concepts/">Learn more</a></td>
-</tr>
-</tbody>
-</table>
-
-```python
-# Extract document sections
-aspect = Aspect(
-    name="Term and termination",
-    description="Clauses on contract term and termination",
-)
-# Extract specific data points
-concept = BooleanConcept(
-    name="NDA check",
-    description="Is the contract an NDA?",
-)
-# Add these to the document instance for further extraction
-document.add_aspects([aspect])
-document.add_concepts([concept])
-```
-
-<table>
-<thead>
-<tr>
-<th width="100%" align="left">🔄 <i>Alternative</i>: Configure  <strong>Extraction Pipeline</strong></th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>Create a reusable collection of predefined aspects and concepts that enables consistent extraction across multiple documents. <a href="https://contextgem.dev/pipelines/extraction_pipelines/">Learn more</a></td>
-</tr>
-</tbody>
-</table>
-
-### 🧠 Step 3: Run LLM extraction
-
-<table>
-<thead>
-<tr>
-<th width="50%" align="left">🤖 <strong>LLM</strong></th>
-<th width="50%" align="left">🤖🤖 <i>Alternative</i>: <strong>Model Group (advanced)</strong></th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>Configure a cloud or local LLM that will extract aspects and/or concepts from the document. DocumentLLM supports fallback models, which take over when the primary LLM fails. <a href="https://contextgem.dev/llms/llm_extraction_methods/">Learn more</a></td>
-<td>Configure a group of models with unique roles for complex extraction workflows. You can route different aspects and/or concepts to specialized models (e.g., simple extraction vs. reasoning tasks). <a href="https://contextgem.dev/llms/llm_config/#model-groups">Learn more</a></td>
-</tr>
-</tbody>
-</table>
-
-```python
-llm = DocumentLLM(
-    model="openai/gpt-6-luna",  # or another provider/LLM
-    api_key="...",
-)
-document = llm.extract_all(document)
-# print(document.aspects[0].extracted_items)
-# print(document.concepts[0].extracted_items)
-```
-
-📖 Learn more about ContextGem's [core components](https://contextgem.dev/how_it_works/) and their practical examples in the documentation.
-
-## 📚 Usage Examples
-
-🌟 **Basic usage:**
-
-- [Aspect Extraction from Document](https://contextgem.dev/quickstart/#aspect-extraction-from-document)
-- [Extracting Aspect with Sub-Aspects](https://contextgem.dev/quickstart/#extracting-aspect-with-sub-aspects)
-- [Concept Extraction from Aspect](https://contextgem.dev/quickstart/#concept-extraction-from-aspect)
-- [Concept Extraction from Document (text)](https://contextgem.dev/quickstart/#concept-extraction-from-document-text)
-- [Concept Extraction from Document (vision)](https://contextgem.dev/quickstart/#concept-extraction-from-document-vision)
-- [LLM chat interface with tool calling](https://contextgem.dev/quickstart/#lightweight-llm-chat-interface)
-
-🚀 **Advanced usage:**
-
-- [Extracting Aspects Containing Concepts](https://contextgem.dev/advanced_usage/#extracting-aspects-containing-concepts)
-- [Extracting Aspects and Concepts from a Document](https://contextgem.dev/advanced_usage/#extracting-aspects-and-concepts-from-a-document)
-- [Using a Multi-LLM Pipeline to Extract Data from Several Documents](https://contextgem.dev/advanced_usage/#using-a-multi-llm-pipeline-to-extract-data-from-several-documents)
-
-## 🎯 Focused document analysis
-
-ContextGem leverages LLMs' long context windows to deliver superior extraction accuracy from individual documents. Unlike RAG approaches that often [struggle with complex concepts and nuanced insights](https://www.linkedin.com/pulse/raging-contracts-pitfalls-rag-contract-review-shcherbak-ai-ptg3f), ContextGem capitalizes on continuously expanding context capacity, evolving LLM capabilities, and decreasing costs. This focused approach enables direct information extraction from complete documents, eliminating retrieval inconsistencies while optimizing for in-depth single-document analysis. While this delivers higher accuracy for individual documents, ContextGem does not currently support cross-document querying or corpus-wide retrieval - for these use cases, modern RAG frameworks (e.g., LlamaIndex, Haystack) remain more appropriate.
-
-📖 Read more on [how ContextGem works](https://contextgem.dev/how_it_works/) in the documentation.
-
-## 🤖 Supported LLMs
-
-ContextGem supports both cloud-based and local LLMs through [LiteLLM](https://github.com/BerriAI/litellm) integration:
-
-- **Cloud LLMs**: OpenAI, Anthropic, Google, Azure OpenAI, xAI, and more
-- **Local LLMs**: Run models locally using providers like Ollama, LM Studio, etc.
-- **Model Architectures**: Works with models with and without reasoning (CoT) capabilities
-- **Simple API**: Unified interface for all LLMs with easy provider switching
-
-> **💡 Model Selection Note:** For reliable structured extraction, we recommend using models with performance equivalent to or exceeding `gpt-6-luna`. Smaller models (such as 8B parameter models) may struggle with ContextGem's detailed extraction instructions. If you encounter issues with smaller models, see our [troubleshooting guide](https://contextgem.dev/optimizations/optimization_small_llm_troubleshooting/) for potential solutions.
-
-📖 Learn more about [supported LLM providers and models](https://contextgem.dev/llms/supported_llms/), how to [configure LLMs](https://contextgem.dev/llms/llm_config/), and [LLM extraction methods](https://contextgem.dev/llms/llm_extraction_methods/) in the documentation.
-
-## ⚖️ Decision models
-
-Besides LLMs, ContextGem supports decision models (e.g. TypeSafe Jev, OpenAI Decisions API, Microsoft Foundry) through the same [LiteLLM](https://github.com/BerriAI/litellm) integration. A decision model answers typed questions about a text (yes/no, pick one option, rate on a scale) with probabilities, and generates no text. It extracts `BooleanConcept`, `LabelConcept` and `RatingConcept`, as well as aspects, and can be used on its own, in a model group next to an LLM, or in a fallback chain. Each extracted item has the probabilities of all the possible answers. Concepts with open values (text, numbers, dates, JSON objects), justifications, references for concepts and extraction from images require an LLM.
-
-📖 Learn more about [decision models](https://contextgem.dev/decision_models/decision_models/) in the documentation.
-
-## ⚡ Optimizations
-
-ContextGem documentation offers guidance on optimization strategies to maximize performance, minimize costs, and enhance extraction accuracy:
-
-- [Optimizing for Accuracy](https://contextgem.dev/optimizations/optimization_accuracy/)
-- [Optimizing for Speed](https://contextgem.dev/optimizations/optimization_speed/)
-- [Optimizing for Cost](https://contextgem.dev/optimizations/optimization_cost/)
-- [Dealing with Long Documents](https://contextgem.dev/optimizations/optimization_long_docs/)
-- [Choosing the Right LLM(s)](https://contextgem.dev/optimizations/optimization_choosing_llm/)
-- [Troubleshooting Issues with Small Models](https://contextgem.dev/optimizations/optimization_small_llm_troubleshooting/)
-
-## 💾 Serializing results
-
-ContextGem allows you to save and load Document objects, pipelines, and model configurations with built-in serialization methods:
-
-- Save processed documents to avoid repeating expensive model calls
-- Transfer extraction results between systems
-- Persist pipeline and model configurations for later reuse
-
-📖 Learn more about [serialization options](https://contextgem.dev/serialization/) in the documentation.
-
-## 📚 Documentation
-
-📖 **Full documentation:** [contextgem.dev](https://contextgem.dev)
-
-🤖 **AI-powered code exploration:** [DeepWiki](https://deepwiki.com/shcherbak-ai/contextgem) provides visual architecture maps and natural language Q&A for the codebase.
-
-📈 **Change history:** See the [CHANGELOG](https://github.com/shcherbak-ai/contextgem/blob/main/CHANGELOG.md) for version history, improvements, and bug fixes.
-
-## 💬 Community
-
-🐛 **Found a bug or have a feature request?** [Open an issue](https://github.com/shcherbak-ai/contextgem/issues/new) on GitHub.
-
-💭 **Need help or want to discuss?** Start a thread in [GitHub Discussions](https://github.com/shcherbak-ai/contextgem/discussions/new/).
-
-## 🤝 Contributing
-
-We welcome contributions from the community - whether it's fixing a typo or developing a completely new feature!
-
-📋 **Get started:** Check out our [Contributor Guidelines](https://github.com/shcherbak-ai/contextgem/blob/main/CONTRIBUTING.md).
-
-## 🔐 Security
-
-This project is automatically scanned for security vulnerabilities using multiple security tools:
-
-- **[CodeQL](https://codeql.github.com/)** - GitHub's semantic code analysis engine for vulnerability detection
-- **[Bandit](https://github.com/PyCQA/bandit)** - Python security linter for common security issues  
-- **[Snyk](https://snyk.io)** - Dependency vulnerability monitoring (used as needed)
-
-🛡️ **Security policy:** See [SECURITY](https://github.com/shcherbak-ai/contextgem/blob/main/SECURITY.md) file for details.
-
-## 💖 Acknowledgements
-
-ContextGem relies on these excellent open-source packages:
-
-- [aiolimiter](https://github.com/mjpieters/aiolimiter): Powerful rate limiting for async operations
-- [colorlog](https://github.com/borntyping/python-colorlog): Colored formatter for Python's logging module
-- [docstring-parser](https://github.com/rr-/docstring_parser): Docstring parsing for auto-generating tool schemas
-- [fastjsonschema](https://github.com/horejsek/python-fastjsonschema): Ultra-fast JSON schema validation
-- [genai-prices](https://github.com/pydantic/genai-prices): LLM pricing data and utilities (by Pydantic) to automatically estimate costs
-- [Jinja2](https://github.com/pallets/jinja): Fast, expressive, extensible templating engine used for prompt rendering
-- [litellm](https://github.com/BerriAI/litellm): Unified interface to multiple LLM providers with seamless provider switching
-- [pillow](https://github.com/python-pillow/Pillow): Image processing library for local model image handling
-- [pydantic](https://github.com/pydantic/pydantic): The gold standard for data validation
-- [python-ulid](https://github.com/mdomke/python-ulid): Efficient ULID generation for unique object identification
-- [tenacity](https://github.com/jd/tenacity): General-purpose retry library for Python
-- [wtpsplit-lite](https://github.com/superlinear-ai/wtpsplit-lite): Lightweight version of [wtpsplit](https://github.com/segment-any-text/wtpsplit) for state-of-the-art paragraph/sentence segmentation using wtpsplit's SaT models
-
-## 📄 License & Contact
-
-**License:** Apache 2.0 License - see the [LICENSE](https://github.com/shcherbak-ai/contextgem/blob/main/LICENSE) and [NOTICE](https://github.com/shcherbak-ai/contextgem/blob/main/NOTICE) files for details.
-
-**Copyright:** © 2025 [Shcherbak AI AS](https://shcherbak.ai) — Enterprise AI Engineering. We build AI agents that transform how enterprises operate.
-
-**Connect:** [LinkedIn](https://www.linkedin.com/in/sergii-shcherbak-10068866/) or [X](https://x.com/seshch) for questions or collaboration ideas.
-
-Built with ❤️ in Oslo, Norway.
-
-## 📦 More from Shcherbak AI
-
-| Package | Description |
-|---------|-------------|
-| **[licenseal](https://github.com/shcherbak-ai/licenseal)** [![PyPI](https://img.shields.io/pypi/v/licenseal?logo=pypi&logoColor=gold&style=flat-square)](https://pypi.org/project/licenseal/) [![License: Apache-2.0](https://img.shields.io/badge/license-Apache--2.0-blue.svg?style=flat-square)](https://github.com/shcherbak-ai/licenseal/blob/main/LICENSE) | Fast cross-ecosystem license compatibility checker for CI, audits, and enterprise adoption. Scans manifests, lockfiles, and public registry metadata without installing dependencies. |
-| **[tethered](https://github.com/shcherbak-ai/tethered)** [![PyPI](https://img.shields.io/pypi/v/tethered?logo=pypi&logoColor=gold&style=flat-square)](https://pypi.org/project/tethered/) [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg?style=flat-square)](https://github.com/shcherbak-ai/tethered/blob/main/LICENSE) | Runtime network egress control for Python. One function call blocks all unauthorized outbound connections — zero dependencies, no infrastructure changes. Ideal for supply chain defense, AI agent guardrails, and test isolation. |
+Questions or collaboration ideas? Reach out on [LinkedIn](https://www.linkedin.com/in/sergii-shcherbak-10068866/) or [X](https://x.com/seshch). Built with ❤️ in Oslo, Norway.

@@ -2,61 +2,69 @@ name: build docs
 
 on:
   push:
-    branches: [ main ]
+    branches: [ main, dev ]
   pull_request:
-    branches: [ main ]
+    branches: [ main, dev ]
   workflow_dispatch:
 
 permissions:
   contents: read
-  pages: write
-  id-token: write
 
 concurrency:
-  group: "pages"
+  group: docs-${{ github.ref }}
   cancel-in-progress: true
 
+env:
+  UV_VERSION: "0.13.0"
+
 jobs:
+  # A strict build on every push and pull request, so that a broken
+  # reference fails before it is merged. Only main, the release branch, is
+  # published: the site describes the released version.
   build:
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     steps:
       - name: Checkout
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd  # v6
-      
-      - name: Setup Python
-        id: setup-python
-        uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405  # v6.2.0
-        with:
-          python-version: '3.13'
-      
+
       - name: Install uv
         uses: astral-sh/setup-uv@37802adc94f370d6bfd71619e3f0bf239e1f3b78  # v7
         with:
+          version: ${{ env.UV_VERSION }}
           enable-cache: true
-      
+
+      - name: Set up Python from .python-version
+        run: uv python install
+
       - name: Install dependencies
-        run: uv sync --all-groups
-      
+        run: uv sync --locked --all-groups
+
       - name: Build documentation
         run: |
           cd docs
           uv run sphinx-build -b dirhtml source _build/dirhtml -v -E -W
-      
+
       - name: Create .nojekyll file
         run: touch docs/_build/dirhtml/.nojekyll
-      
+
       - name: Upload artifact
+        if: github.ref == 'refs/heads/main'
         uses: actions/upload-pages-artifact@fc324d3547104276b827a68afc52ff2a11cc49c9  # v5.0.0
         with:
           path: ./docs/_build/dirhtml
-  
+
   deploy:
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     needs: build
     if: github.ref == 'refs/heads/main'
+    permissions:
+      pages: write
+      id-token: write
     steps:
       - name: Deploy to GitHub Pages
         id: deployment

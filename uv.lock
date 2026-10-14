@@ -641,7 +641,6 @@ dependencies = [
     { name = "pydantic" },
     { name = "python-ulid" },
     { name = "tenacity" },
-    { name = "tethered" },
     { name = "wtpsplit-lite" },
 ]
 
@@ -655,7 +654,6 @@ dev = [
     { name = "hypothesis" },
     { name = "interrogate" },
     { name = "licenseal" },
-    { name = "nest-asyncio" },
     { name = "pre-commit" },
     { name = "pytest" },
     { name = "pytest-cov" },
@@ -670,6 +668,7 @@ dev = [
     { name = "sphinx-design" },
     { name = "sphinx-sitemap" },
     { name = "sphinxext-opengraph" },
+    { name = "tethered" },
     { name = "twine" },
     { name = "ty" },
 ]
@@ -689,7 +688,6 @@ requires-dist = [
     { name = "pydantic", specifier = ">=2.10.6,<3.0.0" },
     { name = "python-ulid", specifier = ">=3.0.0,<4.0.0" },
     { name = "tenacity", specifier = ">=9.1.2,<10.0.0" },
-    { name = "tethered", specifier = ">=0.5.1,<1.0.0" },
     { name = "wtpsplit-lite", specifier = ">=0.2.0,<0.3.0" },
 ]
 
@@ -703,7 +701,6 @@ dev = [
     { name = "hypothesis", specifier = ">=6.122.0,<7.0.0" },
     { name = "interrogate", specifier = ">=1.7.0,<2.0.0" },
     { name = "licenseal", specifier = ">=0.1.1" },
-    { name = "nest-asyncio", specifier = ">=1.6.0,<2.0.0" },
     { name = "pre-commit", specifier = ">=4.1.0,<5.0.0" },
     { name = "pytest", specifier = ">=8.3.4,<9.0.0" },
     { name = "pytest-cov", specifier = ">=6.0.0,<7.0.0" },
@@ -718,6 +715,7 @@ dev = [
     { name = "sphinx-design", specifier = ">=0.6.1,<1.0.0" },
     { name = "sphinx-sitemap", specifier = ">=2.6.0,<3.0.0" },
     { name = "sphinxext-opengraph", specifier = ">=0.9.1,<1.0.0" },
+    { name = "tethered", specifier = ">=1.0.1,<2.0.0" },
     { name = "twine", specifier = ">=6.2.0" },
     { name = "ty", specifier = "==0.0.35" },
 ]
@@ -1733,7 +1731,7 @@ wheels = [
 
 [[package]]
 name = "licenseal"
-version = "0.4.2"
+version = "1.0.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "click" },
@@ -1745,9 +1743,9 @@ dependencies = [
     { name = "semantic-version" },
     { name = "tethered" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/e1/c0/8690d7a63008c8bd901322e08b6c9549fb193379f2e35d8f925394420a9f/licenseal-0.4.2.tar.gz", hash = "sha256:f3c5550d1291d758174fa246c284301658241c2c695985a652d76ffeaf5daac7", size = 265893, upload-time = "2026-09-26T18:59:41.881Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/15/b0/94e1c0c53e5925ed2b67f5f3cbc8e33dc7d0dbddebdd97d2f8a5054140d3/licenseal-1.0.0.tar.gz", hash = "sha256:8148a4ea2721097413478ea3b0c9abeb0bc94cacd39e1109e6f14b1d31be7e59", size = 400251, upload-time = "2026-10-14T00:50:19.47Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/49/31/7ea9742048df1692917d2b534d1cd8911f9b35513463ee41e5fcbdd223d6/licenseal-0.4.2-py3-none-any.whl", hash = "sha256:8392bcba3725c6d99203fcecf3d9891a710d59efa34f5159ce628070c13df586", size = 324104, upload-time = "2026-09-26T18:59:40.066Z" },
+    { url = "https://files.pythonhosted.org/packages/7f/b6/5e7f75608915907fd8f1d8f7358c91eb8d286b318fa2dfdafed08511c125/licenseal-1.0.0-py3-none-any.whl", hash = "sha256:114f427774980a8199adf99e85bc38de0e9ef74a4fcb27b084818aac6c033bdf", size = 456501, upload-time = "2026-10-14T00:50:17.379Z" },
 ]
 
 [[package]]
@@ -2021,15 +2019,6 @@ wheels = [
     { url = "https://files.pythonhosted.org/packages/8d/87/013e1eed30ad46bec1eb68947bc9caf55ba2fd0d6aed04fe964e3b44c23b/multidict-6.9.1-cp314-cp314t-win_amd64.whl", hash = "sha256:7c8d5882ba25ac0282258be435d8a05aa0cbcacfce15799154a338f847f159b9", size = 64881, upload-time = "2026-09-21T17:57:34.489Z" },
     { url = "https://files.pythonhosted.org/packages/7f/95/64dd049bb4c53426e2fee7afb874daaa8b4426c41878785883a94511ecf8/multidict-6.9.1-cp314-cp314t-win_arm64.whl", hash = "sha256:ac348379cf4de5538a0a213be1532d289aa801ec5d267c5909446b9ea2f8e2c3", size = 58582, upload-time = "2026-09-21T17:57:36.19Z" },
     { url = "https://files.pythonhosted.org/packages/be/59/e26cb779be4c591d1a910f59d29aca9fba4de70349840a833beba2652371/multidict-6.9.1-py3-none-any.whl", hash = "sha256:7bf6478188f4e47bf5686e8a33da4ae28bf43b1b2528d9ee144d28492bfac60b", size = 19176, upload-time = "2026-09-21T17:59:03.501Z" },
-]
-
-[[package]]
-name = "nest-asyncio"
-version = "1.6.0"
-source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/83/f8/51569ac65d696c8ecbee95938f89d4abf00f47d58d48f6fbabfe8f0baefe/nest_asyncio-1.6.0.tar.gz", hash = "sha256:6f172d5449aca15afd6c646851f4e31e02c598d553a667e38cafa997cfec55fe", size = 7418, upload-time = "2024-01-21T14:25:19.227Z" }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/a0/c4/c2971a3ba4c6103a3d10c4b0f24f461ddc027f0f09763220cf35ca1401b3/nest_asyncio-1.6.0-py3-none-any.whl", hash = "sha256:87af6efd6b5e897c81050477ef65c62e2b2f35d51703cae01aff2905b1852e1c", size = 5195, upload-time = "2024-01-21T14:25:17.223Z" },
 ]
 
 [[package]]
@@ -3527,38 +3516,38 @@ wheels = [
 
 [[package]]
 name = "tethered"
-version = "0.5.3"
+version = "1.0.1"
 source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/bf/6b/167ee2b1f0774b0ce62bf4f2e5446266b8fdf145b385de3287013f17fc37/tethered-0.5.3.tar.gz", hash = "sha256:336d94074a5c1ec3dd2ddd7b42baee50c24a58fd803116e8d33efadf062364b4", size = 106310, upload-time = "2026-08-19T11:16:09.59Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/7f/e1/ab5ad5846525d645677eef1f3e4af52e88b102e96072d988da4b6cd48389/tethered-1.0.1.tar.gz", hash = "sha256:d95b91bc739efce427986c33ddd29d32c35794cb63bd8565e5f23ab185819e6e", size = 350967, upload-time = "2026-10-14T17:15:33.799Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/96/3b/efece9dd5aa73c17a80cddf5e01036f6ce236f704b626062f43d78907179/tethered-0.5.3-cp311-cp311-macosx_11_0_arm64.whl", hash = "sha256:a3fef5f9ccbc521c58daf2d62be34295147a6afa004efd03277630e663357c4d", size = 54165, upload-time = "2026-08-19T11:15:40.405Z" },
-    { url = "https://files.pythonhosted.org/packages/0a/0c/a55840f7eb3663f53d5dccc8f8b1bd350b365e18d483c0b751a898542195/tethered-0.5.3-cp311-cp311-manylinux1_x86_64.manylinux_2_28_x86_64.manylinux_2_5_x86_64.whl", hash = "sha256:e1f5963f6fc76741f19d23f8777b9c1bded1b172fe208aa8c4f0b95c23a6845e", size = 72684, upload-time = "2026-08-19T11:15:41.586Z" },
-    { url = "https://files.pythonhosted.org/packages/9b/89/f3d3c540331b51a538f4d1b84f09a616505b7d3377ebcd74f2f6d33f5d20/tethered-0.5.3-cp311-cp311-manylinux2014_aarch64.manylinux_2_17_aarch64.manylinux_2_28_aarch64.whl", hash = "sha256:0ebf6debd20299e6843d50678e10e7b688ded2bf329811fb38040ea84bd61526", size = 73501, upload-time = "2026-08-19T11:15:42.616Z" },
-    { url = "https://files.pythonhosted.org/packages/07/98/2c1ce0e48baa030f59811bb0d20355c27edd5c47de38f145b979d2cb9c35/tethered-0.5.3-cp311-cp311-musllinux_1_2_aarch64.whl", hash = "sha256:84e0e553e8ac53ab75ed424d6b256f4e9bf4786edbe0ab30fc0a2ddc0e1b77ba", size = 73012, upload-time = "2026-08-19T11:15:43.826Z" },
-    { url = "https://files.pythonhosted.org/packages/f7/08/3e2e784b7a27bdee2794a2f998423634fdbaee6a09b52702d60b431f4a91/tethered-0.5.3-cp311-cp311-musllinux_1_2_x86_64.whl", hash = "sha256:759cc363a7ccceab4ca5b4b0020edce8155da5332070f72ab20a2fbb4910b8f5", size = 72336, upload-time = "2026-08-19T11:15:44.956Z" },
-    { url = "https://files.pythonhosted.org/packages/63/15/f1ec3d334fd2e4b4fd1932a6ce8e38fdb577d97721515f4823b3e82771ab/tethered-0.5.3-cp311-cp311-win32.whl", hash = "sha256:0826ebe78f97b1683fb77ec3e64f9d5b4442e1053cd063c52664fbd9179305e8", size = 55502, upload-time = "2026-08-19T11:15:46.019Z" },
-    { url = "https://files.pythonhosted.org/packages/72/ac/9798b954684051c1dfb0e623af0b32e0628b86ecef70c9a0f0a2aced5e04/tethered-0.5.3-cp311-cp311-win_amd64.whl", hash = "sha256:fcbb138a01c6ea254811d6479bbe06e0d3bbf304954994689c4d0de0e31c356d", size = 56440, upload-time = "2026-08-19T11:15:47.15Z" },
-    { url = "https://files.pythonhosted.org/packages/35/ac/eb5fd8454d437dbbf9ff40f76d9e551823aae1d76c58c2984d2fdbb6f96d/tethered-0.5.3-cp312-cp312-macosx_11_0_arm64.whl", hash = "sha256:07a1ed41f9e7d7b195b5bcb181e8e2ba944e340102e2211a4e3543cd5a437226", size = 54203, upload-time = "2026-08-19T11:15:48.129Z" },
-    { url = "https://files.pythonhosted.org/packages/1e/1f/9cfb64e8f8f7dabda95eeb874eb7e16200d7cb777fc86cd7f2abe68a74fb/tethered-0.5.3-cp312-cp312-manylinux1_x86_64.manylinux_2_28_x86_64.manylinux_2_5_x86_64.whl", hash = "sha256:13e048be819aee87354d4af2f9d7e7a46a914f20be3a5cabe9d0b3103d4e56de", size = 74054, upload-time = "2026-08-19T11:15:49.123Z" },
-    { url = "https://files.pythonhosted.org/packages/b9/81/dfbcc9b58dfdb024e73057466c5bd8a6103ef67ce2e76c4db9caf5e0406e/tethered-0.5.3-cp312-cp312-manylinux2014_aarch64.manylinux_2_17_aarch64.manylinux_2_28_aarch64.whl", hash = "sha256:4f44b4f9d5010bf982349cc776c4815aac7c94b8f51884154d507939df339a01", size = 74973, upload-time = "2026-08-19T11:15:50.127Z" },
-    { url = "https://files.pythonhosted.org/packages/88/c1/8bfc18604ce0017d8d7869da1c86f45e4a54392fc58430d8bfdc2c9d51d8/tethered-0.5.3-cp312-cp312-musllinux_1_2_aarch64.whl", hash = "sha256:cd7d62446a7655f3a45674a2be418cfcdefdb7067d94d3d2efdadb95c96aaeec", size = 74386, upload-time = "2026-08-19T11:15:51.313Z" },
-    { url = "https://files.pythonhosted.org/packages/4c/1b/369c5aabcb3b08c8f20b2ae01034938354f39775a8cd782c591818638191/tethered-0.5.3-cp312-cp312-musllinux_1_2_x86_64.whl", hash = "sha256:ba3d5d2eafacf82cdcdb12d4abff04bb4850de3c16de382ad55fd04e4b39b36d", size = 73722, upload-time = "2026-08-19T11:15:52.509Z" },
-    { url = "https://files.pythonhosted.org/packages/62/d8/db4ce20e834d8a323e2e24fdd824fedb8820cf90b1859a80bf97a1aefdde/tethered-0.5.3-cp312-cp312-win32.whl", hash = "sha256:c0836c5700f9f2b7ea8f8057bea91b613daa9821622bf70ea81ae6006fdc25f6", size = 55553, upload-time = "2026-08-19T11:15:53.461Z" },
-    { url = "https://files.pythonhosted.org/packages/44/90/a4c272ca5b7faedd6756dd7683bf00da5eeaf6d9d1c19c45d299265ff5b9/tethered-0.5.3-cp312-cp312-win_amd64.whl", hash = "sha256:c9c9ea2f4d2baf95759085789aa561f6e2c3892a57e5fb8827d18a953dbfa885", size = 56508, upload-time = "2026-08-19T11:15:54.419Z" },
-    { url = "https://files.pythonhosted.org/packages/52/86/9afb6f6eb04b9cdfd6921bf7ae9cd0a9cefa765faf9a5c3b8618285e7df5/tethered-0.5.3-cp313-cp313-macosx_11_0_arm64.whl", hash = "sha256:25753aa77662fad11329d7b2955b21f7a7fc145898df947dcaf1c76cd19706e1", size = 54188, upload-time = "2026-08-19T11:15:55.383Z" },
-    { url = "https://files.pythonhosted.org/packages/14/c2/741adf1f7ecdeeeb53b706c264a46180b4b5565181c08e23129ed4c7f78e/tethered-0.5.3-cp313-cp313-manylinux1_x86_64.manylinux_2_28_x86_64.manylinux_2_5_x86_64.whl", hash = "sha256:f01e753dc64401603b8e0cb708713bd2a48bdb301c091c018e8bb4f7b0fa7c99", size = 74129, upload-time = "2026-08-19T11:15:56.369Z" },
-    { url = "https://files.pythonhosted.org/packages/c7/3d/213d56e644bab0ae90c386bb317c51ae99520e4a7884c6f1b8589b1828b5/tethered-0.5.3-cp313-cp313-manylinux2014_aarch64.manylinux_2_17_aarch64.manylinux_2_28_aarch64.whl", hash = "sha256:65e932ad350295b2e2cf92bd70e305251377ba8537cd542d22ec87e916d21722", size = 75034, upload-time = "2026-08-19T11:15:57.418Z" },
-    { url = "https://files.pythonhosted.org/packages/a6/93/ef0c4b3a435082250242d3c5de8976bb2065724dcc1af3421565e5437cd7/tethered-0.5.3-cp313-cp313-musllinux_1_2_aarch64.whl", hash = "sha256:60dab600d0e1ebf966bf4401d91594bdefb6253357732b5095036aba5fc333b3", size = 74485, upload-time = "2026-08-19T11:15:58.386Z" },
-    { url = "https://files.pythonhosted.org/packages/99/2b/97224f0aaf73ad82b5862e99598a92641faa5b2d1f0790310c76a181a07d/tethered-0.5.3-cp313-cp313-musllinux_1_2_x86_64.whl", hash = "sha256:1e3507b87dcb33739bb23b820287a0746037be5790ff9fe9979bcfe629e25851", size = 73819, upload-time = "2026-08-19T11:15:59.357Z" },
-    { url = "https://files.pythonhosted.org/packages/ae/9a/8cf43293f6c9821a99012a08894a0b0e2cc449166a828446873f34eac6fa/tethered-0.5.3-cp313-cp313-win32.whl", hash = "sha256:fa1ef656e2c1343a456811d25ebf180f7f0a71aa70e74f5814cafd900f736c83", size = 55544, upload-time = "2026-08-19T11:16:00.3Z" },
-    { url = "https://files.pythonhosted.org/packages/d0/ce/75442457bec5c175a718d4a1362e5f0dd5b281cdc7eb64fd15658d46e228/tethered-0.5.3-cp313-cp313-win_amd64.whl", hash = "sha256:3be6515d3be71b4a4d55e06e79c20d7393e2aa9c086fb07637b114b79e125187", size = 56498, upload-time = "2026-08-19T11:16:01.335Z" },
-    { url = "https://files.pythonhosted.org/packages/32/48/6cb162c5c4be3df37ea4b87724de2d6c72e54121870cac6476a526d48cbe/tethered-0.5.3-cp314-cp314-macosx_11_0_arm64.whl", hash = "sha256:b01f8765855ee904edb585adcebb994d7862d8bea5afaf7b97fd1860c0037a80", size = 54178, upload-time = "2026-08-19T11:16:02.356Z" },
-    { url = "https://files.pythonhosted.org/packages/6e/ff/ef7852852bf396ffffcf688fd3696b52ec7e2abece513915e2a7c3929cf7/tethered-0.5.3-cp314-cp314-manylinux1_x86_64.manylinux_2_28_x86_64.manylinux_2_5_x86_64.whl", hash = "sha256:41416a93dda428f7954f6c2316eb2c007cf6abe2a35e05d73f5bc879fc37b9d4", size = 73871, upload-time = "2026-08-19T11:16:03.271Z" },
-    { url = "https://files.pythonhosted.org/packages/e0/fb/4a3c9b50e9bd4c2c1b1de2454c4c3253d7da62ebdf7c3e63e7a4903ff21d/tethered-0.5.3-cp314-cp314-manylinux2014_aarch64.manylinux_2_17_aarch64.manylinux_2_28_aarch64.whl", hash = "sha256:fd415f2acff2a90694644e468f15f511a5dbbb8581350a957636c81db907bd64", size = 74902, upload-time = "2026-08-19T11:16:04.396Z" },
-    { url = "https://files.pythonhosted.org/packages/12/6f/93db036d2c9f65b832922ee1893bfb1e1accdfb7419c05c6b4c53ad7cc79/tethered-0.5.3-cp314-cp314-musllinux_1_2_aarch64.whl", hash = "sha256:c44c164c16f50d34436a68d35e37e0bb9253e9cbea0bb002803740ae277ac3e7", size = 74310, upload-time = "2026-08-19T11:16:05.394Z" },
-    { url = "https://files.pythonhosted.org/packages/77/d9/174eb3e909dc089409b008cd8aa84ae34f96f078c38ecd5deaed8178bf53/tethered-0.5.3-cp314-cp314-musllinux_1_2_x86_64.whl", hash = "sha256:a4fc4aa064ab0c82411a82f975cb36e19d185cc0625975d2a5f2f16ee662bfbc", size = 73513, upload-time = "2026-08-19T11:16:06.352Z" },
-    { url = "https://files.pythonhosted.org/packages/30/2f/d6ca78756ab490ba7c73f5205bfa432d9f4653e0414e6343541273342396/tethered-0.5.3-cp314-cp314-win32.whl", hash = "sha256:901c742d7d7937f3019db018c663cb09087eb2bd0e27a77bfb94ce77d9610ec3", size = 55755, upload-time = "2026-08-19T11:16:07.278Z" },
-    { url = "https://files.pythonhosted.org/packages/e2/da/6a588e2feb065d55f6b6212c6aa11ddae5d1202ac37749f0218983fd8561/tethered-0.5.3-cp314-cp314-win_amd64.whl", hash = "sha256:9beb55030ec95456c3961f36184e1197e39cb34127cbe1183c245c2017c112da", size = 56788, upload-time = "2026-08-19T11:16:08.478Z" },
+    { url = "https://files.pythonhosted.org/packages/04/f4/766ce3d028fa080d56cde3d72c450bd3004fcf17be3fa51bd3a3f1de99b2/tethered-1.0.1-cp311-cp311-macosx_11_0_arm64.whl", hash = "sha256:7157921dcfb465e74dbea85b957bbdd7387c09f1baea22f588accacfcdbdda32", size = 146822, upload-time = "2026-10-14T17:14:45.744Z" },
+    { url = "https://files.pythonhosted.org/packages/06/73/f1b593c5b99dbb3ede10c0f0ac4c47470791a90cec7c7e42280d1c63bb15/tethered-1.0.1-cp311-cp311-manylinux2014_aarch64.manylinux_2_17_aarch64.manylinux_2_28_aarch64.whl", hash = "sha256:aa68724fe9ae61e088d550d90558164523e42f98de27d3aaa12c2315250da407", size = 233807, upload-time = "2026-10-14T17:14:47.443Z" },
+    { url = "https://files.pythonhosted.org/packages/49/b8/d449dbfe83ff01281e22d0dbb593299d1f85078793ac2c91d85f907ce9d0/tethered-1.0.1-cp311-cp311-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl", hash = "sha256:78b7f47127bedef42e570814a112c1079ee39b6bbefd8f49b1cd85fb02b8ad7f", size = 232293, upload-time = "2026-10-14T17:14:48.745Z" },
+    { url = "https://files.pythonhosted.org/packages/f6/f1/4d93a2f8dab8f884c37a2594e1d49c2b162ec90dfe2d952791d9221ca547/tethered-1.0.1-cp311-cp311-musllinux_1_2_aarch64.whl", hash = "sha256:9157e0b1acf2bba37894083338397956389424c8996d6646e5e95cee12ad7feb", size = 231179, upload-time = "2026-10-14T17:14:50.071Z" },
+    { url = "https://files.pythonhosted.org/packages/21/e0/7e92eb04c1bedfe316df222161359523ba76f091557d204dcf712b2a3b0e/tethered-1.0.1-cp311-cp311-musllinux_1_2_x86_64.whl", hash = "sha256:119049220f6c71f7b8ed2634b99d1fb7388fb9aab5a64900419af13213d516b8", size = 230326, upload-time = "2026-10-14T17:14:51.477Z" },
+    { url = "https://files.pythonhosted.org/packages/be/b6/9ded203e59b581b9bc6de51ad0aa7443ed4a5c49baf205275e16c3e1571b/tethered-1.0.1-cp311-cp311-win32.whl", hash = "sha256:cc2bf005f4947501eefd038dfcb566ebc73931529ac8c8fcb8898279af01059a", size = 145015, upload-time = "2026-10-14T17:14:52.811Z" },
+    { url = "https://files.pythonhosted.org/packages/49/31/2f9d4213639d8f711df14b2399eacd2f254defef05343d2bf1668314d1ea/tethered-1.0.1-cp311-cp311-win_amd64.whl", hash = "sha256:f9bccd5e7dd1ce5987cfce02bdaf9ee123dc13cbb2cbf2024e5283482f8a182c", size = 147207, upload-time = "2026-10-14T17:14:54.077Z" },
+    { url = "https://files.pythonhosted.org/packages/d2/d3/a1c0b6e9209c73e4c3787a456828382e6866c1eba3fe3eaf22d5c18b5c2f/tethered-1.0.1-cp312-cp312-macosx_11_0_arm64.whl", hash = "sha256:6976e965cb9f1f6023989ea8f6122f6a08f414629658d6e43f423b83c40c00f5", size = 146852, upload-time = "2026-10-14T17:14:55.351Z" },
+    { url = "https://files.pythonhosted.org/packages/d8/6a/a1538af092bca955072119dc54fb92540121a2c87fa8fe1a6a25dcc54846/tethered-1.0.1-cp312-cp312-manylinux2014_aarch64.manylinux_2_17_aarch64.manylinux_2_28_aarch64.whl", hash = "sha256:c726a66353d0f3993a2afde8d6ef1e5b8106acfaf9ee8dce4e50c597f5b9e02b", size = 237553, upload-time = "2026-10-14T17:14:56.851Z" },
+    { url = "https://files.pythonhosted.org/packages/01/64/e7456015f9819032104b4f53767f5b06e5d07b6c8effb0485aecf07c88f0/tethered-1.0.1-cp312-cp312-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl", hash = "sha256:1da6ff8bfcc32e4a6ba48d55de65f01927dbd37290c8efcd25abc251235cb428", size = 236734, upload-time = "2026-10-14T17:14:58.143Z" },
+    { url = "https://files.pythonhosted.org/packages/d2/c1/4311015c657dde8ca5bf9d662fb2830cfc10c5957e6aaf618971b2160ede/tethered-1.0.1-cp312-cp312-musllinux_1_2_aarch64.whl", hash = "sha256:d2a1d29485e56f7be3e2566af95bd6feb2fb94868d54fc9e64cb1fe2bcd35e29", size = 234426, upload-time = "2026-10-14T17:14:59.466Z" },
+    { url = "https://files.pythonhosted.org/packages/eb/6a/eaa90956d2a5ed59f5c194006c5bbe7f4de51461211a6a7c1f953de6f54f/tethered-1.0.1-cp312-cp312-musllinux_1_2_x86_64.whl", hash = "sha256:9b88ef8ce31a6c2f5eed63f61844e1b9a64d2739b3c431c12d1dfbca9c4aee76", size = 234473, upload-time = "2026-10-14T17:15:00.772Z" },
+    { url = "https://files.pythonhosted.org/packages/2f/14/369bf23838c1b0058b4f2fadd57cf3f4eef271ea1ae76f28b7fee080d172/tethered-1.0.1-cp312-cp312-win32.whl", hash = "sha256:38961c6d67f5e03bf2fc4d170efe87ea418fd54e239be4331dd75391daae34fd", size = 144824, upload-time = "2026-10-14T17:15:02.296Z" },
+    { url = "https://files.pythonhosted.org/packages/34/ad/2c5c74fb2f26f2e157d25f0d6215524f241ca4c451e0f0ea6322f084d466/tethered-1.0.1-cp312-cp312-win_amd64.whl", hash = "sha256:de4dbc491c115c9917c96ed20fea29d914581a75afcb9f0b7c2d8e5a64f727d0", size = 147574, upload-time = "2026-10-14T17:15:03.666Z" },
+    { url = "https://files.pythonhosted.org/packages/29/17/218bf378eac5ff1d43d1892acc6034de7b628f0b99234f19135303f147a7/tethered-1.0.1-cp313-cp313-macosx_11_0_arm64.whl", hash = "sha256:58230152239d27c5a32f9fc49c28caead20b3afd422cf57ebd82b49e4ae587da", size = 146847, upload-time = "2026-10-14T17:15:05.231Z" },
+    { url = "https://files.pythonhosted.org/packages/46/a3/14768cd9e1061ab05aabb6c0ab9aca08b159043b8b133a77d1c1b2954828/tethered-1.0.1-cp313-cp313-manylinux2014_aarch64.manylinux_2_17_aarch64.manylinux_2_28_aarch64.whl", hash = "sha256:ae84ea853d3a21f2f7a3f53990a9075c7f23c896803ea07ca10f37dca0b2cdc6", size = 237642, upload-time = "2026-10-14T17:15:06.545Z" },
+    { url = "https://files.pythonhosted.org/packages/a4/8c/1d63657d313e2280b5a4d02af20b10f4fe57abd71330ec02834ad516c2cd/tethered-1.0.1-cp313-cp313-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl", hash = "sha256:758975a202abf9b82ec7093d2125de762e8a814f837e814862a1ba82b060399a", size = 236796, upload-time = "2026-10-14T17:15:07.819Z" },
+    { url = "https://files.pythonhosted.org/packages/f3/7c/4b7be3e792758914cecd20b95ea809345e68ddcdd866d9b1dc79ce18d17a/tethered-1.0.1-cp313-cp313-musllinux_1_2_aarch64.whl", hash = "sha256:13223e5fd4f5d03f807db418c9dbe55527074a41fa45d16dc983a4b6aa0d15b6", size = 234468, upload-time = "2026-10-14T17:15:09.191Z" },
+    { url = "https://files.pythonhosted.org/packages/65/37/e310c78f11da8165f5c9e7e3570c83c5bd4ecd13f99a649850680a3e31ad/tethered-1.0.1-cp313-cp313-musllinux_1_2_x86_64.whl", hash = "sha256:dd424c9560a41d21c3b5291a6810268c17982a086a8c98fd9127c00a34d1dc75", size = 234537, upload-time = "2026-10-14T17:15:10.843Z" },
+    { url = "https://files.pythonhosted.org/packages/71/5d/bd482b6b90e4b746deb8dc7592bb4fadd509df9bf1fab4037340216762f4/tethered-1.0.1-cp313-cp313-win32.whl", hash = "sha256:d48ceb36f98ec8d0f624cc7207c3b49c1d7360f30ff77274e59324dc471f9104", size = 144821, upload-time = "2026-10-14T17:15:12.154Z" },
+    { url = "https://files.pythonhosted.org/packages/b9/d0/3da2664ce77e4ebdc5095b059b045b1d4d7a1faaa797b1ad64ee4072e27f/tethered-1.0.1-cp313-cp313-win_amd64.whl", hash = "sha256:7cd8163d45b5fd6f0d32863d7ab260a0c978288f4d1e645c47ab5d67d9bbe105", size = 147574, upload-time = "2026-10-14T17:15:13.611Z" },
+    { url = "https://files.pythonhosted.org/packages/f8/25/daefc11b2dc21e3e89a610a3b428e43bbd9d76a4d587b3d59fd14b3787b2/tethered-1.0.1-cp314-cp314-macosx_11_0_arm64.whl", hash = "sha256:116681547c16cd3c78ef0b725c6beb886b95db8ee725ec08c5214f76a7c6eef4", size = 146852, upload-time = "2026-10-14T17:15:14.864Z" },
+    { url = "https://files.pythonhosted.org/packages/a2/da/46cb86d8aa74a21bdc36377f991a90c1576a33a2a42e5961b8480389df14/tethered-1.0.1-cp314-cp314-manylinux2014_aarch64.manylinux_2_17_aarch64.manylinux_2_28_aarch64.whl", hash = "sha256:07266488e65f445a0a71d2f01856e3c556438c911a7b254ff373ab6329ea6890", size = 237395, upload-time = "2026-10-14T17:15:16.097Z" },
+    { url = "https://files.pythonhosted.org/packages/35/27/db39a7119d86c039dcd7316bca61a77f5542adbb1912fd7f050890be99cc/tethered-1.0.1-cp314-cp314-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl", hash = "sha256:ad3db1ee3669b2ddce02390926ee1948fee576cbef2a0b387f50a05c7a249685", size = 236339, upload-time = "2026-10-14T17:15:17.451Z" },
+    { url = "https://files.pythonhosted.org/packages/de/c0/b1991e5547eedcc57600b4da3092f642904f41c984140ea98d38a0bbb622/tethered-1.0.1-cp314-cp314-musllinux_1_2_aarch64.whl", hash = "sha256:a6b2069311dfc4fa7d2bf634fadd778010731dacd0851d58df248bf09edef09b", size = 234287, upload-time = "2026-10-14T17:15:18.782Z" },
+    { url = "https://files.pythonhosted.org/packages/53/c8/2a73ac94ae9f0f49969f7c053a7b29b74bebc318a76fdf0d671601a24ff8/tethered-1.0.1-cp314-cp314-musllinux_1_2_x86_64.whl", hash = "sha256:1baa532a4a96e0813b3ad7a329629721750fe231c2d6094e33ec1ddf92f5242a", size = 234064, upload-time = "2026-10-14T17:15:20.167Z" },
+    { url = "https://files.pythonhosted.org/packages/d4/18/82c2e0682c939d7f2df9add02fa58ed8973172adf83c47f800d1f3819ad8/tethered-1.0.1-cp314-cp314-win32.whl", hash = "sha256:992402679b9836e37ec84f159a00ac1a1583982022ac1e7bbad5673d5afd4b5b", size = 145857, upload-time = "2026-10-14T17:15:21.454Z" },
+    { url = "https://files.pythonhosted.org/packages/71/c5/7ddb8c894b80b0207ba44fc30e9f8b51c1572d5f6401ff01fffac6bec570/tethered-1.0.1-cp314-cp314-win_amd64.whl", hash = "sha256:8df9554d1d82a2469d89777086d939f7acfbe34f4f265185f768a2e4b7f671ce", size = 148469, upload-time = "2026-10-14T17:15:22.742Z" },
 ]
 
 [[package]]

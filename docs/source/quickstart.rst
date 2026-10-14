@@ -1,14 +1,14 @@
-.. 
+..
    ContextGem
-   
+
    Copyright 2025 Shcherbak AI AS. All rights reserved. Developed by Sergii Shcherbak.
-   
+
    Licensed under the Apache License, Version 2.0 (the "License");
    you may not use this file except in compliance with the License.
    You may obtain a copy of the License at
-   
+
        http://www.apache.org/licenses/LICENSE-2.0
-   
+
    Unless required by applicable law or agreed to in writing, software
    distributed under the License is distributed on an "AS IS" BASIS,
    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -69,7 +69,7 @@ ContextGem follows a simple extraction process:
 
 .. tip::
    Concept extraction from aspects helps identify specific data points within already extracted sections or topics. Common use cases include:
-   
+
    * Extracting payment amounts from a contract's payment terms
    * Extracting liability cap from a contract's liability section
    * Isolating timelines from delivery terms
@@ -85,7 +85,7 @@ ContextGem follows a simple extraction process:
 
 .. tip::
    Concept extraction from text documents locates specific information directly from text. Common use cases include:
-   
+
    * Extracting anomalies from entire legal documents
    * Identifying financial figures across multiple report sections
    * Extracting citations and references from academic papers
@@ -103,7 +103,7 @@ ContextGem follows a simple extraction process:
 
 .. tip::
    Concept extraction using vision capabilities processes documents with complex layouts or images. Common use cases include:
-   
+
    * Extracting data from scanned contracts or receipts
    * Identifying information from charts and graphs in reports
    * Identifying visual product features from marketing materials

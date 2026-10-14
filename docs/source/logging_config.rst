@@ -1,14 +1,14 @@
-.. 
+..
    ContextGem
-   
+
    Copyright 2025 Shcherbak AI AS. All rights reserved. Developed by Sergii Shcherbak.
-   
+
    Licensed under the Apache License, Version 2.0 (the "License");
    you may not use this file except in compliance with the License.
    You may obtain a copy of the License at
-   
+
        http://www.apache.org/licenses/LICENSE-2.0
-   
+
    Unless required by applicable law or agreed to in writing, software
    distributed under the License is distributed on an "AS IS" BASIS,
    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -61,7 +61,7 @@ ContextGem uses the following environment variables for logging configuration:
 
    # Set logging level to WARNING
    export CONTEXTGEM_LOGGER_LEVEL=WARNING
-   
+
    # Disable logging completely
    export CONTEXTGEM_LOGGER_LEVEL=OFF
 
@@ -70,10 +70,10 @@ ContextGem uses the following environment variables for logging configuration:
 .. code-block:: python
 
    import os
-   
+
    # Set logging level to DEBUG
    os.environ["CONTEXTGEM_LOGGER_LEVEL"] = "DEBUG"
-   
+
    # Import ContextGem after setting environment variables
    import contextgem
 

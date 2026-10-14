@@ -1,0 +1,76 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 832 304" width="832" height="304" role="img" aria-labelledby="title desc" font-family="ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Consolas, 'Liberation Mono', 'DejaVu Sans Mono', monospace" font-size="13">
+  <title id="title">ContextGem - describe what to extract, and get every fact with its source</title>
+  <desc id="desc">On the left, the code that is written: a concept named "Anomalies" is described in plain language, with references asked for. It is added to a document, and one call extracts it. On the right, what comes back: three anomalies, each next to the line of the document that it was taken from: 5-year auto-renewal in section 3.4, unilateral price changes in section 5.2, and uncapped liability in section 9.2.</desc>
+
+  <!-- The run, played once: the facts come back one by one, each marking
+       the line of the document it was taken from, then the result line.
+       The drawing as it stands is where the run ends: each part fades in
+       from a hidden first frame, and without motion it is all there -->
+  <style>
+    .in { animation: show 0.35s ease-out backwards; }
+    @keyframes show { from { opacity: 0; } }
+    @media (prefers-reduced-motion: reduce) { * { animation: none !important; } }
+  </style>
+
+  <!-- A ground of its own, so that the picture reads the same in the light
+       and the dark theme: a window, with the name of the file on its tab -->
+  <path d="M0.5 28.5H831.5V303.5H0.5Z" fill="#111113" stroke="#2c2c30"/>
+  <path d="M0.5 29V0.5H112.5V29" fill="#111113" stroke="#2c2c30"/>
+  <path d="M1 28.5H112" stroke="#111113"/>
+  <text x="16" y="18.5" font-size="11" fill="#9ca3af">extract.py</text>
+
+  <!-- What is written -->
+  <text x="28" y="62" font-size="10.5" letter-spacing="1.4" fill="#6b7280">YOU WRITE</text>
+  <g fill="#9ca3af">
+    <text xml:space="preserve" x="28" y="92">anomalies <tspan fill="#6b7280">=</tspan> StringConcept<tspan fill="#6b7280">(</tspan></text>
+    <text xml:space="preserve" x="28" y="114">    name<tspan fill="#6b7280">=</tspan><tspan fill="#d1d5db">"Anomalies"</tspan><tspan fill="#6b7280">,</tspan></text>
+    <text xml:space="preserve" x="28" y="136">    description<tspan fill="#6b7280">=</tspan><tspan fill="#7dd3fc">"Anomalies in the contract"</tspan><tspan fill="#6b7280">,</tspan></text>
+    <text xml:space="preserve" x="28" y="158">    add_references<tspan fill="#6b7280">=</tspan><tspan fill="#d1d5db">True</tspan><tspan fill="#6b7280">,</tspan></text>
+    <text xml:space="preserve" x="28" y="180"><tspan fill="#6b7280">)</tspan></text>
+    <text xml:space="preserve" x="28" y="224">doc<tspan fill="#6b7280">.</tspan>add_concepts<tspan fill="#6b7280">([</tspan>anomalies<tspan fill="#6b7280">])</tspan></text>
+    <text xml:space="preserve" x="28" y="246" fill="#f3f4f6">doc <tspan fill="#6b7280">=</tspan> llm<tspan fill="#6b7280">.</tspan>extract_all<tspan fill="#6b7280">(</tspan>doc<tspan fill="#6b7280">)</tspan></text>
+  </g>
+
+  <!-- From the one to the other -->
+  <path d="M396.5 52V276" stroke="#2c2c30"/>
+
+  <!-- What comes back -->
+  <text x="428" y="62" font-size="10.5" letter-spacing="1.4" fill="#6b7280">YOU GET</text>
+  <g class="in" style="animation-delay: 2.5s">
+    <path d="M429 87.5l3.5 3.5 6.5-8" fill="none" stroke="#38bdf8" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+    <text x="447" y="92" fill="#f3f4f6">3 anomalies extracted with references</text>
+  </g>
+
+  <!-- The document: a sheet with bars for its lines of text. The lines that
+       the facts were taken from are marked, and each fact stands beside its
+       line -->
+  <path d="M428.5 112.5H528.5L540.5 124.5V272.5H428.5Z" fill="none" stroke="#ffffff" stroke-opacity="0.2"/>
+  <path d="M528.5 112.5V124.5H540.5" fill="none" stroke="#ffffff" stroke-opacity="0.2"/>
+  <g fill="#ffffff" fill-opacity="0.14">
+    <rect x="440" y="128" width="40" height="3" fill-opacity="0.32"/>
+    <rect x="440" y="144" width="81" height="2"/>
+    <rect x="440" y="158" width="88" height="2"/>
+    <rect x="440" y="172" width="53" height="2"/>
+    <rect x="440" y="186" width="70" height="2"/>
+    <rect x="440" y="200" width="88" height="2"/>
+    <rect x="440" y="214" width="59" height="2"/>
+    <rect x="440" y="228" width="88" height="2"/>
+    <rect x="440" y="242" width="88" height="2"/>
+    <rect x="440" y="256" width="35" height="2"/>
+  </g>
+  <g class="in" style="animation-delay: 0.6s">
+    <rect x="440" y="158" width="88" height="2" fill="#38bdf8"/>
+    <path d="M541 159H564" stroke="#ffffff" stroke-opacity="0.3"/>
+    <text xml:space="preserve" x="572" y="163.5" fill="#e5e7eb"><tspan fill="#6b7280">§3.4</tspan> 5-year auto-renewal</text>
+  </g>
+  <g class="in" style="animation-delay: 1.2s">
+    <rect x="440" y="200" width="88" height="2" fill="#38bdf8"/>
+    <path d="M541 201H564" stroke="#ffffff" stroke-opacity="0.3"/>
+    <text xml:space="preserve" x="572" y="205.5" fill="#e5e7eb"><tspan fill="#6b7280">§5.2</tspan> Unilateral price changes</text>
+  </g>
+  <g class="in" style="animation-delay: 1.8s">
+    <rect x="440" y="242" width="88" height="2" fill="#38bdf8"/>
+    <path d="M541 243H564" stroke="#ffffff" stroke-opacity="0.3"/>
+    <text xml:space="preserve" x="572" y="247.5" fill="#e5e7eb"><tspan fill="#6b7280">§9.2</tspan> Uncapped liability</text>
+  </g>
+</svg>

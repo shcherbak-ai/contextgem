@@ -45,7 +45,7 @@ Building reliable structured-extraction workflows from documents typically invol
 
         * Mapping outputs back to precise locations in the source document
         * Handling nested context (*e.g. document > sections > paragraphs > entities*)
-        * Orchestrating multi-step, multi-LLM workflows
+        * Orchestrating multi-step, multi-model workflows
         * Tracking usage and costs across providers
         * Configuring concurrent I/O to keep extraction fast
 
@@ -57,6 +57,7 @@ ContextGem provides a "batteries included" answer to each of these problems, wit
 
 - **Prompting and modelling.** ContextGem auto-generates dynamic prompts and validated data models from your natural-language extraction targets, with optional few-shot calibration via attached examples.
 - **Document and pipeline plumbing.** Outputs map back to precise paragraph- or sentence-level locations in the source. Nested context (document → aspects → sub-aspects → concepts) is handled automatically. The whole workflow is a single declarative, reusable, serializable pipeline. Concurrent I/O, fallback/retry, and cross-provider usage tracking are built in.
+- **The right model for each question.** Each aspect and concept can be routed to the model that suits it: an LLM where it takes reasoning, or a :doc:`decision model <decision_models/decision_models>`, which answers closed questions (yes/no, pick one option, rate on a scale) with a probability for each possible answer, so that you set the threshold.
 
 For details on each capability, see the relevant feature pages in the sidebar.
 
