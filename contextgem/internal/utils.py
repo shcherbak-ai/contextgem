@@ -24,9 +24,12 @@ from __future__ import annotations
 
 import asyncio
 import concurrent.futures
+import inspect
 import json
+import os
 import random
 import re
+import warnings
 from collections import defaultdict
 from collections.abc import Callable, Coroutine, Sequence
 from functools import cache
@@ -34,6 +37,7 @@ from importlib import resources
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, Literal, TypeVar, get_args
 
+import pydantic
 from jinja2 import Environment, Template, nodes
 from wtpsplit_lite import SaT
 
@@ -65,6 +69,17 @@ T = TypeVar("T")
 # An aspect or a concept, i.e. an instance that items are extracted for
 InstanceT = TypeVar("InstanceT", bound="_Aspect | _Concept")
 
+
+# Directories of the code that the checks of an instance run in when it is validated:
+# the framework, and Pydantic, which calls the validators of the framework.
+# A warning issued by such a check is attributed to the first frame outside them.
+_FRAMEWORK_AND_PYDANTIC_DIRS: tuple[str, ...] = tuple(
+    os.path.normcase(os.path.abspath(package_dir)) + os.sep
+    for package_dir in (
+        os.path.dirname(os.path.dirname(__file__)),  # the package of the framework
+        os.path.dirname(pydantic.__file__),
+    )
+)
 
 # HTTP status codes of model API errors that are worth retrying, in addition to
 # server errors (5xx): request timeout, conflict (lock timeout), rate limit.
@@ -599,6 +614,44 @@ def _run_sync(coro: Coroutine[Any, Any, T]) -> T:
     else:
         # No running loop, so just run it directly.
         return asyncio.run(coro)
+
+
+def _warn_from_caller_code(message: str, category: type[Warning] = UserWarning) -> None:
+    """
+    Issues a warning attributed to the code that called the framework, i.e. to
+    the first frame of the call stack outside the framework and Pydantic, e.g.
+    to the line that creates a model or assigns a value to its param.
+
+    A warning issued by a check that runs when an instance is validated is issued
+    under frames of the framework and of Pydantic, whose number differs between
+    the creation of the instance, its deserialization and an assignment to its
+    param, i.e. no fixed ``stacklevel`` attributes it to the calling code in all
+    these cases. If there is no frame outside them, the warning is attributed to
+    the outermost frame.
+
+    :param message: The message of the warning.
+    :type message: str
+    :param category: The category of the warning. Defaults to ``UserWarning``.
+    :type category: type[Warning]
+    :return: None
+    :rtype: None
+    """
+    current_frame = inspect.currentframe()
+    frame = current_frame.f_back if current_frame is not None else None
+    # The level of the frame of the caller of this function
+    stacklevel = 2
+    while (
+        frame is not None
+        and frame.f_back is not None
+        and os.path.normcase(frame.f_code.co_filename).startswith(
+            _FRAMEWORK_AND_PYDANTIC_DIRS
+        )
+    ):
+        frame = frame.f_back
+        stacklevel += 1
+    # The frames are released before the warning is issued (reference cycles)
+    del current_frame, frame
+    warnings.warn(message, category, stacklevel=stacklevel)
 
 
 def _model_call_result_is_valid(res: tuple[Any, _ModelUsage] | None) -> bool:

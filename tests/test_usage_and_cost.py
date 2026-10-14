@@ -942,8 +942,30 @@ class TestUsageAndCost(BaseTest):
             """
             return DocumentLLM(model=model, api_key="test_api_key", **kwargs)
 
-        with pytest.warns(UserWarning, match="not be 100% accurate"):
+        def check_warning_attributed_to_this_file(
+            caught_warnings: pytest.WarningsRecorder, match: str
+        ) -> None:
+            """
+            Checks that the warning that has the given text is attributed to
+            this file, i.e. to the code that creates the model or assigns a value
+            to its param, and not to the framework or to Pydantic.
+            """
+            (caught_warning,) = [
+                caught_warning
+                for caught_warning in caught_warnings
+                if match in str(caught_warning.message)
+            ]
+            assert os.path.normcase(caught_warning.filename) == os.path.normcase(
+                __file__
+            )
+
+        with pytest.warns(
+            UserWarning, match="not be 100% accurate"
+        ) as caught_pricing_warnings:
             llm = create_llm("openai/gpt-6-luna", auto_pricing=True)
+        check_warning_attributed_to_this_file(
+            caught_pricing_warnings, "not be 100% accurate"
+        )
         cost_of_model = get_cost_of_call(llm)
         with pytest.warns(UserWarning, match="not be 100% accurate"):
             other_llm = create_llm("openai/gpt-5.6-luna", auto_pricing=True)
@@ -964,8 +986,13 @@ class TestUsageAndCost(BaseTest):
         assert get_cost_of_call(llm) == cost_of_other_model
         # ... and are not calculated with the prices of the previous model, if
         # there are no prices for the new one
-        with pytest.warns(UserWarning, match="Unable to fetch pricing data"):
+        with pytest.warns(
+            UserWarning, match="Unable to fetch pricing data"
+        ) as caught_pricing_warnings:
             llm.model = "openai/model-without-prices"
+        check_warning_attributed_to_this_file(
+            caught_pricing_warnings, "Unable to fetch pricing data"
+        )
         assert get_cost_of_call(llm) == Decimal("0")
         # The prices are not looked up again when another param is assigned
         with warnings.catch_warnings(record=True) as caught_warnings:
@@ -980,8 +1007,13 @@ class TestUsageAndCost(BaseTest):
         llm = create_llm("openai/gpt-6-luna")
         assert llm._auto_pricing_provider_id is None
         assert get_cost_of_call(llm) == Decimal("0")
-        with pytest.warns(UserWarning, match="not be 100% accurate"):
+        with pytest.warns(
+            UserWarning, match="not be 100% accurate"
+        ) as caught_pricing_warnings:
             llm.auto_pricing = True
+        check_warning_attributed_to_this_file(
+            caught_pricing_warnings, "not be 100% accurate"
+        )
         assert get_cost_of_call(llm) == cost_of_model
         llm.auto_pricing = False
         assert llm._auto_pricing_provider_id is None

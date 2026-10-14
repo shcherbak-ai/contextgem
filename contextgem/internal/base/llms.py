@@ -82,6 +82,7 @@ from contextgem.internal.utils import (
     _run_async_calls,
     _run_sync,
     _setup_jinja2_template,
+    _warn_from_caller_code,
 )
 
 
@@ -1012,9 +1013,9 @@ class _DocumentLLM(_DocumentModel):
         Updates the state derived from the params of the LLM, and emits the warnings
         on its configuration, after all the params of the LLM are validated.
 
-        The warnings are emitted with ``stacklevel=3``: they are attributed to
-        the code that triggered the validation, i.e. to the caller of the validator
-        that calls this method.
+        The warnings are attributed to the code that triggered the validation, e.g.
+        to the line that creates the LLM or assigns a value to its param (see
+        ``_warn_from_caller_code()``).
 
         :return: None
         :rtype: None
@@ -1036,32 +1037,34 @@ class _DocumentLLM(_DocumentModel):
         # Emit relevant warnings
 
         if self.tools is not None and not self._supports_tools:
-            warnings.warn(
+            _warn_from_caller_code(
                 f"Model `{self.model}` is assigned tools but litellm does not detect it as tools-capable. "
                 f"This will cause tool calling to fail. If you know this model supports tools, "
                 f"manually set `_supports_tools=True` on the LLM instance.",
-                stacklevel=3,
             )
         if (
             self.parallel_tool_calls is not None
             and not self._supports_parallel_tool_calls
         ):
-            warnings.warn(
+            _warn_from_caller_code(
                 f"Model `{self.model}` has `parallel_tool_calls` parameter set but "
                 f"litellm does not detect it as parallel tool calls-capable. "
                 f"This will cause parallel tool calling to fail. "
                 f"If you know this model supports parallel tool calls, "
                 f"manually set `_supports_parallel_tool_calls=True` on the LLM instance.",
-                stacklevel=3,
             )
 
-        # Warn that output language param will take no effect if system message is not the default one
-        if self.system_message != self._get_default_system_message():
-            warnings.warn(
+        # Warn that output language param will take no effect if system message is not
+        # the default one. With the default output language, nothing that is set
+        # is left without effect, e.g. when the system message is disabled for chat.
+        if (
+            self.output_language != type(self).model_fields["output_language"].default
+            and self.system_message != self._get_default_system_message()
+        ):
+            _warn_from_caller_code(
                 "`output_language` parameter will take no effect if system message is not the default one. "
                 "This setting primarily affects extraction workflows that rely on the default system message; "
                 "for simple chat interactions, you can ignore this warning.",
-                stacklevel=3,
             )
 
     def _validate_input_tokens(self, messages: list[dict[str, str]]) -> None:

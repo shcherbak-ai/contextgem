@@ -102,6 +102,7 @@ from contextgem.internal.utils import (
     _run_async_calls,
     _run_sync,
     _validate_parsed_llm_output,
+    _warn_from_caller_code,
 )
 
 
@@ -4870,12 +4871,11 @@ class _DocumentModel(_GenericModelProcessor):
 
         if self._auto_pricing_source_model is None:
             # Warn about auto-pricing accuracy limitations when it is enabled
-            warnings.warn(
+            _warn_from_caller_code(
                 "Auto-pricing: these prices will not be 100% accurate. "
                 "The price data cannot be exactly correct because model providers do not provide "
                 "exact price information for their APIs in a format which can be reliably processed. "
                 "See Pydantic's genai-prices https://github.com/pydantic/genai-prices for more details.",
-                stacklevel=2,
             )
 
         # Not left from the previous model if they cannot be derived from this one
@@ -4920,9 +4920,8 @@ class _DocumentModel(_GenericModelProcessor):
                 f"Consider setting `pricing_details=ModelPricing(...)` "
                 f"or disabling auto-pricing."
             )
-            warnings.warn(
+            _warn_from_caller_code(
                 warning_msg,
-                stacklevel=2,
             )
             return
 
@@ -4940,9 +4939,8 @@ class _DocumentModel(_GenericModelProcessor):
                 "Auto-pricing will be skipped. "
                 f"{self._get_missing_auto_pricing_advice()}"
             )
-            warnings.warn(
+            _warn_from_caller_code(
                 warning_msg,
-                stacklevel=2,
             )
 
 

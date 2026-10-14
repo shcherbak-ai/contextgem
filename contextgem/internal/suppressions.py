@@ -228,6 +228,9 @@ def _suppress_litellm_warnings_context() -> Generator[None, None, None]:
     Specifically suppresses:
     - Pydantic DeprecationWarnings
     - Pydantic serialization UserWarnings
+    - Pydantic UserWarnings about the `ReadOnly` qualifier on the items of a TypedDict,
+      issued when Pydantic builds the schemas of litellm's response types on their
+      first use (e.g. ``ChatCompletionReasoningItem`` in litellm 1.105.0)
     - httpx DeprecationWarnings about content parameter usage (typically when using local LLMs)
 
     The context manager uses Python's warnings.catch_warnings() to create a temporary
@@ -250,6 +253,12 @@ def _suppress_litellm_warnings_context() -> Generator[None, None, None]:
             category=UserWarning,
             module=r"pydantic\.main",
             message=r"^Pydantic serializer warnings:",
+        )
+        warnings.filterwarnings(
+            "ignore",
+            category=UserWarning,
+            module=r"pydantic(\..*)?",
+            message=r"^Item '.*' on TypedDict class '.*' is using the `ReadOnly` qualifier",
         )
         # httpx (typically when using local LLMs)
         warnings.filterwarnings(

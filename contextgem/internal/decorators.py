@@ -22,7 +22,7 @@ Module defining internal decorators for the framework.
 
 from __future__ import annotations
 
-import asyncio
+import inspect
 import timeit
 from collections.abc import Callable
 from functools import wraps
@@ -81,7 +81,7 @@ def _timer_decorator(
                 f"Process `{process_name}` finished in {elapsed_time} seconds."
             )
 
-        if asyncio.iscoroutinefunction(func):
+        if inspect.iscoroutinefunction(func):
             # Async wrapper
             @wraps(func)
             async def async_wrapper(*args: Any, **kwargs: Any) -> Any:

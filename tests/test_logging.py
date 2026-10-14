@@ -23,11 +23,17 @@ Module defining tests for the logger.
 from __future__ import annotations
 
 import logging
+import sys
+import warnings
 
 import pytest
+from pydantic import TypeAdapter
 
 from contextgem.internal.loggers import LOGGER_LEVEL_ENV_VAR_NAME, logger
-from contextgem.internal.suppressions import _SuppressLiteLLMNoiseFilter
+from contextgem.internal.suppressions import (
+    _suppress_litellm_warnings_context,
+    _SuppressLiteLLMNoiseFilter,
+)
 from contextgem.public import reload_logger_settings
 from tests.base import BaseTest
 
@@ -38,6 +44,26 @@ _LITELLM_NOISE_FILTER_LOGGER_NAMES = ("LiteLLM", "litellm", "asyncio")
 # Environment variable that the filter of the noisy logs of litellm is disabled with
 _SUPPRESS_LITELLM_NOISE_ENV_VAR_NAME = "CONTEXTGEM_SUPPRESS_LITELLM_NOISE"
 
+if sys.version_info >= (3, 13):
+    from typing import ReadOnly, TypedDict
+
+    class _ReadOnlyItemInCall(TypedDict):
+        """
+        A TypedDict with a read-only item, as some of the response types of litellm,
+        for which Pydantic warns when it builds its schema: the schema built within
+        a call of litellm.
+        """
+
+        summary: ReadOnly[str]
+
+    class _ReadOnlyItemOutsideCall(TypedDict):
+        """
+        The same TypedDict as ``_ReadOnlyItemInCall``, for the schema built outside
+        a call of litellm: a schema is built for each of them once.
+        """
+
+        summary: ReadOnly[str]
+
 
 @pytest.mark.usefixtures("restore_logger_settings")
 class TestLogging(BaseTest):
@@ -46,6 +72,28 @@ class TestLogging(BaseTest):
 
     Each test changes the logger settings, which are restored after the test.
     """
+
+    @pytest.mark.skipif(
+        sys.version_info < (3, 13), reason="`typing.ReadOnly` requires Python 3.13+"
+    )
+    def test_litellm_warnings_suppressed_in_calls(self):
+        """
+        Tests that the warning that Pydantic issues for a read-only item of
+        a TypedDict, as when it builds the schemas of the response types of litellm,
+        which users cannot act on, is suppressed within a call of litellm, while
+        it is not suppressed outside such a call, and other warnings are not
+        suppressed within it.
+        """
+
+        with warnings.catch_warnings(record=True) as caught_warnings:
+            warnings.simplefilter("always")
+            with _suppress_litellm_warnings_context():
+                TypeAdapter(_ReadOnlyItemInCall)
+                warnings.warn("Another warning", UserWarning, stacklevel=1)
+        assert [str(w.message) for w in caught_warnings] == ["Another warning"]
+
+        with pytest.warns(UserWarning, match="is using the `ReadOnly` qualifier"):
+            TypeAdapter(_ReadOnlyItemOutsideCall)
 
     def test_logger_disabled(self, monkeypatch, capsys):
         """

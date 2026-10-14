@@ -479,6 +479,54 @@ class TestLLMs(BaseTest):
                 output_language="adapt",
                 system_message="You are a helpful assistant.",
             )
+        # ... while there is no such warning if `output_language` has its default
+        # value, e.g. when the system message is disabled for chat, as suggested
+        # by the warning on the default system message
+        with warnings.catch_warnings(record=True) as caught_warnings:
+            warnings.simplefilter("always")
+            llm_without_system_message = DocumentLLM(
+                model="openai/gpt-6-luna",
+                api_key=os.getenv("CONTEXTGEM_OPENAI_API_KEY"),
+                system_message="",
+            )
+            llm_without_system_message.system_message = "Be concise."
+        assert not any(
+            "`output_language`" in str(caught_warning.message)
+            for caught_warning in caught_warnings
+        )
+
+        # The warnings are attributed to the code that creates the LLM, assigns
+        # a value to its param or deserializes it, i.e. not to the framework or
+        # to Pydantic, which run the checks
+        def check_warning_attributed_to_this_file(
+            caught_warnings: pytest.WarningsRecorder,
+        ) -> None:
+            """
+            Checks that the warning on the output language is attributed to this file.
+            """
+            (warning_on_output_language,) = [
+                caught_warning
+                for caught_warning in caught_warnings
+                if "`output_language`" in str(caught_warning.message)
+            ]
+            assert os.path.normcase(
+                warning_on_output_language.filename
+            ) == os.path.normcase(__file__)
+
+        with pytest.warns(UserWarning, match="`output_language`") as caught_warnings:
+            llm_with_ignored_language = DocumentLLM(
+                model="openai/gpt-6-luna",
+                api_key=os.getenv("CONTEXTGEM_OPENAI_API_KEY"),
+                output_language="adapt",
+                system_message="",
+            )
+        check_warning_attributed_to_this_file(caught_warnings)
+        with pytest.warns(UserWarning, match="`output_language`") as caught_warnings:
+            llm_without_system_message.output_language = "adapt"
+        check_warning_attributed_to_this_file(caught_warnings)
+        with pytest.warns(UserWarning, match="`output_language`") as caught_warnings:
+            DocumentLLM.from_dict(llm_with_ignored_language.to_dict())
+        check_warning_attributed_to_this_file(caught_warnings)
 
     def test_update_default_prompt(self):
         """
@@ -2072,12 +2120,7 @@ class TestLLMs(BaseTest):
                     ],
                 ),
             ]
-            with pytest.warns(
-                UserWarning, match="`output_language` parameter will take no effect"
-            ):
-                other_llms.append(
-                    DocumentLLM(**llm_kwargs, system_message="Be concise.")
-                )
+            other_llms.append(DocumentLLM(**llm_kwargs, system_message="Be concise."))
             other_llms[0].temperature = 0.5
         assert setup_template_mock.call_count == 0
         for other_llm in [*other_llms, other_llms[2].fallback_models[0]]:
