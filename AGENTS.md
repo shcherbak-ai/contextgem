@@ -115,13 +115,23 @@ When adding or modifying functionality:
 
 1. **Update docstrings** in the affected classes/methods (reStructuredText format)
 2. **Update RST files** in `docs/source/` if the feature has dedicated documentation. A new page starts with a `.. meta::` block whose `:description:` says in one sentence what the page covers: it is the page's line in `llms.txt` and its meta description (the `docs-page-description` hook checks that it is there)
-3. **Update `dev/readme.template.md`** if README content is affected (not `README.md` directly), and `PYPI.md` if the summary, the install command or the feature list changes
+3. **Update `dev/readme.template.md`** if README content is affected (not `README.md` directly), and `PYPI.md` if the summary, the install command or the feature list changes. Then look at the README in a browser (below)
 4. **Add usage examples** to `dev/usage_examples/` if demonstrating new features, and list each new example in `tests/test_usage_examples.py`: in `_EXAMPLES_WITHOUT_REQUESTS` if it sends no requests, or in `_EXAMPLES_WITH_REQUESTS` if it does, in which case its test is a VCR test whose cassette the user has to record (**do NOT run it**). A change to the requests of an existing example invalidates the cassette of that example only
 5. **Verify docs compile** by running from the `docs/` directory:
 
    ```bash
    uv run sphinx-build -b dirhtml source build/dirhtml -v -E -W
    ```
+
+### Checking the README in a browser
+
+- **A change to the README (through `dev/readme.template.md`), or to an image it shows, isn't done until the README was looked at as GitHub renders it**: at 1280 pixels wide (`browser_resize` to 1280x900) and at 390 (390x844), in light and in dark (`browser_emulate_media` with `colorScheme`), with the figure played to its end. Say what you looked at, and what you couldn't check.
+- **`uv run fab readme-preview` serves `README.md` at `http://127.0.0.1:9120/`.** It shows the file as it is, so regenerate it from the template first (`uv run fab readme`). Ask that address first and use it if the page's title is `README.md · contextgem`, else start the task in the background (`--port N` where another program holds the port: licenseal's preview uses 9100, tethered's 9110). What the page shows, and how often it asks GitHub, is in [CONTRIBUTING.md](CONTRIBUTING.md#-updating-readmemd).
+- **Use the `playwright` browser** ([Playwright MCP](https://github.com/microsoft/playwright-mcp)). `.mcp.json` starts it, in the version that `package-lock.json` holds (`npm ci` installs it), once the developer has approved it: the installed Chrome, without a window, with a fresh profile for each session. Drive it a step at a time with its tools (`browser_navigate`, `browser_resize`, `browser_emulate_media`, `browser_take_screenshot`, `browser_evaluate`), and don't write Playwright scripts of your own.
+  - It refuses addresses other than `localhost`, `127.0.0.1`, and `camo.githubusercontent.com`, GitHub's image proxy, which serves the badges (`--allowed-origins`). That catches a mistake and isn't a security boundary.
+- **The figure plays for a few seconds after the page loads**, and the gem of the wordmark shines once, so a screenshot taken at once catches them part-way: wait, then take it. Emulated reduced motion doesn't reach an image inside `<img>`. To check that the figure stops, open the SVG itself (`http://127.0.0.1:9120/docs/source/_static/contextgem_readme_extraction.svg`) with `reducedMotion: "reduce"`: it shows the whole figure at once.
+- **Everything the browser saves goes in `.playwright-mcp/`**, which git ignores, and nothing in the project's root. It puts the files it names itself there; a file that you name is taken from the root, so name it with the folder: `.playwright-mcp/readme-390.png`. In Claude Code a hook refuses any other name (`.claude/hooks/playwright-files.mjs`, which `.claude/settings.json` starts before each of the browser's tools; pre-commit runs its tests).
+- **Clear out your own files when the work is done.** Delete what your session put in `.playwright-mcp/`, never the folder as a whole: another session may be using it. A screenshot that your last message asks the developer to look at stays, named in that message.
 
 ### VCR Cassette Rules
 
@@ -156,7 +166,9 @@ git mv old_name.py new_name.py
 
 ```bash
 uv sync --all-groups                    # Install dependencies
+npm ci                                  # Install the development tools of package.json
 uv run pre-commit run --all-files       # Run all linters/formatters
+uv run fab readme-preview               # Serve README.md as GitHub renders it
 uv run pytest                           # Run tests (uses recorded cassettes)
 uv run pytest --cov=contextgem          # Run tests with coverage
 uv run pytest tests/test_extraction.py::TestExtraction::test_specific  # Run specific test

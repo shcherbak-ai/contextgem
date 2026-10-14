@@ -55,15 +55,19 @@ When using AI assistants (Claude Code, Cursor, etc.) to contribute:
     # Install uv if you don't have it:
     # https://docs.astral.sh/uv/getting-started/installation/
 
-    # Install dependencies, as locked in uv.lock, and pre-commit hooks.
-    # The Python version of the environment is the one in .python-version
+    # Install dependencies, as locked in uv.lock and package-lock.json, and
+    # pre-commit hooks. The Python version of the environment is the one in
+    # .python-version
     uv run fab setup
 
     # Or manually:
     # uv sync --all-groups
+    # npm ci
     # uv run pre-commit install
     # uv run pre-commit install --hook-type commit-msg
     ```
+
+    The development tools that `package.json` lists need [Node.js](https://nodejs.org/): the stylesheet of the README preview and the browser of AI coding assistants. None of them is part of the package.
 
 ### 🛠️ Available Fabric Commands
 
@@ -71,12 +75,13 @@ The project includes a `fabfile.py` with common development tasks:
 
 ```bash
 uv run fab --list          # List all available commands
-uv run fab setup           # Set up dev environment (locked deps + hooks)
+uv run fab setup           # Set up dev environment (locked deps, npm tools, hooks)
 uv run fab sync            # Upgrade dependencies (rewrites uv.lock)
 uv run fab lint            # Run pre-commit checks on all files
 uv run fab docs            # Build documentation
 uv run fab docs-live       # Start live documentation server
 uv run fab readme          # Regenerate README.md from template
+uv run fab readme-preview  # Serve README.md as GitHub renders it
 uv run fab social-preview  # Render social/github-social-preview.png from its SVG
 uv run fab install-hooks   # Install pre-commit hooks
 ```
@@ -132,6 +137,7 @@ contextgem/
 │
 ├── assets/                       # 🖼️ Images of the README only
 ├── pyproject.toml                # ⚙️ Dependencies & project config
+├── package.json                  # 🧰 Development tools from npm (README preview, agents' browser)
 ├── PYPI.md                       # 📦 Package description shown on PyPI
 └── README.md                     # 🤖 Auto-generated (don't edit)
 ```
@@ -186,6 +192,7 @@ contextgem/
     - **Commitizen**: For the format of commit messages (see below)
     - **licenseal**: For license compatibility of the dependencies (in CI)
     - **add-file-headers**: Adds the license header (two SPDX lines) to a Python file that has none, except a usage example
+    - **claude hooks tests**: The tests of the Claude Code hook in `.claude/hooks/` and of the settings that start it, with `node --test`
     - **Pre-commit hooks**: To automatically check and format code before commits, together with checks for trailing whitespace and the ends of files (except in the files whose bytes go into the requests recorded in the VCR cassettes: the package, the tests, the usage examples and the evaluation cases)
 
     The pre-commit hooks check and format your code when you commit. They run the tools through `uv run`, at the versions locked in `uv.lock`, and CI runs the same hooks (`uv run pre-commit run --all-files`), so a check that passes locally passes in CI.
@@ -611,7 +618,7 @@ Use the fabric commands from the project root:
 uv run fab docs-live
 ```
 
-This starts a development server on `http://localhost:9000` with:
+This starts a development server on `http://127.0.0.1:9000` with:
 
 - Automatic rebuilds when files change
 - Browser auto-refresh
@@ -626,15 +633,15 @@ uv run fab docs
 
 ### 👀 Viewing the Documentation
 
-**With Live Development:**
-Open `http://localhost:9000` in your browser.
+**With Live Development:** open `http://127.0.0.1:9000` in your browser.
 
-**With Static Builds:**
-The pages of a static build link to each other as directories, which a browser does not resolve when the files are opened from disk. After building, serve the folder and open `http://localhost:9000`:
+**With Static Builds:** the pages of a static build link to each other as directories, which a browser does not resolve when the files are opened from disk. After building, serve the folder and open `http://127.0.0.1:9000`:
 
 ```bash
-uv run python -m http.server 9000 --directory docs/build/dirhtml
+uv run python -m http.server 9000 --bind 127.0.0.1 --directory docs/build/dirhtml
 ```
+
+Use `127.0.0.1` rather than `localhost`: on Windows, a request to `localhost` tries IPv6 first and waits two seconds for the refusal of a server that listens on IPv4 only.
 
 ### 🌐 Live Documentation
 
@@ -679,6 +686,12 @@ Give images descriptive alt text, and check them at their README display size on
 - `assets/licenseal-wordmark.svg` and `assets/tethered-wordmark.svg` are the sibling projects' pixel names, drawn at twice their size in transparent images of one size (336 by 80), so that the two share a baseline. Show them at that width.
 - The figures (`contextgem_readme_extraction.svg`, `contextgem_readme_structure.svg`) are drawn on their own dark ground, so one file serves both GitHub themes. Draw a new one in their style: hairlines, monospace labels, grey, and the blue of the gem only for what is extracted.
 - Do not delete an image that a released version of the README loads from `https://contextgem.dev/_static/`.
+
+Look at a change as GitHub will show it before pushing it. `uv run fab readme-preview` serves `README.md` at <http://127.0.0.1:9120/> (`--port N` for another port). It shows the file as it is, so regenerate it from the template first (`uv run fab readme`):
+
+- The HTML is what GitHub's Markdown API returns for the file, so what GitHub removes from a README is removed here too.
+- The look comes from github-markdown-css, in GitHub's colours, light or dark as the browser is set. The column is as wide as GitHub's at 1280 pixels and wider, and below 768.
+- A reload sends the README to GitHub again when it has changed. GitHub allows 60 of those an hour without a token.
 
 **Package description.** PyPI shows [PYPI.md](PYPI.md) (`project.readme` in `pyproject.toml`), not the README. Keep it short, without images, with absolute HTTPS links, and update it when the summary, the install command or the feature list changes.
 

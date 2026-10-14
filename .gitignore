@@ -1,28 +1,84 @@
-.idea
-__pycache__
-.pytest_cache
-.ruff_cache
+# uv.lock, package-lock.json and .python-version are committed. A leading
+# slash anchors a path to the project's root.
 
-env
-.env
-venv
-.venv
+# Python: bytecode, compiled extensions, and what a build writes
+__pycache__/
+*.py[cod]
+*.so
+*.egg-info/
+/build/
+/dist/
+/wheelhouse/
+
+# uv's virtual environment
+.venv/
+
+# Tests and coverage
+.pytest_cache/
+.hypothesis/
 .coverage
-.cz.msg
-.vscode
-~$*
-*.tmp
+.coverage.*
+coverage.xml
+coverage.json
+htmlcov/
 
-notebooks
-**/instance_*.json
-htmlcov
-coverage_annotate
-docs/build
-dist
+# Linters
+.ruff_cache/
+
+# Documentation site: Sphinx's output, locally and in CI
+/docs/build/
+/docs/_build/
+
+# Development tools that npm installs (package.json)
+node_modules/
+
+# Secrets: environment files are committed only as their .example templates
+.env
+.env.*
+!.env.example
+!.env.*.example
+*.pem
+*.key
+credentials.json
+token.json
+
+# Agents. Claude Code's settings.json, hooks, skills, commands and rules are
+# shared; its local settings, worktrees and plans belong to one machine.
+.claude/settings.local.json
+.claude/worktrees/
+.claude/plans/
+.cursor/plans/
+# The licenseal review skill, installed from the locked licenseal version
+.claude/skills/licenseal-review/
+.agents/skills/licenseal-review/
+# Temporary files that Claude Code can leave in the project
+tmpclaude*
+# What the agents' browser (Playwright MCP) saves
+/.playwright-mcp/
+
+# Editors. The extensions the project recommends are committed.
+.idea/
+.vscode/*
+!.vscode/extensions.json
+*.swp
+*.swo
+
+# Operating systems
 .DS_Store
-code_sample.py
+Thumbs.db
+Desktop.ini
+# Office's lock file beside an open document
+~$*
+# A file named nul, left when a Windows shell takes a redirect to /dev/null
+# for a file name
+nul
+NUL
 
-settings.local.json
-
-.claude
-.agents
+# ContextGem
+# The serialized instances that the tests write and then remove
+tests/instance_*.json
+.cz.msg
+*.tmp
+/coverage_annotate/
+# A local scratch file, which ruff, ty, deptry and interrogate leave out too
+/code_sample.py

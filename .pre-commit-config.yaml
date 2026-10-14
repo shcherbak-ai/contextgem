@@ -116,3 +116,15 @@ repos:
     rev: 5387279b3b4c24822c0f86d4df4f28b37e3e8992  # v0.21.0
     hooks:
       - id: markdownlint-cli2
+
+  # The tests of the Claude Code hook that keeps the agents' browser files in
+  # one folder, and of the settings that start it, with Node's own runner: the
+  # Node that npm needs for the development tools (package.json).
+  - repo: local
+    hooks:
+      - id: claude-hooks
+        name: claude hooks tests
+        entry: node --test .claude/hooks/playwright-files.test.mjs
+        language: system
+        files: ^\.claude/(hooks/|settings\.json$)
+        pass_filenames: false
