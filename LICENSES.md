@@ -9,7 +9,7 @@
 |  └─ [colorama (0.4.6)](https://pypi.org/project/colorama/) (also: litellm, openai +1 more)|python|prod||[BSD-3-Clause](https://spdx.org/licenses/BSD-3-Clause.html)|permissive|✓|
 |[docstring-parser (0.18.0)](https://pypi.org/project/docstring-parser/)|python|prod|[pyproject.toml](pyproject.toml)|[MIT](https://spdx.org/licenses/MIT.html)|permissive|✓|
 |[fastjsonschema (2.22.2)](https://pypi.org/project/fastjsonschema/)|python|prod|[pyproject.toml](pyproject.toml)|[BSD-3-Clause](https://spdx.org/licenses/BSD-3-Clause.html)|permissive|✓|
-|[genai-prices (0.1.10)](https://pypi.org/project/genai-prices/)|python|prod|[pyproject.toml](pyproject.toml)|[MIT](https://spdx.org/licenses/MIT.html)|permissive|✓|
+|[genai-prices (0.1.12)](https://pypi.org/project/genai-prices/)|python|prod|[pyproject.toml](pyproject.toml)|[MIT](https://spdx.org/licenses/MIT.html)|permissive|✓|
 |  └─ [annotated-types (0.8.0)](https://pypi.org/project/annotated-types/) (also: litellm, openai +1 more)|python|prod||[MIT](https://spdx.org/licenses/MIT.html)|permissive|✓|
 |  └─ [anyio (4.15.1)](https://pypi.org/project/anyio/) (also: litellm, openai +1 more)|python|prod||[MIT](https://spdx.org/licenses/MIT.html)|permissive|✓|
 |  └─ [h11 (0.16.0)](https://pypi.org/project/h11/) (also: litellm, openai +1 more)|python|prod||[MIT](https://spdx.org/licenses/MIT.html)|permissive|✓|
@@ -75,10 +75,10 @@
 |  └─ [numpy (2.5.4)](https://pypi.org/project/numpy/) (also: wtpsplit-lite)|python|prod||[0BSD](https://spdx.org/licenses/0BSD.html) AND [BSD-3-Clause](https://spdx.org/licenses/BSD-3-Clause.html) AND [CC0-1.0](https://spdx.org/licenses/CC0-1.0.html) AND [MIT](https://spdx.org/licenses/MIT.html) AND [Zlib](https://spdx.org/licenses/Zlib.html)|permissive|✓|
 |  └─ [protobuf (7.36.2)](https://pypi.org/project/protobuf/) (also: wtpsplit-lite)|python|prod||[BSD-3-Clause](https://spdx.org/licenses/BSD-3-Clause.html)|permissive|✓|
 |[openai (2.54.0)](https://pypi.org/project/openai/)|python|prod|[pyproject.toml](pyproject.toml)|[Apache-2.0](https://spdx.org/licenses/Apache-2.0.html)|permissive|✓|
-|[pillow (11.3.0)](https://pypi.org/project/pillow/)|python|prod|[pyproject.toml](pyproject.toml)|[MIT-CMU](https://spdx.org/licenses/MIT-CMU.html)|permissive|✓|
+|[pillow (12.3.0)](https://pypi.org/project/pillow/)|python|prod|[pyproject.toml](pyproject.toml)|[MIT-CMU](https://spdx.org/licenses/MIT-CMU.html)|permissive|✓|
 |[pydantic (2.14.1)](https://pypi.org/project/pydantic/)|python|prod|[pyproject.toml](pyproject.toml)|[MIT](https://spdx.org/licenses/MIT.html)|permissive|✓|
 |[python-dotenv (1.2.4)](https://pypi.org/project/python-dotenv/)|python|prod|[pyproject.toml](pyproject.toml)|[BSD-3-Clause](https://spdx.org/licenses/BSD-3-Clause.html)|permissive|✓|
-|[python-ulid (3.2.1)](https://pypi.org/project/python-ulid/)|python|prod|[pyproject.toml](pyproject.toml)|[MIT](https://spdx.org/licenses/MIT.html)|permissive|✓|
+|[python-ulid (4.0.1)](https://pypi.org/project/python-ulid/)|python|prod|[pyproject.toml](pyproject.toml)|[MIT](https://spdx.org/licenses/MIT.html)|permissive|✓|
 |[tenacity (9.2.1)](https://pypi.org/project/tenacity/)|python|prod|[pyproject.toml](pyproject.toml)|[Apache-2.0](https://spdx.org/licenses/Apache-2.0.html)|permissive|✓|
 |[wtpsplit-lite (0.2.0)](https://pypi.org/project/wtpsplit-lite/)|python|prod|[pyproject.toml](pyproject.toml)|[MIT](https://spdx.org/licenses/MIT.html)|permissive|✓|
 
