@@ -103,7 +103,7 @@ The example below extracts four concepts from a document with a decision model, 
 🔌 Supported Providers and Models
 -----------------------------------
 
-A decision model is identified in the same way as an LLM, in the format ``<provider>/<model_name>``. ContextGem supports the providers that LiteLLM serves through its Decisions API. With the pinned ``litellm`` version (1.105.0), these are:
+A decision model is identified in the same way as an LLM, in the format ``<provider>/<model_name>``. ContextGem supports the providers that LiteLLM serves through its Decisions API. With the pinned ``litellm`` version (1.105.1), these are:
 
 .. list-table:: Providers of decision models
    :header-rows: 1
@@ -646,7 +646,7 @@ These were single tests on one short document: they show that the effect exists,
 📏 Limits
 -----------
 
-**Limits of litellm.** ``litellm`` accepts a request only within its limits. With the pinned ``litellm`` version (1.105.0), these are:
+**Limits of litellm.** ``litellm`` accepts a request only within its limits. With the pinned ``litellm`` version (1.105.1), these are:
 
 .. list-table::
    :header-rows: 1
