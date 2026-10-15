@@ -1,0 +1,116 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 832 284" width="832" height="284" role="img" aria-labelledby="title desc" font-family="ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Consolas, 'Liberation Mono', 'DejaVu Sans Mono', monospace" font-size="13">
+  <title id="title">ContextGem - a model group sends each question to the model that suits it</title>
+  <desc id="desc">A model group with an LLM and a decision model, and three concepts of a service agreement. "Notice period", a string concept, goes to the LLM, which writes the answer: "30 days". "Termination for convenience", a Boolean concept, and "Notice form", a single-label (multi_class) label concept, go to the decision model, which gives the probability of each possible answer: True with a probability of 0.98, above the decision threshold of 0.5, and the label "Written" with a probability of 1.00, the most probable of its labels.</desc>
+
+  <!-- The run, played once: each question travels to its model, then the
+       answers come back, the probabilities growing to their values. The
+       drawing as it stands is where the run ends: each part fades or grows
+       in from a hidden first frame, the traces along the routes show only
+       while they play, and without motion it is all there -->
+  <style>
+    .in { animation: show 0.35s ease-out backwards; }
+    @keyframes show { from { opacity: 0; } }
+    .grow { transform-box: fill-box; transform-origin: left center; animation: grow 0.7s cubic-bezier(0.2, 0.7, 0.2, 1) backwards; }
+    @keyframes grow { from { transform: scaleX(0); } }
+    .trace { opacity: 0; stroke-dasharray: 1; animation: trace 0.7s ease-in-out; }
+    @keyframes trace {
+      0% { opacity: 1; stroke-dashoffset: 1; }
+      60% { opacity: 1; stroke-dashoffset: 0; }
+      100% { opacity: 0; stroke-dashoffset: 0; }
+    }
+    .lit { opacity: 0; animation: lit 0.8s ease-out; }
+    @keyframes lit { 0%, 100% { opacity: 0; } 30% { opacity: 1; } }
+    @media (prefers-reduced-motion: reduce) { * { animation: none !important; } }
+  </style>
+
+  <!-- A ground of its own, so that the picture reads the same in the light
+       and the dark theme: a window, with what it shows on its tab -->
+  <path d="M0.5 28.5H831.5V283.5H0.5Z" fill="#111113" stroke="#2c2c30"/>
+  <path d="M0.5 29V0.5H119.5V29" fill="#111113" stroke="#2c2c30"/>
+  <path d="M1 28.5H119" stroke="#111113"/>
+  <text x="16" y="18.5" font-size="11" fill="#9ca3af">model group</text>
+
+  <!-- The columns -->
+  <g font-size="10.5" letter-spacing="1.4" fill="#6b7280">
+    <text x="28" y="62">YOU DEFINE</text>
+    <text x="332" y="62">MODELS</text>
+    <text x="588" y="62">YOU GET</text>
+  </g>
+
+  <!-- The questions: an open one, and two closed ones -->
+  <g fill="#f3f4f6">
+    <text x="28" y="104">Notice period</text>
+    <text x="28" y="180">Termination for convenience</text>
+    <text x="28" y="240">Notice form</text>
+  </g>
+  <g font-size="11" fill="#6b7280">
+    <text x="28" y="122">StringConcept</text>
+    <text x="28" y="198">BooleanConcept</text>
+    <text x="28" y="258">LabelConcept · multi_class</text>
+  </g>
+
+  <!-- The routes: each question to its model, and each answer back. A
+       route shows when its trace has run along it, so that none leads to a
+       model or an answer before the run reaches it -->
+  <g fill="none" stroke="#ffffff" stroke-opacity="0.2">
+    <path class="in" style="animation-delay: 0.6s" d="M256 99.5H332"/>
+    <path class="in" style="animation-delay: 0.8s" d="M256 175.5H300.5V205.5H332"/>
+    <path class="in" style="animation-delay: 1s" d="M256 235.5H300.5V205.5"/>
+    <path class="in" style="animation-delay: 1.5s" d="M524 99.5H576"/>
+    <path class="in" style="animation-delay: 1.75s" d="M524 205.5H552.5V175.5H576"/>
+    <path class="in" style="animation-delay: 1.95s" d="M552.5 205.5V235.5H576"/>
+  </g>
+
+  <!-- The models: an LLM writes the answer, a decision model scores each
+       possible answer -->
+  <g fill="none" stroke="#ffffff" stroke-opacity="0.2">
+    <path d="M332.5 75.5H523.5V123.5H332.5Z"/>
+    <path d="M332.5 181.5H523.5V229.5H332.5Z"/>
+  </g>
+  <g transform="translate(344 84) scale(2)" shape-rendering="crispEdges"><path fill="#6b7280" d="M1 1h14v1h-14zM0 2h1v1h-1zM15 2h1v1h-1zM0 3h1v1h-1zM2 3h11v1h-11zM15 3h1v1h-1zM0 4h1v1h-1zM15 4h1v1h-1zM0 5h1v1h-1zM2 5h9v1h-9zM15 5h1v1h-1zM0 6h1v1h-1zM15 6h1v1h-1zM0 7h1v1h-1zM15 7h1v1h-1zM0 8h1v1h-1zM15 8h1v1h-1zM0 9h1v1h-1zM15 9h1v1h-1zM1 10h3v1h-3zM6 10h9v1h-9zM3 11h1v1h-1zM5 11h1v1h-1zM3 12h2v1h-2zM3 13h1v1h-1z"/><path fill="#9ca3af" d="M10 6h1v1h-1zM2 7h7v1h-7zM10 7h1v1h-1zM10 8h1v1h-1z"/></g>
+  <g transform="translate(344 190) scale(2)" shape-rendering="crispEdges"><path fill="#6b7280" d="M0 5h1v1h-1zM5 5h11v1h-11zM6 10h4v1h-4zM6 11h4v1h-4zM6 12h4v1h-4zM11 12h4v1h-4zM6 13h4v1h-4zM11 13h4v1h-4zM6 14h4v1h-4zM11 14h4v1h-4zM0 15h16v1h-16z"/><path fill="#9ca3af" d="M2 1h3v1h-3zM1 2h4v1h-4zM1 3h4v1h-4zM1 4h4v1h-4zM1 5h4v1h-4zM1 6h4v1h-4zM1 7h4v1h-4zM1 8h4v1h-4zM1 9h4v1h-4zM1 10h4v1h-4zM1 11h4v1h-4zM1 12h4v1h-4zM1 13h4v1h-4zM1 14h4v1h-4z"/><path fill="#9ca3af" d="M1 1h1v1h-1z"/></g>
+  <g fill="#f3f4f6">
+    <text x="388" y="96">LLM</text>
+    <text x="388" y="202">Decision model</text>
+  </g>
+  <g font-size="11" fill="#6b7280">
+    <text x="388" y="113">writes the answer</text>
+    <text x="388" y="219">scores each answer</text>
+  </g>
+
+  <!-- The traces of the run -->
+  <g fill="none" stroke="#38bdf8" stroke-width="1.5">
+    <path class="trace" pathLength="1" style="animation-delay: 0.3s" d="M256 99.5H332"/>
+    <path class="trace" pathLength="1" style="animation-delay: 0.5s" d="M256 175.5H300.5V205.5H332"/>
+    <path class="trace" pathLength="1" style="animation-delay: 0.7s" d="M256 235.5H300.5V205.5H332"/>
+    <path class="lit" style="animation-delay: 0.75s" stroke-width="1" d="M332.5 75.5H523.5V123.5H332.5Z"/>
+    <path class="lit" style="animation-delay: 1s" stroke-width="1" d="M332.5 181.5H523.5V229.5H332.5Z"/>
+    <path class="trace" pathLength="1" style="animation-delay: 1.2s" d="M524 99.5H576"/>
+    <path class="trace" pathLength="1" style="animation-delay: 1.45s" d="M524 205.5H552.5V175.5H576"/>
+    <path class="trace" pathLength="1" style="animation-delay: 1.65s" d="M524 205.5H552.5V235.5H576"/>
+  </g>
+
+  <!-- What comes back: the text that the LLM wrote, and for each closed
+       question the answer that the decision model gave, with its
+       probability. The decision threshold, 0.5 by default, decides a yes/no
+       question; of the labels of a single-label (multi_class) concept, the
+       most probable is taken, whatever its probability. Each bar comes with
+       its answer, and grows past the mark set before it -->
+  <text class="in" style="animation-delay: 1.65s" x="588" y="104" fill="#f3f4f6">"30 days"</text>
+
+  <g class="in" style="animation-delay: 1.9s">
+    <text x="588" y="180" fill="#f3f4f6">True</text>
+    <rect x="672" y="174" width="100" height="3" fill="#ffffff" fill-opacity="0.12"/>
+    <path d="M722.5 169V182" stroke="#ffffff" stroke-opacity="0.5"/>
+    <text x="722.5" y="196" font-size="10" fill="#6b7280" text-anchor="middle">threshold</text>
+  </g>
+  <rect class="grow" style="animation-delay: 2s" x="672" y="174" width="98" height="3" fill="#38bdf8"/>
+  <text class="in" style="animation-delay: 2.5s" x="784" y="180" fill="#9ca3af">0.98</text>
+
+  <g class="in" style="animation-delay: 2.1s">
+    <text x="588" y="240" fill="#f3f4f6">"Written"</text>
+    <rect x="672" y="234" width="100" height="3" fill="#ffffff" fill-opacity="0.12"/>
+  </g>
+  <rect class="grow" style="animation-delay: 2.2s" x="672" y="234" width="100" height="3" fill="#38bdf8"/>
+  <text class="in" style="animation-delay: 2.7s" x="784" y="240" fill="#9ca3af">1.00</text>
+</svg>

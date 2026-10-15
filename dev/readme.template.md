@@ -48,14 +48,14 @@ Reliable extraction from documents usually means writing prompts, designing vali
 <!-- markdownlint-disable MD033 -->
 <table>
 <tr>
-<td width="33%"><strong>No prompts to write</strong><br>Prompts are generated from your descriptions of what to extract.</td>
-<td width="33%"><strong>Typed, validated output</strong><br>Text, numbers, dates, booleans, labels, ratings and JSON objects.</td>
-<td width="34%"><strong>Every fact traced to its source</strong><br>Items map back to their paragraphs or sentences, with the reasoning on request.</td>
+<td width="33%" valign="top"><img src="assets/icons/prompts.svg" alt="" width="32" height="32"><br><strong>No prompts to write</strong><br>Prompts are generated from your descriptions of what to extract.</td>
+<td width="33%" valign="top"><img src="assets/icons/typed-output.svg" alt="" width="32" height="32"><br><strong>Typed, validated output</strong><br>Text, numbers, dates, booleans, labels, ratings and JSON objects.</td>
+<td width="34%" valign="top"><img src="assets/icons/source.svg" alt="" width="32" height="32"><br><strong>Every fact traced to its source</strong><br>Items map back to their paragraphs or sentences, with the reasoning on request.</td>
 </tr>
 <tr>
-<td><strong>Nested context</strong><br>Aspects, sub-aspects and concepts focus the model on the text that matters.</td>
-<td><strong>The right model for each question</strong><br>An LLM where it takes reasoning, a decision model where a fast, low-cost answer is enough.</td>
-<td><strong>Answers with probabilities</strong><br>A decision model gives the probability of each possible answer, and you set the threshold.</td>
+<td valign="top"><img src="assets/icons/nested-context.svg" alt="" width="32" height="32"><br><strong>Nested context</strong><br>Aspects, sub-aspects and concepts focus the model on the text that matters.</td>
+<td valign="top"><img src="assets/icons/routing.svg" alt="" width="32" height="32"><br><strong>The right model for each question</strong><br>An LLM where it takes reasoning, a decision model where a fast, low-cost answer is enough.</td>
+<td valign="top"><img src="assets/icons/decision-model.svg" alt="" width="32" height="32"><br><strong>Answers with probabilities</strong><br>A decision model gives the probability of each possible answer, and you set the threshold.</td>
 </tr>
 </table>
 <!-- markdownlint-enable MD033 -->
@@ -66,7 +66,15 @@ Read more on the [motivation](https://contextgem.shcherbak.ai/motivation/) behin
 
 ContextGem works with two kinds of models. You describe what to extract in the same way for both, and each aspect and concept goes to the model that suits it.
 
-| | LLM | Decision model |
+<!-- markdownlint-disable MD033 -->
+<p align="center">
+  <img src="docs/source/_static/contextgem_readme_models.svg" alt="A model group with an LLM and a decision model. The open question, the notice period, goes to the LLM, which writes the answer: 30 days. Two closed questions go to the decision model, which gives the probability of each possible answer: termination for convenience is True with 0.98, above the decision threshold, and the notice form is Written with 1.00, the most probable of its labels." width="832"><br>
+  <sup>An illustrative service agreement: the open question goes to the LLM, the closed ones to the decision model.</sup>
+</p>
+<!-- markdownlint-enable MD033 -->
+
+<!-- markdownlint-disable MD033 -->
+| | <img src="assets/icons/llm.svg" alt="" width="32" height="32"><br>LLM | <img src="assets/icons/decision-model.svg" alt="" width="32" height="32"><br>Decision model |
 |---|---|---|
 | **How it answers** | Writes the answer, which ContextGem validates into typed items | Gives the probability of each possible answer, and writes no text |
 | **What it extracts** | Aspects and every type of concept, from text and images | Aspects, and Boolean, label and rating concepts, from text |
@@ -74,6 +82,7 @@ ContextGem works with two kinds of models. You describe what to extract in the s
 | **Use it for** | Open values, and answers that take reasoning | Closed questions in volume, where a fast, low-cost answer is enough |
 | **Models** | Any cloud or local LLM through [LiteLLM](https://github.com/BerriAI/litellm): OpenAI, Anthropic, Google, Azure OpenAI, xAI, Ollama, LM Studio and more | TypeSafe Jev, OpenAI Decisions API, Microsoft Foundry and more, cloud or local |
 | **Read more** | [Supported LLMs](https://contextgem.shcherbak.ai/llms/supported_llms/), [configuration](https://contextgem.shcherbak.ai/llms/llm_config/), [extraction methods](https://contextgem.shcherbak.ai/llms/llm_extraction_methods/) | [Decision models](https://contextgem.shcherbak.ai/decision_models/decision_models/) |
+<!-- markdownlint-enable MD033 -->
 
 > **Choosing a model.** ContextGem is tested with hosted LLMs such as `gpt-6-luna`. A smaller LLM, such as many that run locally, may not follow the detailed extraction instructions: check it on a sample of your documents, and see the [troubleshooting guide](https://contextgem.shcherbak.ai/optimizations/optimization_small_llm_troubleshooting/) if it falls short. Before you give questions to a decision model, compare it with an LLM on a sample of your documents: see [when to use a decision model](https://contextgem.shcherbak.ai/decision_models/decision_models/#when-to-use-a-decision-model).
 
@@ -94,6 +103,13 @@ An LLM extracts aspects and values of any type. Below, it extracts two things fr
 ```python
 {{QUICKSTART_LLM}}
 ```
+
+<!-- markdownlint-disable MD033 -->
+<p align="center">
+  <img src="docs/source/_static/contextgem_readme_aspects_concepts.svg" alt="What the example above extracts from its contract. The aspect Payment terms gives back the paragraph on payments as it is written in the document. The concept Anomalies gives two new values, each with a justification and the sentence it was found in: the purple elephant that danced on the moon, and the time-traveling dinosaurs that will review the deliverables." width="832"><br>
+  <sup>What the example above extracts: an aspect gives back the document's own text, a concept gives new values with their sources.</sup>
+</p>
+<!-- markdownlint-enable MD033 -->
 
 ### Decide with a decision model
 
@@ -134,9 +150,11 @@ The trade-off: ContextGem does not query across documents or search a corpus. Fo
 
 Full documentation: **[contextgem.shcherbak.ai](https://contextgem.shcherbak.ai)**
 
-| Get started | Define what to extract | Run models | Optimize |
-|-------------|------------------------|------------|----------|
+<!-- markdownlint-disable MD033 -->
+| <img src="assets/icons/get-started.svg" alt="" width="32" height="32"><br>Get started | <img src="assets/icons/nested-context.svg" alt="" width="32" height="32"><br>Define what to extract | <img src="assets/icons/models.svg" alt="" width="32" height="32"><br>Run models | <img src="assets/icons/optimize.svg" alt="" width="32" height="32"><br>Optimize |
+|:------------|:-----------------------|:-----------|:---------|
 | [Installation](https://contextgem.shcherbak.ai/installation/)<br>[Quickstart](https://contextgem.shcherbak.ai/quickstart/)<br>[Advanced usage](https://contextgem.shcherbak.ai/advanced_usage/)<br>[How it works](https://contextgem.shcherbak.ai/how_it_works/)<br>[Migrating to v1.0](https://contextgem.shcherbak.ai/migration_v1/) | [Documents](https://contextgem.shcherbak.ai/documents/document_config/)<br>[Aspects](https://contextgem.shcherbak.ai/aspects/aspects/)<br>[Concepts](https://contextgem.shcherbak.ai/concepts/supported_concepts/)<br>[Extraction pipelines](https://contextgem.shcherbak.ai/pipelines/extraction_pipelines/)<br>[Serialization](https://contextgem.shcherbak.ai/serialization/) | [Supported LLMs](https://contextgem.shcherbak.ai/llms/supported_llms/)<br>[LLM configuration](https://contextgem.shcherbak.ai/llms/llm_config/)<br>[Extraction methods](https://contextgem.shcherbak.ai/llms/llm_extraction_methods/)<br>[Decision models](https://contextgem.shcherbak.ai/decision_models/decision_models/)<br>[Chat with tools](https://contextgem.shcherbak.ai/llms/chat_with_tools/) | [Accuracy](https://contextgem.shcherbak.ai/optimizations/optimization_accuracy/)<br>[Speed](https://contextgem.shcherbak.ai/optimizations/optimization_speed/)<br>[Cost](https://contextgem.shcherbak.ai/optimizations/optimization_cost/)<br>[Long documents](https://contextgem.shcherbak.ai/optimizations/optimization_long_docs/)<br>[Choosing the right LLM(s)](https://contextgem.shcherbak.ai/optimizations/optimization_choosing_llm/) |
+<!-- markdownlint-enable MD033 -->
 
 For LLMs and coding agents, [llms.txt](https://contextgem.shcherbak.ai/llms.txt) indexes the documentation, with a Markdown copy of each page.
 
@@ -144,10 +162,18 @@ For visual architecture maps and natural language Q&A on the codebase, see [Deep
 
 ## Community
 
-- **Need help or want to discuss?** Start a thread in [GitHub Discussions](https://github.com/shcherbak-ai/contextgem/discussions/new/).
-- **Found a bug or have a feature request?** [Open an issue](https://github.com/shcherbak-ai/contextgem/issues/new).
-- **Want to contribute?** Contributions are welcome, from a fixed typo to a new feature: see the [Contributor Guidelines](CONTRIBUTING.md).
-- **Security.** The project is scanned with [CodeQL](https://codeql.github.com/) and [Bandit](https://github.com/PyCQA/bandit), and with [Snyk](https://snyk.io) as needed: see the [security policy](SECURITY.md).
+<!-- markdownlint-disable MD033 -->
+<table>
+<tr>
+<td width="50%" valign="top"><strong>Need help or want to discuss?</strong><br>Start a thread in <a href="https://github.com/shcherbak-ai/contextgem/discussions/new/">GitHub Discussions</a>.</td>
+<td width="50%" valign="top"><strong>Found a bug or have a feature request?</strong><br><a href="https://github.com/shcherbak-ai/contextgem/issues/new">Open an issue</a>.</td>
+</tr>
+<tr>
+<td valign="top"><strong>Want to contribute?</strong><br>Contributions are welcome, from a fixed typo to a new feature: see the <a href="CONTRIBUTING.md">Contributor Guidelines</a>.</td>
+<td valign="top"><strong>Security</strong><br>The project is scanned with <a href="https://codeql.github.com/">CodeQL</a> and <a href="https://github.com/PyCQA/bandit">Bandit</a>, and with <a href="https://snyk.io">Snyk</a> as needed: see the <a href="SECURITY.md">security policy</a>.</td>
+</tr>
+</table>
+<!-- markdownlint-enable MD033 -->
 
 ## Acknowledgements
 

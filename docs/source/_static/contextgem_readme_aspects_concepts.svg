@@ -1,0 +1,100 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 832 292" width="832" height="292" role="img" aria-labelledby="title desc" font-family="ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Consolas, 'Liberation Mono', 'DejaVu Sans Mono', monospace" font-size="13">
+  <title id="title">ContextGem - an aspect gives back the text of the document, a concept gives new values with their sources</title>
+  <desc id="desc">What the quick start example extracts from its consultancy agreement. The aspect "Payment terms" gives back a paragraph of the document as it is written: "The Customer shall pay the Supplier within 30 calendar days of receiving an invoice...". The concept "Anomalies" gives two new values, each with a justification and the sentence it was found in: the statement that a purple elephant danced on the moon, and the statement that time-traveling dinosaurs will review the deliverables.</desc>
+
+  <!-- The run, played once: the aspect's paragraph is marked and comes back
+       as it is written, then the concept's two sentences are marked and
+       their values come back. The drawing as it stands is where the run
+       ends: each part fades or grows in from a hidden first frame, the
+       traces along the routes show only while they play, and without motion
+       it is all there -->
+  <style>
+    .in { animation: show 0.35s ease-out backwards; }
+    @keyframes show { from { opacity: 0; } }
+    .grow { transform-box: fill-box; transform-origin: left center; animation: grow 0.5s cubic-bezier(0.2, 0.7, 0.2, 1) backwards; }
+    .rise { transform-box: fill-box; transform-origin: center top; animation: rise 0.4s cubic-bezier(0.2, 0.7, 0.2, 1) backwards; }
+    @keyframes grow { from { transform: scaleX(0); } }
+    .light { animation: light 0.4s ease-out backwards; }
+    @keyframes light { from { fill: #6b7280; } }
+    @keyframes rise { from { transform: scaleY(0); } }
+    .trace { opacity: 0; stroke-dasharray: 1; animation: trace 0.6s ease-in-out; }
+    @keyframes trace {
+      0% { opacity: 1; stroke-dashoffset: 1; }
+      60% { opacity: 1; stroke-dashoffset: 0; }
+      100% { opacity: 0; stroke-dashoffset: 0; }
+    }
+    @media (prefers-reduced-motion: reduce) { * { animation: none !important; } }
+  </style>
+
+  <!-- A ground of its own, so that the picture reads the same in the light
+       and the dark theme: a window, with the call on its tab -->
+  <path d="M0.5 28.5H831.5V291.5H0.5Z" fill="#111113" stroke="#2c2c30"/>
+  <path d="M0.5 29V0.5H152.5V29" fill="#111113" stroke="#2c2c30"/>
+  <path d="M1 28.5H152" stroke="#111113"/>
+  <text x="16" y="18.5" font-size="11" fill="#9ca3af">extract_all(doc)</text>
+
+  <!-- The columns -->
+  <g font-size="10.5" letter-spacing="1.4" fill="#6b7280">
+    <text x="28" y="62">THE DOCUMENT</text>
+    <text x="392" y="62">YOU GET</text>
+  </g>
+
+  <!-- The document of the example: a sheet, a paragraph to a line -->
+  <path d="M28.5 78.5H322.5L336.5 92.5V272.5H28.5Z" fill="none" stroke="#ffffff" stroke-opacity="0.2"/>
+  <path d="M322.5 78.5V92.5H336.5" fill="none" stroke="#ffffff" stroke-opacity="0.2"/>
+  <g font-size="12" fill="#6b7280">
+    <text x="48" y="102">Consultancy Agreement</text>
+    <text x="48" y="124">This agreement between Company A…</text>
+    <text x="48" y="146">The term of the agreement is 1 year…</text>
+    <text x="48" y="168">The Supplier shall provide consultancy…</text>
+    <text x="48" y="256">This agreement is governed by the laws…</text>
+  </g>
+
+  <!-- What the aspect takes: the paragraph on payments, whole, marked by a
+       bar at its side. What the concept takes: a sentence for each value,
+       underlined, the text set to the width of its line. A marked line
+       lights up from the grey of the others -->
+  <g font-size="12" fill="#e5e7eb">
+    <text class="light" style="animation-delay: 0.3s" x="48" y="190">The Customer shall pay the Supplier…</text>
+    <text class="light" style="animation-delay: 1.5s" x="48" y="212" textLength="273">The purple elephant danced gracefully…</text>
+    <text class="light" style="animation-delay: 1.7s" x="48" y="234" textLength="266">Time-traveling dinosaurs will review…</text>
+  </g>
+  <rect class="rise" style="animation-delay: 0.3s" x="38" y="178" width="2" height="16" fill="#38bdf8"/>
+  <rect class="grow" style="animation-delay: 1.5s" x="48" y="216" width="273" height="1.5" fill="#38bdf8"/>
+  <rect class="grow" style="animation-delay: 1.7s" x="48" y="238" width="266" height="1.5" fill="#38bdf8"/>
+
+  <!-- The routes from each marked line to what it gives. A route shows
+       when its trace has run along it -->
+  <g fill="none" stroke="#ffffff" stroke-opacity="0.2">
+    <path class="in" style="animation-delay: 0.85s" d="M344 186.5H362.5V97.5H384"/>
+    <path class="in" style="animation-delay: 2.05s" d="M344 208.5H374.5V193.5H384"/>
+    <path class="in" style="animation-delay: 2.25s" d="M344 230.5H384"/>
+  </g>
+  <g fill="none" stroke="#38bdf8" stroke-width="1.5">
+    <path class="trace" pathLength="1" style="animation-delay: 0.6s" d="M344 186.5H362.5V97.5H384"/>
+    <path class="trace" pathLength="1" style="animation-delay: 1.8s" d="M344 208.5H374.5V193.5H384"/>
+    <path class="trace" pathLength="1" style="animation-delay: 2s" d="M344 230.5H384"/>
+  </g>
+
+  <!-- The aspect: the paragraph back, as it is written in the document -->
+  <g class="in" style="animation-delay: 1s">
+    <text x="392" y="102"><tspan font-size="10.5" letter-spacing="1.4" fill="#6b7280">ASPECT</tspan><tspan dx="12" fill="#f3f4f6">Payment terms</tspan><tspan dx="12" font-size="11" fill="#6b7280">the document's own text</tspan></text>
+    <rect x="392" y="113" width="2" height="34" fill="#38bdf8"/>
+    <g font-size="12" fill="#d1d5db">
+      <text x="406" y="125">The Customer shall pay the Supplier within 30 calendar</text>
+      <text x="406" y="143">days of receiving an invoice...</text>
+    </g>
+  </g>
+
+  <!-- The concept: new values, each with its justification, from the
+       sentences marked in the document -->
+  <g class="in" style="animation-delay: 2.2s">
+    <text x="392" y="174"><tspan font-size="10.5" letter-spacing="1.4" fill="#6b7280">CONCEPT</tspan><tspan dx="12" fill="#f3f4f6">Anomalies</tspan><tspan dx="12" font-size="11" fill="#6b7280">new values, with their sources</tspan></text>
+    <text x="392" y="198" font-size="12" fill="#f3f4f6">"The statement that a purple elephant danced…"</text>
+    <text x="392" y="214" font-size="11" fill="#9ca3af"><tspan fill="#6b7280">justification:</tspan> It is an implausible, fantastical…</text>
+  </g>
+  <g class="in" style="animation-delay: 2.4s">
+    <text x="392" y="235" font-size="12" fill="#f3f4f6">"The statement that time-traveling dinosaurs…"</text>
+    <text x="392" y="251" font-size="11" fill="#9ca3af"><tspan fill="#6b7280">justification:</tspan> Time-traveling dinosaurs are…</text>
+  </g>
+</svg>
