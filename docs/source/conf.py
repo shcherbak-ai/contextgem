@@ -93,10 +93,10 @@ extensions = [
 # models and coding agents, at the root of the site, with a Markdown copy of
 # every page beside its HTML one. A page's line in it is its description.
 llms_txt_description = (
-    "ContextGem is a free, open-source LLM framework for extracting structured "
-    "data and insights from documents: you describe what to extract as aspects "
-    "and concepts, and ContextGem handles the prompts, the data models, the "
-    "source references and the justifications."
+    "ContextGem is a free, open-source framework for extracting structured data "
+    "and insights from documents with LLMs and decision models: you describe "
+    "what to extract as aspects and concepts, and ContextGem handles the "
+    "prompts, the data models, the source references and the justifications."
 )
 llms_txt_nested_enabled = False  # one index, at the root of the site
 # Full URLs for the links in llms.txt and in the Markdown copies, so that they

@@ -35,7 +35,7 @@
 >
 > **Upgrading from 0.x?** Some classes and parameters are renamed or removed, some defaults have changed, and Python 3.10 is no longer supported. Follow the [migration guide](https://contextgem.shcherbak.ai/migration_v1/), or point a coding agent at [llms.txt](https://contextgem.shcherbak.ai/llms.txt), the index of the documentation.
 
-ContextGem is a free, open-source LLM framework that makes it radically easier to extract structured data and insights from documents — with minimal code. You describe *what* to extract, and ContextGem handles *how*: the prompts, the data models, the source references and the justifications.
+ContextGem is a free, open-source framework that makes it radically easier to extract structured data and insights from documents with LLMs and decision models — with minimal code. You describe *what* to extract, and ContextGem handles *how*: the prompts, the data models, the source references and the justifications.
 
 <!-- markdownlint-disable MD033 -->
 <p align="center"><img src="assets/contextgem-separator.svg" alt="" width="456" height="26"></p>
@@ -263,6 +263,10 @@ Read more on [how ContextGem works](https://contextgem.shcherbak.ai/how_it_works
 ContextGem is built for in-depth analysis of individual documents. There is no search step that picks the chunks that look relevant, as in RAG: the model reads every paragraph of the text it extracts from, all at once or in [batches of paragraphs](https://contextgem.shcherbak.ai/optimizations/optimization_long_docs/) of a size you set, so no fact is missed because a search ranked its passage low. This avoids the retrieval inconsistencies that make RAG [struggle with complex concepts and nuanced insights](https://www.linkedin.com/pulse/raging-contracts-pitfalls-rag-contract-review-shcherbak-ai-ptg3f).
 
 The trade-off: ContextGem does not query across documents or search a corpus. For these, RAG frameworks (e.g. LlamaIndex, Haystack) remain more appropriate.
+
+## How it is tested
+
+Besides tests that replay recorded responses of real models, [Hypothesis](https://hypothesis.readthedocs.io/) property tests run whole extractions on generated model outputs, including what a model should never return: IDs that are not in the prompt, values of the wrong type or not valid JSON, and responses cut off at the max output tokens. They check that such an output is rejected and retried, or reported with an error or a warning, and that it never yields extracted items. A change that can affect the quality of the extraction is measured on evaluation cases, i.e. complex documents with reference answers, against a recorded baseline of quality and cost: see [Testing](CONTRIBUTING.md#-testing).
 
 ## Documentation
 

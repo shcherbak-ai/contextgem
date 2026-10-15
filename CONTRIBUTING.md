@@ -8,7 +8,7 @@ Please read our [Code of Conduct](CODE_OF_CONDUCT.md) to understand the expectat
 
 ## ✍️ Contributor Agreement
 
-Before your contribution can be accepted, you must sign our [Contributor Agreement](/.github/CONTRIBUTOR_AGREEMENT.md). This is a legal document that grants us the necessary rights to use your contribution. The agreement is based on the [Oracle Contributor Agreement](http://www.oracle.com/technetwork/oca-405177.pdf) and this requirement follows [OpenSSF Best Practices](https://www.bestpractices.dev/en) for silver-level criteria (section "Project oversight").
+Before your contribution can be accepted, you must sign our [Contributor Agreement](/.github/CONTRIBUTOR_AGREEMENT.md). This is a legal document that grants us the necessary rights to use your contribution. The agreement is based on the [Oracle Contributor Agreement](https://www.oracle.com/technetwork/oca-405177.pdf) and this requirement follows [OpenSSF Best Practices](https://www.bestpractices.dev/en) for silver-level criteria (section "Project oversight").
 
 To sign the agreement:
 
@@ -144,12 +144,10 @@ contextgem/
 
 **🎯 Quick Start for Your Contribution:**
 
-- **Adding new functionality?** → Implement in `contextgem/internal/` (core logic). Then expose via a thin public facade in `contextgem/public/` using the registry.
-- **Writing tests?** → Feature/integration tests go to the module of the relevant feature area (`tests/test_<area>.py`, e.g. `tests/test_extraction.py::TestExtraction`). Property tests for pure helpers go to `tests/test_properties.py`, and property tests of the extraction, with stubbed model APIs, to `tests/test_extraction_properties.py`. Example-based unit tests for pure helpers go to `tests/test_units.py`.
-- **Updating docs?** → Edit files in `docs/source/` or `dev/`
+- **Adding new functionality?** → Implement it in `contextgem/internal/` (base classes, validation, serialization, typing). Then expose it through a thin, documented facade in `contextgem/public/` that inherits from the internal class and is registered with the `@_expose_in_registry` decorator, so that deserialization and instance creation return public types. Do not import public classes in internal modules: use the registry to resolve types.
+- **Writing tests?** → Most tests go to the module of the relevant feature area (`tests/test_<area>.py`, e.g. `tests/test_extraction.py::TestExtraction`). See [Testing](#-testing) for the others.
+- **Updating docs?** → Edit the pages in `docs/source/`, and the code they show in `dev/usage_examples/`
 - **Fixing README?** → Edit `dev/readme.template.md`
-
-> **💡 Note:** Implement functionality in `internal/` (base classes, validation, serialization, typing). Use `public/` to expose thin, documented facades that inherit from internal classes and are registered with `@_expose_in_registry` decorator to ensure deserialization and instance creation utils return public types. Do not import public classes in internal modules; use the registry for type resolution and publicization.
 
 ---
 
@@ -177,25 +175,26 @@ contextgem/
     - Include issue numbers when applicable (e.g., `bugfix/issue-42`)
     - Keep branch names lowercase
 
-2. **📝 Make your changes** following our code style guidelines.
+2. **📝 Make your changes** following the conventions in [AGENTS.md](AGENTS.md#coding-conventions). Write docstrings in reStructuredText (`:param:`, `:type:`, `:returns:`, `:rtype:`, ...): the API reference of the documentation is built from them.
 
-    We use several tools to maintain code quality:
+    The pre-commit hooks check and format your code when you commit:
 
-    - **Ruff**: For code formatting and linting
-    - **ty**: For static type checking
-    - **Bandit**: For Python security vulnerability scanning
-    - **Deptry**: For dependency health checks (unused, missing, transitive dependencies)
-    - **Interrogate**: For docstring coverage checking
-    - **markdownlint-cli2**: For Markdown style and consistency
-    - **Twine**: For sdist/wheel metadata validation (via the `package-check` pre-commit hook, which runs `uv build` + `twine check`)
-    - **uv lock check**: To verify that `uv.lock` is in sync with `pyproject.toml`
-    - **Commitizen**: For the format of commit messages (see below)
-    - **licenseal**: For license compatibility of the dependencies (in CI)
-    - **add-file-headers**: Adds the license header (two SPDX lines) to a Python file that has none, except a usage example
-    - **claude hooks tests**: The tests of the Claude Code hook in `.claude/hooks/` and of the settings that start it, with `node --test`
-    - **Pre-commit hooks**: To automatically check and format code before commits, together with checks for trailing whitespace and the ends of files (except in the files whose bytes go into the requests recorded in the VCR cassettes: the package, the tests, the usage examples and the evaluation cases)
+    - **Ruff**: formatting and linting
+    - **ty**: static type checking
+    - **Bandit**: security issues in the Python code
+    - **Interrogate**: docstring coverage, which must stay at 100%: every module, class and function has a docstring
+    - **Deptry**: the declared dependencies against the imported ones (unused, missing, transitive)
+    - **markdownlint-cli2**: Markdown style
+    - **add-file-headers**: adds the license header (two SPDX lines) to a Python file that has none, except a usage example
+    - **docs-page-description**: each page of the documentation starts with a meta description (see [Documentation Structure](#-documentation-structure))
+    - **update-readme**: regenerates `README.md` from its template (see [Updating README.md](#-updating-readmemd))
+    - **package-check**: builds the package and validates its metadata (`uv build` + `twine check`)
+    - **uv lock check**: `uv.lock` is in sync with `pyproject.toml`
+    - **Commitizen**: the format of the commit message (see below)
+    - **claude hooks tests**: the tests of the Claude Code hook in `.claude/hooks/` and of the settings that start it, with `node --test`
+    - the checks of YAML and TOML files, trailing whitespace and the ends of files. The last two skip the files whose bytes go into the requests recorded in the VCR cassettes (the package, the tests, the usage examples and the evaluation cases) and the signed contributor agreements.
 
-    The pre-commit hooks check and format your code when you commit. They run the tools through `uv run`, at the versions locked in `uv.lock`, and CI runs the same hooks (`uv run pre-commit run --all-files`), so a check that passes locally passes in CI.
+    The hooks run the tools through `uv run`, at the versions locked in `uv.lock`, and CI runs the same hooks (`uv run pre-commit run --all-files`), so a check that passes locally passes in CI. CI also checks the license compatibility of the dependencies, with licenseal.
 
     - **If a hook modifies files** (e.g. Ruff formatting, the README): review the changes, add the modified files to the staging area, and commit again.
     - **If a hook reports a problem** (e.g. a Bandit finding or a type error): fix it, add the fixed files to the staging area, and commit again.
@@ -273,13 +272,15 @@ When submitting issues or feature requests, please use our GitHub issue template
 
 Each template will guide you through providing all the necessary information for your specific request.
 
+Do not report a security vulnerability in a public issue: report it privately, as described in [SECURITY.md](SECURITY.md).
+
 By submitting issues or feature requests to this project, you acknowledge that these suggestions may be implemented by the project maintainers without attribution or compensation.
 
 ## 🧪 Testing
 
 ### 🏗️ Current Test Structure
 
-Tests are split across the feature/integration test modules and two files for pure helpers:
+Tests are split across the feature/integration test modules, two files for pure helpers and the tests of the changelog:
 
 - **`tests/test_<area>.py`** (one `Test<Area>` class per module) — feature and integration tests, including all LLM-backed extraction tests that replay through VCR cassettes. Most contributions belong here, in the module of the relevant feature area:
 
@@ -302,8 +303,8 @@ Tests are split across the feature/integration test modules and two files for pu
   | `test_usage_examples.py` | Usage examples in the documentation, README and docstrings |
 
   All these test classes inherit from `BaseTest` in **`tests/base.py`**, which creates the test objects (documents, LLMs, images, etc.) once and shares them across the test classes. A test must leave the shared objects unchanged: a test that changes a document works on its copy (`document = self.document.clone()`). The usage and cost recorded by the shared LLMs are reset before each test. The tests do not depend on the order in which they are run.
-- **`tests/test_properties.py`** — Hypothesis-based property tests for pure utility helpers (text cleaning, JSON parsing, type-hint serialization, list chunking, etc.). No LLM, no shared test objects, no cassettes.
-- **`tests/test_units.py`** — example-based unit tests for pure utility helpers (tool-schema generation, type-system normalization, error branches). Pins specific input/output contracts and error messages that property tests aren't well suited to express. No LLM, no shared test objects, no cassettes.
+- **`tests/test_properties.py`** and **`tests/test_units.py`** — property-based and example-based tests of pure utility helpers (see [below](#-tests-for-pure-helpers-property-based-and-example-based)).
+- **`tests/test_changelog.py`** — checks that each version in `CHANGELOG.md` has its compare link, and that `CITATION.cff` gives the version of the package and the release date of that version in the changelog.
 
 ### 📚 Tests of the Usage Examples
 
@@ -334,7 +335,7 @@ When you add an example, add it to one of the lists: a test fails for an example
 
 ### 🎲 Tests for Pure Helpers (Property-Based and Example-Based)
 
-Pure utility helpers in `contextgem/internal/` (text cleaning, JSON parsing, type-hint serialization, tool-schema generation, etc.) are covered by two complementary test files. Both run without LLMs, shared test objects, or cassettes.
+Pure utility helpers in `contextgem/internal/` (text cleaning, JSON parsing, type-hint serialization, list chunking, tool-schema generation, etc.) are covered by two complementary test files. Both run without LLMs, shared test objects, or cassettes.
 
 **`tests/test_properties.py`** — property-based tests using [Hypothesis](https://hypothesis.readthedocs.io/). Property tests assert **invariants that must hold for any input** ("running the function twice yields the same result", "concatenating chunks recovers the original list", "serialize then deserialize round-trips") rather than checking hand-picked input/output pairs. Hypothesis generates many varied inputs and shrinks any failure to a minimal reproducer.
 
@@ -358,6 +359,14 @@ Stick with the feature/integration test modules (`tests/test_<area>.py`) for fea
 **`tests/test_extraction_properties.py`** tests the extraction itself with [Hypothesis](https://hypothesis.readthedocs.io/), with LLMs and with decision models, whose APIs are stubbed: no requests are sent, and no cassettes are needed. Unlike the tests for pure helpers, its tests use the shared test objects of `BaseTest` and run whole extractions. Hypothesis generates the documents, the aspects and concepts, and what the APIs return, including what a model is not supposed to return: IDs that are not in the prompt, values of another type than the concept has, numbers that are not valid JSON, probabilities that are not numbers within [0, 1], failed requests, and responses cut off at the max output tokens. Most of its tests check the outcome of the extraction against what these responses entail: the items extracted, or the error or the warning, and the calls and tokens recorded; the test of fallback chains also checks the cost. Others check invariants: a higher decision threshold never adds items, and any configuration of aspects and concepts round-trips through serialization. The tests run the retries for invalid data, the fallback models, the model groups and concurrency. Only hosted models are used, as where a model is served does not change how its responses are handled.
 
 When you change how the output of a model is read, how the calls are retried or passed to fallback models, or how usage is recorded, change the oracle of the test concerned with it (the `_get_expected_*` functions and `_simulate_extraction`), so that the tests state the new behavior. A failure is reported with the generated document, the response and the expected outcome, shrunk to a minimal example.
+
+---
+
+### 📊 Extraction Evaluation
+
+The tests check what the extraction does; **`dev/evals/`** measures how well it does it, and at what cost. It extracts evaluation cases, i.e. complex documents with reference answers (two contracts and the technical documentation of a microcontroller), with real models, and scores the aspects, the concepts and their references against the answers. A decision model, used as a judge, scores what cannot be compared exactly: narrative answers, justifications and text fields. Recorded baselines give the scores and the costs of the models at one state of the library. The harness is not a part of the package, and the tests do not run it.
+
+A change that can affect the quality of the extraction, e.g. to a prompt template, to how the output of a model is read, or to a default, is measured there: the version with the change and the version without it are run at the same time and compared. The harness sends live requests, which are paid for and need the API keys of the providers, so the maintainer runs it; say in your pull request if you think a change needs it. Its rules, commands and baselines are in [dev/evals/AGENTS.md](dev/evals/AGENTS.md).
 
 ---
 
@@ -452,7 +461,7 @@ Based on the test results and your changes, you'll fall into one of these four s
 
 5. **Run your new tests** - new cassettes will be created automatically
 
-6. **Verify redaction** - check that sensitive data is properly redacted in the new cassette files
+6. **Verify redaction** - check that sensitive data is properly redacted in the new cassette files (see [Environment Variable Security](#environment-variable-security) for what is redacted)
 
 7. **Test with dummy variables** - delete your `.env` file and run tests again to confirm LLM API tests pass by replaying from cassettes with dummy variables
 
@@ -551,10 +560,6 @@ The host of TypeSafe (`api.typesafe.ai`) is on the list of the hosts allowed whi
 
 > **💰 Cost Warning:** Recording cassettes for test methods that use live LLM API (non-local LLMs) uses your API keys and **will incur charges**. Scenario 4 (re-recording all cassettes) can be particularly expensive.
 >
-> **🔒 Security:** API keys are redacted in cassettes only where they are sent in the headers listed in `VCR_FILTER_HEADERS` (`tests/utils.py`), so always verify new cassette content.
->
-> **🧪 Testing:** After recording, delete your `.env` file and run tests again to ensure LLM API tests pass by replaying from cassettes with dummy variables.
->
 > **📼 Cassette names:** Cassette files are named `<TestClass>.<test name>.yaml`. If you move a test that calls LLM APIs to another test class, rename its cassette files accordingly (with `git mv`) in the same change. Otherwise, the test will not find its cassette and will record a new one.
 
 #### Network Egress Control
@@ -601,7 +606,6 @@ uv run python -c "import litellm; litellm.token_counter(model='gpt-6-luna', text
 Warnings generated during tests are often expected and by design. Many warnings are intentionally triggered to test error handling, edge cases, and warning systems. Common expected warnings include:
 
 - Model extraction errors and retries (testing error handling)
-- Concurrency optimization warnings (testing performance comparisons)
 - Deprecation warnings from dependencies
 
 **Key Point**: If tests **PASS** with warnings, this should **not** prevent you from submitting your PR. The test suite is designed to handle and expect these warnings as part of normal operation.
@@ -612,9 +616,9 @@ The tests run with the ContextGem logger at the `DEBUG` level, which is set in `
 
 ## 📚 Documentation
 
-- Update documentation for any changed functionality
-- Document new features
-- Use clear, concise language
+- Update the docstrings and the pages in `docs/source/` that describe the functionality you change or add, in the same pull request. Use clear, concise language.
+- The code shown on a page or in a docstring lives in `dev/usage_examples/` and is included with `literalinclude`, so that the tests run it (see [Tests of the Usage Examples](#-tests-of-the-usage-examples)). Add or change the example there, not in the page.
+- Update `dev/readme.template.md` and `PYPI.md` where the change affects them (see [Updating README.md](#-updating-readmemd)).
 
 ### 🏗️ Building the Documentation
 
@@ -697,7 +701,7 @@ Give images descriptive alt text, and check them at their README display size on
 - `assets/icons/` holds the README's icons: pixel art of 16 by 16 pixels, one path of rectangles per colour. Show an icon at twice that size (`width="32" height="32"`) with an empty `alt`, above the title of a card or of a table column, and never in a heading, where it changes the heading's anchor. Lines are in the gem's mid blue (`#0e74bc`), which reads on both GitHub themes, and the part that carries the meaning is in its light blue (`#38bdf8`). The palest blue (`#a5ebff`) and white disappear on a light ground: use them only for a single pixel of shine. An icon stands for one thing wherever it appears, such as `llm.svg` and `decision-model.svg` for the two kinds of models.
 - The figures (`contextgem_readme_extraction.svg`, `contextgem_readme_models.svg`, `contextgem_readme_aspects_concepts.svg`, `contextgem_readme_structure.svg`) are drawn on their own dark ground, so one file serves both GitHub themes. Draw a new one in their style: hairlines, monospace labels, grey, and the blue of the gem only for what is extracted.
 - Do not delete an image that a released version of the README loads from `https://contextgem.dev/_static/`.
-- `social/github-social-preview.svg` is the picture a link to the repository, or to a page of the documentation, is shown with on other sites: the share card of the game on shcherbak.ai, five pixels to a pixel of the art. In the meadow, the duck reads a document and holds up a gem it found, by crates of documents, and a mine cart of gems stands on the path; on the card are the wordmark at rest, the README's heading, the tagline's claims and the company's name. When one of these changes, change the SVG with it and render `social/github-social-preview.png` with `uv run fab social-preview` (the task needs Chrome, Edge or Chromium). GitHub reads no file for it: a maintainer uploads the picture in the settings of the repository. In the SVG a rule in `<style>` outranks an attribute: set type sizes by class, and write no rule for `path`, which would override the art's fills.
+- `social/github-social-preview.svg` is the picture a link to the repository, or to a page of the documentation, is shown with on other sites: a pixel-art scene, five pixels to a pixel of the art, with a card that carries the wordmark at rest, the README's heading, the tagline's claims and the company's name. When one of these changes, change the SVG with it and render `social/github-social-preview.png` with `uv run fab social-preview` (the task needs Chrome, Edge or Chromium). GitHub reads no file for it: a maintainer uploads the picture in the settings of the repository. In the SVG a rule in `<style>` outranks an attribute: set type sizes by class, and write no rule for `path`, which would override the art's fills.
 - `docs/source/_static/favicon.ico` (16 to 256 pixels) and `docs/source/_static/contextgem_gem.svg`, the logo of the documentation's sidebar, are the wordmark's gem at rest. Change them with it.
 
 Look at a change as GitHub will show it before pushing it. `uv run fab readme-preview` serves `README.md` at <http://127.0.0.1:9120/> (`--port N` for another port). It shows the file as it is, so regenerate it from the template first (`uv run fab readme`):

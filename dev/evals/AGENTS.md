@@ -1,6 +1,6 @@
 # dev/evals - Extraction Evaluation Harness
 
-Measures the quality and the cost of extraction on evaluation cases with reference answers, so that a change (a prompt, a model, a setting) can be compared with a recorded baseline. It is a development tool: it is not a part of the package, and the tests do not run it.
+Measures the quality and the cost of extraction on evaluation cases with reference answers, so that a change (a prompt, a model, a setting) can be compared with the version without it, and models with one another, with recorded baselines as snapshots. It is a development tool: it is not a part of the package, and the tests do not run it.
 
 ## Layout
 
@@ -103,10 +103,13 @@ Each run records a short hash of every prompt template of the library, including
 
 ## Comparing a Change with the Baseline
 
-1. Make the change in the working tree, e.g. in a prompt template.
-2. Run the same cases, models and modes as the current baseline (`baseline_2026-10-15`) under a new label, at least 3 runs each for an LLM, and judge the runs.
-3. Run the version without the change again as well, under a label of its own, at the same time. A hosted model can change under the same name, and the version of `litellm` moves: a baseline of another day is not a control.
-4. Summarize both labels, and compare their `summary.md` files.
+1. **Pick what the change concerns**, among the configurations of the current baseline (`baseline_2026-10-15`). For a prompt of the LLMs: the LLM runs of the three cases, e.g. `openai/gpt-6-luna` and `openai/gpt-5.6-luna`, at least 3 runs each (`openai/gpt-6.1-sol` costs 10 to 20 times as much). For a question of the decision models: one pass of `decision_probabilities` of each hosted decision model, and the threshold sweep; these models give nearly the same answers in each pass.
+2. **Make the change.** It can be run from a copy of the code outside the repo (`git archive HEAD contextgem dev/__init__.py dev/evals`, with the changed template, and a launcher that puts the copy first on `sys.path`), so that the working tree stays as it is meanwhile.
+3. **Record the version with the change and the version without it at the same time**, each under a label of its own, and judge both. A hosted model can change under the same name, and the version of `litellm` moves: a baseline of another day is not a control.
+4. **Summarize both labels and compare their `summary.md` files**, then read the disagreements behind a difference (see The Reference Answers).
+5. **Record the outcome.** A change that is kept goes into the library, and a new dated baseline is recorded once the library is in its new state; a change that is not kept goes into Tried and Rejected below.
+
+For a first look, the version with the change alone can be compared with the current baseline, with the same version of `litellm`: a large difference may settle it, a small one needs the control.
 
 Runs of one configuration differ: the aspect F1 of a hosted LLM varies by up to 0.05 between runs. Compare the means of several runs, and treat a smaller difference as noise.
 
@@ -168,4 +171,8 @@ Not tested: the questions of concepts (each case has six concepts that a decisio
 
 ## Adding a Case
 
-Add the `.txt`, `.py` and `.gold.json` files of the case to `cases/`, and a `.neutral.json` file if the case has paragraphs that are not scored, register its pipeline builder in `_PIPELINE_BUILDERS` of `harness.py`, and run `check_scorer`. The paragraphs of the text, split by line, must be those of the reference answers.
+1. **Write the files** in `cases/`: the `.txt` text, one paragraph per line, which must be the paragraphs of the reference answers; the `.py` pipeline; the `.gold.json` reference answers, in the format of the other cases (the paragraphs of each aspect and the items of each concept by the positions of the paragraphs, with a justification and evidence for each item); and a `.neutral.json` file if some paragraphs are not scored. A JSON object concept whose objects have no `name` field names the field that identifies them as `object_key` in its `custom_data`.
+2. **Register the pipeline builder** in `_PIPELINE_BUILDERS` of `harness.py`, and run `check_scorer`.
+3. **Review the reference answers** as those of the other cases were (see `cases/reference_review.md`): separate agents that see only the numbered text and the definitions derive every concept answer, with its evidence and the errors they find in the document, and select the paragraphs of every aspect. Rule on every difference against the text, and record the rulings.
+4. **Add checks of the judge** for the string concepts, the justifications and the text fields of objects of the case to `cases/judge_checks.json`, right answers in other words and wrong ones with the mistakes a capable model makes, and run `judge --checks`.
+5. **After the first runs of the hosted models, review the aspects again**: a paragraph that at least 4 of 7 runs of the LLMs, or all the hosted decision models, extract beyond the reference answers or leave out of them is a candidate for the linked or borderline paragraphs, as the text supports; score the runs again with `rescore`.
