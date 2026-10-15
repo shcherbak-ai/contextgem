@@ -24,7 +24,7 @@ Since ContextGem specializes in deep single-document analysis, models with large
      - For *basic concepts* (e.g., titles, payment amounts, dates), the same **smaller/distilled model** is often sufficient (e.g., ``gpt-6-luna``). For *complex concepts* requiring nuanced understanding within specific aspects or the entire document, consider a **larger model** (e.g., ``gpt-6.1-sol``). For concepts requiring advanced understanding or complex reasoning (e.g., logical deductions, evaluation), consider the most capable model available to you, with a higher ``reasoning_effort`` if the model supports it.
 
 .. seealso::
-   **Small Model Issues?** If you're experiencing issues with smaller models (e.g. 8B parameter models), such as JSON validation errors or inconsistent results, see our :doc:`troubleshooting guide <optimization_small_llm_troubleshooting>` for specific solutions and workarounds.
+   **Small Model Issues?** If a smaller model, such as many that run locally, gives you JSON validation errors or inconsistent results, see our :doc:`troubleshooting guide <optimization_small_llm_troubleshooting>` for specific solutions and workarounds.
 
 .. seealso::
    **Yes/No Questions, Classifications or Ratings?** The concepts whose answers come from a closed set (:class:`~contextgem.public.concepts.BooleanConcept`, :class:`~contextgem.public.concepts.LabelConcept`, :class:`~contextgem.public.concepts.RatingConcept`), as well as aspects, can be extracted with a decision model instead of an LLM. A decision model generates no text and returns the probabilities of the answers. See :doc:`../decision_models/decision_models` for when it is a good fit and when an LLM is the better choice.

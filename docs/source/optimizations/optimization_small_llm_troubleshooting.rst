@@ -6,7 +6,7 @@
 Troubleshooting Issues with Small Models
 ==========================================
 
-Small language models (e.g. 8B parameter models) often struggle with ContextGem's structured extraction tasks. This guide addresses common issues and provides practical solutions.
+Smaller language models, such as many that run locally, often struggle with ContextGem's structured extraction tasks: the extraction instructions are long and detailed, and the answer must follow a precise JSON structure. This guide addresses common issues and provides practical solutions.
 
 .. seealso::
    For general guidance on selecting appropriate models for your use case, see :doc:`Choosing the Right LLM(s) <optimization_choosing_llm>`.
@@ -32,19 +32,21 @@ Small language models (e.g. 8B parameter models) often struggle with ContextGem'
 🎯 Model Capability Requirements
 ---------------------------------
 
-**Minimum Recommended Performance**
+**What the Model Needs**
     ContextGem is tested with ``openai/gpt-6-luna`` as the baseline model. For reliable structured extraction, your model should:
 
     - Be able to follow detailed JSON schema instructions consistently
     - Have a sufficient context window to ingest the detailed prompt and the document content
     - Maintain attention across long prompts with complex instructions
 
+    The size of a model alone does not tell whether it can do this, so test the model on your own documents (see below). In the evaluation of ContextGem on two complex contracts (October 2026), ``llama3.1:8b`` on Ollama returned no valid JSON, and ``mistral-small:24b`` on Ollama matched the reference answers for 15 of the 40 concepts, against all 40 for ``gpt-6-luna``.
+
 
 🛠️ Mitigation Strategies for Small Models
 -------------------------------------------
 
 .. important::
-   **The most effective solution is usually to upgrade to a larger, more capable model** (such as ``gpt-6-luna`` or larger). The strategies below are workarounds for situations where upgrading isn't possible.
+   **The most effective solution is usually a more capable model**: a larger local model, or a hosted one such as ``gpt-6-luna``. The strategies below are workarounds for situations where that isn't possible.
 
 If you must use a smaller model, try these approaches individually or in combination:
 
@@ -167,7 +169,7 @@ To see what your LLM is supposed to return, you can inspect the prompt and the m
 📊 Testing Local Models
 -------------------------
 
-Before committing to a local model for production, test it on extraction tasks in the documentation, such as:
+Before committing to a smaller or local model for production, test it on a sample of your own documents, and on extraction tasks in the documentation, such as:
 
 - :ref:`Aspect Extraction from Document <quickstart:📋 aspect extraction from document>`
 - :ref:`Extracting Aspect with Sub-Aspects <quickstart:🌳 extracting aspect with sub-aspects>`
