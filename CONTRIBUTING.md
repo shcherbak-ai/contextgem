@@ -145,7 +145,7 @@ contextgem/
 **🎯 Quick Start for Your Contribution:**
 
 - **Adding new functionality?** → Implement in `contextgem/internal/` (core logic). Then expose via a thin public facade in `contextgem/public/` using the registry.
-- **Writing tests?** → Feature/integration tests go to the module of the relevant feature area (`tests/test_<area>.py`, e.g. `tests/test_extraction.py::TestExtraction`). Property tests for pure helpers go to `tests/test_properties.py`. Example-based unit tests for pure helpers go to `tests/test_units.py`.
+- **Writing tests?** → Feature/integration tests go to the module of the relevant feature area (`tests/test_<area>.py`, e.g. `tests/test_extraction.py::TestExtraction`). Property tests for pure helpers go to `tests/test_properties.py`, and property tests of the extraction, with stubbed model APIs, to `tests/test_extraction_properties.py`. Example-based unit tests for pure helpers go to `tests/test_units.py`.
 - **Updating docs?** → Edit files in `docs/source/` or `dev/`
 - **Fixing README?** → Edit `dev/readme.template.md`
 
@@ -290,6 +290,7 @@ Tests are split across the feature/integration test modules and two files for pu
   | `test_decision_models.py` | Decision models: questions for concepts and aspects, conversion of answers to item values and probabilities; extraction of aspects and concepts with decision models, on their own, in model groups and in fallback chains |
   | `test_documents.py` | Documents, paragraphs, sentences and extraction pipelines; text segmentation with SaT models |
   | `test_extraction.py` | Extraction of aspects and concepts from documents; extraction errors |
+  | `test_extraction_properties.py` | Property-based tests of the extraction with LLMs and decision models, whose APIs are stubbed: the items, errors and usage that any output of the models entails; retries, fallback models, model groups and concurrency |
   | `test_images.py` | Images; extraction from images and multimodal documents |
   | `test_internals.py` | Prompt templates, registry of public types, base classes; rejection of invalid names and assignments |
   | `test_llms.py` | LLM configuration, local LLMs, prompts, token limits, retries of API requests and rate limiting |
@@ -349,6 +350,14 @@ Reach for a property test when:
 - The behavior is contract-shaped rather than invariant-shaped.
 
 Stick with the feature/integration test modules (`tests/test_<area>.py`) for feature/integration scenarios where correctness depends on full document/aspect/concept extraction flows — most LLM-backed tests fall into this category.
+
+---
+
+### 🧬 Property-Based Tests of the Extraction
+
+**`tests/test_extraction_properties.py`** tests the extraction itself with [Hypothesis](https://hypothesis.readthedocs.io/), with LLMs and with decision models, whose APIs are stubbed: no requests are sent, and no cassettes are needed. Unlike the tests for pure helpers, its tests use the shared test objects of `BaseTest` and run whole extractions. Hypothesis generates the documents, the aspects and concepts, and what the APIs return, including what a model is not supposed to return: IDs that are not in the prompt, values of another type than the concept has, numbers that are not valid JSON, probabilities that are not numbers within [0, 1], failed requests, and responses cut off at the max output tokens. Most of its tests check the outcome of the extraction against what these responses entail: the items extracted, or the error or the warning, and the calls and tokens recorded; the test of fallback chains also checks the cost. Others check invariants: a higher decision threshold never adds items, and any configuration of aspects and concepts round-trips through serialization. The tests run the retries for invalid data, the fallback models, the model groups and concurrency. Only hosted models are used, as where a model is served does not change how its responses are handled.
+
+When you change how the output of a model is read, how the calls are retried or passed to fallback models, or how usage is recorded, change the oracle of the test concerned with it (the `_get_expected_*` functions and `_simulate_extraction`), so that the tests state the new behavior. A failure is reported with the generated document, the response and the expected outcome, shrunk to a minimal example.
 
 ---
 

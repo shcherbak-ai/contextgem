@@ -11,6 +11,7 @@ import asyncio
 import concurrent.futures
 import inspect
 import json
+import math
 import os
 import random
 import re
@@ -107,6 +108,15 @@ _RE_HORIZONTAL_WHITESPACE = re.compile(r"[ \t]+")
 _RE_EXTRA_BLANK_LINES = re.compile(r"\n{3,}")
 _RE_ANY_WHITESPACE = re.compile(r"\s+")
 _RE_JSON_CODE_BLOCK = re.compile(r"^```json\s*([\s\S]*?)\s*```$")
+
+# The IDs that the extraction prompts show: of an aspect ("A3"), a concept ("C3")
+# or a paragraph ("P3"), and of a sentence of a paragraph ("P3-S1"). A position
+# in an ID is a number in ASCII digits, without a sign or leading zeros.
+_ID_POSITION_PATTERN = r"(0|[1-9][0-9]*)"
+_RE_PROMPT_IDS = {
+    prefix: re.compile(prefix + _ID_POSITION_PATTERN) for prefix in ("A", "C", "P")
+}
+_RE_PROMPT_SENTENCE_ID = re.compile(f"P{_ID_POSITION_PATTERN}-S{_ID_POSITION_PATTERN}")
 
 
 @cache
@@ -861,6 +871,58 @@ def _remove_thinking_content_from_llm_output(output_str: str | None) -> str | No
         return None
 
 
+def _get_finite_float(number_text: str) -> float:
+    """
+    Converts a number of a JSON text with a fraction or an exponent to a float,
+    which must be finite: a number too large for a float, e.g. ``1e400``, is not
+    read as an infinity, which JSON does not have.
+
+    :param number_text: The number, as written in the JSON text.
+    :type number_text: str
+    :return: The number.
+    :rtype: float
+    :raises ValueError: If the number is too large for a float.
+    """
+    number = float(number_text)
+    if not math.isfinite(number):
+        raise ValueError(f"The number `{number_text}` is too large for a float.")
+    return number
+
+
+def _reject_json_constant(constant: str) -> float:
+    """
+    Rejects ``NaN``, ``Infinity`` and ``-Infinity`` in a JSON text, which JSON does
+    not have, while ``json.loads()`` reads them as floats by default.
+
+    :param constant: The constant, as written in the JSON text.
+    :type constant: str
+    :return: Never returns.
+    :rtype: float
+    :raises ValueError: Always.
+    """
+    raise ValueError(f"`{constant}` is not a JSON value.")
+
+
+def _load_json(text: str) -> Any:
+    """
+    Parses a JSON text, which must be valid JSON: a number that is not finite
+    (``NaN``, ``Infinity``, ``-Infinity``), or that is too large for a float, is
+    rejected rather than read as a float that is not finite.
+
+    :param text: The JSON text.
+    :type text: str
+    :return: The parsed object.
+    :rtype: Any
+    :raises ValueError: If the text is not valid JSON, has a number that is not
+        finite, or has an integer with more digits than Python converts.
+    :raises RecursionError: If arrays or objects are nested deeper than
+        the parser can recurse.
+    """
+    return json.loads(
+        text, parse_float=_get_finite_float, parse_constant=_reject_json_constant
+    )
+
+
 def _parse_llm_output_as_json(
     output_str: str | dict | list | None,
 ) -> dict | list | None:
@@ -871,6 +933,12 @@ def _parse_llm_output_as_json(
     If the string cannot be parsed (either due to a JSON decoding error or an incompatible type),
     it returns `None`. The function also includes handling for strings that include a surrounding
     ` ```json` code block, removing them before parsing.
+
+    The output must be valid JSON: a number that is not finite (``NaN``, ``Infinity``,
+    ``-Infinity``), or that is too large for a float (e.g. ``1e400``), which
+    ``json.loads()`` reads by default as a float that is not finite, makes the output
+    unparseable, as do an integer with more digits than Python converts, and
+    arrays or objects nested deeper than the parser can recurse.
 
     :param output_str: The output string to parse. It may already be a JSON-parsed Python object,
         a JSON string, or a string containing a JSON code block marked with ` ```json`. Can be None
@@ -893,10 +961,14 @@ def _parse_llm_output_as_json(
     if not isinstance(output_str, str):
         return None
 
+    # A JSON text that cannot be parsed raises json.JSONDecodeError, which is
+    # a ValueError, as is the error for a number that is not finite, or for
+    # an integer with more digits than Python converts. Arrays or objects nested
+    # deeper than the parser can recurse raise RecursionError.
     try:
-        parsed = json.loads(output_str)
+        parsed = _load_json(output_str)
 
-    except json.JSONDecodeError:
+    except (ValueError, RecursionError):
         try:
             # Handle markdown code blocks using regex
             answer = output_str.strip()
@@ -906,14 +978,74 @@ def _parse_llm_output_as_json(
                 # Get the content between the markers
                 answer = match.group(1).strip()
 
-            parsed = json.loads(answer)
-        except json.JSONDecodeError:
+            parsed = _load_json(answer)
+        except (ValueError, RecursionError):
             return None
 
     # JSON primitives (numbers, booleans, strings, null) are not extraction
     # outputs — only dict/list root values are valid. Reject anything else
     # to honor the declared return type.
     return parsed if isinstance(parsed, dict | list) else None
+
+
+def _get_position_from_prompt_id(prompt_id: str, prefix: Literal["A", "C", "P"]) -> int:
+    """
+    Returns the position that an ID returned by an LLM refers to, e.g. 3 for "P3",
+    the ID of the fourth paragraph shown in the prompt.
+
+    The ID must have the form of the IDs that the prompt shows: the prefix and
+    the position in ASCII digits, without a sign or leading zeros. Surrounding
+    whitespace is ignored. Any other ID, e.g. "P03", "P-3", "PP3", "3" or "P3_0",
+    is not an ID of the prompt, and is not read as one.
+
+    :param prompt_id: The ID returned by the LLM.
+    :type prompt_id: str
+    :param prefix: Prefix of the IDs of the kind: "A" for aspects, "C" for
+        concepts, "P" for paragraphs.
+    :type prefix: Literal["A", "C", "P"]
+    :return: The position in the ID.
+    :rtype: int
+    :raises ValueError: If the ID does not have the form of the IDs of the kind.
+    """
+    match = _RE_PROMPT_IDS[prefix].fullmatch(prompt_id.strip())
+    if match is None:
+        raise ValueError(
+            f"Invalid ID `{prompt_id}`: an ID of the form `{prefix}<position>` "
+            f"is expected."
+        )
+    return int(match.group(1))
+
+
+def _get_sentence_position_from_prompt_id(
+    sentence_id: str, paragraph_position: int
+) -> int:
+    """
+    Returns the position of the sentence that a sentence ID returned by an LLM
+    refers to in its paragraph, e.g. 1 for "P3-S1", the ID of the second sentence
+    of the paragraph "P3" shown in the prompt.
+
+    The ID must have the form of the sentence IDs that the prompt shows, and be
+    the ID of a sentence of the paragraph that the LLM lists it for: a sentence of
+    another paragraph is an error of the LLM, and is not read as a sentence of
+    either paragraph. Surrounding whitespace is ignored.
+
+    :param sentence_id: The sentence ID returned by the LLM.
+    :type sentence_id: str
+    :param paragraph_position: Position of the paragraph that the LLM lists
+        the sentence for.
+    :type paragraph_position: int
+    :return: The position of the sentence in its paragraph.
+    :rtype: int
+    :raises ValueError: If the ID does not have the form of a sentence ID, or is
+        the ID of a sentence of another paragraph.
+    """
+    match = _RE_PROMPT_SENTENCE_ID.fullmatch(sentence_id.strip())
+    if match is None or int(match.group(1)) != paragraph_position:
+        raise ValueError(
+            f"Invalid sentence ID `{sentence_id}`: an ID of the form "
+            f"`P{paragraph_position}-S<position>` is expected."
+        )
+    return int(match.group(2))
 
 
 def _validate_parsed_llm_output(

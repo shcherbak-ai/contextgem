@@ -11,6 +11,7 @@ import asyncio
 import gc
 import json
 import os
+import re
 import types
 import warnings
 from concurrent.futures import ThreadPoolExecutor
@@ -1380,7 +1381,8 @@ class TestLLMs(BaseTest):
         async def acompletion_stub(**kwargs: Any):
             """
             Simulates the LLM API: requests to the primary LLM fail,
-            requests to the fallback LLM succeed.
+            requests to the fallback LLM succeed, with an item for each concept
+            of the prompt.
             """
             if kwargs["model"] == primary_model:
                 raise litellm.AuthenticationError(
@@ -1388,11 +1390,22 @@ class TestLLMs(BaseTest):
                     llm_provider="openai",
                     model=primary_model,
                 )
+            concept_ids = re.findall(
+                r"<concept_id>(C\d+)</concept_id>", kwargs["messages"][-1]["content"]
+            )
             return types.SimpleNamespace(
                 choices=[
                     types.SimpleNamespace(
                         message=types.SimpleNamespace(
-                            content='[{"concept_id": "C0", "extracted_items": ["Item"]}]'
+                            content=json.dumps(
+                                [
+                                    {
+                                        "concept_id": concept_id,
+                                        "extracted_items": ["Item"],
+                                    }
+                                    for concept_id in concept_ids
+                                ]
+                            )
                         )
                     )
                 ],

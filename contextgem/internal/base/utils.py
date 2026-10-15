@@ -22,6 +22,7 @@ from contextgem.internal.typings.types_to_strings import (
     _is_json_serializable_type,
     _raise_json_serializable_type_error,
 )
+from contextgem.internal.typings.user_type_hints_validation import _is_string_type
 
 
 @_disable_direct_initialization
@@ -254,11 +255,12 @@ class _JsonObjectClassStruct:
 
         key_type, value_type = field_type.__args__
 
-        # Check if key type is str (required for dictionaries)
-        if key_type is not str:
+        # Check that the keys are strings, which the keys of JSON objects are:
+        # `str`, or a Literal of strings, as in a structure given as a dictionary
+        if not _is_string_type(key_type):
             raise TypeError(
                 f"Invalid key type for dictionary field '{field_name}': {key_type}.\n"
-                f"Dictionary keys must be strings."
+                f"Dictionary keys must be strings: `str`, or a Literal of strings."
             )
 
         # Check if key or value type is a class that should be disallowed

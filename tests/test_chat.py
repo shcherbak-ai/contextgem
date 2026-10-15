@@ -2198,7 +2198,8 @@ class TestChat(BaseTest):
             {
                 _MAIN_MODEL: [
                     _create_completion(
-                        "[]", ("get_order_status", '{"order_id": "ORD-123"}')
+                        '[{"concept_id": "C0", "extracted_items": []}]',
+                        ("get_order_status", '{"order_id": "ORD-123"}'),
                     )
                 ]
             }

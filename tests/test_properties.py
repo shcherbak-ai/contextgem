@@ -15,9 +15,10 @@ JSON, paragraph splitting).
 from __future__ import annotations
 
 import json
+import math
 import sys
 from types import SimpleNamespace
-from typing import Any, Union
+from typing import Any, Literal, Union
 
 import pytest
 from hypothesis import HealthCheck, example, given, settings
@@ -32,6 +33,8 @@ from contextgem.internal.utils import (
     _chunk_list,
     _clean_control_characters,
     _clean_text_for_llm_prompt,
+    _get_position_from_prompt_id,
+    _get_sentence_position_from_prompt_id,
     _group_instances_by_fields,
     _is_text_content_empty,
     _parse_llm_output_as_json,
@@ -355,8 +358,15 @@ _JSON_VALUES = st.recursive(
 
 @_PROPERTY_SETTINGS
 @given(garbage=st.text())
+@example(garbage="[" * 100_000 + "]" * 100_000)
+@example(garbage="```json\n" + "[" * 100_000 + "]" * 100_000 + "\n```")
+@example(garbage="[" + "9" * 5000 + "]")
 def test_parse_llm_output_as_json_never_raises_on_strings(garbage: str) -> None:
-    """Arbitrary string input must never raise — only return None or dict/list."""
+    """
+    Arbitrary string input must never raise — only return None or dict/list.
+    That includes arrays nested deeper than the parser can recurse, and integers
+    with more digits than Python converts.
+    """
     result = _parse_llm_output_as_json(garbage)
     assert result is None or isinstance(result, dict | list)
 
@@ -409,6 +419,178 @@ def test_parse_llm_output_as_json_returns_none_for_non_string_non_collection(
 def test_parse_llm_output_as_json_returns_none_for_none() -> None:
     """``None`` input maps to ``None`` output."""
     assert _parse_llm_output_as_json(None) is None
+
+
+def _has_non_finite_float(value: object) -> bool:
+    """Whether a parsed JSON value holds NaN or an infinity at any depth."""
+    if isinstance(value, float):
+        return not math.isfinite(value)
+    if isinstance(value, dict):
+        return any(_has_non_finite_float(item) for item in value.values())
+    if isinstance(value, list):
+        return any(_has_non_finite_float(item) for item in value)
+    return False
+
+
+@_PROPERTY_SETTINGS
+@given(text=st.text())
+@example(text="[NaN]")
+@example(text='{"value": Infinity}')
+@example(text="[-Infinity]")
+@example(text="[1e400]")
+@example(text="[" + "9" * 5000 + "]")
+@example(text="```json\n[NaN]\n```")
+def test_parse_llm_output_as_json_never_returns_non_finite_numbers(
+    text: str,
+) -> None:
+    """
+    The output must be valid JSON, which has no NaN or infinities: ``NaN``,
+    ``Infinity``, a number too large for a float, and an integer with more
+    digits than Python converts make the output unparseable, rather than
+    raising or giving a float that is not finite.
+    """
+    result = _parse_llm_output_as_json(text)
+    assert result is None or not _has_non_finite_float(result)
+
+
+@_PROPERTY_SETTINGS
+@given(
+    values=st.lists(
+        st.one_of(_JSON_ATOMS, st.sampled_from([math.nan, math.inf, -math.inf])),
+        min_size=1,
+        max_size=5,
+    ).filter(_has_non_finite_float),
+    fenced=st.booleans(),
+)
+def test_parse_llm_output_as_json_rejects_non_finite_numbers(
+    values: list, fenced: bool
+) -> None:
+    """JSON with NaN or an infinity, as ``json.dumps`` writes them, is rejected."""
+    text = json.dumps(values)
+    if fenced:
+        text = f"```json\n{text}\n```"
+    assert _parse_llm_output_as_json(text) is None
+
+
+# ---------------------------------------------------------------------------
+# _get_position_from_prompt_id / _get_sentence_position_from_prompt_id
+# ---------------------------------------------------------------------------
+
+
+# Strings that look like the IDs of a prompt, or almost do: with other prefixes,
+# signs, leading zeros, non-ASCII digits, suffixes and surrounding whitespace
+_ID_LIKE_STRINGS = st.one_of(
+    st.from_regex(
+        r"\s?[ACPacp]{0,2}[-+]?[0-9٠-٩]{0,3}[_.x]?[0-9]?\s?",
+        fullmatch=True,
+    ),
+    st.from_regex(
+        r"\s?[Pp]?[0-9]{0,2}-?[Ss]?-?[0-9٠-٩]{0,2}(-S[0-9])?\s?",
+        fullmatch=True,
+    ),
+    st.text(max_size=8),
+)
+
+
+def _get_ascii_position(text: str) -> int | None:
+    """The number written in ASCII digits without a sign or leading zeros, if any."""
+    if text and text.isascii() and text.isdigit() and str(int(text)) == text:
+        return int(text)
+    return None
+
+
+@_PROPERTY_SETTINGS
+@given(
+    prefix=st.sampled_from(["A", "C", "P"]),
+    position=st.integers(min_value=0, max_value=10**6),
+    padding=st.sampled_from(["", " ", "\t", "\n", " \n"]),
+)
+def test_position_from_prompt_id_roundtrip(
+    prefix: Literal["A", "C", "P"], position: int, padding: str
+) -> None:
+    """The ID of a position, as a prompt shows it, gives the position back."""
+    assert (
+        _get_position_from_prompt_id(f"{padding}{prefix}{position}{padding}", prefix)
+        == position
+    )
+
+
+@_PROPERTY_SETTINGS
+@given(prompt_id=_ID_LIKE_STRINGS, prefix=st.sampled_from(["A", "C", "P"]))
+@example(prompt_id="P1_0", prefix="P")
+@example(prompt_id="P٣", prefix="P")
+@example(prompt_id="PP3", prefix="P")
+@example(prompt_id="P-0", prefix="P")
+@example(prompt_id="3", prefix="P")
+@example(prompt_id=" A0 ", prefix="A")
+def test_position_from_prompt_id_only_for_ids_of_the_prompt(
+    prompt_id: str, prefix: Literal["A", "C", "P"]
+) -> None:
+    """
+    An ID gives a position exactly if it has the form of the IDs that a prompt
+    shows: the prefix and the position, in ASCII digits without a sign or
+    leading zeros, with or without surrounding whitespace. Any other ID is
+    rejected with ``ValueError``, rather than read as another position.
+    """
+    stripped = prompt_id.strip()
+    expected = (
+        _get_ascii_position(stripped[1:]) if stripped.startswith(prefix) else None
+    )
+    if expected is None:
+        with pytest.raises(ValueError):
+            _get_position_from_prompt_id(prompt_id, prefix)
+    else:
+        assert _get_position_from_prompt_id(prompt_id, prefix) == expected
+
+
+@_PROPERTY_SETTINGS
+@given(
+    paragraph_position=st.integers(min_value=0, max_value=1000),
+    sentence_position=st.integers(min_value=0, max_value=1000),
+    padding=st.sampled_from(["", " ", "\t", "\n"]),
+)
+def test_sentence_position_from_prompt_id_roundtrip(
+    paragraph_position: int, sentence_position: int, padding: str
+) -> None:
+    """The ID of a sentence, as a prompt shows it, gives the position back."""
+    sentence_id = f"{padding}P{paragraph_position}-S{sentence_position}{padding}"
+    assert (
+        _get_sentence_position_from_prompt_id(sentence_id, paragraph_position)
+        == sentence_position
+    )
+
+
+@_PROPERTY_SETTINGS
+@given(sentence_id=_ID_LIKE_STRINGS, paragraph_position=st.integers(0, 12))
+@example(sentence_id="P4-S1", paragraph_position=3)
+@example(sentence_id="P3-S01", paragraph_position=3)
+@example(sentence_id="P3-S1-S2", paragraph_position=3)
+@example(sentence_id="S1", paragraph_position=3)
+@example(sentence_id="1", paragraph_position=3)
+def test_sentence_position_from_prompt_id_only_for_sentences_of_the_paragraph(
+    sentence_id: str, paragraph_position: int
+) -> None:
+    """
+    A sentence ID gives a position exactly if it has the form of the sentence IDs
+    that a prompt shows and is the ID of a sentence of the given paragraph.
+    The ID of a sentence of another paragraph, or any other ID, is rejected with
+    ``ValueError``, rather than read as a sentence of the given paragraph.
+    """
+    stripped = sentence_id.strip()
+    paragraph_prefix = f"P{paragraph_position}-S"
+    expected = (
+        _get_ascii_position(stripped.removeprefix(paragraph_prefix))
+        if stripped.startswith(paragraph_prefix)
+        else None
+    )
+    if expected is None:
+        with pytest.raises(ValueError):
+            _get_sentence_position_from_prompt_id(sentence_id, paragraph_position)
+    else:
+        assert (
+            _get_sentence_position_from_prompt_id(sentence_id, paragraph_position)
+            == expected
+        )
 
 
 # ---------------------------------------------------------------------------

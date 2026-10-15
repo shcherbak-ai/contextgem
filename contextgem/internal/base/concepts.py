@@ -108,7 +108,7 @@ class _Concept(_ExtractedItemsAttributeProcessor):
     )
     singular_occurrence: StrictBool = Field(
         default=False,
-        description="If True, restrict extraction to a single item.",
+        description="If True, at most one item is extracted.",
     )
 
     _extracted_items: list[_ExtractedItem] = PrivateAttr(default_factory=list)
@@ -452,16 +452,25 @@ class _RatingConcept(_Concept):
                 f"{self._rating_start} to {self._rating_end}"
             )
 
-    def _process_item_value(self, value: int) -> int:
+    def _process_item_value(self, value: Any) -> int:
         """
         Validates the rating value against the rating scale and returns it.
 
-        :param value: Integer rating value to validate.
-        :type value: int
+        :param value: Rating value to validate, as returned by an LLM, which must
+            be an integer.
+        :type value: Any
         :return: Validated rating value.
         :rtype: int
-        :raises ValueError: If the value is outside the allowed rating scale range.
+        :raises ValueError: If the value is not an integer, or is outside
+            the allowed rating scale range.
         """
+        # The value is returned by an LLM, i.e. it may be of any JSON type, which
+        # cannot be compared with the scale. A Boolean is not a rating.
+        if not isinstance(value, int) or isinstance(value, bool):
+            raise ValueError(
+                f"Invalid value for scaled rating concept: an integer is expected, "
+                f"got {type(value).__name__}"
+            )
         # Apply concept-specific business logic validation
         self._validate_rating_value(value)
 
@@ -884,13 +893,25 @@ class _DateConcept(_Concept):
         """
         return _DateItem
 
-    def _process_item_value(self, value: str) -> date:
+    def _process_item_value(self, value: Any) -> date:
         """
         Transforms a string value into an object expected by the concept.
 
-        :param value: String value to transform.
-        :type value: str
+        :param value: Value to transform, as returned by an LLM, which must be
+            a string.
+        :type value: Any
+        :return: The date.
+        :rtype: date
+        :raises ValueError: If the value is not a string, or cannot be parsed
+            as a date in the format of the concept.
         """
+        # The value is returned by an LLM, i.e. it may be of any JSON type
+        if not isinstance(value, str):
+            raise ValueError(
+                f"Invalid value for date concept: a string in the "
+                f"'{self._date_format_in_prompt}' format is expected, "
+                f"got {type(value).__name__}"
+            )
         return self._string_to_date(value)
 
     def _string_to_date(self, date_string: str) -> date:

@@ -78,6 +78,8 @@ from contextgem.internal.utils import (
     _chunk_list,
     _clean_text_for_llm_prompt,
     _get_distinct_instances,
+    _get_position_from_prompt_id,
+    _get_sentence_position_from_prompt_id,
     _group_instances_by_fields,
     _model_call_result_is_api_failure,
     _model_call_result_is_output_truncated,
@@ -1653,6 +1655,52 @@ class _GenericModelProcessor(_AbstractGenericModelProcessor):
                 )
 
     @staticmethod
+    def _shows_additional_context(
+        paragraphs: list[_Paragraph], reference_depth: ReferenceDepth
+    ) -> bool:
+        """
+        Checks whether the prompt of an LLM that lists the given paragraphs shows
+        the additional context of any of them or of their sentences, as
+        the prompt templates render it: the additional context is cleaned as
+        the texts are, and is shown if anything is left of it, for a paragraph
+        that has text to show, and, with the "sentences" reference depth, for
+        a sentence of such a paragraph that has text to show. The prompt then
+        tells the LLM what the additional context is.
+
+        :param paragraphs: The paragraphs that the prompt lists.
+        :type paragraphs: list[_Paragraph]
+        :param reference_depth: The reference depth, by which the prompt lists
+            the sentences of the paragraphs, or not.
+        :type reference_depth: ReferenceDepth
+        :return: True if the prompt shows additional context, False otherwise.
+        :rtype: bool
+        """
+
+        def is_shown(text: str | None) -> bool:
+            """
+            Checks whether anything is left of a text once it is cleaned for
+            the prompt.
+            """
+            return bool(
+                text
+                and _clean_text_for_llm_prompt(
+                    text, preserve_linebreaks=False, strip_text=True
+                )
+            )
+
+        for paragraph in paragraphs:
+            if not is_shown(paragraph.raw_text):
+                continue
+            if is_shown(paragraph.additional_context):
+                return True
+            if reference_depth == "sentences" and any(
+                is_shown(sentence.raw_text) and is_shown(sentence.additional_context)
+                for sentence in paragraph.sentences
+            ):
+                return True
+        return False
+
+    @staticmethod
     def _get_text_for_concept_extraction(
         source: _Document | _Aspect,
         paragraphs_chunk: list[_Paragraph],
@@ -1888,10 +1936,8 @@ class _GenericModelProcessor(_AbstractGenericModelProcessor):
                         "output_language": llm.output_language,
                         "supports_reasoning": llm._supports_reasoning,
                     }
-                    if any(p.additional_context for p in paragraphs_chunk) or any(
-                        s.additional_context
-                        for p in paragraphs_chunk
-                        for s in p.sentences
+                    if _GenericModelProcessor._shows_additional_context(
+                        paragraphs_chunk, reference_depth
                     ):
                         # Add guidance that the paragraphs or sentences have additional context,
                         # such as formatting, list context, or table position.
@@ -1917,10 +1963,8 @@ class _GenericModelProcessor(_AbstractGenericModelProcessor):
                     if add_references:
                         # List of document/aspect paragraphs used for concept extraction with references
                         prompt_kwargs["paragraphs"] = paragraphs_chunk  # ty: ignore[invalid-assignment]
-                        if any(p.additional_context for p in paragraphs_chunk) or any(
-                            s.additional_context
-                            for p in paragraphs_chunk
-                            for s in p.sentences
+                        if _GenericModelProcessor._shows_additional_context(
+                            paragraphs_chunk, reference_depth
                         ):
                             # Add guidance that the paragraphs or sentences have additional context,
                             # such as formatting, list context, or table position.
@@ -2554,16 +2598,21 @@ class _GenericModelProcessor(_AbstractGenericModelProcessor):
                     )
                 return None, all_usage_data
 
+            # The unique IDs of the aspects or concepts that the output has an entry
+            # for, which it must have for each of the prompt
+            listed_instance_ids: set[str] = set()
+
             # Aspect (document-level)
             if extracted_item_type == "aspect":
                 for aspect_dict in extracted_data:
                     try:
                         relevant_aspect = instances_enumerated[
-                            int(aspect_dict["aspect_id"].lstrip("A"))
+                            _get_position_from_prompt_id(aspect_dict["aspect_id"], "A")
                         ]
                     except (KeyError, ValueError):
                         logger.error("Aspect ID returned by LLM is invalid")
                         return None, all_usage_data
+                    listed_instance_ids.add(relevant_aspect.unique_id)
                     self._check_instances_already_processed(
                         instance_type=extracted_item_type,
                         # Safe cast: relevant_aspect is always an _Aspect instance
@@ -2584,8 +2633,10 @@ class _GenericModelProcessor(_AbstractGenericModelProcessor):
                         # texts are the values of extracted items for the aspects
                         try:
                             for para_dict in aspect_dict["paragraphs"]:
-                                para_dict["paragraph_id"] = int(
-                                    para_dict["paragraph_id"].lstrip("P")
+                                para_dict["paragraph_id"] = (
+                                    _get_position_from_prompt_id(
+                                        para_dict["paragraph_id"], "P"
+                                    )
                                 )
                         except ValueError:
                             logger.error("Paragraph ID returned by LLM is invalid")
@@ -2610,8 +2661,10 @@ class _GenericModelProcessor(_AbstractGenericModelProcessor):
                                 )
                                 try:
                                     for sent_dict in para_dict["sentences"]:
-                                        sent_dict["sentence_id"] = int(
-                                            sent_dict["sentence_id"].split("-S")[-1]
+                                        sent_dict["sentence_id"] = (
+                                            _get_sentence_position_from_prompt_id(
+                                                sent_dict["sentence_id"], para_id
+                                            )
                                         )
                                 except ValueError:
                                     logger.error(
@@ -2684,7 +2737,7 @@ class _GenericModelProcessor(_AbstractGenericModelProcessor):
                         # reference paragraph in the list of reference paragraphs, and no reference sentences
                         try:
                             aspect_dict["paragraph_ids"] = [
-                                int(para_id.lstrip("P"))
+                                _get_position_from_prompt_id(para_id, "P")
                                 for para_id in aspect_dict["paragraph_ids"]
                             ]
                         except ValueError:
@@ -2718,11 +2771,14 @@ class _GenericModelProcessor(_AbstractGenericModelProcessor):
                 for concept_dict in extracted_data:
                     try:
                         relevant_concept = instances_enumerated[
-                            int(concept_dict["concept_id"].lstrip("C"))
+                            _get_position_from_prompt_id(
+                                concept_dict["concept_id"], "C"
+                            )
                         ]
                     except (KeyError, ValueError):
                         logger.error("Concept ID returned by LLM is invalid")
                         return None, all_usage_data
+                    listed_instance_ids.add(relevant_concept.unique_id)
                     self._check_instances_already_processed(
                         instance_type=extracted_item_type,
                         # Safe cast: relevant_concept is always a _Concept
@@ -2776,10 +2832,11 @@ class _GenericModelProcessor(_AbstractGenericModelProcessor):
                                     ]
                                     for para_dict in reference_paragraphs_list:
                                         try:
-                                            para_dict["reference_paragraph_id"] = int(
-                                                para_dict[
-                                                    "reference_paragraph_id"
-                                                ].lstrip("P")
+                                            para_dict["reference_paragraph_id"] = (
+                                                _get_position_from_prompt_id(
+                                                    para_dict["reference_paragraph_id"],
+                                                    "P",
+                                                )
                                             )
                                         except ValueError:
                                             logger.error(
@@ -2788,8 +2845,11 @@ class _GenericModelProcessor(_AbstractGenericModelProcessor):
                                             return None, all_usage_data
                                         try:
                                             para_dict["reference_sentence_ids"] = [
-                                                int(i.split("-S")[-1])
-                                                for i in para_dict[
+                                                _get_sentence_position_from_prompt_id(
+                                                    sentence_id,
+                                                    para_dict["reference_paragraph_id"],
+                                                )
+                                                for sentence_id in para_dict[
                                                     "reference_sentence_ids"
                                                 ]
                                             ]
@@ -2809,7 +2869,9 @@ class _GenericModelProcessor(_AbstractGenericModelProcessor):
                                     try:
                                         reference_paragraphs_list = sorted(
                                             [
-                                                int(para_id.lstrip("P"))
+                                                _get_position_from_prompt_id(
+                                                    para_id, "P"
+                                                )
                                                 for para_id in i[
                                                     "reference_paragraph_ids"
                                                 ]
@@ -2935,6 +2997,44 @@ class _GenericModelProcessor(_AbstractGenericModelProcessor):
                 raise ValueError(
                     f"Unsupported extracted item type: `{extracted_item_type}`"
                 )
+
+            # The LLM is instructed to return an entry for each aspect or concept
+            # of the prompt, with no items if there are none: an aspect or a concept
+            # that the output leaves out is not answered for, i.e. the output is
+            # invalid data
+            missing_instance_names = [
+                instance.name
+                for instance in instances_enumerated.values()
+                if instance.unique_id not in listed_instance_ids
+            ]
+            if missing_instance_names:
+                logger.error(
+                    f"LLM returned no entry for the {extracted_item_type}s "
+                    f"{missing_instance_names}"
+                )
+                return None, all_usage_data
+            # A concept with a singular occurrence has one item at most. Its items
+            # are those of this output, as the concept is not in the prompt once
+            # an earlier part of the content gave it an item.
+            if extracted_item_type == "concept":
+                singular_concept_names = [
+                    instance.name
+                    for instance in instances_enumerated.values()
+                    if cast(_Concept, instance).singular_occurrence
+                    and len(
+                        cast(
+                            list,
+                            sources_mapper[instance.unique_id]["extracted_items"],
+                        )
+                    )
+                    > 1
+                ]
+                if singular_concept_names:
+                    logger.error(
+                        f"LLM returned more than one item for the concepts "
+                        f"{singular_concept_names}, which have a singular occurrence"
+                    )
+                    return None, all_usage_data
 
         # Process all gathered results for all processed instances
         async with (

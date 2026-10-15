@@ -2137,8 +2137,9 @@ class TestAspectsAndConcepts(BaseTest):
             _JsonObjectItem()
         with pytest.raises(ValueError):
             _JsonObjectItem(value={})
-        with pytest.raises(ValueError):
-            _JsonObjectItem(value={"hello": {}})
+        # A nested object may be empty, e.g. a mapping with no entries, which
+        # the structure of the concept decides on
+        assert _JsonObjectItem(value={"hello": {}}).value == {"hello": {}}
         with pytest.raises(ValueError):
             _StringItem(
                 value="Random string",

@@ -274,10 +274,11 @@ DOCUMENT PARAGRAPHS:
         {{ para_text }}
         </paragraph_text>
         {% endif %}
-        {% if para_item.additional_context %}
+        {% set para_context = _clean_text_for_llm_prompt(para_item.additional_context, preserve_linebreaks=False, strip_text=True) if para_item.additional_context else "" %}
+        {% if para_context %}
         
         <additional_context>
-        {{ para_item.additional_context }}
+        {{ para_context }}
         </additional_context>
         {% endif %}
         {% if reference_depth == "sentences" %}
@@ -292,10 +293,11 @@ DOCUMENT PARAGRAPHS:
                 <sentence_text>
                 {{ sent_text }}
                 </sentence_text>
-                    {% if sent_item.additional_context %}
+                    {% set sent_context = _clean_text_for_llm_prompt(sent_item.additional_context, preserve_linebreaks=False, strip_text=True) if sent_item.additional_context else "" %}
+                    {% if sent_context %}
                 
                 <additional_context>
-                {{ sent_item.additional_context }}
+                {{ sent_context }}
                 </additional_context>
                     {% endif %}
             </sentence>

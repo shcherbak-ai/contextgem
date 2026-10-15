@@ -82,7 +82,7 @@ When creating a :class:`~contextgem.public.concepts.StringConcept`, you can spec
    * - ``singular_occurrence``
      - ``bool``
      - ``False``
-     - Whether this concept is restricted to having only one extracted item. If ``True``, only a single extracted item will be extracted. This is particularly relevant when it might be unclear for the LLM whether to focus on the concept as a single item or extract multiple items. For example, when extracting the total amount of payments in a contract, where payments might be mentioned in different parts of the document but you only want the final total. Note that with advanced LLMs, this constraint may not be strictly required as they can often infer the appropriate number of items to extract from the concept's name, description, and type (e.g., "document title" vs "key findings").
+     - Whether this concept has at most one extracted item. If ``True``, at most one item is extracted, and none if there is nothing to extract: an LLM that returns more than one is asked again, as for any other invalid data. This is particularly relevant when it might be unclear for the LLM whether to focus on the concept as a single item or extract multiple items. For example, when extracting the total amount of payments in a contract, where payments might be mentioned in different parts of the document but you only want the final total. Note that with advanced LLMs, this constraint may not be strictly required as they can often infer the appropriate number of items to extract from the concept's name, description, and type (e.g., "document title" vs "key findings").
    * - ``custom_data``
      - ``dict``
      - ``{}``

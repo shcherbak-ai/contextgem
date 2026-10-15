@@ -86,7 +86,7 @@ When creating a :class:`~contextgem.public.concepts.JsonObjectConcept`, you can 
    * - ``singular_occurrence``
      - ``bool``
      - ``False``
-     - Whether this concept is restricted to having only one extracted item. If ``True``, only a single JSON object will be extracted. For JSON object concepts, this parameter is particularly useful when you want to extract a comprehensive structured representation of a single entity (e.g., "product specifications" or "company profile") rather than multiple instances of structured data scattered throughout the document. This is especially valuable when extracting complex nested objects that aggregate information from different parts of the document into a cohesive whole. Note that with advanced LLMs, this constraint may not be required as they can often infer the appropriate number of objects to extract from the concept's name, description, and schema structure.
+     - Whether this concept has at most one extracted item. If ``True``, at most one JSON object is extracted, and none if there is nothing to extract: an LLM that returns more than one is asked again, as for any other invalid data. For JSON object concepts, this parameter is particularly useful when you want to extract a comprehensive structured representation of a single entity (e.g., "product specifications" or "company profile") rather than multiple instances of structured data scattered throughout the document. This is especially valuable when extracting complex nested objects that aggregate information from different parts of the document into a cohesive whole. Note that with advanced LLMs, this constraint may not be required as they can often infer the appropriate number of objects to extract from the concept's name, description, and schema structure.
    * - ``custom_data``
      - ``dict``
      - ``{}``
@@ -125,6 +125,13 @@ When using nested class definitions, all classes in the structure must inherit f
 
 .. literalinclude:: ../../../dev/usage_examples/docs/concepts/json_object_concept/structure/nested_class_structure.py
    :language: python
+
+**Supported types and validation**
+
+- The types of the fields are JSON types: ``str``, ``int``, ``float``, ``bool``, ``None``, ``Literal`` of such values, unions of types (``X | Y`` or ``Union[X, Y]``), lists (``list[X]``, or ``[X]`` for an ``X`` that is not a list or a mapping), mappings (``dict[str, X]``), nested structures, and lists of nested structures. ``Optional[X]`` (or ``X | None``) is supported for the primitive types and ``Literal`` only; a field of such a type may be left out of an extracted value.
+- The keys of a mapping must be strings, i.e. of type ``str`` or a ``Literal`` of strings, as the keys of a JSON object are strings. A structure with a mapping with keys of another type, e.g. ``dict[int, str]``, is rejected.
+- A field name can be any non-empty string that does not start with an underscore, e.g. ``"model name"`` or ``"json"``.
+- The extracted values are validated strictly: a value is not converted to the type of its field, except that an integer is accepted for a ``float``, and a ``Literal`` accepts a value only of the type of its own value, e.g. ``Literal[1]`` does not accept ``true`` or ``1.0``. A value that does not conform to the structure, e.g. that has a field that the structure does not have, is invalid data, which the LLM is asked again for.
 
 
 🚀 Advanced Usage

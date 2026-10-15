@@ -65,11 +65,13 @@ class StringConcept(_StringConcept):
         Defaults to "paragraphs". Only relevant when references are added to extracted items.
         Affects the structure of ``extracted_items``.
     :vartype reference_depth: ReferenceDepth
-    :ivar singular_occurrence: Whether this concept is restricted to having only one extracted item.
-        If True, only a single extracted item will be extracted. Defaults to False (multiple
-        extracted items are allowed). Note that with advanced LLMs, this constraint may not be
-        strictly required as they can often infer the appropriate number of items to extract
-        from the concept's name, description, and type (e.g., "document title" vs "key findings").
+    :ivar singular_occurrence: Whether this concept has at most one extracted item. If True,
+        at most one item is extracted, and none if there is nothing to extract: an LLM that
+        returns more than one is asked again, as for any other invalid data. Defaults to
+        False (multiple extracted items are allowed). Note that with advanced LLMs, this
+        constraint may not be strictly required as they can often infer the appropriate
+        number of items to extract from the concept's name, description, and type (e.g.,
+        "document title" vs "key findings").
     :vartype singular_occurrence: StrictBool
 
     Example:
@@ -115,16 +117,17 @@ class BooleanConcept(_BooleanConcept):
         Defaults to "paragraphs". Only relevant when references are added to extracted items.
         Affects the structure of ``extracted_items``.
     :vartype reference_depth: ReferenceDepth
-    :ivar singular_occurrence: Whether this concept is restricted to having only one extracted item.
-        If True, only a single extracted item will be extracted. Defaults to False (multiple
-        extracted items are allowed). Note that with advanced LLMs, this constraint may not be
-        strictly required as they can often infer the appropriate number of items to extract
-        from the concept's name, description, and type (e.g., "contains confidential information"
-        vs "compliance violations"). A decision model
+    :ivar singular_occurrence: Whether this concept has at most one extracted item. If True,
+        at most one item is extracted, and none if there is nothing to extract: an LLM that
+        returns more than one is asked again, as for any other invalid data. Defaults to
+        False (multiple extracted items are allowed). Note that with advanced LLMs, this
+        constraint may not be strictly required as they can often infer the appropriate
+        number of items to extract from the concept's name, description, and type (e.g.,
+        "contains confidential information" vs "compliance violations"). A decision model
         (``DocumentDecisionModel``) extracts at most one item for a concept in any case,
         unless the text is sent in parts (``max_paragraphs_to_analyze_per_call`` passed to
-        the extraction method): it then returns an item for each part, and rejects
-        a concept with ``singular_occurrence=True`` with ``ValueError``.
+        the extraction method): it then returns an item for each part, and rejects a concept
+        with ``singular_occurrence=True`` with ``ValueError``.
     :vartype singular_occurrence: StrictBool
     :ivar decision_threshold: The lowest probability of "yes" (above 0, up to 1) with which
         a decision model (``DocumentDecisionModel``) sets the value of the concept to True.
@@ -178,12 +181,13 @@ class NumericalConcept(_NumericalConcept):
         Defaults to "paragraphs". Only relevant when references are added to extracted items.
         Affects the structure of ``extracted_items``.
     :vartype reference_depth: ReferenceDepth
-    :ivar singular_occurrence: Whether this concept is restricted to having only one extracted item.
-        If True, only a single extracted item will be extracted. Defaults to False (multiple
-        extracted items are allowed). Note that with advanced LLMs, this constraint may not be
-        strictly required as they can often infer the appropriate number of items to extract
-        from the concept's name, description, and type (e.g., "total revenue" vs
-        "monthly sales figures").
+    :ivar singular_occurrence: Whether this concept has at most one extracted item. If True,
+        at most one item is extracted, and none if there is nothing to extract: an LLM that
+        returns more than one is asked again, as for any other invalid data. Defaults to
+        False (multiple extracted items are allowed). Note that with advanced LLMs, this
+        constraint may not be strictly required as they can often infer the appropriate
+        number of items to extract from the concept's name, description, and type (e.g.,
+        "total revenue" vs "monthly sales figures").
     :vartype singular_occurrence: StrictBool
 
     Example:
@@ -232,16 +236,17 @@ class RatingConcept(_RatingConcept):
         Defaults to "paragraphs". Only relevant when references are added to extracted items.
         Affects the structure of ``extracted_items``.
     :vartype reference_depth: ReferenceDepth
-    :ivar singular_occurrence: Whether this concept is restricted to having only one extracted item.
-        If True, only a single extracted item will be extracted. Defaults to False (multiple
-        extracted items are allowed). Note that with advanced LLMs, this constraint may not be
-        strictly required as they can often infer the appropriate number of items to extract
-        from the concept's name, description, and type (e.g., "product rating score" vs
-        "customer satisfaction ratings"). A decision model
+    :ivar singular_occurrence: Whether this concept has at most one extracted item. If True,
+        at most one item is extracted, and none if there is nothing to extract: an LLM that
+        returns more than one is asked again, as for any other invalid data. Defaults to
+        False (multiple extracted items are allowed). Note that with advanced LLMs, this
+        constraint may not be strictly required as they can often infer the appropriate
+        number of items to extract from the concept's name, description, and type (e.g.,
+        "product rating score" vs "customer satisfaction ratings"). A decision model
         (``DocumentDecisionModel``) extracts at most one item for a concept in any case,
         unless the text is sent in parts (``max_paragraphs_to_analyze_per_call`` passed to
-        the extraction method): it then returns an item for each part, and rejects
-        a concept with ``singular_occurrence=True`` with ``ValueError``.
+        the extraction method): it then returns an item for each part, and rejects a concept
+        with ``singular_occurrence=True`` with ``ValueError``.
     :vartype singular_occurrence: StrictBool
 
     Example:
@@ -270,7 +275,8 @@ class JsonObjectConcept(_JsonObjectConcept):
         Supports generic aliases, union types, nested dictionaries for complex hierarchical structures,
         lists of dictionaries for array items, Literal types, and classes with type annotations
         (Pydantic models, dataclasses, etc.) for nested structures. All annotated types must be
-        JSON-serializable.
+        JSON-serializable, and mappings must have string keys (``dict[str, ...]``), as JSON
+        objects do. Extracted values are validated strictly against the structure.
         Examples:
 
         - Simple structure: ``{"item": str, "amount": int | float}``
@@ -320,12 +326,13 @@ class JsonObjectConcept(_JsonObjectConcept):
         Defaults to "paragraphs". Only relevant when references are added to extracted items.
         Affects the structure of ``extracted_items``.
     :vartype reference_depth: ReferenceDepth
-    :ivar singular_occurrence: Whether this concept is restricted to having only one extracted item.
-        If True, only a single extracted item will be extracted. Defaults to False (multiple
-        extracted items are allowed). Note that with advanced LLMs, this constraint may not be
-        strictly required as they can often infer the appropriate number of items to extract
-        from the concept's name, description, and type (e.g., "product specifications" vs
-        "customer order details").
+    :ivar singular_occurrence: Whether this concept has at most one extracted item. If True,
+        at most one item is extracted, and none if there is nothing to extract: an LLM that
+        returns more than one is asked again, as for any other invalid data. Defaults to
+        False (multiple extracted items are allowed). Note that with advanced LLMs, this
+        constraint may not be strictly required as they can often infer the appropriate
+        number of items to extract from the concept's name, description, and type (e.g.,
+        "product specifications" vs "customer order details").
     :vartype singular_occurrence: StrictBool
 
     Example:
@@ -371,12 +378,13 @@ class DateConcept(_DateConcept):
         Defaults to "paragraphs". Only relevant when references are added to extracted items.
         Affects the structure of ``extracted_items``.
     :vartype reference_depth: ReferenceDepth
-    :ivar singular_occurrence: Whether this concept is restricted to having only one extracted item.
-        If True, only a single extracted item will be extracted. Defaults to False (multiple
-        extracted items are allowed). Note that with advanced LLMs, this constraint may not be
-        strictly required as they can often infer the appropriate number of items to extract
-        from the concept's name, description, and type (e.g., "contract signing date" vs
-        "meeting dates").
+    :ivar singular_occurrence: Whether this concept has at most one extracted item. If True,
+        at most one item is extracted, and none if there is nothing to extract: an LLM that
+        returns more than one is asked again, as for any other invalid data. Defaults to
+        False (multiple extracted items are allowed). Note that with advanced LLMs, this
+        constraint may not be strictly required as they can often infer the appropriate
+        number of items to extract from the concept's name, description, and type (e.g.,
+        "contract signing date" vs "meeting dates").
     :vartype singular_occurrence: StrictBool
 
     Example:
@@ -438,16 +446,17 @@ class LabelConcept(_LabelConcept):
         Defaults to "paragraphs". Only relevant when references are added to extracted items.
         Affects the structure of ``extracted_items``.
     :vartype reference_depth: ReferenceDepth
-    :ivar singular_occurrence: Whether this concept is restricted to having only one extracted item.
-        If True, only a single extracted item will be extracted. Defaults to False (multiple
-        extracted items are allowed). Note that with advanced LLMs, this constraint may not be
-        strictly required as they can often infer the appropriate number of items to extract
-        from the concept's name, description, and type (e.g., "document type" vs
-        "content topics"). A decision model
-        (``DocumentDecisionModel``) extracts at most one item for a concept in any case,
-        unless the text is sent in parts (``max_paragraphs_to_analyze_per_call`` passed to
-        the extraction method): it then returns an item for each part, and rejects
-        a concept with ``singular_occurrence=True`` with ``ValueError``.
+    :ivar singular_occurrence: Whether this concept has at most one extracted item. If True,
+        at most one item is extracted, and none if there is nothing to extract: an LLM that
+        returns more than one is asked again, as for any other invalid data. Defaults to
+        False (multiple extracted items are allowed). Note that with advanced LLMs, this
+        constraint may not be strictly required as they can often infer the appropriate
+        number of items to extract from the concept's name, description, and type (e.g.,
+        "document type" vs "content topics"). A decision model (``DocumentDecisionModel``)
+        extracts at most one item for a concept in any case, unless the text is sent in
+        parts (``max_paragraphs_to_analyze_per_call`` passed to the extraction method): it
+        then returns an item for each part, and rejects a concept with
+        ``singular_occurrence=True`` with ``ValueError``.
     :vartype singular_occurrence: bool
     :ivar decision_threshold: The lowest probability (above 0, up to 1) with which
         a decision model (``DocumentDecisionModel``) selects a label of the concept.

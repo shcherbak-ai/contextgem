@@ -13,9 +13,9 @@ serialization requirements, and ensuring type consistency across the application
 from __future__ import annotations
 
 from types import UnionType
-from typing import Any, Union, get_args, get_origin
+from typing import Annotated, Any, Literal, Union, get_args, get_origin
 
-from pydantic import BaseModel, ConfigDict, create_model
+from pydantic import BaseModel, BeforeValidator, ConfigDict, Field, create_model
 
 from contextgem.internal.typings.types_to_strings import (
     _is_json_serializable_type,
@@ -66,6 +66,101 @@ def _is_optional(type_hint: Any) -> bool:
     return False
 
 
+def _is_string_type(type_hint: Any) -> bool:
+    """
+    Checks whether a type hint allows strings only: ``str``, a Literal of strings,
+    or a union of these.
+
+    :param type_hint: The type hint to check.
+    :type type_hint: Any
+    :return: True if the type hint allows strings only, False otherwise.
+    :rtype: bool
+    """
+    if type_hint is str:
+        return True
+    origin = get_origin(type_hint)
+    if origin is Literal:
+        return all(isinstance(value, str) for value in get_args(type_hint))
+    if origin is Union or isinstance(type_hint, UnionType):
+        return all(_is_string_type(arg) for arg in get_args(type_hint))
+    return False
+
+
+def _check_mapping_keys(type_hint: Any, field_name: str) -> None:
+    """
+    Checks that each mapping in a type hint, at any depth, has string keys: the keys
+    of a JSON object are strings, so that a mapping with keys of another type, e.g.
+    ``dict[int, str]``, could not be given a value from JSON, other than an empty one.
+
+    :param type_hint: The type hint of a field.
+    :type type_hint: Any
+    :param field_name: The name of the field, for the error message.
+    :type field_name: str
+    :return: None
+    :rtype: None
+    :raises ValueError: If a mapping in the type hint has keys of another type than
+        strings.
+    """
+    if get_origin(type_hint) is dict:
+        key_type, value_type = get_args(type_hint)
+        if not _is_string_type(key_type):
+            raise ValueError(
+                f"Field '{field_name}' has a mapping with keys of type {key_type!r}: "
+                f"the keys of a JSON object are strings, i.e. a mapping must have "
+                f"`str`, or a Literal of strings, as its key type, e.g. "
+                f"`dict[str, int]`."
+            )
+        _check_mapping_keys(value_type, field_name)
+        return
+    if get_origin(type_hint) is Literal:
+        return
+    for arg in get_args(type_hint):
+        _check_mapping_keys(arg, field_name)
+
+
+def _match_literals_exactly(type_hint: Any) -> Any:
+    """
+    Returns a type hint that validates a value as the given one does, except that
+    each Literal in it, at any depth, accepts a value only if it is one of
+    the values of the Literal and of the same type. Pydantic accepts a value that
+    is equal to a value of a Literal, also in strict mode, so that e.g.
+    ``Literal[1]`` accepts ``True`` and ``1.0``, and ``Literal[True]`` accepts ``1``.
+
+    :param type_hint: The type hint.
+    :type type_hint: Any
+    :return: The type hint with the Literals in it matched exactly.
+    :rtype: Any
+    """
+    origin = get_origin(type_hint)
+    if origin is Literal:
+        allowed_values = get_args(type_hint)
+
+        def check_value(value: Any) -> Any:
+            """
+            Accepts a value of the Literal only with the type of that value.
+            """
+            if not any(
+                type(value) is type(allowed) and value == allowed
+                for allowed in allowed_values
+            ):
+                raise ValueError(f"Input should be one of {list(allowed_values)!r}")
+            return value
+
+        return Annotated[type_hint, BeforeValidator(check_value)]
+    if origin is Union or isinstance(type_hint, UnionType):
+        return Union[tuple(_match_literals_exactly(arg) for arg in get_args(type_hint))]  # noqa: UP007
+    if origin is list:
+        (item_type,) = get_args(type_hint)
+        exact_item_type = _match_literals_exactly(item_type)
+        return list[exact_item_type]
+    if origin is dict:
+        key_type, value_type = get_args(type_hint)
+        exact_key_type = _match_literals_exactly(key_type)
+        exact_value_type = _match_literals_exactly(value_type)
+        return dict[exact_key_type, exact_value_type]
+    return type_hint
+
+
 def _dynamic_pydantic_model(
     user_mapper: dict[str, Any],
 ) -> type[BaseModel]:
@@ -86,17 +181,26 @@ def _dynamic_pydantic_model(
     :rtype: type[BaseModel]
     """
 
-    # Build the fields dict expected by create_model. Each field gets a tuple: (type, default)
+    # Build the fields dict expected by create_model. Each field gets a tuple:
+    # (type, field info with the default). A field of the model has a name of its
+    # own, and the name of the field of the structure as its alias, which values
+    # are validated by: a name of the structure may be any string, also one that
+    # pydantic gives a meaning to, e.g. "model_config", or that shadows
+    # an attribute of BaseModel, e.g. "json", which pydantic warns of each time
+    # the model is created.
     fields = {}
-    for field_name, field_type in _extract_mapper(user_mapper).items():
+    for position, (field_name, field_type) in enumerate(
+        _extract_mapper(user_mapper).items()
+    ):
         if field_name.startswith("_"):
             raise ValueError(f"Field {field_name} cannot start with '_'")
+        model_field_name = f"field_{position}"
 
         # Handle nested dictionaries as nested models
         if isinstance(field_type, dict):
             # Recursively create a nested model for this field
             nested_model = _dynamic_pydantic_model(field_type)
-            fields[field_name] = (nested_model, ...)
+            fields[model_field_name] = (nested_model, Field(..., alias=field_name))
             continue
 
         # Handle lists of dictionaries
@@ -108,7 +212,10 @@ def _dynamic_pydantic_model(
             # Create a nested model for the list item
             nested_model = _dynamic_pydantic_model(field_type[0])
             # Create a list of that model type
-            fields[field_name] = (list[nested_model], ...)  # ty: ignore[invalid-type-form]
+            fields[model_field_name] = (
+                list[nested_model],  # ty: ignore[invalid-type-form]
+                Field(..., alias=field_name),
+            )
             continue
 
         # Handle list instances with non-dictionary content
@@ -120,13 +227,12 @@ def _dynamic_pydantic_model(
         ):
             # Convert list instance to generic list type
             item_type = field_type[0]
-
-            # Handle nested class types recursively
-            if isinstance(item_type, dict):
-                nested_model = _dynamic_pydantic_model(item_type)
-                fields[field_name] = (list[nested_model], ...)  # ty: ignore[invalid-type-form]
-            else:
-                fields[field_name] = (list[item_type], ...)
+            _check_mapping_keys(item_type, field_name)
+            exact_item_type = _match_literals_exactly(item_type)
+            fields[model_field_name] = (
+                list[exact_item_type],
+                Field(..., alias=field_name),
+            )
             continue
 
         # Check that the mapper value is a valid type hint.
@@ -142,11 +248,13 @@ def _dynamic_pydantic_model(
                 field_name=field_name,
                 exception_type=ValueError,
             )
+        _check_mapping_keys(field_type, field_name)
         # If the type includes None, assume it's optional and give it a default of None.
-        if _is_optional(field_type):
-            fields[field_name] = (field_type, None)
-        else:
-            fields[field_name] = (field_type, ...)
+        default = None if _is_optional(field_type) else ...
+        fields[model_field_name] = (
+            _match_literals_exactly(field_type),
+            Field(default, alias=field_name),
+        )
 
     model_config = ConfigDict(
         extra="forbid",

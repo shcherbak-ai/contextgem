@@ -36,8 +36,9 @@ class _ParasAndSentsBase(_InstanceBase):
         """
         Validates the optional 'additional_context' attribute by checking for line breaks
         in the string, if provided. If line breaks are detected, a warning is logged to inform
-        the user that such input may lead to unexpected behavior, as the LLM may not be able
-        to process such input correctly due to the structure of the prompt.
+        the user that they are not kept: the additional context is cleaned before it is
+        sent to a model, as the text of a paragraph is, i.e. its whitespace, line breaks
+        included, is collapsed to single spaces.
 
         :param additional_context: The optional string to be validated for line breaks.
         :type additional_context: str | None
@@ -46,8 +47,8 @@ class _ParasAndSentsBase(_InstanceBase):
         """
         if additional_context is not None and _contains_linebreaks(additional_context):
             logger.warning(
-                f"Additional context of `{cls.__name__}` contains line breaks. "
-                f"This may cause unexpected behavior."
+                f"Additional context of `{cls.__name__}` contains line breaks, "
+                f"which are replaced with spaces when it is sent to a model."
             )
         return additional_context
 

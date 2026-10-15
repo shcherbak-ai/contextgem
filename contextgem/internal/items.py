@@ -132,12 +132,14 @@ class _JsonObjectItem(_ExtractedItem):
     @classmethod
     def _validate_value(cls, value: dict[Any, Any]) -> dict[Any, Any]:
         """
-        Validates the input dictionary value. Ensures keys and values
-        conform to the required structure and data format. If the dictionary has
-        nested structures, each level is validated recursively.
+        Validates the input dictionary value. Ensures that the keys are strings,
+        also those of the nested dictionaries, at any depth. The dictionary itself
+        must not be empty (see the ``min_length`` of the field), while a nested
+        dictionary may be, e.g. the value of a mapping field with no entries:
+        the values are validated against the structure of the concept.
 
         :param value: Dictionary to validate. The dictionary can have nested dicts as
-              values, where each level must conform to the specified constraints.
+              values, whose keys must be strings as well.
         :type value: dict[Any, Any]
         :return: The same dictionary provided as input, if it passes validation.
         :rtype: dict[Any, Any]
@@ -150,9 +152,6 @@ class _JsonObjectItem(_ExtractedItem):
             :param structure: Dictionary to validate.
             :type structure: dict[Any, Any]
             """
-
-            if not structure:
-                raise ValueError("JsonObjectItem value cannot be empty.")
 
             for key, val in structure.items():
                 # Ensure the key is a string
