@@ -185,17 +185,24 @@ class TestInternals(BaseTest):
         from contextgem import public
         from contextgem.internal import exceptions
 
-        for name in ["ModelAPIError", "ModelExtractionError", "LLMToolLoopLimitError"]:
+        for name in [
+            "ContextGemError",
+            "ModelAPIError",
+            "ModelExtractionError",
+            "LLMToolLoopLimitError",
+        ]:
             assert name in contextgem.__all__
             assert name in public.__all__
             # The same class, so that an `except` clause with the public name
             # catches what the framework raises
             assert getattr(contextgem, name) is getattr(exceptions, name)
             assert getattr(public, name) is getattr(exceptions, name)
-            assert issubclass(getattr(contextgem, name), Exception)
+            # ... and an `except ContextGemError` clause catches each of them
+            assert issubclass(getattr(contextgem, name), contextgem.ContextGemError)
+        assert contextgem.ContextGemError.__bases__ == (Exception,)
 
         # Internal exceptions are not exported
-        for name in ["_BaseModelError", "_ToolReturnValueError"]:
+        for name in ["_ToolReturnValueError", "_InvalidDecisionResponseError"]:
             assert not hasattr(contextgem, name)
 
     def test_pre_v1_names_rejected(self):

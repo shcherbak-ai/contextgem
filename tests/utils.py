@@ -1094,17 +1094,16 @@ class TestUtils:
             with pytest.raises(ValidationError) as exc_info:
                 model_class.from_json(json.dumps(serialized_model))
             check_data_error(exc_info.value, case_index)
-            # The error of loading from a file has the text of the validation
-            # error, which it is raised from
+            # Loading from a file raises the same validation error
             disk_path = tmp_path / f"{model_class.__name__}_{uuid4()}.json"
             disk_path.write_text(json.dumps(serialized_model), encoding="utf-8")
-            with pytest.raises(RuntimeError) as runtime_exc_info:
+            with pytest.raises(ValidationError) as exc_info:
                 model_class.from_disk(disk_path)
             assert not any(
-                fragment in str(runtime_exc_info.value)
+                fragment in str(exc_info.value)
                 for fragment in self.get_api_key_fragments(api_key)
             )
-            check_data_error(runtime_exc_info.value.__cause__, case_index)
+            check_data_error(exc_info.value, case_index)
         # The data without the keys is reported as it is, i.e. with the key not set
         serialized_model = model.to_dict()
         serialized_model["auto_pricing"] = True

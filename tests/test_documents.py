@@ -880,7 +880,7 @@ class TestDocuments(BaseTest):
             # Pipeline assignment
             document = self.document.clone()
             document.assign_pipeline(context)
-            with pytest.raises(RuntimeError):
+            with pytest.raises(ValueError, match="already has aspects"):
                 document.assign_pipeline(
                     context
                 )  # document already has aspects and concepts

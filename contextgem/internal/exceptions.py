@@ -8,12 +8,23 @@ Module defining custom exceptions for the ContextGem framework.
 from __future__ import annotations
 
 
-# Model exceptions
+# Base exception
 
 
-class _BaseModelError(Exception):
+class ContextGemError(Exception):
     """
-    Base exception class for model-related errors.
+    Base class of the exceptions that the framework raises when a run fails, i.e.
+    of :class:`ModelAPIError`, :class:`ModelExtractionError` and
+    :class:`LLMToolLoopLimitError`. Catch it to handle any of them in one clause,
+    e.g. ``except ContextGemError``.
+
+    An error in the calling code, e.g. an invalid argument or an object that
+    cannot be used where it is passed, is raised as ``ValueError`` or ``TypeError``
+    instead, which includes the ``ValidationError`` of pydantic, a subclass
+    of ``ValueError``. A file that cannot be read or written, e.g. by ``from_disk()``
+    or ``to_disk()``, raises ``OSError``.
+
+    Can be imported from ``contextgem``.
 
     :ivar message: Human-readable error description
     :vartype message: str
@@ -62,7 +73,10 @@ class _BaseModelError(Exception):
         return base_msg
 
 
-class ModelExtractionError(_BaseModelError):
+# Model exceptions
+
+
+class ModelExtractionError(ContextGemError):
     """
     Exception raised by the extraction methods when a model returns data that cannot
     be used, and there is no fallback model left to try.
@@ -90,7 +104,7 @@ class ModelExtractionError(_BaseModelError):
     """
 
 
-class ModelAPIError(_BaseModelError):
+class ModelAPIError(ContextGemError):
     """
     Exception raised when a request to a model fails for good, and there is
     no fallback model left to try.
@@ -121,7 +135,7 @@ class ModelAPIError(_BaseModelError):
 # Tool calling / tooling exceptions
 
 
-class LLMToolLoopLimitError(_BaseModelError):
+class LLMToolLoopLimitError(ContextGemError):
     """
     Exception raised from a chat when the tool-calling loop reaches the configured
     ``tool_max_rounds`` limit and the LLM continues requesting tools.

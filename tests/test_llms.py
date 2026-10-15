@@ -1982,10 +1982,10 @@ class TestLLMs(BaseTest):
         check_group_error(e.value)
         disk_path = tmp_path / "model_group.json"
         disk_path.write_text(json.dumps(serialized_group), encoding="utf-8")
-        with pytest.raises(RuntimeError) as runtime_exc_info:
+        with pytest.raises(ValidationError) as e:
             DocumentModelGroup.from_disk(disk_path)
-        assert "SECRET" not in str(runtime_exc_info.value)
-        check_group_error(runtime_exc_info.value.__cause__)
+        assert "SECRET" not in str(e.value)
+        check_group_error(e.value)
         # ... and when the key is assigned to the group
         key_param = "api_key"
         with pytest.raises(ValidationError) as e:

@@ -12,6 +12,7 @@ from contextgem.public import (
     Aspect,
     BooleanConcept,
     ChatSession,
+    ContextGemError,
     ContextGemWarning,
     DateConcept,
     Document,
@@ -82,6 +83,7 @@ __all__ = (  # noqa: RUF022 - grouped by kind
     # Decorators
     "register_tool",
     # Exceptions and warnings
+    "ContextGemError",
     "ModelAPIError",
     "ModelExtractionError",
     "LLMToolLoopLimitError",

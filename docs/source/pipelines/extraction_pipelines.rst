@@ -55,7 +55,7 @@ Once created, a pipeline is assigned to documents with :meth:`~contextgem.public
 
    # Now both documents have the same extraction configuration
 
-``assign_pipeline()`` raises ``RuntimeError`` if the document already has aspects or concepts, unless ``overwrite_existing=True`` is passed:
+``assign_pipeline()`` raises ``ValueError`` if the document already has aspects or concepts, unless ``overwrite_existing=True`` is passed:
 
 .. code-block:: python
 

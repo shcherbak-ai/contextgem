@@ -324,7 +324,7 @@ When the LLM can correct a failed tool call, the chat is not stopped: the error 
    * - The LLM still calls tools after ``tool_max_rounds`` rounds of tool calls
      - :class:`~contextgem.public.exceptions.LLMToolLoopLimitError` is raised from ``chat(...)``
 
-``ModelAPIError`` and ``LLMToolLoopLimitError`` can be imported from ``contextgem``.
+``ModelAPIError`` and ``LLMToolLoopLimitError`` can be imported from ``contextgem``, and ``except ContextGemError`` catches either of them (:class:`~contextgem.public.exceptions.ContextGemError`).
 
 When ``chat(...)`` raises an error, or is cancelled (e.g. on a timeout set by the calling code), the requests completed before that are still counted in the usage and cost of the LLM.
 

@@ -682,7 +682,7 @@ Providers may set further limits of their own. See the documentation of your pro
    * - :class:`~contextgem.public.exceptions.ModelExtractionError`
      - A response cannot be used: the model refused to answer a question of a concept, or the question of an aspect on every paragraph, an answer is missing, an answer does not have a valid probability for each of the options offered, or has a zero probability for each of them, or the option that an answer picks is not one of the options offered. The request is not sent again, as the same response is expected.
 
-``ModelAPIError`` and ``ModelExtractionError`` are raised only if there is no fallback model left to try (see :ref:`decision-models-fallbacks-label`). Both can be imported from ``contextgem``.
+``ModelAPIError`` and ``ModelExtractionError`` are raised only if there is no fallback model left to try (see :ref:`decision-models-fallbacks-label`). Both can be imported from ``contextgem``, and ``except ContextGemError`` catches either of them (:class:`~contextgem.public.exceptions.ContextGemError`).
 
 **A refused answer in aspect extraction is not an error** (see :ref:`decision-models-aspects-label`): the paragraph or the sentence is not included in the aspect, and the extraction goes on with the other answers. ``litellm`` also reports a question that the model left unanswered as a refused one. A warning is logged for each aspect with refused answers:
 

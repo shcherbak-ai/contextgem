@@ -34,6 +34,8 @@ To reconstruct objects from their serialized forms, use the corresponding class 
 * ``from_dict(dict_object)`` - Creates an object from a Python dictionary
 * ``from_disk(file_path)`` - Loads an object from a file on disk
 
+``to_disk()`` and ``from_disk()`` raise the error of a file that cannot be written or read as it is, e.g. ``FileNotFoundError`` or ``PermissionError`` (subclasses of ``OSError``). ``from_disk()`` raises the error of what the file holds as ``from_json()`` raises it, with a note that names the file: ``ValueError`` for data that is not valid JSON or fails validation (``json.JSONDecodeError`` and pydantic's ``ValidationError`` are subclasses of ``ValueError``), and ``TypeError`` for the data of another class, e.g. an aspect loaded with ``Document.from_disk()``.
+
 .. note::
    Deserialization reconstructs the full state of the original document or pipeline: all fields, extracted data, and unique IDs are preserved, so a round-tripped object compares equal to the original (e.g. ``Document.from_dict(document.to_dict()) == document``). The serialized data stores each reference paragraph and reference sentence of the aspects and of the extracted items on its own, while in the restored document they are the paragraphs and sentences of the document itself, i.e. the same objects as in ``document.paragraphs``, as after an extraction (see :ref:`locating-paras-and-sents`). For models, see :ref:`serialization-llm-credentials-label`.
 

@@ -17,6 +17,7 @@ from contextgem.public.decorators import register_tool
 from contextgem.public.documents import Document
 from contextgem.public.examples import JsonObjectExample, StringExample
 from contextgem.public.exceptions import (
+    ContextGemError,
     ContextGemWarning,
     LLMToolLoopLimitError,
     ModelAPIError,
@@ -77,6 +78,7 @@ __all__ = (  # noqa: RUF022 - grouped by kind
     # Decorators
     "register_tool",
     # Exceptions and warnings
+    "ContextGemError",
     "ModelAPIError",
     "ModelExtractionError",
     "LLMToolLoopLimitError",

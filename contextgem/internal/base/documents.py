@@ -367,9 +367,11 @@ class _Document(_AssignedInstancesProcessor):
             Defaults to False.
         :type overwrite_existing: bool
         :return: Returns the current instance of the document after assigning the pipeline.
+        :raises ValueError: If the document already has aspects or concepts, and
+            `overwrite_existing` is not set to `True`.
         """
         if (self.aspects or self.concepts) and not overwrite_existing:
-            raise RuntimeError(
+            raise ValueError(
                 "Document already has aspects and concepts assigned. "
                 "Use `overwrite_existing=True` to overwrite existing aspects and concepts "
                 "with the pipeline."

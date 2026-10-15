@@ -415,19 +415,18 @@ class _InstanceSerializer(BaseModel):
         :type file_path: str | Path
         :return: None
         :raises ValueError: If the file path doesn't end with '.json'.
-        :raises RuntimeError: If there's an error during the file writing process.
+        :raises OSError: If the file cannot be written, e.g. its directory does not
+            exist. The error is the one raised by the file operation, e.g.
+            ``FileNotFoundError`` or ``PermissionError``.
         """
         # Convert to Path for consistent handling
         path_obj = Path(file_path)
         if path_obj.suffix.lower() != ".json":
             raise ValueError("The file path must end with '.json'")
-        try:
-            # Dump the JSON representation
-            data = self.to_dict()
-            with open(path_obj, "w", encoding="utf-8") as file:
-                json.dump(data, file, ensure_ascii=False, indent=2)
-        except Exception as e:
-            raise RuntimeError(f"Failed to save the instance to {path_obj}: {e}") from e
+        # Dump the JSON representation
+        data = self.to_dict()
+        with open(path_obj, "w", encoding="utf-8") as file:
+            json.dump(data, file, ensure_ascii=False, indent=2)
 
     @classmethod
     def from_disk(cls, file_path: str | Path) -> Self:
@@ -443,8 +442,15 @@ class _InstanceSerializer(BaseModel):
         :type file_path: str | Path
         :return: An instance of the class populated with the data from the file.
         :rtype: Self
-        :raises ValueError: If the file path doesn't end with '.json'.
-        :raises RuntimeError: If deserialization fails.
+        :raises ValueError: If the file path doesn't end with '.json', or if the file
+            does not hold valid serialized data, e.g. it is not a valid UTF-8 text
+            (``UnicodeDecodeError``) or JSON (``json.JSONDecodeError``), or the data
+            fails validation (pydantic's ``ValidationError``). These errors are
+            subclasses of ``ValueError``.
+        :raises TypeError: If the serialized data is of another class.
+        :raises OSError: If the file cannot be read, e.g. it does not exist.
+            The error is the one raised by the file operation, e.g.
+            ``FileNotFoundError`` or ``PermissionError``.
         """
         # Convert to Path for consistent handling
         path_obj = Path(file_path)
@@ -458,9 +464,12 @@ class _InstanceSerializer(BaseModel):
             # Deserialize the JSON content into an instance
             return cls.from_json(json_data)
         except Exception as e:
-            raise RuntimeError(
-                f"Failed to load the instance from {path_obj}: {e}"
-            ) from e
+            # The error is raised as it is, so that the calling code can handle it
+            # by its type. An error of the file operation names the file itself,
+            # and an error of the content gets a note that names it.
+            if not isinstance(e, OSError):
+                e.add_note(f"Failed to load the instance from {path_obj}")
+            raise
 
     @classmethod
     def from_dict(cls, obj_dict: dict[str, Any]) -> Self:
@@ -486,8 +495,9 @@ class _InstanceSerializer(BaseModel):
         # Create a copy of the object dict due to further modification
         obj_dict = deepcopy(obj_dict)
 
-        object_class_name = obj_dict.get(KEY_CLASS_PRIVATE)
-        del obj_dict[KEY_CLASS_PRIVATE]
+        object_class_name = obj_dict.pop(KEY_CLASS_PRIVATE, None)
+        if object_class_name is None:
+            raise ValueError("Missing class name in serialized dictionary")
         if object_class_name != cls.__name__:
             raise TypeError(f"Class {object_class_name} does not match {cls.__name__}")
 
@@ -675,6 +685,8 @@ class _InstanceSerializer(BaseModel):
         :rtype: Self
         :raises json.JSONDecodeError: If the string is not a valid JSON. The error
             gives the position of what is invalid, and does not hold the string.
+        :raises ValueError: If the JSON value is not an object with a class name,
+            i.e. not serialized data.
         :raises TypeError: If the class name in the serialized data doesn't match.
         """
         try:
@@ -688,6 +700,11 @@ class _InstanceSerializer(BaseModel):
             # in the string, and its other attributes stay as they are.
             e.doc = ""
             raise
+        if not isinstance(obj_dict, dict) or KEY_CLASS_PRIVATE not in obj_dict:
+            raise ValueError(
+                "Missing class name in serialized data: a JSON object "
+                "with the class name is expected"
+            )
         if obj_dict[KEY_CLASS_PRIVATE] != cls.__name__:
             raise TypeError(
                 f"Class {obj_dict[KEY_CLASS_PRIVATE]} does not match {cls.__name__}"

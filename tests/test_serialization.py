@@ -368,7 +368,7 @@ class TestSerialization(BaseTest):
             self.check_instance_serialization_and_cloning(image)
 
         # Check with extraction pipeline assignment
-        with pytest.raises(RuntimeError):
+        with pytest.raises(ValueError, match="already has aspects"):
             document.assign_pipeline(self.extraction_pipeline)
         document.remove_all_instances()
         document.assign_pipeline(self.extraction_pipeline)
@@ -684,7 +684,7 @@ class TestSerialization(BaseTest):
         # From disk
         disk_path = tmp_path / "item.json"
         disk_path.write_text(item_json, encoding="utf-8")
-        with pytest.raises(RuntimeError, match="probabilities"):
+        with pytest.raises(ValueError, match="probabilities"):
             _BooleanItem.from_disk(disk_path)
 
     def test_deserialize_item_without_probabilities(self, tmp_path: Path):
@@ -807,19 +807,76 @@ class TestSerialization(BaseTest):
                 parser_error.colno,
             )
 
-            # The error for a file has the same error as its cause
+            # The error for a file is the same error, with a note that names
+            # the file
             file_path = tmp_path / f"{type(instance).__name__}.json"
             file_path.write_text(invalid_json_string, encoding="utf-8")
-            with pytest.raises(RuntimeError, match="Failed to load") as exc_info:
+            with pytest.raises(json.JSONDecodeError) as exc_info:
                 type(instance).from_disk(file_path)
-            assert api_key not in str(exc_info.value)
-            cause = exc_info.value.__cause__
-            assert isinstance(cause, json.JSONDecodeError)
-            assert cause.doc == ""
-            assert str(cause) == str(parser_error)
+            error = exc_info.value
+            assert error.doc == ""
+            assert api_key not in str(error)
+            assert str(error) == str(parser_error)
+            assert error.__notes__ == [f"Failed to load the instance from {file_path}"]
 
         # A valid string is restored as before
         assert Document.from_json(document.to_json()) == document
+
+    def test_file_errors(self, tmp_path: Path):
+        """
+        Tests that ``to_disk()`` and ``from_disk()`` raise the error of a file that
+        cannot be written or read as it is, e.g. ``FileNotFoundError``, so that
+        the calling code can handle it by its type, and that ``from_disk()`` raises
+        the error of what the file holds as ``from_json()`` raises it, with a note
+        that names the file.
+        """
+        document = Document(raw_text="Services agreement")
+        file_path = tmp_path / "document.json"
+
+        # A file path without the `.json` extension
+        for method in (document.to_disk, Document.from_disk):
+            with pytest.raises(ValueError, match="must end with '.json'"):
+                method(tmp_path / "document.txt")
+
+        # A file that cannot be written or read
+        missing_dir_path = tmp_path / "missing_dir" / "document.json"
+        with pytest.raises(FileNotFoundError):
+            document.to_disk(missing_dir_path)
+        with pytest.raises(FileNotFoundError) as exc_info:
+            Document.from_disk(missing_dir_path)
+        assert not hasattr(exc_info.value, "__notes__")
+        # A directory in place of the file (`IsADirectoryError`, or
+        # `PermissionError` on Windows)
+        dir_path = tmp_path / "dir.json"
+        dir_path.mkdir()
+        with pytest.raises(OSError):
+            document.to_disk(dir_path)
+        with pytest.raises(OSError):
+            Document.from_disk(dir_path)
+
+        # A file with what is not serialized data of the class
+        aspect_data = Aspect(name="Fees", description="Fees and payments").to_json()
+        cases: list[tuple[bytes, type[Exception], str]] = [
+            (b"\xff{}", UnicodeDecodeError, "utf-8"),
+            (b'{"__class__": ', json.JSONDecodeError, "Expecting value"),
+            (b"[]", ValueError, "Missing class name"),
+            (b"{}", ValueError, "Missing class name"),
+            (aspect_data.encode("utf-8"), TypeError, "Class Aspect does not match"),
+        ]
+        for content, error_class, message in cases:
+            file_path.write_bytes(content)
+            with pytest.raises(error_class, match=message) as exc_info:
+                Document.from_disk(file_path)
+            assert exc_info.value.__notes__ == [
+                f"Failed to load the instance from {file_path}"
+            ]
+        # ... which `from_dict()` rejects as well
+        with pytest.raises(ValueError, match="Missing class name"):
+            Document.from_dict({})
+
+        # A file that can be written and read
+        document.to_disk(file_path)
+        assert Document.from_disk(file_path) == document
 
     def test_document_serialization_with_item_probabilities(self, tmp_path: Path):
         """
