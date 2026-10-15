@@ -1,29 +1,31 @@
-# Extraction evaluation: baseline
+# Extraction evaluation: baseline_2026-10-11
 
-| Case | Model | Mode | Runs | Aspect F1 | Concepts correct | Reference F1 | Requests | Input tokens | Cached | Output tokens | Seconds | Retries |
-|---|---|---|---|---|---|---|---|---|---|---|---|---|
-| complex_dpa | azure_ai/ms-decision-model | decision_default | 2 | 0.771 (0.768-0.774) | 5/6 | n/a | 157 | 109,184 (109,118-109,249) | 0 | 934 | 54 (53-56) | 0 |
-| complex_dpa | ollama_chat/llama3.1:8b | default | 2 | 0.000 | 1/22 | 0.000 | 4 | 53,660 | 0 | 3,404 (3,388-3,419) | 37 (36-37) | 6 |
-| complex_dpa | ollama_chat/mistral-small:24b | default | 2 | 0.638 (0.624-0.651) | 8/22 | 0.278 (0.224-0.333) | 13 | 82,232 (82,227-82,238) | 0 | 4,472 (4,389-4,555) | 280 (274-285) | 12 |
-| complex_dpa | openai/gpt-5.6-luna | default | 3 | 0.968 (0.940-0.981) | 20.3/22 (19-21) | 0.804 (0.780-0.820) | 7 | 57,563 (57,274-57,846) | 29,214 (9,569-39,036) | 5,548 (5,331-5,901) | 52 (49-54) | 0 |
-| complex_dpa | openai/gpt-6-luna | concurrent | 3 | 0.960 (0.958-0.961) | 22/22 | 0.904 (0.900-0.908) | 30 | 260,478 (260,046-261,316) | 150,527 (48,836-201,373) | 12,470 (11,334-13,357) | 30 (26-33) | 0 |
-| complex_dpa | openai/gpt-6-luna | decision_default | 2 | 0.832 | 5/6 | n/a | 157 | 222,085 | 0 | 0 | 38 (38-38) | 0 |
-| complex_dpa | openai/gpt-6-luna | default | 3 | 0.968 (0.961-0.981) | 22/22 | 0.885 (0.860-0.925) | 7 (7-8) | 61,330 (57,840-68,176) | 32,731 (9,569-49,588) | 8,201 (7,217-9,227) | 66 (57-70) | 1 |
-| complex_dpa | openai/gpt-6.1-sol | default | 1 | 0.941 | 22/22 | 0.946 | 7 | 58,774 | 9,569 | 3,850 | 64 | 0 |
-| complex_dpa | strands_decider/kev-4b | decision_default | 1 | 0.718 | 4/6 | n/a | 157 | 153,347 | 0 | 0 | 138 | 0 |
-| complex_dpa | strands_decider/nimble | decision_default | 1 | 0.697 | 5/6 | n/a | 157 | 929,099 | 0 | 1,090 | 99 | 0 |
-| complex_dpa | typesafe/jev-latest | decision_default | 2 | 0.791 (0.787-0.794) | 5/6 | n/a | 157 | 144,032 | 0 | 16,545 | 37 (36-37) | 0 |
-| complex_nda | azure_ai/ms-decision-model | decision_default | 2 | 0.781 (0.778-0.784) | 4/6 | n/a | 76 | 50,858 (50,838-50,878) | 0 | 312 | 27 (26-28) | 0 |
-| complex_nda | ollama_chat/llama3.1:8b | default | 2 | 0.000 | 1/18 | 0.000 | 4 | 40,576 | 0 | 4,111 (2,276-5,946) | 45 (37-54) | 6 |
-| complex_nda | ollama_chat/mistral-small:24b | default | 2 | 0.771 | 7/18 | 0.384 (0.376-0.392) | 12 (12-13) | 87,698 (81,860-93,535) | 0 | 5,817 (5,600-6,034) | 320 (314-326) | 13 |
-| complex_nda | openai/gpt-5.6-luna | default | 3 | 1.000 | 17.3/18 (17-18) | 0.806 (0.796-0.819) | 6 | 48,229 (48,034-48,355) | 29,136 (6,835-43,236) | 4,759 (4,703-4,861) | 44 (43-45) | 0 |
-| complex_nda | openai/gpt-6-luna | concurrent | 3 | 0.956 (0.939-0.985) | 18/18 | 0.864 (0.856-0.876) | 25 | 198,279 (197,141-199,328) | 96,168 (34,175-133,079) | 8,667 (8,309-8,899) | 24 (23-25) | 0 |
-| complex_nda | openai/gpt-6-luna | decision_default | 2 | 0.866 | 4/6 | n/a | 76 | 86,361 | 0 | 0 | 19 (19-19) | 0 |
-| complex_nda | openai/gpt-6-luna | default | 3 | 0.986 (0.972-1.000) | 18/18 | 0.870 (0.846-0.890) | 6 | 48,347 (48,248-48,460) | 24,105 (6,835-33,138) | 5,972 (5,500-6,351) | 49 (47-50) | 0 |
-| complex_nda | openai/gpt-6.1-sol | default | 1 | 1.000 | 18/18 | 0.899 | 6 | 48,358 | 6,835 | 3,567 | 56 | 0 |
-| complex_nda | strands_decider/kev-4b | decision_default | 1 | 0.768 | 4/6 | n/a | 76 | 98,623 | 0 | 0 | 67 | 0 |
-| complex_nda | strands_decider/nimble | decision_default | 1 | 0.692 | 3/6 | n/a | 76 | 286,023 | 0 | 388 | 44 | 0 |
-| complex_nda | typesafe/jev-latest | decision_default | 2 | 0.824 (0.817-0.830) | 3/6 | n/a | 76 | 65,312 (65,306-65,318) | 0 | 5,652 | 18 (18-18) | 0 |
+Decision models extract only the closed concepts (Boolean, label and rating concepts), without justifications and references: compare them with LLMs on the aspects and on the closed concepts.
+
+| Case | Model | Mode | Runs | Aspect F1 | Concepts correct | Closed concepts correct | Reference F1 | Requests | Input tokens | Cached | Output tokens | Seconds | Retries |
+|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
+| complex_dpa | azure_ai/ms-decision-model | decision_default | 2 | 0.771 (0.768-0.774) | 5/6 | 5/6 | n/a | 157 | 109,184 (109,118-109,249) | 0 | 934 | 54 (53-56) | 0 |
+| complex_dpa | ollama_chat/llama3.1:8b | default | 2 | 0.000 | 1/22 | 0/6 | 0.000 | 4 | 53,660 | 0 | 3,404 (3,388-3,419) | 37 (36-37) | 6 |
+| complex_dpa | ollama_chat/mistral-small:24b | default | 2 | 0.638 (0.624-0.651) | 8/22 | 3/6 | 0.278 (0.224-0.333) | 13 | 82,232 (82,227-82,238) | 0 | 4,472 (4,389-4,555) | 280 (274-285) | 12 |
+| complex_dpa | openai/gpt-5.6-luna | default | 3 | 0.968 (0.940-0.981) | 20.3/22 (19-21) | 6/6 | 0.804 (0.780-0.820) | 7 | 57,563 (57,274-57,846) | 29,214 (9,569-39,036) | 5,548 (5,331-5,901) | 52 (49-54) | 0 |
+| complex_dpa | openai/gpt-6-luna | concurrent | 3 | 0.960 (0.958-0.961) | 22/22 | 6/6 | 0.904 (0.900-0.908) | 30 | 260,478 (260,046-261,316) | 150,527 (48,836-201,373) | 12,470 (11,334-13,357) | 30 (26-33) | 0 |
+| complex_dpa | openai/gpt-6-luna | decision_default | 2 | 0.832 | 5/6 | 5/6 | n/a | 157 | 222,085 | 0 | 0 | 38 (38-38) | 0 |
+| complex_dpa | openai/gpt-6-luna | default | 3 | 0.968 (0.961-0.981) | 22/22 | 6/6 | 0.885 (0.860-0.925) | 7 (7-8) | 61,330 (57,840-68,176) | 32,731 (9,569-49,588) | 8,201 (7,217-9,227) | 66 (57-70) | 1 |
+| complex_dpa | openai/gpt-6.1-sol | default | 1 | 0.941 | 22/22 | 6/6 | 0.946 | 7 | 58,774 | 9,569 | 3,850 | 64 | 0 |
+| complex_dpa | strands_decider/kev-4b | decision_default | 1 | 0.718 | 4/6 | 4/6 | n/a | 157 | 153,347 | 0 | 0 | 138 | 0 |
+| complex_dpa | strands_decider/nimble | decision_default | 1 | 0.697 | 5/6 | 5/6 | n/a | 157 | 929,099 | 0 | 1,090 | 99 | 0 |
+| complex_dpa | typesafe/jev-latest | decision_default | 2 | 0.791 (0.787-0.794) | 5/6 | 5/6 | n/a | 157 | 144,032 | 0 | 16,545 | 37 (36-37) | 0 |
+| complex_nda | azure_ai/ms-decision-model | decision_default | 2 | 0.781 (0.778-0.784) | 4/6 | 4/6 | n/a | 76 | 50,858 (50,838-50,878) | 0 | 312 | 27 (26-28) | 0 |
+| complex_nda | ollama_chat/llama3.1:8b | default | 2 | 0.000 | 1/18 | 0/6 | 0.000 | 4 | 40,576 | 0 | 4,111 (2,276-5,946) | 45 (37-54) | 6 |
+| complex_nda | ollama_chat/mistral-small:24b | default | 2 | 0.771 | 7/18 | 1/6 | 0.384 (0.376-0.392) | 12 (12-13) | 87,698 (81,860-93,535) | 0 | 5,817 (5,600-6,034) | 320 (314-326) | 13 |
+| complex_nda | openai/gpt-5.6-luna | default | 3 | 1.000 | 17.3/18 (17-18) | 5.7/6 (5-6) | 0.806 (0.796-0.819) | 6 | 48,229 (48,034-48,355) | 29,136 (6,835-43,236) | 4,759 (4,703-4,861) | 44 (43-45) | 0 |
+| complex_nda | openai/gpt-6-luna | concurrent | 3 | 0.956 (0.939-0.985) | 18/18 | 6/6 | 0.864 (0.856-0.876) | 25 | 198,279 (197,141-199,328) | 96,168 (34,175-133,079) | 8,667 (8,309-8,899) | 24 (23-25) | 0 |
+| complex_nda | openai/gpt-6-luna | decision_default | 2 | 0.866 | 4/6 | 4/6 | n/a | 76 | 86,361 | 0 | 0 | 19 (19-19) | 0 |
+| complex_nda | openai/gpt-6-luna | default | 3 | 0.986 (0.972-1.000) | 18/18 | 6/6 | 0.870 (0.846-0.890) | 6 | 48,347 (48,248-48,460) | 24,105 (6,835-33,138) | 5,972 (5,500-6,351) | 49 (47-50) | 0 |
+| complex_nda | openai/gpt-6.1-sol | default | 1 | 1.000 | 18/18 | 6/6 | 0.899 | 6 | 48,358 | 6,835 | 3,567 | 56 | 0 |
+| complex_nda | strands_decider/kev-4b | decision_default | 1 | 0.768 | 4/6 | 4/6 | n/a | 76 | 98,623 | 0 | 0 | 67 | 0 |
+| complex_nda | strands_decider/nimble | decision_default | 1 | 0.692 | 3/6 | 3/6 | n/a | 76 | 286,023 | 0 | 388 | 44 | 0 |
+| complex_nda | typesafe/jev-latest | decision_default | 2 | 0.824 (0.817-0.830) | 3/6 | 3/6 | n/a | 76 | 65,312 (65,306-65,318) | 0 | 5,652 | 18 (18-18) | 0 |
 
 ## Concepts missed
 

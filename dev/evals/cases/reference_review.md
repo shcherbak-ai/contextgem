@@ -1,14 +1,16 @@
-# Review of the Reference Answers (2026-10-11)
+# Review of the Reference Answers
 
-The reference answers of both cases (`complex_nda.gold.json`, `complex_dpa.gold.json`) were produced by an AI agent. This is the record of their review, which was also done by AI agents: no person has verified the answers. The maintainer delegated the review.
+The reference answers of `complex_nda` and `complex_dpa` were reviewed on 2026-10-11 (the sections up to "Limits"). `complex_mcu` was written with its reference answers on 2026-10-15 and reviewed in the same way (its own section, at the end).
+
+The reference answers of the two contract cases (`complex_nda.gold.json`, `complex_dpa.gold.json`) were produced by an AI agent. This is the record of their review, which was also done by AI agents: no person has verified the answers. The maintainer delegated the review.
 
 ## Method
 
 1. **Blind annotation.** For each case, a separate agent got only the text with numbered paragraphs and the definitions of the aspects and concepts. It saw neither the reference answers nor any model result. It listed the paragraphs of each aspect and derived the answer of each concept.
 2. **Own derivation.** The reviewing agent read both contracts in full and derived every typed concept answer from the text before comparing it with the reference.
-3. **Comparison of three sources**: the reference, the blind annotation, and the five decision models of the baseline (how many of them give a paragraph a probability of 0.5 or more for an aspect).
+3. **Comparison of three sources**: the reference, the blind annotation, and the five decision models of the baseline of 2026-10-11 (`baseline_2026-10-11`; how many of them give a paragraph a probability of 0.5 or more for an aspect).
 4. **Ruling.** Every paragraph on which the reference and the blind annotation differ, and every paragraph on which four or five decision models disagree with both, was ruled on against the text.
-5. **Second part**, after the baseline was recorded again with runs that keep what they extract: the evidence of each concept, the justifications and the string answers were reviewed, and what the hosted LLMs extract beyond the reference (seven runs) was ruled on in the same way.
+5. **Second part**, after the baseline of 2026-10-11 was recorded again with runs that keep what they extract: the evidence of each concept, the justifications and the string answers were reviewed, and what the hosted LLMs extract beyond the reference (seven runs) was ruled on in the same way.
 
 The standard for an aspect is the one the models are given: a paragraph belongs to an aspect if it clearly relates to the aspect, based on its name and description; the context of the surrounding paragraphs counts; tangential mentions are left out.
 
@@ -70,7 +72,7 @@ A candidate was a paragraph that at least four of seven runs of the hosted LLMs,
 
 ## Effect on the Scores
 
-The baseline was recorded again after the first part of the review, as the earlier runs had kept their scores but not what they extracted. The runs now keep it, and were scored again from it after the second part (`rescore`). Aspect F1 before the review and after it (NDA / DPA, mean of the runs of a configuration):
+The baseline of 2026-10-11 was recorded again after the first part of the review, as the earlier runs had kept their scores but not what they extracted. The runs now keep it, and were scored again from it after the second part (`rescore`). Aspect F1 before the review and after it (NDA / DPA, mean of the runs of a configuration):
 
 | Model | Before | After |
 |-------|--------|-------|
@@ -95,3 +97,107 @@ What is left between the hosted LLMs and the reference is small. In the NDA they
 - With the reviewed reference, the hosted LLMs are at or near the top of the scale on both cases, for aspects and for concepts. The cases can show that a change makes extraction worse, and how models and settings differ in cost; they have little room left to show that a change makes a capable model better.
 - Whether a paragraph "clearly relates" to an aspect has judgement in it. The borderline list is where that judgement was closest.
 - A decision model judges a paragraph on its own, while the reference lists what belongs in the context of the document. Part of the difference between the two is this, not an error of either.
+
+## complex_mcu (2026-10-15)
+
+### How the case was made
+
+An AI agent wrote the document and its reference answers together, from one set of facts. The document is a fictional documentation package of a microcontroller: an extract of the datasheet, the errata sheet, a product change notification (PCN) with an amendment, an extract of an application note, and the design review and purchasing records of a customer for two boards, DR-114 and DR-115. A script computed each derived answer from the facts and checks it: the junction temperatures (108.2 °C and 100.4 °C), the clock frequencies, the wait states, the ADC sampling rate, the calendar dates and the ISO week of a date code. No answer is close to a rounding boundary.
+
+The answers depend on the following, which is what the case tests:
+
+- **Later documents override earlier values.** For example, DC-2 corrects a wait-state limit, and the PCN changes a BOR threshold and a retention time for revision C. The errata sheet of September 2026 overrides the PCN of June 2026 on ES-08 and ES-09.
+- **The silicon revision is decoded from the marking**: revision C is marked Y.
+- **Errata apply only under their conditions**, which the board records meet or not.
+- **The application note is informative.** Its thermal shortcut, an example at another frequency, and a laboratory INL would give wrong answers.
+- **The records have distractors**: a prototype lot of another revision, a measured temperature, a revised forecast.
+
+### Method
+
+The method of the two contract cases, with two separate agents, each given only the text with numbered paragraphs and the definitions of the aspects and concepts:
+
+1. **Blind derivation of every concept answer**, with its evidence and calculation, and a report of any ambiguity or error in the document.
+2. **Blind annotation of the paragraphs of every aspect**, with the paragraphs it was unsure about.
+
+Each difference was ruled on against the text.
+
+### Concepts
+
+The blind derivation reaches the same value on all 26 typed concepts. The one string concept matches in substance, and its wording was added to the accepted values.
+
+The ambiguities it records are the traps of the case, each with the reason why the reference value holds. For example, ES-03 would apply to the prototype lot of revision B, not to the production boards. One more reading: ES-02 applies to DR-115 because its junction temperature can fall below 0 °C at power-up at an ambient of −25 °C, although under full load at that ambient it stays at about +5 °C.
+
+Evidence, i.e. the paragraphs that the items of a concept reference:
+
+- **Added** from the blind derivation:
+  - 9.1, the conditions of Table 18, for both junction temperatures;
+  - 1.5, the decoding of the marking, for the maximum SYSCLK;
+  - II.2, why revision C is not marked C, for the marking code;
+  - the older statements of class 2 for ES-08 and of ES-09 as fixed (row 2 of Table E3 and III.3 of the PCN), as superseded values are part of the evidence where an answer depends on the change.
+- **Not added:**
+  - the order of precedence, which the blind derivation cites for most answers: each later document states its change itself;
+  - the column headers of tables;
+  - table rows that an answer does not need.
+
+### Errors in the document, found by the blind derivation and corrected
+
+- VDDA had a minimum of 1.8 V, below which the 1.8 V ±3 % rail of DR-114 falls. The minimum is now 1.71 V, also in the INL and DNL conditions of Table 17.
+- The application note reported a test at 3.0 Msps with a VDDA of 1.8 V, which the fADC limit of 36 MHz does not allow. It is now 2.57 Msps.
+- The ADC was "up to 3.6 Msps", which the formula of 7.2 does not give. It is now 3.57 Msps, also in the ENOB condition.
+- TIM1 had "a break input" in 1.2 and two in 13.1. Both now say there is more than one.
+- DC-4 gave the current of VOH without its sign.
+
+No answer changed. The derivation also noted two points that stay as they are: the PCN was never amended on ES-08 and ES-09, which the order of precedence resolves, and grade A devices have no maximum IDD or endurance specified above a Tj of 125 °C, which no answer needs.
+
+### Aspects
+
+The blind annotation has every paragraph of the reference answers except two groups:
+
+- **The fREF rows that DR-115 does not use** (PLLxRGE = 00, 01 and 11). Only the row of the range it configures is needed, so these rows are now borderline.
+- **Two flash paragraphs:** the row of the errata history that records the adding of DC-2, and the wait-state example of the application note. These are now borderline.
+
+What it adds beyond the reference answers was ruled on as follows:
+
+- **Paragraphs on the borderline or linked lists**, or that it was unsure about, are listed as borderline. These are:
+  - the order of precedence (in five aspects);
+  - the scope of the errata sheet (II.1);
+  - the descriptions of errata that are not present in the revision of a board;
+  - the informative paragraphs of the application note;
+  - the fADC limits (7.1) for the INL of DR-114.
+- **Four paragraphs that I had listed as borderline beforehand are scored**, as it left them out without doubt: row A of Table E1 and II.2 for the DR-114 clock configuration, 3.4 for the DR-114 thermal assessment, and 15.2 for the flash specifications.
+- **The descriptions of the four aspects of the boards and of the end-of-life aspect were reworded** after the annotation, as "What is needed to determine …:", followed by the kinds of rules and records. The annotation had taken "All clock, PLL, … rules" in the DR-114 clock configuration literally, with whole tables, while it applied "needed to determine" in the other aspects. The lock-time row of Table 10, which it added on that reading, is not needed and stays scored.
+- **Section headings, table captions and column headers are not scored**:
+  - a heading or a caption is not scored where its section has a paragraph of the aspect;
+  - a column header is listed as linked to the aspect whose rows it heads.
+
+### Second part, after the baseline of 2026-10-15
+
+The method of the second part of the review of the contract cases. A candidate is a paragraph that at least 4 of the 7 runs of the hosted LLMs in the default mode (`openai/gpt-6-luna` 3, `openai/gpt-5.6-luna` 3, `openai/gpt-6.1-sol` 1) extract beyond the reference answers, or leave out of them. A candidate is listed as linked if the text shows the dependency, and as borderline if careful readers disagree on it:
+
+- **Device limitations of revision C, linked:**
+  - the rows of Table E2 of the limitations that revision C does not have (ES-01, ES-02, ES-03, ES-06 and ES-07; 5 or 6 of 7 runs), whose column of revision C says so;
+  - the descriptions of ES-02, ES-03, ES-06 and ES-07 (6 of 7 runs), which end with the revision that fixed them;
+  - the row of revision C in Table E1 (4 of 7 runs), which identifies it.
+
+  As in the contract cases, these give the fuller picture: the list of the limitations of revision C is read against them.
+- **DR-114 thermal assessment:**
+  - 5.3, which defines the output frequency of a PLL, is now linked rather than in the reference answers. All 7 runs left it out; the calculation depends on it only through the clock configuration of the boards. It is also out of the evidence of the two concepts of the aspect, which can only reference what the aspect has.
+  - The rows of Tables 18, 19 and 20 for another frequency, package or ADC clock (4 or 5 of 7 runs) are borderline: the tables are read as a whole.
+- **DR-114 errata and firmware, borderline:** the other rows of Table 17 (6 or 7 of 7 runs), as the aspect names "the ADC sampling and accuracy rules", and row 2 of Table E3 (4 of 7 runs).
+- **Flash memory specifications, borderline:** 6.2, the sector size and the programming, and row 5 of the revision history of the datasheet. The blind annotation included them, 6 of 7 runs left them out, and the description lists latency, endurance and retention only.
+- **From the decision models:** as on 2026-10-11, the paragraphs that the decision models extract beyond the reference answers are candidates too: here those that all 3 hosted decision models extract, 7 in all. Two are borderline for the DR-114 thermal assessment: the absolute maximum Tj of Table 2, a limit that HDR-7 does not use and that a reader checks to rule it out, and DC-3, which corrects 8.2 for a QFN-48 with an unsoldered pad. The other five only share a word with their aspect and stay scored (the caption of Table 2, 3.3 for the thermal aspect, DR-115.4 for the flash aspect, DR-114.8 for the DR-114 clock configuration, and IV.3 for DR-115). This part was added after the first pass, which had taken the candidates from the LLMs only and so made unscored only what LLMs add.
+- **Kept as they are:**
+  - the row of revision C in Table E1 for the DR-114 clock configuration, and 1.3 for DR-115: 4 of 7 runs left each out, and the answers need them;
+  - row 3 of Table E3 for DR-115 (4 of 7 runs), which has no bearing on revision B.
+
+The scores of `baseline_2026-10-15` were computed again after this (`rescore`): the aspect F1 of the hosted LLMs on the case went from 0.85-0.94 to 0.90-0.96, and that of the decision models from 0.55-0.61 to 0.57-0.65. No concept score changed.
+
+### Limits
+
+- The case and its reference answers are the work of AI agents. The blind review makes them consistent; it does not make them verified.
+- The aspects of this case have more neutral paragraphs than those of the contract cases: from 7 to 32 per aspect, 155 in all, against 55 in `complex_dpa`. Of these, 61 are headings, captions and column headers of the many tables, 69 are borderline and 25 are other linked context. The aspect scores are computed over fewer paragraphs.
+- The evidence of many concepts lists every input of a calculation and the superseded values that an answer depends on, while the LLMs reference the governing paragraphs: the reference F1 of the hosted LLMs is 0.64 to 0.77 on this case, against 0.83 to 0.94 on the contracts. Read it to compare models and changes, not as a measure of their references.
+
+## complex_dpa: the wording of two justifications (2026-10-15)
+
+When the judge was added, two reference justifications of `complex_dpa` said that the 24-hour notification limit is "effective on 1 November", for a limit that A1.1 puts in force from 1 October 2026. The judge then found the justifications of the LLMs that say "from 1 October" wrong, in 4 runs. Both are now worded as in force from 1 October, and so on 1 November ("Breach notification deadline in force on 1 November 2026" and "Breach notification obligation summary"). No answer changed, and the scores do not depend on the justifications.

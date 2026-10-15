@@ -36,6 +36,7 @@ from contextgem import (
     RatingConcept,
 )
 from dev.evals.cases.complex_dpa import build_complex_dpa_pipeline
+from dev.evals.cases.complex_mcu import build_complex_mcu_pipeline
 from dev.evals.cases.complex_nda import build_complex_nda_pipeline
 
 
@@ -53,6 +54,7 @@ ModelKind = Literal["llm", "decision"]
 _PIPELINE_BUILDERS: dict[str, Callable[[], ExtractionPipeline]] = {
     "complex_nda": build_complex_nda_pipeline,
     "complex_dpa": build_complex_dpa_pipeline,
+    "complex_mcu": build_complex_mcu_pipeline,
 }
 CASE_NAMES = tuple(_PIPELINE_BUILDERS)
 

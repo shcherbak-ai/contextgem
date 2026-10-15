@@ -240,7 +240,7 @@ def main() -> None:
     parser.add_argument("--runs", type=int, default=1)
     parser.add_argument("--first-run", type=int, default=1)
     parser.add_argument(
-        "--label", required=True, help="name of the experiment, e.g. baseline"
+        "--label", required=True, help="name of the experiment, e.g. my_experiment"
     )
     parser.add_argument(
         "--concurrency", action="store_true", help="extract with use_concurrency=True"

@@ -13,7 +13,8 @@ uv run python -m dev.evals.summarize --label my_experiment
 ```
 
 Writes ``results/<label>/summary.md`` and ``results/<label>/summary.json``, and
-prints the summary.
+prints the summary. The verdicts of the judge on the runs (``results/<label>/judgments/``,
+written by ``dev.evals.judge``) are summarized too, where they exist.
 """
 
 from __future__ import annotations
@@ -25,6 +26,11 @@ from collections import defaultdict
 from typing import Any
 
 from dev.evals.harness import RESULTS_DIR, write_json
+
+
+# The concepts that LLMs and decision models both extract, i.e. the closed
+# questions: on these, the two kinds of model are compared on the same answers
+_CLOSED_CONCEPT_TYPES = ("BooleanConcept", "LabelConcept", "RatingConcept")
 
 
 def _format_spread(values: list[float | None], digits: int = 3) -> str:
@@ -64,6 +70,108 @@ def _format_count(values: list[float]) -> str:
     return f"{mean:,.0f} ({min(values):,.0f}-{max(values):,.0f})"
 
 
+def _format_correct(correct: list[int], total: int) -> str:
+    """
+    Formats the numbers of correct concepts of the runs of a configuration.
+
+    :param correct: The number of correct concepts of each run.
+    :type correct: list[int]
+    :param total: The number of concepts scored in a run.
+    :type total: int
+    :return: E.g. "22/22", or the mean with the lowest and the highest number in
+        brackets if the runs differ.
+    :rtype: str
+    """
+    if min(correct) == max(correct):
+        return f"{correct[0]}/{total}"
+    return f"{statistics.mean(correct):.1f}/{total} ({min(correct)}-{max(correct)})"
+
+
+def _count_closed_concepts(run: dict[str, Any]) -> tuple[int, int]:
+    """
+    Counts the closed concepts of a run (see ``_CLOSED_CONCEPT_TYPES``) and
+    the correct ones among them.
+
+    :param run: The record of the run.
+    :type run: dict[str, Any]
+    :return: The number of the correct closed concepts, and of the closed concepts.
+    :rtype: tuple[int, int]
+    """
+    closed = [
+        concept
+        for concept in run["scores"]["concepts"]
+        if concept["type"] in _CLOSED_CONCEPT_TYPES
+    ]
+    return sum(concept["correct"] for concept in closed), len(closed)
+
+
+def _format_share(correct: int, total: int) -> str:
+    """
+    Formats a number of correct verdicts out of a number of verdicts.
+
+    :param correct: The number of correct verdicts.
+    :type correct: int
+    :param total: The number of verdicts.
+    :type total: int
+    :return: E.g. "45/50 (0.90)", or "n/a" without verdicts.
+    :rtype: str
+    """
+    if not total:
+        return "n/a"
+    return f"{correct}/{total} ({correct / total:.2f})"
+
+
+def _get_judged_lines(
+    groups: dict[tuple[str, str, str], list[dict[str, Any]]],
+    judgments: dict[tuple[str, str, str], list[dict[str, Any]]],
+) -> list[str]:
+    """
+    Returns the section of the summary on the verdicts of the judge: for each
+    case, model and mode, the string values, the justifications and the fields
+    of objects judged correct, over the runs judged, and the cost of the judge.
+
+    :param groups: The runs by case, model and mode.
+    :type groups: dict[tuple[str, str, str], list[dict[str, Any]]]
+    :param judgments: The judgments of the runs by case, model and mode.
+    :type judgments: dict[tuple[str, str, str], list[dict[str, Any]]]
+    :return: The lines of the section.
+    :rtype: list[str]
+    """
+    judges = sorted(
+        {j["judge"]["model"] for group in judgments.values() for j in group}
+    )
+    lines = [
+        "",
+        f"## Judged by {', '.join(judges)}",
+        "",
+        "String values, justifications and text fields of objects, over all the "
+        "runs judged; a value equal to the reference value or to an accepted one "
+        "is correct without the judge.",
+        "",
+        "| Case | Model | Mode | Runs judged | Strings correct | "
+        "Justifications correct | Object fields correct | Judge requests | "
+        "Judge cost (USD) |",
+        "|---|---|---|---|---|---|---|---|---|",
+    ]
+    for key in sorted(groups):
+        group = judgments.get(key, [])
+        if not group:
+            continue
+        counts = {
+            name: sum(j["summary"][name] for j in group) for name in group[0]["summary"]
+        }
+        case, model, mode = key
+        lines.append(
+            f"| {case} | {model} | {mode} | {len(group)} | "
+            f"{_format_share(counts['n_strings_correct'], counts['n_strings'])} | "
+            f"{_format_share(counts['n_justifications_correct'], counts['n_justifications'])} | "
+            f"{_format_share(counts['n_fields_correct'], counts['n_fields'])} | "
+            f"{sum(j['usage']['requests'] for j in group)} | "
+            f"{sum(float(j['usage']['cost_total']) for j in group):.4f} |"
+        )
+    return lines
+
+
 def summarize(label: str) -> tuple[str, list[dict[str, Any]]]:
     """
     Summarizes the runs of an experiment.
@@ -75,28 +183,40 @@ def summarize(label: str) -> tuple[str, list[dict[str, Any]]]:
     :rtype: tuple[str, list[dict[str, Any]]]
     :raises ValueError: If the experiment has no runs.
     """
-    runs = [
-        json.loads(path.read_text(encoding="utf-8"))
-        for path in sorted((RESULTS_DIR / label / "runs").glob("*.json"))
-    ]
+    paths = sorted((RESULTS_DIR / label / "runs").glob("*.json"))
+    runs = [json.loads(path.read_text(encoding="utf-8")) for path in paths]
     if not runs:
         raise ValueError(f"No runs are recorded for the label `{label}`.")
     groups: dict[tuple[str, str, str], list[dict[str, Any]]] = defaultdict(list)
     for run in runs:
         groups[(run["case"], run["model"], run["mode"])].append(run)
+    # The verdicts of the judge on each run that has them
+    judgment_paths = [RESULTS_DIR / label / "judgments" / path.name for path in paths]
+    judgments: dict[tuple[str, str, str], list[dict[str, Any]]] = defaultdict(list)
+    for run, judgment_path in zip(runs, judgment_paths, strict=True):
+        if judgment_path.exists():
+            judgments[(run["case"], run["model"], run["mode"])].append(
+                json.loads(judgment_path.read_text(encoding="utf-8"))
+            )
 
     lines = [
         f"# Extraction evaluation: {label}",
         "",
-        "| Case | Model | Mode | Runs | Aspect F1 | Concepts correct | Reference F1 | "
-        "Requests | Input tokens | Cached | Output tokens | Seconds | Retries |",
-        "|---|---|---|---|---|---|---|---|---|---|---|---|---|",
+        "Decision models extract only the closed concepts (Boolean, label and rating "
+        "concepts), without justifications and references: compare them with LLMs "
+        "on the aspects and on the closed concepts.",
+        "",
+        "| Case | Model | Mode | Runs | Aspect F1 | Concepts correct | "
+        "Closed concepts correct | Reference F1 | Requests | Input tokens | Cached | "
+        "Output tokens | Seconds | Retries |",
+        "|---|---|---|---|---|---|---|---|---|---|---|---|---|---|",
     ]
     rows: list[dict[str, Any]] = []
     for (case, model, mode), group in sorted(groups.items()):
         summaries = [run["scores"]["summary"] for run in group]
         usages = [run["usage"] for run in group]
         n_concepts_scored = summaries[0]["n_concepts_scored"]
+        closed_counts = [_count_closed_concepts(run) for run in group]
         row: dict[str, Any] = {
             "case": case,
             "model": model,
@@ -109,6 +229,8 @@ def summarize(label: str) -> tuple[str, list[dict[str, Any]]]:
                 summary["n_concepts_correct"] for summary in summaries
             ],
             "n_concepts_scored": n_concepts_scored,
+            "closed_concepts_correct": [correct for correct, _ in closed_counts],
+            "n_closed_concepts": closed_counts[0][1],
             "reference_f1": [summary["reference_f1"] for summary in summaries],
             "requests": [usage["requests"] for usage in usages],
             "input_tokens": [usage["input_tokens"] for usage in usages],
@@ -120,17 +242,14 @@ def summarize(label: str) -> tuple[str, list[dict[str, Any]]]:
             "errors": [run["error"] for run in group if run["error"]],
             "warnings": sum(len(run["extraction_warnings"]) for run in group),
         }
+        if (case, model, mode) in judgments:
+            row["judged"] = [j["summary"] for j in judgments[(case, model, mode)]]
         rows.append(row)
-        correct = row["concepts_correct"]
-        correct_text = (
-            f"{correct[0]}/{n_concepts_scored}"
-            if min(correct) == max(correct)
-            else f"{statistics.mean(correct):.1f}/{n_concepts_scored} "
-            f"({min(correct)}-{max(correct)})"
-        )
         lines.append(
             f"| {case} | {model} | {mode} | {len(group)} | "
-            f"{_format_spread(row['aspect_f1'])} | {correct_text} | "
+            f"{_format_spread(row['aspect_f1'])} | "
+            f"{_format_correct(row['concepts_correct'], n_concepts_scored)} | "
+            f"{_format_correct(row['closed_concepts_correct'], row['n_closed_concepts'])} | "
             f"{_format_spread(row['reference_f1'])} | "
             f"{_format_count(row['requests'])} | "
             f"{_format_count(row['input_tokens'])} | "
@@ -138,6 +257,9 @@ def summarize(label: str) -> tuple[str, list[dict[str, Any]]]:
             f"{_format_count(row['output_tokens'])} | "
             f"{_format_count(row['seconds'])} | {sum(row['retries'])} |"
         )
+
+    if judgments:
+        lines += _get_judged_lines(groups, judgments)
 
     lines += ["", "## Concepts missed", ""]
     for (case, model, mode), group in sorted(groups.items()):

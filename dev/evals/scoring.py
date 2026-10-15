@@ -15,7 +15,9 @@ What is scored, and how:
 - Date, numerical, Boolean, label and rating concepts: correct if the values of
   the extracted items equal the reference values, whatever their order.
 - JSON object concepts: correct if the names of the extracted objects equal
-  the reference ones. The share of the reference fields that match is given too.
+  the reference ones, or the values of another field that identifies the objects,
+  if the reference answers name one (``object_key`` in the ``custom_data`` of
+  the concept). The share of the reference fields that match is given too.
 - String concepts: correct only if each value equals the reference value or one
   of its accepted values. These are counted apart from the other concepts, as
   a narrative answer can be right in other words, which only a judge can tell.
@@ -160,14 +162,20 @@ def score_concept_values(
             any(value in options for options in accepted) for value in predicted_values
         )
     elif concept_type == "JsonObjectConcept":
-        # The objects are matched by their names: their other fields can be texts
-        predicted_names = sorted(value.get("name", "") for value in predicted_values)
-        gold_names = sorted(value.get("name", "") for value in gold_values)
-        result["scoring"] = "names_of_objects"
-        result["correct"] = predicted_names == gold_names
-        predicted_by_name = {value.get("name", ""): value for value in predicted_values}
+        # The objects are matched by their names, or by the field that the reference
+        # answers name: their other fields can be texts
+        object_key = gold_concept.get("custom_data", {}).get("object_key", "name")
+        predicted_keys = sorted(value.get(object_key, "") for value in predicted_values)
+        gold_keys = sorted(value.get(object_key, "") for value in gold_values)
+        result["scoring"] = (
+            "names_of_objects" if object_key == "name" else "keys_of_objects"
+        )
+        result["correct"] = predicted_keys == gold_keys
+        predicted_by_key = {
+            value.get(object_key, ""): value for value in predicted_values
+        }
         fields = [
-            predicted_by_name.get(gold_value.get("name", ""), {}).get(key) == value
+            predicted_by_key.get(gold_value.get(object_key, ""), {}).get(key) == value
             for gold_value in gold_values
             for key, value in gold_value.items()
         ]
@@ -203,7 +211,7 @@ def score_concept(
     :rtype: dict[str, Any]
     """
     items = list(concept.extracted_items)
-    return score_concept_values(
+    result = score_concept_values(
         concept.name,
         [_normalize_value(item.value) for item in items],
         {
@@ -213,6 +221,13 @@ def score_concept(
         },
         gold_concept,
     )
+    # Kept for the judge (see dev.evals.judge): the values as extracted, not
+    # normalized, and the justification of each item
+    result["values"] = [
+        json.loads(json.dumps(item.value, default=str)) for item in items
+    ]
+    result["justifications"] = [item.justification for item in items]
+    return result
 
 
 def score_aspect_paragraphs(
@@ -401,6 +416,12 @@ def rescore(scores: dict[str, Any], gold: dict[str, Any]) -> dict[str, Any]:
                 set(concept["predicted_references"]),
                 gold_concept,
             ),
+            # What the run keeps for the judge, which the scores do not depend on
+            **{
+                key: concept[key]
+                for key in ("values", "justifications")
+                if key in concept
+            },
         }
         for concept, (context, gold_concept) in zip(
             scores["concepts"], gold_concepts, strict=True

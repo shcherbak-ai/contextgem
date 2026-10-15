@@ -1,0 +1,342 @@
+{
+  "case": "complex_dpa",
+  "model": "openai/gpt-6-luna",
+  "kind": "decision",
+  "mode": "decision_default",
+  "label": "baseline_2026-10-15",
+  "run": 2,
+  "error": null,
+  "seconds": 43.8,
+  "usage": {
+    "requests": 157,
+    "requests_without_response": 0,
+    "input_tokens": 222536,
+    "output_tokens": 0,
+    "cache_read_tokens": 0,
+    "cache_write_tokens": 0,
+    "cost_total": "0.02225"
+  },
+  "retries_for_invalid_data": 0,
+  "responses_not_valid_json": 0,
+  "extraction_warnings": [],
+  "refusal_warnings": [
+    "Decision model `openai/gpt-6-luna` refused to answer the question of aspect `Amendment effectiveness and precedence` on 3 of 153 paragraphs (indices: [21, 28, 108]). These are not included in the aspect.",
+    "Decision model `openai/gpt-6-luna` refused to answer the question of aspect `Personal data breach notification` on 5 of 153 paragraphs (indices: [9, 17, 21, 28, 90]). These are not included in the aspect.",
+    "Decision model `openai/gpt-6-luna` refused to answer the question of aspect `Incident IR-27` on 5 of 153 paragraphs (indices: [17, 21, 97, 108, 128]). These are not included in the aspect.",
+    "Decision model `openai/gpt-6-luna` refused to answer the question of aspect `Retention TR-27` on 8 of 153 paragraphs (indices: [13, 17, 21, 28, 90, 97, 108, 128]). These are not included in the aspect.",
+    "Decision model `openai/gpt-6-luna` refused to answer the question of aspect `Supplier approvals in May 2027` on 1 of 153 paragraphs (indices: [28]). These are not included in the aspect.",
+    "Decision model `openai/gpt-6-luna` refused to answer the question of aspect `Liability LC-27` on 1 of 153 paragraphs (indices: [28]). These are not included in the aspect."
+  ],
+  "provenance": {
+    "litellm": "1.105.1",
+    "prompts": {
+      "decision_question_aspect.j2": "7b069363576f",
+      "decision_question_concept.j2": "603962caf35d",
+      "default_system_message.j2": "8bb691c5e36c",
+      "extract_aspect_items.j2": "4b4bd68cd6a8",
+      "extract_concept_items.j2": "4f0b332af667"
+    }
+  },
+  "scores": {
+    "summary": {
+      "aspect_f1": 0.8230061686202038,
+      "aspect_precision": 0.8663003663003663,
+      "aspect_recall": 0.7972222222222222,
+      "concept_accuracy": 0.6666666666666666,
+      "n_concepts_scored": 6,
+      "n_concepts_correct": 4,
+      "string_exact": null,
+      "n_strings": 0,
+      "reference_f1": null,
+      "n_concepts_without_items": 1
+    },
+    "aspects": [
+      {
+        "name": "Amendment effectiveness and precedence",
+        "n_predicted": 5,
+        "n_gold": 5,
+        "n_neutral_predicted": 1,
+        "predicted_paragraphs": [
+          51,
+          91,
+          93,
+          103,
+          118,
+          126
+        ],
+        "precision": 0.8,
+        "recall": 0.8,
+        "f1": 0.8000000000000002
+      },
+      {
+        "name": "Personal data breach notification",
+        "n_predicted": 10,
+        "n_gold": 8,
+        "n_neutral_predicted": 0,
+        "predicted_paragraphs": [
+          39,
+          40,
+          41,
+          95,
+          96,
+          105,
+          121,
+          122,
+          123,
+          137
+        ],
+        "precision": 0.8,
+        "recall": 1.0,
+        "f1": 0.888888888888889
+      },
+      {
+        "name": "Incident IR-27",
+        "n_predicted": 13,
+        "n_gold": 14,
+        "n_neutral_predicted": 0,
+        "predicted_paragraphs": [
+          39,
+          40,
+          95,
+          96,
+          105,
+          111,
+          118,
+          121,
+          122,
+          123,
+          136,
+          137,
+          148
+        ],
+        "precision": 0.7692307692307693,
+        "recall": 0.7142857142857143,
+        "f1": 0.7407407407407408
+      },
+      {
+        "name": "Retention TR-27",
+        "n_predicted": 10,
+        "n_gold": 12,
+        "n_neutral_predicted": 2,
+        "predicted_paragraphs": [
+          53,
+          54,
+          67,
+          77,
+          105,
+          118,
+          125,
+          126,
+          127,
+          135,
+          140,
+          142
+        ],
+        "precision": 0.9,
+        "recall": 0.75,
+        "f1": 0.8181818181818182
+      },
+      {
+        "name": "Supplier approvals in May 2027",
+        "n_predicted": 14,
+        "n_gold": 21,
+        "n_neutral_predicted": 1,
+        "predicted_paragraphs": [
+          17,
+          29,
+          30,
+          52,
+          101,
+          102,
+          128,
+          129,
+          130,
+          131,
+          144,
+          145,
+          146,
+          147,
+          148
+        ],
+        "precision": 0.9285714285714286,
+        "recall": 0.6190476190476191,
+        "f1": 0.742857142857143
+      },
+      {
+        "name": "Liability LC-27",
+        "n_predicted": 9,
+        "n_gold": 10,
+        "n_neutral_predicted": 1,
+        "predicted_paragraphs": [
+          57,
+          58,
+          107,
+          118,
+          132,
+          133,
+          134,
+          150,
+          151,
+          152
+        ],
+        "precision": 1.0,
+        "recall": 0.9,
+        "f1": 0.9473684210526316
+      }
+    ],
+    "concepts": [
+      {
+        "context": "document",
+        "name": "Liability cap covers confidentiality breaches",
+        "type": "BooleanConcept",
+        "n_items": 1,
+        "n_gold_items": 1,
+        "predicted": [
+          false
+        ],
+        "gold": [
+          false
+        ],
+        "scoring": "exact",
+        "correct": true,
+        "predicted_references": [],
+        "values": [
+          false
+        ],
+        "justifications": [
+          null
+        ]
+      },
+      {
+        "context": "document",
+        "name": "Meridian Mail approved on 1 November 2026",
+        "type": "BooleanConcept",
+        "n_items": 1,
+        "n_gold_items": 1,
+        "predicted": [
+          true
+        ],
+        "gold": [
+          true
+        ],
+        "scoring": "exact",
+        "correct": true,
+        "predicted_references": [],
+        "values": [
+          true
+        ],
+        "justifications": [
+          null
+        ]
+      },
+      {
+        "context": "document",
+        "name": "Meridian Mail approved on 1 February 2027",
+        "type": "BooleanConcept",
+        "n_items": 1,
+        "n_gold_items": 1,
+        "predicted": [
+          true
+        ],
+        "gold": [
+          false
+        ],
+        "scoring": "exact",
+        "correct": false,
+        "predicted_references": [],
+        "values": [
+          true
+        ],
+        "justifications": [
+          null
+        ]
+      },
+      {
+        "context": "aspect: Incident IR-27",
+        "name": "Applicable initial notification regime",
+        "type": "LabelConcept",
+        "n_items": 1,
+        "n_gold_items": 1,
+        "predicted": [
+          [
+            "expedited"
+          ]
+        ],
+        "gold": [
+          [
+            "expedited"
+          ]
+        ],
+        "scoring": "exact",
+        "correct": true,
+        "predicted_references": [],
+        "values": [
+          [
+            "expedited"
+          ]
+        ],
+        "justifications": [
+          null
+        ]
+      },
+      {
+        "context": "aspect: Retention TR-27",
+        "name": "Permitted uses of held ORD records on 1 September 2027",
+        "type": "LabelConcept",
+        "n_items": 0,
+        "n_gold_items": 1,
+        "predicted": [],
+        "gold": [
+          [
+            "legal preservation"
+          ]
+        ],
+        "scoring": "exact",
+        "correct": false,
+        "predicted_references": [],
+        "values": [],
+        "justifications": []
+      },
+      {
+        "context": "aspect: Supplier approvals in May 2027",
+        "name": "Authorised data locations on 15 May 2027",
+        "type": "LabelConcept",
+        "n_items": 1,
+        "n_gold_items": 1,
+        "predicted": [
+          [
+            "estonia",
+            "france",
+            "lithuania",
+            "norway",
+            "sweden"
+          ]
+        ],
+        "gold": [
+          [
+            "estonia",
+            "france",
+            "lithuania",
+            "norway",
+            "sweden"
+          ]
+        ],
+        "scoring": "exact",
+        "correct": true,
+        "predicted_references": [],
+        "values": [
+          [
+            "Norway",
+            "Estonia",
+            "Lithuania",
+            "France",
+            "Sweden"
+          ]
+        ],
+        "justifications": [
+          null
+        ]
+      }
+    ]
+  }
+}

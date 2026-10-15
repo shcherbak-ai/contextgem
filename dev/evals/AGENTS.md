@@ -11,6 +11,7 @@ Measures the quality and the cost of extraction on evaluation cases with referen
 | `cases/<case>.gold.json` | Reference answers of the case: paragraphs of each aspect, items of each concept |
 | `cases/<case>.neutral.json` | Paragraphs that are not scored for an aspect: section headings, and borderline and linked paragraphs with the reasons |
 | `cases/reference_review.md` | Record of the review of the reference answers: method, rulings and limits |
+| `cases/judge_checks.json` | Checks of the judge: candidate answers whose verdict is known |
 | `harness.py` | Loads a case, creates the model, writes results |
 | `scoring.py` | Scores an extracted document against the reference answers |
 | `run_eval.py` | Extracts a case with a model and scores it (**live requests**) |
@@ -18,20 +19,31 @@ Measures the quality and the cost of extraction on evaluation cases with referen
 | `rescore.py` | Scores the recorded runs of a label again, after a change in the reference answers (offline) |
 | `decision_probabilities.py` | Probabilities of a decision model for the aspects of a case (**live requests**) |
 | `threshold_sweep.py` | Decision threshold sweep over the recorded probabilities (offline) |
+| `judge.py` | Judges the string values, justifications and text fields of objects of the runs of a label, and checks the judge (**live requests**) |
 | `check_scorer.py` | Self-check of the scorer on each case (offline) |
-| `results/<label>/` | Results of one experiment: `runs/`, `decision_probabilities/`, and the generated `summary.*` and `thresholds.*` |
+| `results/<label>/` | Results of one experiment: `runs/`, `decision_probabilities/`, `judgments/` and `judge_checks.json`, and the generated `summary.*` and `thresholds.*` |
+
+## The Cases
+
+| Case | Document | Paragraphs | Aspects | Concepts |
+|------|----------|------------|---------|----------|
+| `complex_nda` | A non-disclosure agreement with annexes and a disclosure register | 72 | 4 | 21 |
+| `complex_dpa` | A data processing agreement with two amendments and operational records | 153 | 6 | 24 |
+| `complex_mcu` | The technical documentation of a microcontroller: datasheet, errata sheet, change notification with an amendment, application note, and the design review and purchasing records of a customer | 268 | 7 | 27 |
+
+`complex_mcu` is a technical document with dense terminology (voltage-scaling ranges, PLL dividers, wait states, thermal resistances, errata conditions). It has many values in tables, one row per paragraph, and later documents that change values of earlier ones. Many of its answers are computed: junction temperatures from currents and thermal resistances, clock frequencies from divider settings, calendar dates and ISO weeks. Its document concepts ask for references, as its aspect concepts do.
 
 ## Rules
 
-- **`run_eval` and `decision_probabilities` send live, paid requests.** Run them only when the maintainer asks for it. The other scripts send nothing.
+- **`run_eval`, `decision_probabilities` and `judge` send live, paid requests.** Run them only when the maintainer asks for it. The other scripts send nothing.
 - **Keys come from the environment or the `.env` file of the repo** (`CONTEXTGEM_OPENAI_API_KEY`, `CONTEXTGEM_TYPESAFE_API_KEY`, `CONTEXTGEM_AZURE_AI_API_KEY` with `CONTEXTGEM_AZURE_AI_API_BASE`). Never print them. The host of a Microsoft Foundry resource is replaced in what is written.
-- **A label is one experiment.** A run whose file exists is skipped, so results are never overwritten: record a change under a new label, and leave `baseline` as it is.
-- **Results are tracked artifacts.** Do not edit or delete the files under `results/`. `summary.*` and `thresholds.*` are generated: regenerate them, do not edit them. The scores of a run are rewritten only by `rescore`.
+- **A label is one experiment.** A run whose file exists is skipped, so results are never overwritten: record a change under a new label, and leave the baselines (`baseline_2026-10-11`, `baseline_2026-10-15`) as they are.
+- **Results are tracked artifacts.** Do not edit or delete the files under `results/`. `summary.*` and `thresholds.*` are generated: regenerate them, do not edit them. The scores of a run are rewritten only by `rescore`, and its judgment (`judgments/`) only by `judge`, when the judge, its questions or the reference answers of the case changed.
 - **The reference answers change only by a recorded review.** Do not change a `.gold.json` or `.neutral.json` file to make a result pass. Record a change with its reason in `cases/reference_review.md`, and run `check_scorer` after a change in a case, in its reference answers or in the scorer. After a change in the reference answers, score the recorded runs again with `rescore`, and regenerate the summaries.
 
 ## The Reference Answers
 
-The `.gold.json` files of both cases were produced by an AI agent, and reviewed on 2026-10-11 by AI agents: a second, blind annotation of each case, and a ruling on every disagreement against the text (see `cases/reference_review.md`). No person has verified them, whatever the `reviewed` flags in the files say. So a score is the agreement with these answers, not a proof of correctness:
+The `.gold.json` files of `complex_nda` and `complex_dpa` were produced by an AI agent, and reviewed on 2026-10-11 by AI agents: a second, blind annotation of each case, and a ruling on every disagreement against the text. `complex_mcu` was written with its reference answers by an AI agent on 2026-10-15, with the computed answers recomputed by a script, and reviewed in the same way (see `cases/reference_review.md`). No person has verified them, whatever the `reviewed` flags in the files say. So a score is the agreement with these answers, not a proof of correctness:
 
 - **Use the scores to compare**: one prompt, model or setting with another, on the same reference.
 - **Do not read a score as accuracy.** An extraction that differs from the reference is not necessarily wrong, and one that agrees with it is not necessarily right.
@@ -61,6 +73,10 @@ uv run python -m dev.evals.rescore --label my_experiment
 uv run python -m dev.evals.decision_probabilities --case complex_nda --model typesafe/jev-latest --label my_experiment
 uv run python -m dev.evals.threshold_sweep --label my_experiment
 
+# Check the judge on the checks of known verdict, then judge the runs of a label (live)
+uv run python -m dev.evals.judge --checks --label my_experiment
+uv run python -m dev.evals.judge --label my_experiment
+
 # Self-check of the scorer (offline)
 uv run python -m dev.evals.check_scorer
 ```
@@ -70,29 +86,50 @@ uv run python -m dev.evals.check_scorer
 ## What Is Measured
 
 - **Aspects**: precision, recall and F1 of the extracted paragraphs against those of the reference answers, averaged over the aspects. The neutral paragraphs of an aspect are left out of both.
-- **Concepts**: date, numerical, Boolean, label and rating concepts by exact match of the values; JSON object concepts by the names of the objects. String concepts are counted apart, as an exact or accepted value only: a narrative answer needs a judge.
+- **Concepts**: date, numerical, Boolean, label and rating concepts by exact match of the values; JSON object concepts by the names of the objects, or by the field that identifies them where the reference answers name one (`object_key` in the `custom_data` of the concept, e.g. `id` in `complex_mcu`). String concepts are counted apart from these, and judged (below).
+- **What exact matching cannot compare is judged** by a decision model, `typesafe/jev-latest` unless `--model` names another (`judge.py`):
+  - the values of string concepts, against the reference value (a value equal to the reference value or to an accepted one is correct without a request);
+  - the justification of each extracted item, against the reference answer and its reasoning: it is correct only for a value of the reference answer, with no wrong fact or step;
+  - the text fields of the objects of JSON object concepts, against the reference object with the same name or ID (the other fields are compared exactly).
+
+  The judge is asked one yes/no question at a time, with the questions of `judge.py`, not with the prompts of the library, so that a change of the library does not change the judge. A verdict is "correct" at a probability of 0.5 or more; the probability is kept. The judgment of a run records the judge, a hash of its questions and of the reference answers it judged against, and its cost. Decision models give no strings, objects or justifications, so their runs are not judged.
+- **The judge is checked before it is used**: `cases/judge_checks.json` has candidate answers of the three cases whose verdict is known, right ones in other words and wrong ones with the mistakes a capable model makes. `judge --checks` records how often the judge agrees, for each kind, in `results/<label>/judge_checks.json`. Read a judged score with that agreement in mind.
 - **References of concepts**: F1 of the referenced paragraphs.
 - **Cost**: requests, input, cached and output tokens, seconds, retries for invalid data.
-- **Decision models** extract all the aspects, and of the concepts only the Boolean, label and rating ones, without justifications and references. Their concept counts are not comparable with those of the LLMs.
+- **Decision models** extract all the aspects, and of the concepts only the Boolean, label and rating ones (the closed concepts), without justifications and references. Their concept counts are not comparable with those of the LLMs: compare the two kinds of model on the aspects and on the column "Closed concepts correct" of the summary, which counts the closed concepts only, for every model. The judged columns are of LLMs only, and no score adds them up with the others, so a decision model loses nothing for what it does not extract.
+- **The aspects of the cases favour models that read the whole document**: most are defined by what is needed to answer a question about a board, an incident or a claim, which a decision model, judging each paragraph on its own, cannot see. On `complex_mcu`, the decision models score an aspect F1 of 0.40 to 0.66 on the four aspects of the boards, and 0.66 to 0.84 on the other three; the hosted LLMs 0.85 to 0.95, and 0.95 to 1.00. A difference between the two kinds of model on the aspects is partly this.
 
-Each run records a short hash of every prompt template of the library, including the template of the default system message (`provenance`), which tells the runs of a changed prompt apart. The runs of the baseline were recorded before the system message template was hashed, so they have no hash of it.
+Each run records a short hash of every prompt template of the library, including the template of the default system message (`provenance`), which tells the runs of a changed prompt apart. The runs of `baseline_2026-10-11` were recorded before the system message template was hashed, so they have no hash of it.
 
 ## Comparing a Change with the Baseline
 
 1. Make the change in the working tree, e.g. in a prompt template.
-2. Run the same cases, models and modes as the baseline under a new label, at least 3 runs each for an LLM.
-3. Summarize the label, and compare its `summary.md` with `results/baseline/summary.md`.
+2. Run the same cases, models and modes as the current baseline (`baseline_2026-10-15`) under a new label, at least 3 runs each for an LLM, and judge the runs.
+3. Run the version without the change again as well, under a label of its own, at the same time. A hosted model can change under the same name, and the version of `litellm` moves: a baseline of another day is not a control.
+4. Summarize both labels, and compare their `summary.md` files.
 
-Runs of one configuration differ: in the baseline, the aspect F1 of a hosted LLM varies by up to 0.05 between runs. Compare the means of several runs, and treat a smaller difference as noise.
+Runs of one configuration differ: the aspect F1 of a hosted LLM varies by up to 0.05 between runs. Compare the means of several runs, and treat a smaller difference as noise.
 
-The hosted LLMs of the baseline are at or near the top of the scale on both cases, for aspects and for concepts. So the cases show whether a change makes extraction worse, what it costs, and how weaker models and decision models differ; they have little room left to show that a change makes a capable model better.
+A baseline is a snapshot: what the models score and cost on the cases at one state of the library. It is the comparison when the models of the tests change (is the new model as good and as cheap on these cases?), and it shows whether a change of the library makes extraction worse while the models stay. Record a new one, under a dated label, when the models or the library change; the older ones stay as they are.
 
 ## The Baseline
 
-Recorded on 2026-10-11 with `litellm` 1.105.0, after the first part of the review of the reference answers, and scored again after its second part:
+**`baseline_2026-10-15`**, the current one, on the three cases, recorded on 2026-10-15 with `litellm` 1.105.1, from commit `1ecd68c` of the library (the reading of model output made strict), with the hosted models only:
+
+- **LLMs**, each case: `openai/gpt-6-luna` (3 runs, and 3 with concurrency), `openai/gpt-5.6-luna` (3), `openai/gpt-6.1-sol` (1).
+- **Decision models**, each case: `typesafe/jev-latest`, `openai/gpt-6-luna` and `azure_ai/ms-decision-model`, a deployment of Microsoft-Decision-1 in Microsoft Foundry (2 runs each), and one pass of `decision_probabilities` each.
+- **The judge** (`judgments/`, `judge_checks.json`): `typesafe/jev-latest`, which agreed with all 62 checks. On the runs, every verdict "not correct" was read against the reference answers: of the 24 justifications so judged in the first pass, 19 were wrong; 4 were judged against a reference justification that called the 24-hour limit of `complex_dpa` "effective on 1 November", which is now worded as in force from 1 October (no answer changed), and 1 was correct but shorter than the reference. Of the 13 justifications of values that are wrong by exact match, the judge found 12 wrong. The 6 breach summaries of `openai/gpt-6-luna` in `complex_dpa` that it judged not correct leave out the duties to document breaches and to cooperate, which the reference answer has.
+- **No retries** for invalid data in any run, with the stricter reading of model output of that commit.
+- **Cost**: USD 1.33 for the runs, USD 0.02 for the judge, about USD 0.10 for the probabilities.
+
+`complex_mcu` separates the models where the contract cases no longer do: its concepts give `openai/gpt-5.6-luna` 23 of 26 in each run, against 26 for `openai/gpt-6.1-sol`, and the decision models score an aspect F1 of 0.57 to 0.65 on it, against 0.77 to 0.89 on the contracts.
+
+Local models are not in it: their results of 2026-10-11 (`baseline_2026-10-11`) are what is known of them, and they are recorded under a label of their own when a question needs them. A local LLM needs a context of more than 16k tokens for `complex_mcu`.
+
+**`baseline_2026-10-11`**, the earlier one, named `baseline` until 2026-10-15 (its runs keep that label), recorded on 2026-10-11 with `litellm` 1.105.0, on `complex_nda` and `complex_dpa`, after the first part of the review of the reference answers, and scored again after its second part. Its runs keep neither the values as extracted nor the justifications, so they cannot be judged:
 
 - **LLMs** (`default` mode unless stated): `openai/gpt-6-luna` (3 runs, and 3 with concurrency), `openai/gpt-5.6-luna` (3), `openai/gpt-6.1-sol` (1), and on Ollama with a context length of 16k, `ollama_chat/mistral-small:24b` (2) and `ollama_chat/llama3.1:8b` (2, which failed on invalid JSON).
-- **Decision models**: `typesafe/jev-latest` (2), `openai/gpt-6-luna` (2), `azure_ai/ms-decision-model`, a deployment of Microsoft-Decision-1 in Microsoft Foundry (2), `strands_decider/nimble` on Ollama (1) and `strands_decider/kev-4b` on LM Studio (1).
+- **Decision models**: `typesafe/jev-latest` (2), `openai/gpt-6-luna` (2), `azure_ai/ms-decision-model` (2), `strands_decider/nimble` on Ollama (1) and `strands_decider/kev-4b` on LM Studio (1).
 - **Probabilities of the decision models** (`decision_probabilities/`): recorded earlier the same day, one pass per model and case. They do not depend on the reference answers, so they were kept; they have no `provenance`. Those of `openai/gpt-6-luna` were recorded with `litellm` 1.104.2.
 
 ## Tried and Rejected
@@ -101,7 +138,7 @@ Experiments that changed nothing in the library, recorded so that they are not r
 
 ### Wording of the aspect question of the decision models (2026-10-12)
 
-Three wordings of `decision_question_aspect.j2`, each with one change, were compared with the current one on the five decision models of the baseline and both cases, in one pass of `decision_probabilities` each:
+Three wordings of `decision_question_aspect.j2`, each with one change, were compared with the current one on the five decision models of `baseline_2026-10-11` and both cases, in one pass of `decision_probabilities` each:
 
 - **Exclusion**: the sentence on "no" ends with "including when it is about another subject and only mentions the aspect."
 - **Narrower criterion**: "belongs to the aspect" and "is a part of what the aspect covers, as its name and description define it", in place of "is relevant to" and "addresses or clearly relates to".
@@ -125,7 +162,7 @@ No wording is better across the models:
 - **No wording tells the paragraphs of the reference answers from the others better**: the mean at the best threshold of each model is not higher for any of the three.
 - **The paragraphs that four or five models extract beyond the reference answers stay**: of the 35 answers behind these seven paragraph-aspect pairs, 31 are "yes" with the current wording, and 30, 31 and 26 with the three others.
 
-The differences are not the variation between passes: with the current wording, three of the models give the same answers as in the baseline, and the other two differ in about 10 of 1,206 answers, i.e. by 0.003 or less in F1.
+The differences are not the variation between passes: with the current wording, three of the models give the same answers as in `baseline_2026-10-11`, and the other two differ in about 10 of 1,206 answers, i.e. by 0.003 or less in F1.
 
 Not tested: the questions of concepts (each case has six concepts that a decision model extracts, too few to compare wordings), and aspects extracted with sentences or with additional context. The recorded probabilities were not kept: the numbers above are the record.
 

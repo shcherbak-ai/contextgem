@@ -1,0 +1,532 @@
+{
+  "headings": [
+    0,
+    5,
+    6,
+    12,
+    14,
+    24,
+    27,
+    35,
+    37,
+    44,
+    48,
+    59,
+    61,
+    69,
+    77,
+    80,
+    89,
+    91,
+    98,
+    100,
+    110,
+    121,
+    128,
+    134,
+    135,
+    143,
+    158,
+    161,
+    165,
+    168,
+    172,
+    176,
+    181,
+    183,
+    190,
+    214,
+    219,
+    230,
+    240,
+    241,
+    254,
+    263
+  ],
+  "borderline": {
+    "Device limitations of revision C": [
+      {
+        "paragraph": 3,
+        "reason": "The general rule that the later document prevails decides between the PCN and the errata sheet on ES-08 and ES-09, but the errata sheet also states both changes itself."
+      },
+      {
+        "paragraph": 182,
+        "reason": "The scope of the errata sheet, which covers revision C among others, without describing a limitation."
+      },
+      {
+        "paragraph": 221,
+        "reason": "The revised FDCAN transmitter delay compensation block of revision C is where ES-08 comes from, but the paragraph does not name a limitation."
+      },
+      {
+        "paragraph": 235,
+        "reason": "An informative laboratory result on the INL of revision B and C devices, related to ES-04 without being a part of its documentation."
+      }
+    ],
+    "Flash memory specifications": [
+      {
+        "paragraph": 7,
+        "reason": "The overview gives the size, the banks and the ECC of the flash, which are specifications of the flash outside the latency, endurance and retention that the aspect lists."
+      },
+      {
+        "paragraph": 194,
+        "reason": "ES-03 is a limitation of the flash read margin on revisions A and B, expressed as a SYSCLK limit rather than as a latency, endurance or retention value."
+      },
+      {
+        "paragraph": 203,
+        "reason": "ES-03 is a limitation of the flash read margin on revisions A and B, expressed as a SYSCLK limit rather than as a latency, endurance or retention value."
+      },
+      {
+        "paragraph": 3,
+        "reason": "The general rule that the later document prevails; DC-2 and the PCN state what they change themselves."
+      },
+      {
+        "paragraph": 217,
+        "reason": "The revision history of the errata sheet records that DC-2 was added, which the aspect has itself."
+      },
+      {
+        "paragraph": 234,
+        "reason": "An informative example of the wait states at an HCLK of 200 MHz, not a specification."
+      },
+      {
+        "paragraph": 68,
+        "reason": "The sector size and the programming of the flash, which are specifications of the flash outside the latency, endurance and retention that the aspect lists; the blind annotation included it, 6 of 7 runs of the hosted LLMs left it out."
+      },
+      {
+        "paragraph": 179,
+        "reason": "Revision 5 of the datasheet added VOS0 to Table 14, a change that the table already has; the blind annotation included it, 6 of 7 runs of the hosted LLMs left it out."
+      }
+    ],
+    "DR-114 clock configuration": [
+      {
+        "paragraph": 3,
+        "reason": "The general rule that the later document prevails; the errata and corrections that the configuration needs state what they change themselves."
+      },
+      {
+        "paragraph": 186,
+        "reason": "The identification table is read as a whole; revision B is the revision of prototype lot P1, which the review does not cover."
+      },
+      {
+        "paragraph": 50,
+        "reason": "The fREF range of PLLxRGE = 00, which is neither the range configured nor the one that contains 5 MHz: Table 10 is read as a whole."
+      },
+      {
+        "paragraph": 53,
+        "reason": "The fREF range of PLLxRGE = 11, which is neither the range configured nor the one that contains 5 MHz: Table 10 is read as a whole."
+      },
+      {
+        "paragraph": 67,
+        "reason": "LATENCY 4, which VOS1 does not have: Table 14 is read as a whole."
+      },
+      {
+        "paragraph": 55,
+        "reason": "The medium VCO range, which PLL1VCOSEL = 0 does not select, is the alternative to the range used."
+      },
+      {
+        "paragraph": 58,
+        "reason": "The registers that hold the PLL fields, which the configuration records name without needing their location."
+      },
+      {
+        "paragraph": 234,
+        "reason": "An informative example of the wait states at 400 MHz, not the configured frequency."
+      },
+      {
+        "paragraph": 179,
+        "reason": "Revision 5 of the datasheet added VOS0 to Table 14: a change of the table, which the configuration uses as it is now."
+      },
+      {
+        "paragraph": 180,
+        "reason": "Revision 6 of the datasheet added the derating of VOS0 to Table 6: a change of the table, which the configuration uses as it is now."
+      },
+      {
+        "paragraph": 217,
+        "reason": "Revision 2 of the errata sheet added DC-2, which the aspect has itself."
+      }
+    ],
+    "DR-114 thermal assessment": [
+      {
+        "paragraph": 4,
+        "reason": "Defines Ta and Tj, and that max values hold over the temperature range, which the calculation relies on without needing the definitions."
+      },
+      {
+        "paragraph": 3,
+        "reason": "Makes the thermal estimate of the application note informative, which the datasheet method that the aspect asks for replaces anyway."
+      },
+      {
+        "paragraph": 232,
+        "reason": "An informative shortcut for a first estimate, which the datasheet method that the aspect asks for replaces."
+      },
+      {
+        "paragraph": 236,
+        "reason": "An informative guard band of 10 °C, next to Halyard's own rule HDR-7 of 20 °C."
+      },
+      {
+        "paragraph": 250,
+        "reason": "A temperature measured on a prototype, not the junction temperature computed with the method of the datasheet."
+      },
+      {
+        "paragraph": 93,
+        "reason": "The row of the QFN-48 package in Table 19, which the LQFP-64 device of the boards does not use: the table is read as a whole."
+      },
+      {
+        "paragraph": 104,
+        "reason": "The row of 400 MHz in Table 18, the highest SYSCLK permitted, not the 350 MHz configured: the table is read as a whole."
+      },
+      {
+        "paragraph": 112,
+        "reason": "The adder of an ADC at an fADC of 50 MHz, not the 36 MHz configured: the table is read as a whole."
+      },
+      {
+        "paragraph": 22,
+        "reason": "The absolute maximum junction temperature, a limit that HDR-7 does not use, which a reader checks to rule it out: all 3 hosted decision models extracted it."
+      },
+      {
+        "paragraph": 212,
+        "reason": "Corrects 8.2 for a QFN-48 with an unsoldered pad, which the LQFP-64 device of the boards is not: all 3 hosted decision models extracted it."
+      }
+    ],
+    "DR-114 errata and firmware": [
+      {
+        "paragraph": 3,
+        "reason": "Decides between the PCN and the errata sheet on ES-09, which does not apply to the boards whatever its status, as BOR level 0 is selected."
+      },
+      {
+        "paragraph": 185,
+        "reason": "The identification table is read as a whole, but only the row of revision C, the revision of the production boards, is needed."
+      },
+      {
+        "paragraph": 186,
+        "reason": "The identification table is read as a whole; revision B is the revision of prototype lot P1, which the review does not cover."
+      },
+      {
+        "paragraph": 188,
+        "reason": "Explains why revision C is not marked C; the row of revision C in Table E1 gives its code."
+      },
+      {
+        "paragraph": 201,
+        "reason": "ES-01 is not present in revision C, as Table E2 shows; its description gives its conditions on the revisions it affects."
+      },
+      {
+        "paragraph": 202,
+        "reason": "ES-02 is not present in revision C, as Table E2 shows; its description gives its conditions on the revisions it affects."
+      },
+      {
+        "paragraph": 203,
+        "reason": "ES-03 is not present in revision C, as Table E2 shows; its description gives its conditions on the revisions it affects."
+      },
+      {
+        "paragraph": 206,
+        "reason": "ES-06 is not present in revision C, as Table E2 shows; its description gives its conditions on the revisions it affects."
+      },
+      {
+        "paragraph": 207,
+        "reason": "ES-07 is not present in revision C, as Table E2 shows; its description gives its conditions on the revisions it affects."
+      },
+      {
+        "paragraph": 222,
+        "reason": "The errata status of revision C in the PCN, which agrees with Table E2 on every erratum except ES-09, which does not apply to the boards whatever its status."
+      },
+      {
+        "paragraph": 182,
+        "reason": "The scope of the errata sheet, which covers revision C among others, without describing a limitation."
+      },
+      {
+        "paragraph": 78,
+        "reason": "The limits of fADC, which the configuration of the boards meets; the INL depends on the sampling rate and on VDDA."
+      },
+      {
+        "paragraph": 82,
+        "reason": "The INL at a VDDA of 2.4 V or more, which the boards do not have: Table 17, the ADC accuracy rules that the aspect names, is read as a whole."
+      },
+      {
+        "paragraph": 84,
+        "reason": "Another accuracy value of Table 17, which the maximum INL does not depend on: the ADC accuracy rules that the aspect names are read as a whole."
+      },
+      {
+        "paragraph": 85,
+        "reason": "Another accuracy value of Table 17, which the maximum INL does not depend on: the ADC accuracy rules that the aspect names are read as a whole."
+      },
+      {
+        "paragraph": 86,
+        "reason": "Another accuracy value of Table 17, which the maximum INL does not depend on: the ADC accuracy rules that the aspect names are read as a whole."
+      },
+      {
+        "paragraph": 217,
+        "reason": "Revision 2 of the errata sheet added revision C and ES-08, which Table E2 lists."
+      },
+      {
+        "paragraph": 218,
+        "reason": "Revision 3 of the errata sheet made ES-09 present in revision C, which does not apply to the boards whatever its status."
+      },
+      {
+        "paragraph": 87,
+        "reason": "The accuracy of Table 17 needs both calibrations; the maximum INL of the boards is the one of ES-04."
+      },
+      {
+        "paragraph": 235,
+        "reason": "An informative laboratory result on the INL, not the limit that the documentation gives."
+      }
+    ],
+    "DR-115 errata and PLL1 limits": [
+      {
+        "paragraph": 3,
+        "reason": "The general rule that the later document prevails, on which none of the answers for revision B depends."
+      },
+      {
+        "paragraph": 185,
+        "reason": "The identification table is read as a whole, but only the row of revision B, the revision of the boards, is needed."
+      },
+      {
+        "paragraph": 187,
+        "reason": "The identification table is read as a whole, but only the row of revision B, the revision of the boards, is needed."
+      },
+      {
+        "paragraph": 188,
+        "reason": "Explains the marking code of revision C, which the boards do not have."
+      },
+      {
+        "paragraph": 182,
+        "reason": "The scope of the errata sheet, which covers revision B among others, without describing a limitation."
+      },
+      {
+        "paragraph": 50,
+        "reason": "An fREF range other than the one configured, PLLxRGE = 10, which contains 6 MHz: Table 10 is read as a whole."
+      },
+      {
+        "paragraph": 51,
+        "reason": "An fREF range other than the one configured, PLLxRGE = 10, which contains 6 MHz: Table 10 is read as a whole."
+      },
+      {
+        "paragraph": 53,
+        "reason": "An fREF range other than the one configured, PLLxRGE = 10, which contains 6 MHz: Table 10 is read as a whole."
+      },
+      {
+        "paragraph": 201,
+        "reason": "ES-01 is not present in revision B, as Table E2 shows; its description gives its conditions on the revisions it affects."
+      },
+      {
+        "paragraph": 206,
+        "reason": "ES-06 is not present in revision B, as Table E2 shows; its description gives its conditions on the revisions it affects."
+      },
+      {
+        "paragraph": 208,
+        "reason": "ES-08 is not present in revision B, as Table E2 shows; its description gives its conditions on the revisions it affects."
+      },
+      {
+        "paragraph": 55,
+        "reason": "The medium VCO range, which PLL1VCOSEL = 0 does not select, is the alternative to the range used."
+      },
+      {
+        "paragraph": 58,
+        "reason": "The registers that hold the PLL fields, which the configuration records name without needing their location."
+      },
+      {
+        "paragraph": 97,
+        "reason": "The Tj max of grade I, 105 °C, shows that the boards never reach the Tj above 125 °C of ES-09; ES-09 says itself that only grade A permits it."
+      }
+    ],
+    "Revision B end of life": [
+      {
+        "paragraph": 3,
+        "reason": "The general rule that the later document prevails; the amendment states what it changes itself."
+      },
+      {
+        "paragraph": 229,
+        "reason": "Confirms that the other terms of the PCN are unchanged, which the amendment already says of the LTS date."
+      },
+      {
+        "paragraph": 224,
+        "reason": "Shipments may mix revisions B and C until the last shipment of revision B, which it refers to without setting its date."
+      },
+      {
+        "paragraph": 186,
+        "reason": "The status of revision B, end of life under PCN-2611, without the dates."
+      }
+    ]
+  },
+  "linked": {
+    "Device limitations of revision C": [
+      {
+        "paragraph": 191,
+        "reason": "The column header of Table E2, whose rows ES-04, ES-05, ES-08 and ES-09 are in the aspect: it names the columns that the values of these rows are read by."
+      },
+      {
+        "paragraph": 215,
+        "reason": "The column header of Table E3, whose rows of 20 June and 9 September 2026 are in the aspect: it names the columns that the values of these rows are read by."
+      },
+      {
+        "paragraph": 79,
+        "reason": "Defines the sampling rate fS that the conditions of ES-04 use."
+      },
+      {
+        "paragraph": 82,
+        "reason": "The INL of Table 17, which ES-04 says applies with its workaround."
+      },
+      {
+        "paragraph": 83,
+        "reason": "The INL of Table 17, which ES-04 says applies with its workaround."
+      },
+      {
+        "paragraph": 129,
+        "reason": "Defines OVER8, a condition of ES-05."
+      },
+      {
+        "paragraph": 130,
+        "reason": "Defines the receiver timeout and USART_RTOR.RTO, which ES-05 and its workaround refer to."
+      },
+      {
+        "paragraph": 133,
+        "reason": "Defines the transmitter delay compensation and FDCAN_TDCR, which ES-08 and its workaround refer to."
+      },
+      {
+        "paragraph": 42,
+        "reason": "The minimum of BOR level 3 in Table 8, which ES-09 refers to."
+      },
+      {
+        "paragraph": 187,
+        "reason": "Identifies silicon revision C, whose limitations the aspect is about."
+      },
+      {
+        "paragraph": 192,
+        "reason": "The row of ES-01, whose column of revision C says that revision C does not have it: the list of the limitations that it has is read against these rows."
+      },
+      {
+        "paragraph": 193,
+        "reason": "The row of ES-02, whose column of revision C says that revision C does not have it: the list of the limitations that it has is read against these rows."
+      },
+      {
+        "paragraph": 194,
+        "reason": "The row of ES-03, whose column of revision C says that revision C does not have it: the list of the limitations that it has is read against these rows."
+      },
+      {
+        "paragraph": 197,
+        "reason": "The row of ES-06, whose column of revision C says that revision C does not have it: the list of the limitations that it has is read against these rows."
+      },
+      {
+        "paragraph": 198,
+        "reason": "The row of ES-07, whose column of revision C says that revision C does not have it: the list of the limitations that it has is read against these rows."
+      },
+      {
+        "paragraph": 202,
+        "reason": "The description of ES-02, which ends with the revision that fixed it: revision C does not have it."
+      },
+      {
+        "paragraph": 203,
+        "reason": "The description of ES-03, which ends with the revision that fixed it: revision C does not have it."
+      },
+      {
+        "paragraph": 206,
+        "reason": "The description of ES-06, which ends with the revision that fixed it: revision C does not have it."
+      },
+      {
+        "paragraph": 207,
+        "reason": "The description of ES-07, which ends with the revision that fixed it: revision C does not have it."
+      }
+    ],
+    "Flash memory specifications": [
+      {
+        "paragraph": 62,
+        "reason": "The column header of Table 14, whose rows LATENCY 0 to 4 are in the aspect: it names the columns that the values of these rows are read by."
+      },
+      {
+        "paragraph": 70,
+        "reason": "The column header of Table 15, whose rows of endurance and retention are in the aspect: it names the columns that the values of these rows are read by."
+      },
+      {
+        "paragraph": 34,
+        "reason": "Defines HCLK and its limit in each range, the frequency by which Table 14 sets the wait states."
+      }
+    ],
+    "DR-114 clock configuration": [
+      {
+        "paragraph": 28,
+        "reason": "The column header of Table 6, whose rows VOS0 to VOS3 are in the aspect: it names the columns that the values of these rows are read by."
+      },
+      {
+        "paragraph": 49,
+        "reason": "The column header of Table 10, whose rows of the PLL input and VCO frequencies are in the aspect: it names the columns that the values of these rows are read by."
+      },
+      {
+        "paragraph": 62,
+        "reason": "The column header of Table 14, whose rows LATENCY 0 to 4 are in the aspect: it names the columns that the values of these rows are read by."
+      },
+      {
+        "paragraph": 184,
+        "reason": "The column header of Table E1, whose rows of revision C are in the aspect: it names the columns that the values of these rows are read by."
+      },
+      {
+        "paragraph": 191,
+        "reason": "The column header of Table E2, whose rows ES-02 and ES-03 are in the aspect: it names the columns that the values of these rows are read by."
+      }
+    ],
+    "DR-114 thermal assessment": [
+      {
+        "paragraph": 92,
+        "reason": "The column header of Table 19, whose rows of LQFP-64 are in the aspect: it names the columns that the values of these rows are read by."
+      },
+      {
+        "paragraph": 101,
+        "reason": "The column header of Table 18, whose rows of VOS1 at 350 MHz are in the aspect: it names the columns that the values of these rows are read by."
+      },
+      {
+        "paragraph": 111,
+        "reason": "The column header of Table 20, whose rows of the active peripherals are in the aspect: it names the columns that the values of these rows are read by."
+      },
+      {
+        "paragraph": 47,
+        "reason": "Defines the output frequency of a PLL, by which the clock configuration of the boards gives the SYSCLK of 350 MHz that the current of Table 18 is read at; all 7 runs of the hosted LLMs left it out."
+      }
+    ],
+    "DR-114 errata and firmware": [
+      {
+        "paragraph": 184,
+        "reason": "The column header of Table E1, whose rows of revision C are in the aspect: it names the columns that the values of these rows are read by."
+      },
+      {
+        "paragraph": 191,
+        "reason": "The column header of Table E2, whose rows ES-01 to ES-09 are in the aspect: it names the columns that the values of these rows are read by."
+      },
+      {
+        "paragraph": 81,
+        "reason": "The column header of Table 17, whose rows of the INL at VDDA from 1.8 to 2.4 V are in the aspect: it names the columns that the values of these rows are read by."
+      },
+      {
+        "paragraph": 129,
+        "reason": "Defines OVER8, a condition of ES-05."
+      },
+      {
+        "paragraph": 130,
+        "reason": "Defines the receiver timeout, a condition of ES-05."
+      },
+      {
+        "paragraph": 133,
+        "reason": "Defines the transmitter delay compensation, a condition of ES-08."
+      }
+    ],
+    "DR-115 errata and PLL1 limits": [
+      {
+        "paragraph": 184,
+        "reason": "The column header of Table E1, whose rows of revision B are in the aspect: it names the columns that the values of these rows are read by."
+      },
+      {
+        "paragraph": 191,
+        "reason": "The column header of Table E2, whose rows ES-01 to ES-09 are in the aspect: it names the columns that the values of these rows are read by."
+      },
+      {
+        "paragraph": 49,
+        "reason": "The column header of Table 10, whose rows of the PLL input and VCO frequencies are in the aspect: it names the columns that the values of these rows are read by."
+      },
+      {
+        "paragraph": 129,
+        "reason": "Defines OVER8, a condition of ES-05."
+      },
+      {
+        "paragraph": 131,
+        "reason": "Defines the TI mode of the SPI and its CRC, the condition of ES-07."
+      },
+      {
+        "paragraph": 42,
+        "reason": "The minimum of BOR level 3 in Table 8, which ES-09 refers to."
+      }
+    ]
+  }
+}

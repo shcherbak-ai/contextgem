@@ -1,0 +1,1410 @@
+{
+  "case": "complex_mcu",
+  "model": "openai/gpt-6-luna",
+  "kind": "llm",
+  "mode": "concurrent",
+  "label": "baseline_2026-10-15",
+  "run": 2,
+  "error": null,
+  "seconds": 67.1,
+  "usage": {
+    "requests": 34,
+    "requests_without_response": 0,
+    "input_tokens": 439823,
+    "output_tokens": 29896,
+    "cache_read_tokens": 324098,
+    "cache_write_tokens": 115623,
+    "cost_total": "0.03265"
+  },
+  "retries_for_invalid_data": 0,
+  "responses_not_valid_json": 0,
+  "extraction_warnings": [],
+  "refusal_warnings": [],
+  "provenance": {
+    "litellm": "1.105.1",
+    "prompts": {
+      "decision_question_aspect.j2": "7b069363576f",
+      "decision_question_concept.j2": "603962caf35d",
+      "default_system_message.j2": "8bb691c5e36c",
+      "extract_aspect_items.j2": "4b4bd68cd6a8",
+      "extract_concept_items.j2": "4f0b332af667"
+    }
+  },
+  "scores": {
+    "summary": {
+      "aspect_f1": 0.9395598680495706,
+      "aspect_precision": 0.8910542129146781,
+      "aspect_recall": 1.0,
+      "concept_accuracy": 1.0,
+      "n_concepts_scored": 26,
+      "n_concepts_correct": 26,
+      "string_exact": 1.0,
+      "n_strings": 1,
+      "reference_f1": 0.7822072636395497,
+      "n_concepts_without_items": 0
+    },
+    "aspects": [
+      {
+        "name": "Device limitations of revision C",
+        "n_predicted": 12,
+        "n_gold": 12,
+        "n_neutral_predicted": 13,
+        "predicted_paragraphs": [
+          3,
+          182,
+          187,
+          189,
+          191,
+          192,
+          193,
+          194,
+          195,
+          196,
+          197,
+          198,
+          199,
+          200,
+          202,
+          203,
+          204,
+          205,
+          206,
+          207,
+          208,
+          209,
+          217,
+          218,
+          222
+        ],
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0
+      },
+      {
+        "name": "Flash memory specifications",
+        "n_predicted": 14,
+        "n_gold": 14,
+        "n_neutral_predicted": 5,
+        "predicted_paragraphs": [
+          60,
+          61,
+          62,
+          63,
+          64,
+          65,
+          66,
+          67,
+          69,
+          70,
+          71,
+          72,
+          73,
+          74,
+          75,
+          76,
+          203,
+          211,
+          223
+        ],
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0
+      },
+      {
+        "name": "DR-114 clock configuration",
+        "n_predicted": 43,
+        "n_gold": 33,
+        "n_neutral_predicted": 15,
+        "predicted_paragraphs": [
+          3,
+          9,
+          11,
+          26,
+          27,
+          28,
+          29,
+          30,
+          31,
+          32,
+          33,
+          34,
+          45,
+          46,
+          47,
+          48,
+          49,
+          50,
+          51,
+          52,
+          53,
+          54,
+          55,
+          57,
+          58,
+          60,
+          61,
+          62,
+          63,
+          64,
+          65,
+          66,
+          67,
+          182,
+          186,
+          187,
+          188,
+          193,
+          194,
+          202,
+          203,
+          211,
+          217,
+          218,
+          220,
+          221,
+          222,
+          223,
+          224,
+          231,
+          233,
+          234,
+          242,
+          243,
+          244,
+          245,
+          248,
+          249
+        ],
+        "precision": 0.7674418604651163,
+        "recall": 1.0,
+        "f1": 0.868421052631579
+      },
+      {
+        "name": "DR-114 thermal assessment",
+        "n_predicted": 25,
+        "n_gold": 21,
+        "n_neutral_predicted": 7,
+        "predicted_paragraphs": [
+          4,
+          9,
+          51,
+          57,
+          90,
+          92,
+          94,
+          95,
+          96,
+          97,
+          99,
+          100,
+          101,
+          105,
+          110,
+          111,
+          113,
+          114,
+          115,
+          118,
+          119,
+          120,
+          187,
+          223,
+          242,
+          243,
+          244,
+          245,
+          246,
+          247,
+          248,
+          250
+        ],
+        "precision": 0.84,
+        "recall": 1.0,
+        "f1": 0.9130434782608696
+      },
+      {
+        "name": "DR-114 errata and firmware",
+        "n_predicted": 26,
+        "n_gold": 22,
+        "n_neutral_predicted": 16,
+        "predicted_paragraphs": [
+          2,
+          3,
+          11,
+          78,
+          79,
+          80,
+          81,
+          82,
+          83,
+          87,
+          182,
+          183,
+          184,
+          185,
+          186,
+          187,
+          188,
+          190,
+          191,
+          192,
+          193,
+          194,
+          195,
+          196,
+          197,
+          198,
+          199,
+          200,
+          204,
+          205,
+          208,
+          209,
+          218,
+          220,
+          221,
+          222,
+          224,
+          242,
+          243,
+          246,
+          248,
+          249
+        ],
+        "precision": 0.8461538461538461,
+        "recall": 1.0,
+        "f1": 0.9166666666666666
+      },
+      {
+        "name": "DR-115 errata and PLL1 limits",
+        "n_predicted": 37,
+        "n_gold": 29,
+        "n_neutral_predicted": 14,
+        "predicted_paragraphs": [
+          3,
+          9,
+          11,
+          26,
+          29,
+          33,
+          34,
+          45,
+          46,
+          47,
+          48,
+          49,
+          50,
+          51,
+          52,
+          53,
+          54,
+          55,
+          57,
+          58,
+          60,
+          62,
+          66,
+          97,
+          182,
+          184,
+          185,
+          186,
+          187,
+          191,
+          192,
+          193,
+          194,
+          195,
+          196,
+          197,
+          198,
+          199,
+          200,
+          202,
+          203,
+          204,
+          205,
+          207,
+          209,
+          255,
+          256,
+          257,
+          258,
+          259,
+          260
+        ],
+        "precision": 0.7837837837837838,
+        "recall": 1.0,
+        "f1": 0.8787878787878788
+      },
+      {
+        "name": "Revision B end of life",
+        "n_predicted": 7,
+        "n_gold": 7,
+        "n_neutral_predicted": 3,
+        "predicted_paragraphs": [
+          4,
+          186,
+          220,
+          224,
+          225,
+          226,
+          228,
+          229,
+          264,
+          265
+        ],
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0
+      }
+    ],
+    "concepts": [
+      {
+        "context": "document",
+        "name": "Lowest HBM rating of a QFN-48 pin in V",
+        "type": "NumericalConcept",
+        "n_items": 1,
+        "n_gold_items": 1,
+        "predicted": [
+          1000.0
+        ],
+        "gold": [
+          1000.0
+        ],
+        "scoring": "exact",
+        "correct": true,
+        "predicted_references": [
+          23,
+          210
+        ],
+        "references": {
+          "precision": 1.0,
+          "recall": 1.0,
+          "f1": 1.0
+        },
+        "values": [
+          1000
+        ],
+        "justifications": [
+          "The erratum specifies 1000 V HBM for QFN-48 pins PB12 to PB15, while all other pins are rated 2000 V; therefore, 1000 V is the lowest rating."
+        ]
+      },
+      {
+        "context": "document",
+        "name": "Revision C BOR level 2 minimum falling threshold in V",
+        "type": "NumericalConcept",
+        "n_items": 1,
+        "n_gold_items": 1,
+        "predicted": [
+          2.21
+        ],
+        "gold": [
+          2.21
+        ],
+        "scoring": "exact",
+        "correct": true,
+        "predicted_references": [
+          223
+        ],
+        "references": {
+          "precision": 1.0,
+          "recall": 0.5,
+          "f1": 0.6666666666666666
+        },
+        "values": [
+          2.21
+        ],
+        "justifications": [
+          "For revision C, the BOR level 2 falling threshold minimum is specified as 2.21 V."
+        ]
+      },
+      {
+        "context": "document",
+        "name": "VOS0 permitted at a VDD of 1.8 V",
+        "type": "BooleanConcept",
+        "n_items": 1,
+        "n_gold_items": 1,
+        "predicted": [
+          false
+        ],
+        "gold": [
+          false
+        ],
+        "scoring": "exact",
+        "correct": true,
+        "predicted_references": [
+          26,
+          29
+        ],
+        "references": {
+          "precision": 1.0,
+          "recall": 1.0,
+          "f1": 1.0
+        },
+        "values": [
+          false
+        ],
+        "justifications": [
+          "VOS0 may be entered only when VDD is at least 1.95 V, and its table entry also specifies a minimum VDD of 1.95 V; therefore, 1.8 V is insufficient."
+        ]
+      },
+      {
+        "context": "document",
+        "name": "Marking code of revision C",
+        "type": "LabelConcept",
+        "n_items": 1,
+        "n_gold_items": 1,
+        "predicted": [
+          [
+            "y"
+          ]
+        ],
+        "gold": [
+          [
+            "y"
+          ]
+        ],
+        "scoring": "exact",
+        "correct": true,
+        "predicted_references": [
+          187
+        ],
+        "references": {
+          "precision": 1.0,
+          "recall": 0.3333333333333333,
+          "f1": 0.5
+        },
+        "values": [
+          [
+            "Y"
+          ]
+        ],
+        "justifications": [
+          "Production devices of silicon revision C carry marking code Y, beginning with date code 2634."
+        ]
+      },
+      {
+        "context": "document",
+        "name": "DR-115 junction temperature in °C",
+        "type": "NumericalConcept",
+        "n_items": 1,
+        "n_gold_items": 1,
+        "predicted": [
+          100.0
+        ],
+        "gold": [
+          100.0
+        ],
+        "scoring": "exact",
+        "correct": true,
+        "predicted_references": [
+          90,
+          93,
+          95,
+          96,
+          103,
+          112,
+          115,
+          116,
+          117,
+          120,
+          255,
+          256,
+          257,
+          258,
+          259,
+          260
+        ],
+        "references": {
+          "precision": 1.0,
+          "recall": 0.8421052631578947,
+          "f1": 0.9142857142857143
+        },
+        "values": [
+          100
+        ],
+        "justifications": [
+          "At the highest ambient temperature of 70 °C, the clock configuration gives 432 MHz and a maximum base current of 156 mA. Adding 6.5 mA for the active peripherals gives Tj = 70 + 52 × (3.366 × 0.1625 + 0.038) = 100.4 °C, rounded to 100 °C."
+        ]
+      },
+      {
+        "context": "document",
+        "name": "Start of the first revision C date code",
+        "type": "DateConcept",
+        "n_items": 1,
+        "n_gold_items": 1,
+        "predicted": [
+          "2026-08-17"
+        ],
+        "gold": [
+          "2026-08-17"
+        ],
+        "scoring": "exact",
+        "correct": true,
+        "predicted_references": [
+          4,
+          224
+        ],
+        "references": {
+          "precision": 1.0,
+          "recall": 0.6666666666666666,
+          "f1": 0.8
+        },
+        "values": [
+          "2026-08-17"
+        ],
+        "justifications": [
+          "Revision C first ships from date code 2634, which denotes ISO week 34 of 2026; that week begins on Monday, 17 August 2026."
+        ]
+      },
+      {
+        "context": "aspect: Device limitations of revision C",
+        "name": "Limitations present in revision C",
+        "type": "JsonObjectConcept",
+        "n_items": 4,
+        "n_gold_items": 4,
+        "predicted": [
+          {
+            "affected_revisions": [
+              "a",
+              "b",
+              "c"
+            ],
+            "function": "adc",
+            "id": "es-04",
+            "impact_class": 3.0
+          },
+          {
+            "affected_revisions": [
+              "a",
+              "b",
+              "c"
+            ],
+            "function": "usart",
+            "id": "es-05",
+            "impact_class": 2.0
+          },
+          {
+            "affected_revisions": [
+              "c"
+            ],
+            "function": "fdcan",
+            "id": "es-08",
+            "impact_class": 4.0
+          },
+          {
+            "affected_revisions": [
+              "b",
+              "c"
+            ],
+            "function": "power",
+            "id": "es-09",
+            "impact_class": 3.0
+          }
+        ],
+        "gold": [
+          {
+            "affected_revisions": [
+              "a",
+              "b",
+              "c"
+            ],
+            "function": "adc",
+            "id": "es-04",
+            "impact_class": 3.0
+          },
+          {
+            "affected_revisions": [
+              "a",
+              "b",
+              "c"
+            ],
+            "function": "usart",
+            "id": "es-05",
+            "impact_class": 2.0
+          },
+          {
+            "affected_revisions": [
+              "c"
+            ],
+            "function": "fdcan",
+            "id": "es-08",
+            "impact_class": 4.0
+          },
+          {
+            "affected_revisions": [
+              "b",
+              "c"
+            ],
+            "function": "power",
+            "id": "es-09",
+            "impact_class": 3.0
+          }
+        ],
+        "scoring": "keys_of_objects",
+        "correct": true,
+        "field_match_rate": 1.0,
+        "predicted_references": [
+          195,
+          196,
+          199,
+          200,
+          208,
+          209
+        ],
+        "references": {
+          "precision": 1.0,
+          "recall": 0.5454545454545454,
+          "f1": 0.7058823529411764
+        },
+        "values": [
+          {
+            "id": "ES-04",
+            "function": "ADC",
+            "impact_class": 3,
+            "affected_revisions": [
+              "A",
+              "B",
+              "C"
+            ]
+          },
+          {
+            "id": "ES-05",
+            "function": "USART",
+            "impact_class": 2,
+            "affected_revisions": [
+              "A",
+              "B",
+              "C"
+            ]
+          },
+          {
+            "id": "ES-08",
+            "function": "FDCAN",
+            "impact_class": 4,
+            "affected_revisions": [
+              "C"
+            ]
+          },
+          {
+            "id": "ES-09",
+            "function": "Power",
+            "impact_class": 3,
+            "affected_revisions": [
+              "B",
+              "C"
+            ]
+          }
+        ],
+        "justifications": [
+          null,
+          null,
+          null,
+          null
+        ]
+      },
+      {
+        "context": "aspect: Device limitations of revision C",
+        "name": "Impact class of ES-08",
+        "type": "RatingConcept",
+        "n_items": 1,
+        "n_gold_items": 1,
+        "predicted": [
+          4.0
+        ],
+        "gold": [
+          4.0
+        ],
+        "scoring": "exact",
+        "correct": true,
+        "predicted_references": [
+          208,
+          218
+        ],
+        "references": {
+          "precision": 1.0,
+          "recall": 0.3333333333333333,
+          "f1": 0.5
+        },
+        "values": [
+          4
+        ],
+        "justifications": [
+          "The current errata text states that ES-08’s impact class was raised from 2 to 4, and the revision history confirms this update."
+        ]
+      },
+      {
+        "context": "aspect: Device limitations of revision C",
+        "name": "ES-09 present in revision C",
+        "type": "BooleanConcept",
+        "n_items": 1,
+        "n_gold_items": 1,
+        "predicted": [
+          true
+        ],
+        "gold": [
+          true
+        ],
+        "scoring": "exact",
+        "correct": true,
+        "predicted_references": [
+          3,
+          209,
+          218
+        ],
+        "references": {
+          "precision": 0.6666666666666666,
+          "recall": 0.5,
+          "f1": 0.5714285714285715
+        },
+        "values": [
+          true
+        ],
+        "justifications": [
+          "The latest revision states that ES-09 is present in revision C, and production-lot testing confirmed the drift. The earlier statement that revision C fixed it is superseded by the later-dated status update."
+        ]
+      },
+      {
+        "context": "aspect: Device limitations of revision C",
+        "name": "ES-08 workaround",
+        "type": "StringConcept",
+        "n_items": 1,
+        "n_gold_items": 1,
+        "predicted": [
+          "rewrite fdcan_tdcr after each bus-off recovery, before clearing init."
+        ],
+        "gold": [
+          "write fdcan_tdcr again after each bus-off recovery, before init is cleared."
+        ],
+        "scoring": "exact_or_accepted",
+        "correct": true,
+        "predicted_references": [
+          208
+        ],
+        "references": {
+          "precision": 1.0,
+          "recall": 1.0,
+          "f1": 1.0
+        },
+        "values": [
+          "Rewrite FDCAN_TDCR after each bus-off recovery, before clearing INIT."
+        ],
+        "justifications": [
+          "This restores the transmitter delay compensation offset that the recovery sequence clears."
+        ]
+      },
+      {
+        "context": "aspect: Flash memory specifications",
+        "name": "HCLK maximum for 2 wait states in VOS1 in MHz",
+        "type": "NumericalConcept",
+        "n_items": 1,
+        "n_gold_items": 1,
+        "predicted": [
+          165.0
+        ],
+        "gold": [
+          165.0
+        ],
+        "scoring": "exact",
+        "correct": true,
+        "predicted_references": [
+          65,
+          211
+        ],
+        "references": {
+          "precision": 1.0,
+          "recall": 1.0,
+          "f1": 1.0
+        },
+        "values": [
+          165
+        ],
+        "justifications": [
+          "The correction states that the VOS1 maximum for 2 wait states is 165 MHz, replacing the table's 185 MHz value."
+        ]
+      },
+      {
+        "context": "aspect: Flash memory specifications",
+        "name": "Revision C retention after 10 000 cycles at 85 °C",
+        "type": "NumericalConcept",
+        "n_items": 1,
+        "n_gold_items": 1,
+        "predicted": [
+          15.0
+        ],
+        "gold": [
+          15.0
+        ],
+        "scoring": "exact",
+        "correct": true,
+        "predicted_references": [
+          223
+        ],
+        "references": {
+          "precision": 1.0,
+          "recall": 0.5,
+          "f1": 0.6666666666666666
+        },
+        "values": [
+          15
+        ],
+        "justifications": [
+          "For revision C, flash data retention after 10,000 cycles at 85 °C is 15 years."
+        ]
+      },
+      {
+        "context": "aspect: Flash memory specifications",
+        "name": "Revision C retention after 1 000 cycles at 105 °C",
+        "type": "NumericalConcept",
+        "n_items": 1,
+        "n_gold_items": 1,
+        "predicted": [
+          20.0
+        ],
+        "gold": [
+          20.0
+        ],
+        "scoring": "exact",
+        "correct": true,
+        "predicted_references": [
+          73,
+          223
+        ],
+        "references": {
+          "precision": 1.0,
+          "recall": 1.0,
+          "f1": 1.0
+        },
+        "values": [
+          20
+        ],
+        "justifications": [
+          "The minimum flash data retention after 1,000 cycles at Ta = 105 °C is 20 years. The revision C characterization states that all other datasheet values remain unchanged."
+        ]
+      },
+      {
+        "context": "aspect: DR-114 clock configuration",
+        "name": "DR-114 maximum permitted SYSCLK in MHz",
+        "type": "NumericalConcept",
+        "n_items": 1,
+        "n_gold_items": 1,
+        "predicted": [
+          400.0
+        ],
+        "gold": [
+          400.0
+        ],
+        "scoring": "exact",
+        "correct": true,
+        "predicted_references": [
+          28,
+          29,
+          30,
+          33,
+          187,
+          203,
+          243,
+          244
+        ],
+        "references": {
+          "precision": 0.875,
+          "recall": 0.5833333333333334,
+          "f1": 0.7000000000000001
+        },
+        "values": [
+          400
+        ],
+        "justifications": [
+          "Production lot P2 is revision C, for which the datasheet limits apply without the earlier VOS1 erratum. Its 1.8 V rail at −3% remains above VOS1's 1.71 V minimum, while the ambient reaches 95 °C; the applicable VOS1 limit is therefore 400 MHz. VOS0 is not available because its minimum supply is 1.95 V."
+        ]
+      },
+      {
+        "context": "aspect: DR-114 clock configuration",
+        "name": "DR-114 PLL1 configuration within specification",
+        "type": "BooleanConcept",
+        "n_items": 1,
+        "n_gold_items": 1,
+        "predicted": [
+          false
+        ],
+        "gold": [
+          false
+        ],
+        "scoring": "exact",
+        "correct": true,
+        "predicted_references": [
+          47,
+          51,
+          57,
+          245
+        ],
+        "references": {
+          "precision": 1.0,
+          "recall": 0.8,
+          "f1": 0.888888888888889
+        },
+        "values": [
+          false
+        ],
+        "justifications": [
+          "The 25 MHz HSE divided by DIVM1 = 5 gives a PLL1 reference frequency of 5 MHz, but PLL1RGE = 01 selects the 2–4 MHz range. This setting is outside the specification."
+        ]
+      },
+      {
+        "context": "aspect: DR-114 clock configuration",
+        "name": "DR-114 required flash wait states",
+        "type": "NumericalConcept",
+        "n_items": 1,
+        "n_gold_items": 1,
+        "predicted": [
+          3.0
+        ],
+        "gold": [
+          3.0
+        ],
+        "scoring": "exact",
+        "correct": true,
+        "predicted_references": [
+          34,
+          47,
+          66,
+          211,
+          243,
+          245
+        ],
+        "references": {
+          "precision": 1.0,
+          "recall": 0.75,
+          "f1": 0.8571428571428571
+        },
+        "values": [
+          3
+        ],
+        "justifications": [
+          "The configured PLL yields a 350 MHz SYSCLK and, with HPRE = 2, a 175 MHz HCLK in VOS1. Two wait states support at most 165 MHz after the erratum correction, while three support up to 200 MHz, so the smallest permitted setting is 3."
+        ]
+      },
+      {
+        "context": "aspect: DR-114 thermal assessment",
+        "name": "DR-114 junction temperature in °C",
+        "type": "NumericalConcept",
+        "n_items": 1,
+        "n_gold_items": 1,
+        "predicted": [
+          108.0
+        ],
+        "gold": [
+          108.0
+        ],
+        "scoring": "exact",
+        "correct": true,
+        "predicted_references": [
+          9,
+          90,
+          94,
+          95,
+          96,
+          99,
+          101,
+          105,
+          113,
+          114,
+          115,
+          118,
+          119,
+          120,
+          242,
+          243,
+          244,
+          245,
+          246,
+          247
+        ],
+        "references": {
+          "precision": 0.95,
+          "recall": 1.0,
+          "f1": 0.9743589743589743
+        },
+        "values": [
+          108
+        ],
+        "justifications": [
+          "Using the 2s2p thermal resistance of 44 °C/W, the maximum ambient of 95 °C, and the datasheet method with maximum supply current and active-peripheral adders gives a junction temperature of approximately 108.2 °C, rounded to 108 °C."
+        ]
+      },
+      {
+        "context": "aspect: DR-114 thermal assessment",
+        "name": "DR-114 meets HDR-7",
+        "type": "BooleanConcept",
+        "n_items": 1,
+        "n_gold_items": 1,
+        "predicted": [
+          false
+        ],
+        "gold": [
+          false
+        ],
+        "scoring": "exact",
+        "correct": true,
+        "predicted_references": [
+          9,
+          94,
+          95,
+          96,
+          97,
+          101,
+          105,
+          113,
+          114,
+          115,
+          118,
+          119,
+          120,
+          242,
+          243,
+          244,
+          246,
+          247,
+          248
+        ],
+        "references": {
+          "precision": 0.9473684210526315,
+          "recall": 0.8571428571428571,
+          "f1": 0.9
+        },
+        "values": [
+          false
+        ],
+        "justifications": [
+          "For the production device's grade X limit of 125 °C, HDR-7 requires a computed junction temperature no higher than 105 °C. Using the 2s2p-board thermal resistance, the maximum supply current plus applicable peripheral adders, and the stated I/O power gives approximately 108.2 °C, so the boards do not meet HDR-7."
+        ]
+      },
+      {
+        "context": "aspect: DR-114 errata and firmware",
+        "name": "Errata applicable to the DR-114 production boards",
+        "type": "LabelConcept",
+        "n_items": 1,
+        "n_gold_items": 1,
+        "predicted": [
+          [
+            "es-04",
+            "es-05",
+            "es-08"
+          ]
+        ],
+        "gold": [
+          [
+            "es-04",
+            "es-05",
+            "es-08"
+          ]
+        ],
+        "scoring": "exact",
+        "correct": true,
+        "predicted_references": [
+          187,
+          195,
+          204,
+          205,
+          208,
+          242,
+          243,
+          246
+        ],
+        "references": {
+          "precision": 1.0,
+          "recall": 0.42105263157894735,
+          "f1": 0.5925925925925926
+        },
+        "values": [
+          [
+            "ES-04",
+            "ES-05",
+            "ES-08"
+          ]
+        ],
+        "justifications": [
+          "The production devices marked Y 2636 are revision C. ES-04 applies because VDDA is below 2.0 V and the ADC sampling rate is 36/(2.5+12.5) = 2.4 Msps; ES-05 applies with USART OVER8 and receiver timeout enabled; ES-08 applies on revision C with transmitter delay compensation and automatic bus-off recovery enabled."
+        ]
+      },
+      {
+        "context": "aspect: DR-114 errata and firmware",
+        "name": "DR-114 maximum ADC INL in LSB",
+        "type": "NumericalConcept",
+        "n_items": 1,
+        "n_gold_items": 1,
+        "predicted": [
+          6.0
+        ],
+        "gold": [
+          6.0
+        ],
+        "scoring": "exact",
+        "correct": true,
+        "predicted_references": [
+          79,
+          204,
+          242,
+          243,
+          246,
+          249
+        ],
+        "references": {
+          "precision": 0.8333333333333334,
+          "recall": 0.8333333333333334,
+          "f1": 0.8333333333333334
+        },
+        "values": [
+          6
+        ],
+        "justifications": [
+          "The production board operates below 2.0 V VDDA, and its sampling rate is 36 MHz / (2.5 + 12.5) = 2.4 Msps, meeting the ES-04 conditions for a maximum INL of ±6 LSB. Firmware FW 2.3.0 does not implement the ES-04 workaround, so the maximum magnitude is 6 LSB."
+        ]
+      },
+      {
+        "context": "aspect: DR-114 errata and firmware",
+        "name": "FW 2.3.0 meets HDR-9 for the DR-114 production boards",
+        "type": "BooleanConcept",
+        "n_items": 1,
+        "n_gold_items": 1,
+        "predicted": [
+          false
+        ],
+        "gold": [
+          false
+        ],
+        "scoring": "exact",
+        "correct": true,
+        "predicted_references": [
+          204,
+          242,
+          243,
+          246,
+          249
+        ],
+        "references": {
+          "precision": 1.0,
+          "recall": 0.23809523809523808,
+          "f1": 0.3846153846153846
+        },
+        "values": [
+          false
+        ],
+        "justifications": [
+          "The production boards use revision C, and their 1.8 V VDDA and ADC settings yield a sampling rate of 2.4 Msps, meeting the conditions for ES-04. HDR-9 therefore requires its workaround, but FW 2.3.0 implements no workaround other than those for ES-02 and ES-05."
+        ]
+      },
+      {
+        "context": "aspect: DR-115 errata and PLL1 limits",
+        "name": "Errata applicable to the DR-115 boards",
+        "type": "LabelConcept",
+        "n_items": 1,
+        "n_gold_items": 1,
+        "predicted": [
+          [
+            "es-02",
+            "es-07"
+          ]
+        ],
+        "gold": [
+          [
+            "es-02",
+            "es-07"
+          ]
+        ],
+        "scoring": "exact",
+        "correct": true,
+        "predicted_references": [
+          186,
+          202,
+          207,
+          255,
+          257,
+          258,
+          259
+        ],
+        "references": {
+          "precision": 1.0,
+          "recall": 0.2916666666666667,
+          "f1": 0.45161290322580644
+        },
+        "values": [
+          [
+            "ES-02",
+            "ES-07"
+          ]
+        ],
+        "justifications": [
+          "The device is revision B. Its PLL1 configuration gives fVCO = (24 MHz / 4) × 144 = 864 MHz, above the ES-02 threshold, and the outdoor ambient range extends below 0 °C. ES-07 is present on revision B and applies because SPI2 reads the sensor in TI mode."
+        ]
+      },
+      {
+        "context": "aspect: DR-115 errata and PLL1 limits",
+        "name": "DR-115 maximum PLL1 VCO frequency in MHz",
+        "type": "NumericalConcept",
+        "n_items": 1,
+        "n_gold_items": 1,
+        "predicted": [
+          836.0
+        ],
+        "gold": [
+          836.0
+        ],
+        "scoring": "exact",
+        "correct": true,
+        "predicted_references": [
+          11,
+          186,
+          202,
+          255,
+          257
+        ],
+        "references": {
+          "precision": 0.8,
+          "recall": 0.6666666666666666,
+          "f1": 0.7272727272727272
+        },
+        "values": [
+          836
+        ],
+        "justifications": [
+          "The boards are marked with revision code B, and their outdoor operating environment can fall below 0 °C. For revision B, the PLL1 erratum requires keeping fVCO at or below 836 MHz under that condition."
+        ]
+      },
+      {
+        "context": "aspect: DR-115 errata and PLL1 limits",
+        "name": "DR-115 PLL1 configuration within its limits",
+        "type": "BooleanConcept",
+        "n_items": 1,
+        "n_gold_items": 1,
+        "predicted": [
+          false
+        ],
+        "gold": [
+          false
+        ],
+        "scoring": "exact",
+        "correct": true,
+        "predicted_references": [
+          186,
+          202,
+          255,
+          257,
+          258
+        ],
+        "references": {
+          "precision": 1.0,
+          "recall": 0.5,
+          "f1": 0.6666666666666666
+        },
+        "values": [
+          false
+        ],
+        "justifications": [
+          "The marked devices are revision B, and the outdoor operating range reaches −25 °C, making the PLL1 low-temperature erratum applicable. The configuration produces an 864 MHz VCO, exceeding the required 836 MHz workaround limit."
+        ]
+      },
+      {
+        "context": "aspect: Revision B end of life",
+        "name": "Halyard last-time-buy date for revision B",
+        "type": "DateConcept",
+        "n_items": 1,
+        "n_gold_items": 1,
+        "predicted": [
+          "2026-10-13"
+        ],
+        "gold": [
+          "2026-10-13"
+        ],
+        "scoring": "exact",
+        "correct": true,
+        "predicted_references": [
+          4,
+          220,
+          225,
+          228,
+          264
+        ],
+        "references": {
+          "precision": 1.0,
+          "recall": 1.0,
+          "f1": 1.0
+        },
+        "values": [
+          "2026-10-13"
+        ],
+        "justifications": [
+          "The base last-time-buy date is 90 calendar days after the PCN dated 15 June 2026, or 13 September 2026. Halyard registered its forecast by 31 July and therefore qualifies for the amendment extending the deadline by 30 calendar days, to 13 October 2026."
+        ]
+      },
+      {
+        "context": "aspect: Revision B end of life",
+        "name": "Last-shipment date of revision B",
+        "type": "DateConcept",
+        "n_items": 1,
+        "n_gold_items": 1,
+        "predicted": [
+          "2027-03-12"
+        ],
+        "gold": [
+          "2027-03-12"
+        ],
+        "scoring": "exact",
+        "correct": true,
+        "predicted_references": [
+          4,
+          220,
+          225,
+          226,
+          228,
+          264
+        ],
+        "references": {
+          "precision": 0.8333333333333334,
+          "recall": 1.0,
+          "f1": 0.9090909090909091
+        },
+        "values": [
+          "2027-03-12"
+        ],
+        "justifications": [
+          "Halyard registered its revision B demand forecast before the stated cutoff, so the amendment applies; it keeps the original LTS date. The original LTB date is 90 calendar days after 15 June 2026 (13 September 2026), and the LTS date is 180 calendar days after that."
+        ]
+      },
+      {
+        "context": "aspect: Revision B end of life",
+        "name": "PO-5521 valid last-time-buy order",
+        "type": "BooleanConcept",
+        "n_items": 1,
+        "n_gold_items": 1,
+        "predicted": [
+          true
+        ],
+        "gold": [
+          true
+        ],
+        "scoring": "exact",
+        "correct": true,
+        "predicted_references": [
+          220,
+          225,
+          228,
+          264,
+          265
+        ],
+        "references": {
+          "precision": 1.0,
+          "recall": 0.8333333333333334,
+          "f1": 0.9090909090909091
+        },
+        "values": [
+          true
+        ],
+        "justifications": [
+          "Halyard registered its revision B demand forecast on 29 July, before the 31 July cutoff, so the amended LTB deadline applies. That deadline is 30 calendar days after the original 13 September LTB date (13 October); PO-5521 was placed on 2 October and is within it."
+        ]
+      }
+    ]
+  }
+}

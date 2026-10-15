@@ -124,7 +124,7 @@ def main() -> None:
         "--api-base", default=None, help="address of a local server, for its models"
     )
     parser.add_argument(
-        "--label", required=True, help="name of the experiment, e.g. baseline"
+        "--label", required=True, help="name of the experiment, e.g. my_experiment"
     )
     args = parser.parse_args()
 

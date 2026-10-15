@@ -1,0 +1,3481 @@
+{
+  "format": "contextgem.gold",
+  "version": 1,
+  "document": {
+    "paragraphs": [
+      {
+        "index": 0,
+        "custom_data": {},
+        "additional_context": null,
+        "raw_text": "TSV7H SERIES MICROCONTROLLERS - TECHNICAL DOCUMENTATION PACKAGE TDP-0457",
+        "sentences": []
+      },
+      {
+        "index": 1,
+        "custom_data": {},
+        "additional_context": null,
+        "raw_text": "Compiled by Tessaline Semiconductor Ltd. on 2 November 2026 for the design reviews DR-114 and DR-115 of Halyard Drives AS. The package reproduces the parts of each source document that the reviews refer to; omitted sections are not listed.",
+        "sentences": []
+      },
+      {
+        "index": 2,
+        "custom_data": {},
+        "additional_context": null,
+        "raw_text": "Contents: Part I, datasheet DS-TSV7H revision 6 of 14 March 2026 (extract); Part II, errata sheet ES0457 revision 3 of 9 September 2026; Part III, product change notification PCN-2611 of 15 June 2026 and its amendment PCN-2611-A1 of 24 July 2026; Part IV, application note AN-7712 revision 2 of 5 May 2026 (extract); Part V, design review and purchasing records of Halyard Drives AS.",
+        "sentences": []
+      },
+      {
+        "index": 3,
+        "custom_data": {},
+        "additional_context": null,
+        "raw_text": "Order of precedence: where two documents of this package differ on a parameter or on the status of an erratum, the later-dated document prevails for the silicon revisions it names. The datasheet applies to all silicon revisions except where the errata sheet or a PCN states otherwise. The application note is informative: it never overrides a value of the datasheet, of the errata sheet or of a PCN.",
+        "sentences": []
+      },
+      {
+        "index": 4,
+        "custom_data": {},
+        "additional_context": null,
+        "raw_text": "Conventions: Ta is the ambient temperature and Tj the junction temperature. A date code YYWW denotes ISO week WW of the year 20YY. A \"min\" or \"max\" value is guaranteed over the full temperature range of the temperature grade unless a condition is given; a \"typ\" value is not guaranteed. A period of calendar days runs from the day after its start date, ends on its last day, and is not moved for weekends or holidays.",
+        "sentences": []
+      },
+      {
+        "index": 5,
+        "custom_data": {},
+        "additional_context": null,
+        "raw_text": "PART I - DATASHEET DS-TSV7H REVISION 6 (EXTRACT)",
+        "sentences": []
+      },
+      {
+        "index": 6,
+        "custom_data": {},
+        "additional_context": null,
+        "raw_text": "1 DESCRIPTION AND ORDERING INFORMATION",
+        "sentences": []
+      },
+      {
+        "index": 7,
+        "custom_data": {},
+        "additional_context": null,
+        "raw_text": "1.1 The TSV7H series are 32-bit microcontrollers built around an RV32IMFC core with a single-precision floating-point unit, a 16 KB instruction cache and a 16 KB data cache. They embed up to 1024 KB of dual-bank flash memory with error-correcting code (ECC), 512 KB of SRAM, and an internal low-dropout regulator (LDO) whose output, VCORE, is set by one of four voltage-scaling ranges, VOS0 to VOS3.",
+        "sentences": []
+      },
+      {
+        "index": 8,
+        "custom_data": {},
+        "additional_context": null,
+        "raw_text": "1.2 The peripherals include two 12-bit successive-approximation ADCs (ADC1 and ADC2) of up to 3.57 Msps, a 12-bit DAC, two CAN FD controllers (FDCAN1 and FDCAN2), four USARTs, three SPI interfaces with I2S and TI frame modes, two I2C interfaces with SMBus and PMBus support, a CORDIC co-processor for trigonometric functions, and an advanced-control timer (TIM1) with complementary PWM outputs, dead-time insertion and break inputs.",
+        "sentences": []
+      },
+      {
+        "index": 9,
+        "custom_data": {},
+        "additional_context": null,
+        "raw_text": "1.3 A part number is TSV7H followed by a flash code, a package code and a temperature-grade code. Flash code 4 denotes 512 KB and 8 denotes 1024 KB. Package code Q denotes QFN-48 (7 × 7 mm, with an exposed pad) and L denotes LQFP-64 (10 × 10 mm). Temperature-grade code I denotes the industrial grade (Ta −40 to +85 °C, Tj max 105 °C), X the extended grade (Ta −40 to +105 °C, Tj max 125 °C) and A the high-temperature grade (Ta −40 to +125 °C, Tj max 140 °C).",
+        "sentences": []
+      },
+      {
+        "index": 10,
+        "custom_data": {},
+        "additional_context": null,
+        "raw_text": "1.4 For example, TSV7H8LA is a 1024 KB device in LQFP-64 of the high-temperature grade, and TSV7H4LI a 512 KB device in LQFP-64 of the industrial grade.",
+        "sentences": []
+      },
+      {
+        "index": 11,
+        "custom_data": {},
+        "additional_context": null,
+        "raw_text": "1.5 The third line of the top marking gives the revision code of the silicon, followed by a space and the date code, e.g. \"B 2611\". The revision codes are listed in the device identification table of the errata sheet: the revision code on a marking is not necessarily the letter of the silicon revision.",
+        "sentences": []
+      },
+      {
+        "index": 12,
+        "custom_data": {},
+        "additional_context": null,
+        "raw_text": "2 ABSOLUTE MAXIMUM RATINGS",
+        "sentences": []
+      },
+      {
+        "index": 13,
+        "custom_data": {},
+        "additional_context": null,
+        "raw_text": "2.1 Stresses above the absolute maximum ratings can cause permanent damage. They are stress ratings only: functional operation is specified only under the operating conditions of Section 3, and exposure to absolute maximum conditions for extended periods can affect reliability.",
+        "sentences": []
+      },
+      {
+        "index": 14,
+        "custom_data": {},
+        "additional_context": null,
+        "raw_text": "Table 2. Voltage, current and temperature ratings",
+        "sentences": []
+      },
+      {
+        "index": 15,
+        "custom_data": {},
+        "additional_context": null,
+        "raw_text": "| Symbol | Parameter | Min | Max | Unit |",
+        "sentences": []
+      },
+      {
+        "index": 16,
+        "custom_data": {},
+        "additional_context": null,
+        "raw_text": "| VDD − VSS | Main supply voltage, including VDDA | −0.3 | 4.0 | V |",
+        "sentences": []
+      },
+      {
+        "index": 17,
+        "custom_data": {},
+        "additional_context": null,
+        "raw_text": "| VIN | Input voltage on a five-volt-tolerant (FT) pin | VSS − 0.3 | VDD + 4.0, and not above 5.5 | V |",
+        "sentences": []
+      },
+      {
+        "index": 18,
+        "custom_data": {},
+        "additional_context": null,
+        "raw_text": "| VIN | Input voltage on any other pin | VSS − 0.3 | VDD + 0.3 | V |",
+        "sentences": []
+      },
+      {
+        "index": 19,
+        "custom_data": {},
+        "additional_context": null,
+        "raw_text": "| IINJ | Injected current on any pin | −5 | +5 | mA |",
+        "sentences": []
+      },
+      {
+        "index": 20,
+        "custom_data": {},
+        "additional_context": null,
+        "raw_text": "| ΣIINJ | Total injected current, sum over all pins | −25 | +25 | mA |",
+        "sentences": []
+      },
+      {
+        "index": 21,
+        "custom_data": {},
+        "additional_context": null,
+        "raw_text": "| TSTG | Storage temperature | −65 | +150 | °C |",
+        "sentences": []
+      },
+      {
+        "index": 22,
+        "custom_data": {},
+        "additional_context": null,
+        "raw_text": "| TJ | Junction temperature, absolute | — | +150 | °C |",
+        "sentences": []
+      },
+      {
+        "index": 23,
+        "custom_data": {},
+        "additional_context": null,
+        "raw_text": "2.2 Electrostatic discharge: human-body model (HBM, ANSI/ESDA/JEDEC JS-001) 2000 V, class 2, on all pins; charged-device model (CDM, ANSI/ESDA/JEDEC JS-002) 500 V, class C2a. Static latch-up (JESD78): class II, level A, at Ta = +125 °C.",
+        "sentences": []
+      },
+      {
+        "index": 24,
+        "custom_data": {},
+        "additional_context": null,
+        "raw_text": "3 OPERATING CONDITIONS",
+        "sentences": []
+      },
+      {
+        "index": 25,
+        "custom_data": {},
+        "additional_context": null,
+        "raw_text": "3.1 The device operates with VDD from 1.71 V to 3.6 V. VDDA, the supply of the ADCs and of the DAC, operates from 1.71 V to 3.6 V and must not exceed VDD by more than 0.3 V during power-up and power-down.",
+        "sentences": []
+      },
+      {
+        "index": 26,
+        "custom_data": {},
+        "additional_context": null,
+        "raw_text": "3.2 The voltage-scaling range is selected in PWR_D3CR.VOS; it sets VCORE and the maximum SYSCLK frequency (Table 6). VOS0 is the overdrive range: it can be entered only from VOS1, only while the LDO supplies VCORE, and only while VDD is at least 1.95 V.",
+        "sentences": []
+      },
+      {
+        "index": 27,
+        "custom_data": {},
+        "additional_context": null,
+        "raw_text": "Table 6. Maximum SYSCLK frequency",
+        "sentences": []
+      },
+      {
+        "index": 28,
+        "custom_data": {},
+        "additional_context": null,
+        "raw_text": "| Range | VCORE typ (V) | VDD min (V) | fSYSCLK max at Ta up to 85 °C (MHz) | fSYSCLK max at Ta above 85 °C up to 105 °C (MHz) | fSYSCLK max at Ta above 105 °C up to 125 °C (MHz) |",
+        "sentences": []
+      },
+      {
+        "index": 29,
+        "custom_data": {},
+        "additional_context": null,
+        "raw_text": "| VOS0 | 1.30 | 1.95 | 480 | 432 | not permitted |",
+        "sentences": []
+      },
+      {
+        "index": 30,
+        "custom_data": {},
+        "additional_context": null,
+        "raw_text": "| VOS1 | 1.20 | 1.71 | 400 | 400 | 360 |",
+        "sentences": []
+      },
+      {
+        "index": 31,
+        "custom_data": {},
+        "additional_context": null,
+        "raw_text": "| VOS2 | 1.10 | 1.71 | 280 | 280 | 280 |",
+        "sentences": []
+      },
+      {
+        "index": 32,
+        "custom_data": {},
+        "additional_context": null,
+        "raw_text": "| VOS3 | 1.00 | 1.71 | 170 | 170 | 170 |",
+        "sentences": []
+      },
+      {
+        "index": 33,
+        "custom_data": {},
+        "additional_context": null,
+        "raw_text": "3.3 The columns for Ta above 85 °C apply only to a temperature grade rated for that ambient temperature. The column is chosen by the highest ambient temperature of the application, not by the junction temperature.",
+        "sentences": []
+      },
+      {
+        "index": 34,
+        "custom_data": {},
+        "additional_context": null,
+        "raw_text": "3.4 HCLK, which clocks the AXI bus matrix and the flash interface, is SYSCLK divided by HPRE (1, 2, 4, 8, 16, 64, 128, 256 or 512). HCLK must not exceed 240 MHz in VOS0, 200 MHz in VOS1, 150 MHz in VOS2 and 85 MHz in VOS3. PCLK1 and PCLK2 are HCLK divided by PPRE1 and PPRE2 (1, 2, 4, 8 or 16) and must not exceed 120 MHz.",
+        "sentences": []
+      },
+      {
+        "index": 35,
+        "custom_data": {},
+        "additional_context": null,
+        "raw_text": "4 SUPPLY SUPERVISION",
+        "sentences": []
+      },
+      {
+        "index": 36,
+        "custom_data": {},
+        "additional_context": null,
+        "raw_text": "4.1 The power-on reset (POR) and the power-down reset (PDR) hold the device in reset while VDD is below their thresholds. The brown-out reset (BOR) adds a selectable threshold: BOR_LEV in the user option bytes selects level 1, 2 or 3, or level 0, which leaves only the POR and the PDR active.",
+        "sentences": []
+      },
+      {
+        "index": 37,
+        "custom_data": {},
+        "additional_context": null,
+        "raw_text": "Table 8. Reset thresholds",
+        "sentences": []
+      },
+      {
+        "index": 38,
+        "custom_data": {},
+        "additional_context": null,
+        "raw_text": "| BOR level | Rising threshold typ (V) | Falling threshold typ (V) | Falling threshold min (V) |",
+        "sentences": []
+      },
+      {
+        "index": 39,
+        "custom_data": {},
+        "additional_context": null,
+        "raw_text": "| Level 0, POR and PDR only | 1.68 | 1.64 | 1.60 |",
+        "sentences": []
+      },
+      {
+        "index": 40,
+        "custom_data": {},
+        "additional_context": null,
+        "raw_text": "| Level 1 | 2.10 | 2.00 | 1.95 |",
+        "sentences": []
+      },
+      {
+        "index": 41,
+        "custom_data": {},
+        "additional_context": null,
+        "raw_text": "| Level 2 | 2.41 | 2.31 | 2.26 |",
+        "sentences": []
+      },
+      {
+        "index": 42,
+        "custom_data": {},
+        "additional_context": null,
+        "raw_text": "| Level 3 | 2.72 | 2.62 | 2.56 |",
+        "sentences": []
+      },
+      {
+        "index": 43,
+        "custom_data": {},
+        "additional_context": null,
+        "raw_text": "4.2 The device leaves reset when VDD rises above the rising threshold of the selected level, and enters reset when VDD falls below its falling threshold. Level 0 is the delivery state of the option bytes. A level whose rising threshold is above the supply voltage of the application holds the device in reset.",
+        "sentences": []
+      },
+      {
+        "index": 44,
+        "custom_data": {},
+        "additional_context": null,
+        "raw_text": "5 CLOCKS",
+        "sentences": []
+      },
+      {
+        "index": 45,
+        "custom_data": {},
+        "additional_context": null,
+        "raw_text": "5.1 Clock sources: a high-speed external crystal oscillator (HSE) of 4 to 48 MHz, or an external clock of up to 50 MHz in bypass mode; a 64 MHz internal RC oscillator (HSI), trimmed to ±1 % at Ta = 25 °C and within ±3.5 % from −40 to +125 °C; a 4 MHz low-power internal RC oscillator (CSI); and a 32.768 kHz low-speed external crystal oscillator (LSE) for the real-time clock.",
+        "sentences": []
+      },
+      {
+        "index": 46,
+        "custom_data": {},
+        "additional_context": null,
+        "raw_text": "5.2 Three phase-locked loops, PLL1, PLL2 and PLL3, take their reference from HSI, CSI or HSE through a pre-divider DIVMx of 1 to 63. Each PLL has a voltage-controlled oscillator (VCO) and three output dividers, P, Q and R, each of 1 to 128. SYSCLK is taken from the P output of PLL1, from HSI, from CSI or from HSE. The P divider of PLL1 accepts only even values; the P dividers of PLL2 and PLL3 accept any value.",
+        "sentences": []
+      },
+      {
+        "index": 47,
+        "custom_data": {},
+        "additional_context": null,
+        "raw_text": "5.3 The PLL input frequency fREF is the reference frequency divided by DIVMx. The VCO frequency fVCO is fREF multiplied by Nx, an integer of 4 to 512, and each output frequency is fVCO divided by its output divider.",
+        "sentences": []
+      },
+      {
+        "index": 48,
+        "custom_data": {},
+        "additional_context": null,
+        "raw_text": "Table 10. PLL characteristics",
+        "sentences": []
+      },
+      {
+        "index": 49,
+        "custom_data": {},
+        "additional_context": null,
+        "raw_text": "| Parameter | Condition | Min | Max | Unit |",
+        "sentences": []
+      },
+      {
+        "index": 50,
+        "custom_data": {},
+        "additional_context": null,
+        "raw_text": "| fREF, PLL input frequency | PLLxRGE = 00 | 1 | 2 | MHz |",
+        "sentences": []
+      },
+      {
+        "index": 51,
+        "custom_data": {},
+        "additional_context": null,
+        "raw_text": "| fREF, PLL input frequency | PLLxRGE = 01 | 2 | 4 | MHz |",
+        "sentences": []
+      },
+      {
+        "index": 52,
+        "custom_data": {},
+        "additional_context": null,
+        "raw_text": "| fREF, PLL input frequency | PLLxRGE = 10 | 4 | 8 | MHz |",
+        "sentences": []
+      },
+      {
+        "index": 53,
+        "custom_data": {},
+        "additional_context": null,
+        "raw_text": "| fREF, PLL input frequency | PLLxRGE = 11 | 8 | 16 | MHz |",
+        "sentences": []
+      },
+      {
+        "index": 54,
+        "custom_data": {},
+        "additional_context": null,
+        "raw_text": "| fVCO, wide VCO range | PLLxVCOSEL = 0, fREF of 2 MHz or more | 192 | 960 | MHz |",
+        "sentences": []
+      },
+      {
+        "index": 55,
+        "custom_data": {},
+        "additional_context": null,
+        "raw_text": "| fVCO, medium VCO range | PLLxVCOSEL = 1 | 150 | 420 | MHz |",
+        "sentences": []
+      },
+      {
+        "index": 56,
+        "custom_data": {},
+        "additional_context": null,
+        "raw_text": "| tLOCK, lock time | Integer mode | — | 50 | µs |",
+        "sentences": []
+      },
+      {
+        "index": 57,
+        "custom_data": {},
+        "additional_context": null,
+        "raw_text": "5.4 PLLxRGE in RCC_PLLCFGR must select the range that contains fREF. A setting whose range does not contain fREF is outside the specification, even if the PLL locks. Where fREF is exactly at the boundary of two ranges, either range may be selected.",
+        "sentences": []
+      },
+      {
+        "index": 58,
+        "custom_data": {},
+        "additional_context": null,
+        "raw_text": "5.5 RCC_PLLCKSELR holds the source selection and DIVM1 to DIVM3; RCC_PLLCFGR holds PLLxRGE, PLLxVCOSEL and the output enables; RCC_PLL1DIVR holds N1, P1, Q1 and R1. A PLL must be disabled before any of its fields is changed.",
+        "sentences": []
+      },
+      {
+        "index": 59,
+        "custom_data": {},
+        "additional_context": null,
+        "raw_text": "6 EMBEDDED FLASH MEMORY",
+        "sentences": []
+      },
+      {
+        "index": 60,
+        "custom_data": {},
+        "additional_context": null,
+        "raw_text": "6.1 The number of wait states of a flash read, LATENCY in FLASH_ACR, must be set according to the HCLK frequency and the voltage-scaling range (Table 14). Fewer wait states than required cause read errors that the ECC does not correct; more wait states than required are permitted, at a cost in performance.",
+        "sentences": []
+      },
+      {
+        "index": 61,
+        "custom_data": {},
+        "additional_context": null,
+        "raw_text": "Table 14. Flash wait states",
+        "sentences": []
+      },
+      {
+        "index": 62,
+        "custom_data": {},
+        "additional_context": null,
+        "raw_text": "| LATENCY (wait states) | HCLK max in VOS0 (MHz) | HCLK max in VOS1 (MHz) | HCLK max in VOS2 (MHz) | HCLK max in VOS3 (MHz) |",
+        "sentences": []
+      },
+      {
+        "index": 63,
+        "custom_data": {},
+        "additional_context": null,
+        "raw_text": "| 0 | 70 | 70 | 55 | 45 |",
+        "sentences": []
+      },
+      {
+        "index": 64,
+        "custom_data": {},
+        "additional_context": null,
+        "raw_text": "| 1 | 140 | 140 | 110 | 85 |",
+        "sentences": []
+      },
+      {
+        "index": 65,
+        "custom_data": {},
+        "additional_context": null,
+        "raw_text": "| 2 | 210 | 185 | 150 | — |",
+        "sentences": []
+      },
+      {
+        "index": 66,
+        "custom_data": {},
+        "additional_context": null,
+        "raw_text": "| 3 | 225 | 200 | — | — |",
+        "sentences": []
+      },
+      {
+        "index": 67,
+        "custom_data": {},
+        "additional_context": null,
+        "raw_text": "| 4 | 240 | — | — | — |",
+        "sentences": []
+      },
+      {
+        "index": 68,
+        "custom_data": {},
+        "additional_context": null,
+        "raw_text": "6.2 A flash sector is 8 KB. The flash is programmed by 256-bit flash words, each with its ECC, and erased by sector or by bank.",
+        "sentences": []
+      },
+      {
+        "index": 69,
+        "custom_data": {},
+        "additional_context": null,
+        "raw_text": "Table 15. Flash endurance and data retention",
+        "sentences": []
+      },
+      {
+        "index": 70,
+        "custom_data": {},
+        "additional_context": null,
+        "raw_text": "| Parameter | Condition | Min | Unit |",
+        "sentences": []
+      },
+      {
+        "index": 71,
+        "custom_data": {},
+        "additional_context": null,
+        "raw_text": "| NEND, endurance | Per sector, Tj from −40 to +125 °C | 10 000 | cycles |",
+        "sentences": []
+      },
+      {
+        "index": 72,
+        "custom_data": {},
+        "additional_context": null,
+        "raw_text": "| tRET, data retention | After 1 000 cycles, Ta = 85 °C | 30 | years |",
+        "sentences": []
+      },
+      {
+        "index": 73,
+        "custom_data": {},
+        "additional_context": null,
+        "raw_text": "| tRET, data retention | After 1 000 cycles, Ta = 105 °C | 20 | years |",
+        "sentences": []
+      },
+      {
+        "index": 74,
+        "custom_data": {},
+        "additional_context": null,
+        "raw_text": "| tRET, data retention | After 10 000 cycles, Ta = 55 °C | 20 | years |",
+        "sentences": []
+      },
+      {
+        "index": 75,
+        "custom_data": {},
+        "additional_context": null,
+        "raw_text": "| tRET, data retention | After 10 000 cycles, Ta = 85 °C | 10 | years |",
+        "sentences": []
+      },
+      {
+        "index": 76,
+        "custom_data": {},
+        "additional_context": null,
+        "raw_text": "| tRET, data retention | After 10 000 cycles, Ta = 105 °C | 5 | years |",
+        "sentences": []
+      },
+      {
+        "index": 77,
+        "custom_data": {},
+        "additional_context": null,
+        "raw_text": "7 ANALOG-TO-DIGITAL CONVERTERS",
+        "sentences": []
+      },
+      {
+        "index": 78,
+        "custom_data": {},
+        "additional_context": null,
+        "raw_text": "7.1 The ADC kernel clock fADC is taken from the P output of PLL2 or from HCLK divided by 4. fADC must be from 1.5 to 50 MHz when VDDA is 2.4 V or more, and from 1.5 to 36 MHz when VDDA is below 2.4 V.",
+        "sentences": []
+      },
+      {
+        "index": 79,
+        "custom_data": {},
+        "additional_context": null,
+        "raw_text": "7.2 A conversion takes the sampling time tSMPL plus 12.5 cycles of fADC, so that the sampling rate is fS = fADC / (tSMPL + 12.5). tSMPL is programmable to 1.5, 2.5, 8.5, 16.5, 32.5, 64.5, 387.5 or 810.5 cycles.",
+        "sentences": []
+      },
+      {
+        "index": 80,
+        "custom_data": {},
+        "additional_context": null,
+        "raw_text": "Table 17. ADC accuracy",
+        "sentences": []
+      },
+      {
+        "index": 81,
+        "custom_data": {},
+        "additional_context": null,
+        "raw_text": "| Parameter | Condition | Typ | Max | Unit |",
+        "sentences": []
+      },
+      {
+        "index": 82,
+        "custom_data": {},
+        "additional_context": null,
+        "raw_text": "| INL, integral non-linearity | VDDA from 2.4 to 3.6 V | ±1.5 | ±3 | LSB |",
+        "sentences": []
+      },
+      {
+        "index": 83,
+        "custom_data": {},
+        "additional_context": null,
+        "raw_text": "| INL, integral non-linearity | VDDA from 1.71 to 2.4 V | ±2 | ±4 | LSB |",
+        "sentences": []
+      },
+      {
+        "index": 84,
+        "custom_data": {},
+        "additional_context": null,
+        "raw_text": "| DNL, differential non-linearity | VDDA from 1.71 to 3.6 V | ±0.7 | ±1 | LSB |",
+        "sentences": []
+      },
+      {
+        "index": 85,
+        "custom_data": {},
+        "additional_context": null,
+        "raw_text": "| ENOB, effective number of bits | fS = 3.57 Msps, VDDA = 3.3 V, single-ended input | 10.6 | — | bits |",
+        "sentences": []
+      },
+      {
+        "index": 86,
+        "custom_data": {},
+        "additional_context": null,
+        "raw_text": "| EO, offset error | After calibration | ±1 | ±2.5 | LSB |",
+        "sentences": []
+      },
+      {
+        "index": 87,
+        "custom_data": {},
+        "additional_context": null,
+        "raw_text": "7.3 The offset calibration (ADCALLIN = 0) and the linearity calibration (ADCALLIN = 1) must be run after each power-up and after each change of VDDA by more than 10 %. The accuracy of Table 17 applies only after both calibrations.",
+        "sentences": []
+      },
+      {
+        "index": 88,
+        "custom_data": {},
+        "additional_context": null,
+        "raw_text": "7.4 The 12-bit DAC has one output buffer per channel, a settling time of 1.7 µs to ±1 LSB and an output range from 0.2 V to VDDA − 0.2 V with the buffer enabled.",
+        "sentences": []
+      },
+      {
+        "index": 89,
+        "custom_data": {},
+        "additional_context": null,
+        "raw_text": "8 THERMAL CHARACTERISTICS",
+        "sentences": []
+      },
+      {
+        "index": 90,
+        "custom_data": {},
+        "additional_context": null,
+        "raw_text": "8.1 The junction temperature is Tj = Ta + θJA × PD. The total power dissipation PD is PINT + PIO, where PINT = VDD × IDD is the internal power, with the highest VDD of the application, and PIO is the power dissipated in the I/O pins, which depends on the application and is computed for it.",
+        "sentences": []
+      },
+      {
+        "index": 91,
+        "custom_data": {},
+        "additional_context": null,
+        "raw_text": "Table 19. Thermal resistance",
+        "sentences": []
+      },
+      {
+        "index": 92,
+        "custom_data": {},
+        "additional_context": null,
+        "raw_text": "| Package | θJA on a 1s board (°C/W) | θJA on a 2s2p board (°C/W) | θJC (°C/W) | θJB (°C/W) |",
+        "sentences": []
+      },
+      {
+        "index": 93,
+        "custom_data": {},
+        "additional_context": null,
+        "raw_text": "| QFN-48, exposed pad soldered | 52 | 31 | 11 | 16 |",
+        "sentences": []
+      },
+      {
+        "index": 94,
+        "custom_data": {},
+        "additional_context": null,
+        "raw_text": "| LQFP-64 | 63 | 44 | 14 | 26 |",
+        "sentences": []
+      },
+      {
+        "index": 95,
+        "custom_data": {},
+        "additional_context": null,
+        "raw_text": "8.2 The θJA values are for natural convection on JEDEC JESD51-3 (1s) and JESD51-7 (2s2p) test boards. Use the 1s value for a board without internal copper planes and the 2s2p value for a board with at least two internal planes. For a QFN-48 whose exposed pad is not soldered, add 14 °C/W to θJA.",
+        "sentences": []
+      },
+      {
+        "index": 96,
+        "custom_data": {},
+        "additional_context": null,
+        "raw_text": "8.3 The junction temperature is calculated with the maximum IDD of Table 18 and the adders of Table 20; the typical values are for estimates of battery life only.",
+        "sentences": []
+      },
+      {
+        "index": 97,
+        "custom_data": {},
+        "additional_context": null,
+        "raw_text": "8.4 Tj must not exceed the Tj max of the temperature grade of the device: 105 °C for grade I, 125 °C for grade X and 140 °C for grade A.",
+        "sentences": []
+      },
+      {
+        "index": 98,
+        "custom_data": {},
+        "additional_context": null,
+        "raw_text": "9 CURRENT CONSUMPTION",
+        "sentences": []
+      },
+      {
+        "index": 99,
+        "custom_data": {},
+        "additional_context": null,
+        "raw_text": "9.1 Table 18 gives IDD in Run mode, with code executed from flash with the caches enabled, all peripheral clocks disabled, HCLK = SYSCLK / 2 and the PLL running.",
+        "sentences": []
+      },
+      {
+        "index": 100,
+        "custom_data": {},
+        "additional_context": null,
+        "raw_text": "Table 18. Run-mode supply current",
+        "sentences": []
+      },
+      {
+        "index": 101,
+        "custom_data": {},
+        "additional_context": null,
+        "raw_text": "| Range | fSYSCLK (MHz) | IDD typ at Ta = 25 °C (mA) | IDD max at Tj = 125 °C (mA) |",
+        "sentences": []
+      },
+      {
+        "index": 102,
+        "custom_data": {},
+        "additional_context": null,
+        "raw_text": "| VOS0 | 480 | 121 | 172 |",
+        "sentences": []
+      },
+      {
+        "index": 103,
+        "custom_data": {},
+        "additional_context": null,
+        "raw_text": "| VOS0 | 432 | 109 | 156 |",
+        "sentences": []
+      },
+      {
+        "index": 104,
+        "custom_data": {},
+        "additional_context": null,
+        "raw_text": "| VOS1 | 400 | 94 | 134 |",
+        "sentences": []
+      },
+      {
+        "index": 105,
+        "custom_data": {},
+        "additional_context": null,
+        "raw_text": "| VOS1 | 350 | 83 | 119 |",
+        "sentences": []
+      },
+      {
+        "index": 106,
+        "custom_data": {},
+        "additional_context": null,
+        "raw_text": "| VOS1 | 300 | 72 | 104 |",
+        "sentences": []
+      },
+      {
+        "index": 107,
+        "custom_data": {},
+        "additional_context": null,
+        "raw_text": "| VOS2 | 280 | 61 | 88 |",
+        "sentences": []
+      },
+      {
+        "index": 108,
+        "custom_data": {},
+        "additional_context": null,
+        "raw_text": "| VOS2 | 200 | 45 | 66 |",
+        "sentences": []
+      },
+      {
+        "index": 109,
+        "custom_data": {},
+        "additional_context": null,
+        "raw_text": "| VOS3 | 170 | 33 | 49 |",
+        "sentences": []
+      },
+      {
+        "index": 110,
+        "custom_data": {},
+        "additional_context": null,
+        "raw_text": "Table 20. Peripheral current adders",
+        "sentences": []
+      },
+      {
+        "index": 111,
+        "custom_data": {},
+        "additional_context": null,
+        "raw_text": "| Peripheral | Condition | IDD adder max (mA) |",
+        "sentences": []
+      },
+      {
+        "index": 112,
+        "custom_data": {},
+        "additional_context": null,
+        "raw_text": "| ADC1 or ADC2 | Each ADC converting, fADC = 50 MHz | 4.6 |",
+        "sentences": []
+      },
+      {
+        "index": 113,
+        "custom_data": {},
+        "additional_context": null,
+        "raw_text": "| ADC1 or ADC2 | Each ADC converting, fADC = 36 MHz | 3.4 |",
+        "sentences": []
+      },
+      {
+        "index": 114,
+        "custom_data": {},
+        "additional_context": null,
+        "raw_text": "| FDCAN1 or FDCAN2 | Each controller, data phase up to 5 Mbit/s | 2.2 |",
+        "sentences": []
+      },
+      {
+        "index": 115,
+        "custom_data": {},
+        "additional_context": null,
+        "raw_text": "| USART1 to USART4 | Each USART | 0.6 |",
+        "sentences": []
+      },
+      {
+        "index": 116,
+        "custom_data": {},
+        "additional_context": null,
+        "raw_text": "| SPI1 to SPI3 | Each SPI | 0.9 |",
+        "sentences": []
+      },
+      {
+        "index": 117,
+        "custom_data": {},
+        "additional_context": null,
+        "raw_text": "| I2C1 or I2C2 | Each I2C | 0.4 |",
+        "sentences": []
+      },
+      {
+        "index": 118,
+        "custom_data": {},
+        "additional_context": null,
+        "raw_text": "| CORDIC | Continuous operation | 1.8 |",
+        "sentences": []
+      },
+      {
+        "index": 119,
+        "custom_data": {},
+        "additional_context": null,
+        "raw_text": "| TIM1 | PWM outputs active | 1.5 |",
+        "sentences": []
+      },
+      {
+        "index": 120,
+        "custom_data": {},
+        "additional_context": null,
+        "raw_text": "9.2 A peripheral whose kernel or bus clock is enabled counts as active, whether or not it carries traffic. The adders of the active peripherals are added to the value of Table 18.",
+        "sentences": []
+      },
+      {
+        "index": 121,
+        "custom_data": {},
+        "additional_context": null,
+        "raw_text": "Table 21. Low-power mode supply current",
+        "sentences": []
+      },
+      {
+        "index": 122,
+        "custom_data": {},
+        "additional_context": null,
+        "raw_text": "| Mode | Condition | IDD typ at Ta = 25 °C | IDD max at Tj = 125 °C |",
+        "sentences": []
+      },
+      {
+        "index": 123,
+        "custom_data": {},
+        "additional_context": null,
+        "raw_text": "| Sleep | VOS1, 400 MHz, peripheral clocks disabled | 38 mA | 61 mA |",
+        "sentences": []
+      },
+      {
+        "index": 124,
+        "custom_data": {},
+        "additional_context": null,
+        "raw_text": "| Stop | Flash in low-power mode, SRAM retained | 210 µA | 4.1 mA |",
+        "sentences": []
+      },
+      {
+        "index": 125,
+        "custom_data": {},
+        "additional_context": null,
+        "raw_text": "| Standby | Backup SRAM and RTC off | 2.8 µA | 46 µA |",
+        "sentences": []
+      },
+      {
+        "index": 126,
+        "custom_data": {},
+        "additional_context": null,
+        "raw_text": "| VBAT | RTC running from the LSE | 1.1 µA | 9 µA |",
+        "sentences": []
+      },
+      {
+        "index": 127,
+        "custom_data": {},
+        "additional_context": null,
+        "raw_text": "9.3 The wake-up time from Stop to the first instruction is 8 µs with the flash in low-power mode and 2.5 µs with the flash kept ready.",
+        "sentences": []
+      },
+      {
+        "index": 128,
+        "custom_data": {},
+        "additional_context": null,
+        "raw_text": "10 COMMUNICATION INTERFACES",
+        "sentences": []
+      },
+      {
+        "index": 129,
+        "custom_data": {},
+        "additional_context": null,
+        "raw_text": "10.1 Each USART supports oversampling by 16 (OVER8 = 0) and by 8 (OVER8 = 1). The baud rate is fCK / USARTDIV with oversampling by 16 and 2 × fCK / USARTDIV with oversampling by 8; it is at most fCK / 16 or fCK / 8 respectively, and never more than 12.5 Mbit/s.",
+        "sentences": []
+      },
+      {
+        "index": 130,
+        "custom_data": {},
+        "additional_context": null,
+        "raw_text": "10.2 The receiver timeout, enabled with RTOEN, sets RTOF when no new character is received for the number of bit periods programmed in USART_RTOR.RTO after the last stop bit.",
+        "sentences": []
+      },
+      {
+        "index": 131,
+        "custom_data": {},
+        "additional_context": null,
+        "raw_text": "10.3 The SPI interfaces run at up to 75 MHz as masters and 50 MHz as slaves. In TI mode the frame format follows the TI synchronous serial protocol, and the CRC is calculated over each frame.",
+        "sentences": []
+      },
+      {
+        "index": 132,
+        "custom_data": {},
+        "additional_context": null,
+        "raw_text": "10.4 The I2C interfaces support standard mode, fast mode and fast-mode plus (up to 1 Mbit/s), with SMBus clock-low timeouts.",
+        "sentences": []
+      },
+      {
+        "index": 133,
+        "custom_data": {},
+        "additional_context": null,
+        "raw_text": "10.5 FDCAN1 and FDCAN2 support CAN FD data-phase bit rates of up to 8 Mbit/s. Above 1 Mbit/s, the transmitter delay compensation (TDC) must be enabled, with its offset TDCO programmed in FDCAN_TDCR.",
+        "sentences": []
+      },
+      {
+        "index": 134,
+        "custom_data": {},
+        "additional_context": null,
+        "raw_text": "11 GPIO CHARACTERISTICS",
+        "sentences": []
+      },
+      {
+        "index": 135,
+        "custom_data": {},
+        "additional_context": null,
+        "raw_text": "Table 23. I/O static characteristics",
+        "sentences": []
+      },
+      {
+        "index": 136,
+        "custom_data": {},
+        "additional_context": null,
+        "raw_text": "| Symbol | Parameter | Condition | Min | Max | Unit |",
+        "sentences": []
+      },
+      {
+        "index": 137,
+        "custom_data": {},
+        "additional_context": null,
+        "raw_text": "| VIL | Input low level | VDD from 1.71 to 3.6 V | — | 0.3 × VDD | V |",
+        "sentences": []
+      },
+      {
+        "index": 138,
+        "custom_data": {},
+        "additional_context": null,
+        "raw_text": "| VIH | Input high level | VDD from 1.71 to 3.6 V | 0.7 × VDD | — | V |",
+        "sentences": []
+      },
+      {
+        "index": 139,
+        "custom_data": {},
+        "additional_context": null,
+        "raw_text": "| VOL | Output low level | IIO = 8 mA, VDD of 2.7 V or more | — | 0.4 | V |",
+        "sentences": []
+      },
+      {
+        "index": 140,
+        "custom_data": {},
+        "additional_context": null,
+        "raw_text": "| VOH | Output high level | IIO = −8 mA, VDD of 2.7 V or more | VDD − 0.4 | — | V |",
+        "sentences": []
+      },
+      {
+        "index": 141,
+        "custom_data": {},
+        "additional_context": null,
+        "raw_text": "| IIO | Output current, any pin | — | −20 | +20 | mA |",
+        "sentences": []
+      },
+      {
+        "index": 142,
+        "custom_data": {},
+        "additional_context": null,
+        "raw_text": "11.1 The sum of the currents sourced by all I/O pins must not exceed 120 mA, and neither must the sum of the currents sunk.",
+        "sentences": []
+      },
+      {
+        "index": 143,
+        "custom_data": {},
+        "additional_context": null,
+        "raw_text": "Table 24. Pin description (extract, port A)",
+        "sentences": []
+      },
+      {
+        "index": 144,
+        "custom_data": {},
+        "additional_context": null,
+        "raw_text": "| Pin name | QFN-48 pin | LQFP-64 pin | I/O structure | Main alternate functions |",
+        "sentences": []
+      },
+      {
+        "index": 145,
+        "custom_data": {},
+        "additional_context": null,
+        "raw_text": "| PA0 | 10 | 14 | FT | ADC1_IN0, TIM2_CH1, USART2_CTS |",
+        "sentences": []
+      },
+      {
+        "index": 146,
+        "custom_data": {},
+        "additional_context": null,
+        "raw_text": "| PA1 | 11 | 15 | FT | ADC1_IN1, TIM2_CH2, USART2_RTS |",
+        "sentences": []
+      },
+      {
+        "index": 147,
+        "custom_data": {},
+        "additional_context": null,
+        "raw_text": "| PA2 | 12 | 16 | FT | ADC1_IN2, USART2_TX, TIM15_CH1 |",
+        "sentences": []
+      },
+      {
+        "index": 148,
+        "custom_data": {},
+        "additional_context": null,
+        "raw_text": "| PA3 | 13 | 17 | FT | ADC1_IN3, USART2_RX, TIM15_CH2 |",
+        "sentences": []
+      },
+      {
+        "index": 149,
+        "custom_data": {},
+        "additional_context": null,
+        "raw_text": "| PA4 | 14 | 20 | TT | DAC1_OUT1, SPI1_NSS, ADC2_IN4 |",
+        "sentences": []
+      },
+      {
+        "index": 150,
+        "custom_data": {},
+        "additional_context": null,
+        "raw_text": "| PA5 | 15 | 21 | TT | DAC1_OUT2, SPI1_SCK, ADC2_IN5 |",
+        "sentences": []
+      },
+      {
+        "index": 151,
+        "custom_data": {},
+        "additional_context": null,
+        "raw_text": "| PA6 | 16 | 22 | FT | SPI1_MISO, TIM1_BKIN, ADC2_IN6 |",
+        "sentences": []
+      },
+      {
+        "index": 152,
+        "custom_data": {},
+        "additional_context": null,
+        "raw_text": "| PA7 | 17 | 23 | FT | SPI1_MOSI, TIM1_CH1N, ADC2_IN7 |",
+        "sentences": []
+      },
+      {
+        "index": 153,
+        "custom_data": {},
+        "additional_context": null,
+        "raw_text": "| PA8 | 29 | 41 | FT | TIM1_CH1, MCO1, I2C1_SCL |",
+        "sentences": []
+      },
+      {
+        "index": 154,
+        "custom_data": {},
+        "additional_context": null,
+        "raw_text": "| PA9 | 30 | 42 | FT | TIM1_CH2, USART1_TX, FDCAN1_RX |",
+        "sentences": []
+      },
+      {
+        "index": 155,
+        "custom_data": {},
+        "additional_context": null,
+        "raw_text": "| PA10 | 31 | 43 | FT | TIM1_CH3, USART1_RX, FDCAN1_TX |",
+        "sentences": []
+      },
+      {
+        "index": 156,
+        "custom_data": {},
+        "additional_context": null,
+        "raw_text": "| PA11 | 32 | 44 | FT | TIM1_CH4, FDCAN2_RX, I2C1_SDA |",
+        "sentences": []
+      },
+      {
+        "index": 157,
+        "custom_data": {},
+        "additional_context": null,
+        "raw_text": "11.2 FT denotes a five-volt-tolerant I/O and TT a three-volt-tolerant I/O with an analog switch. An FT pin loses its five-volt tolerance while its analog function is selected.",
+        "sentences": []
+      },
+      {
+        "index": 158,
+        "custom_data": {},
+        "additional_context": null,
+        "raw_text": "12 DIRECT MEMORY ACCESS AND INTERRUPTS",
+        "sentences": []
+      },
+      {
+        "index": 159,
+        "custom_data": {},
+        "additional_context": null,
+        "raw_text": "12.1 Two general-purpose DMA controllers, GPDMA1 and GPDMA2, of eight channels each serve the peripherals, through a request multiplexer (DMAMUX) that routes any of 115 request lines to any channel. A master DMA (MDMA) of 16 channels moves data between the AXI memories with linked-list transfers.",
+        "sentences": []
+      },
+      {
+        "index": 160,
+        "custom_data": {},
+        "additional_context": null,
+        "raw_text": "12.2 The platform-level interrupt controller (PLIC) handles 150 external interrupt sources with 16 priority levels, and the core-local interruptor (CLINT) provides the machine timer and the software interrupts. The interrupt latency is 12 cycles of SYSCLK from the request to the first instruction of the handler, with the caches enabled.",
+        "sentences": []
+      },
+      {
+        "index": 161,
+        "custom_data": {},
+        "additional_context": null,
+        "raw_text": "13 TIMERS AND WATCHDOGS",
+        "sentences": []
+      },
+      {
+        "index": 162,
+        "custom_data": {},
+        "additional_context": null,
+        "raw_text": "13.1 TIM1 is a 16-bit advanced-control timer with six complementary PWM outputs, a programmable dead time of up to 8 µs, two break inputs and an encoder interface. Its kernel clock is twice PCLK2 when PPRE2 is not 1.",
+        "sentences": []
+      },
+      {
+        "index": 163,
+        "custom_data": {},
+        "additional_context": null,
+        "raw_text": "13.2 Four 32-bit general-purpose timers (TIM2 to TIM5) and four 16-bit timers (TIM12 to TIM15) provide input capture, output compare and one-pulse modes. Two basic timers, TIM6 and TIM7, trigger the DAC.",
+        "sentences": []
+      },
+      {
+        "index": 164,
+        "custom_data": {},
+        "additional_context": null,
+        "raw_text": "13.3 The independent watchdog (IWDG) runs from a 32 kHz internal RC oscillator and cannot be stopped once started; the window watchdog (WWDG) runs from PCLK1.",
+        "sentences": []
+      },
+      {
+        "index": 165,
+        "custom_data": {},
+        "additional_context": null,
+        "raw_text": "14 REAL-TIME CLOCK AND BACKUP DOMAIN",
+        "sentences": []
+      },
+      {
+        "index": 166,
+        "custom_data": {},
+        "additional_context": null,
+        "raw_text": "14.1 The RTC keeps calendar time with sub-second resolution from the LSE, with two alarms, a periodic wake-up timer and 32 backup registers. The backup domain is supplied from VBAT when VDD is absent.",
+        "sentences": []
+      },
+      {
+        "index": 167,
+        "custom_data": {},
+        "additional_context": null,
+        "raw_text": "14.2 VBAT operates from 1.2 V to 3.6 V. The 4 KB backup SRAM is retained in VBAT mode while its regulator is enabled.",
+        "sentences": []
+      },
+      {
+        "index": 168,
+        "custom_data": {},
+        "additional_context": null,
+        "raw_text": "15 DEBUG AND SECURITY",
+        "sentences": []
+      },
+      {
+        "index": 169,
+        "custom_data": {},
+        "additional_context": null,
+        "raw_text": "15.1 The debug port provides a two-wire serial debug interface and a four-wire JTAG interface, with eight hardware breakpoints and four watchpoints. Trace data are output through a 4-bit trace port or into a 4 KB embedded trace buffer.",
+        "sentences": []
+      },
+      {
+        "index": 170,
+        "custom_data": {},
+        "additional_context": null,
+        "raw_text": "15.2 Readout protection has three levels: at level 0 there is no protection; at level 1 the flash cannot be read through the debug port; at level 2 the debug port is disabled permanently. A regression from level 1 to level 0 erases the user flash.",
+        "sentences": []
+      },
+      {
+        "index": 171,
+        "custom_data": {},
+        "additional_context": null,
+        "raw_text": "15.3 Secure boot verifies the ECDSA P-256 signature of the first-stage firmware before executing it; the hash of the public key is programmed in one-time-programmable (OTP) words.",
+        "sentences": []
+      },
+      {
+        "index": 172,
+        "custom_data": {},
+        "additional_context": null,
+        "raw_text": "16 PACKAGE INFORMATION",
+        "sentences": []
+      },
+      {
+        "index": 173,
+        "custom_data": {},
+        "additional_context": null,
+        "raw_text": "16.1 QFN-48: body of 7.00 × 7.00 mm, height of 0.85 mm max, pitch of 0.50 mm and exposed pad of 5.60 × 5.60 mm. LQFP-64: body of 10.00 × 10.00 mm, height of 1.60 mm max and pitch of 0.50 mm.",
+        "sentences": []
+      },
+      {
+        "index": 174,
+        "custom_data": {},
+        "additional_context": null,
+        "raw_text": "16.2 Both packages are rated at moisture sensitivity level 3 (MSL 3), with a peak reflow temperature of 260 °C, per IPC/JEDEC J-STD-020.",
+        "sentences": []
+      },
+      {
+        "index": 175,
+        "custom_data": {},
+        "additional_context": null,
+        "raw_text": "16.3 The exposed pad of the QFN-48 is connected to VSS and is soldered to a ground area of the board for electrical and thermal performance.",
+        "sentences": []
+      },
+      {
+        "index": 176,
+        "custom_data": {},
+        "additional_context": null,
+        "raw_text": "17 REVISION HISTORY OF THE DATASHEET",
+        "sentences": []
+      },
+      {
+        "index": 177,
+        "custom_data": {},
+        "additional_context": null,
+        "raw_text": "| Date | Revision | Changes |",
+        "sentences": []
+      },
+      {
+        "index": 178,
+        "custom_data": {},
+        "additional_context": null,
+        "raw_text": "| 2 October 2025 | 4 | Added temperature grade A. |",
+        "sentences": []
+      },
+      {
+        "index": 179,
+        "custom_data": {},
+        "additional_context": null,
+        "raw_text": "| 19 December 2025 | 5 | Added VOS0 to Table 14 and θJB to Table 19. |",
+        "sentences": []
+      },
+      {
+        "index": 180,
+        "custom_data": {},
+        "additional_context": null,
+        "raw_text": "| 14 March 2026 | 6 | Added the derating of VOS0 above Ta = 85 °C to Table 6; corrected the BOR level 3 thresholds of Table 8. |",
+        "sentences": []
+      },
+      {
+        "index": 181,
+        "custom_data": {},
+        "additional_context": null,
+        "raw_text": "PART II - ERRATA SHEET ES0457 REVISION 3",
+        "sentences": []
+      },
+      {
+        "index": 182,
+        "custom_data": {},
+        "additional_context": null,
+        "raw_text": "II.1 This errata sheet applies to the TSV7H devices of silicon revisions A, B and C. It describes the device limitations known for each revision, and the corrections to datasheet DS-TSV7H revision 6 (documentation errata).",
+        "sentences": []
+      },
+      {
+        "index": 183,
+        "custom_data": {},
+        "additional_context": null,
+        "raw_text": "Table E1. Device identification",
+        "sentences": []
+      },
+      {
+        "index": 184,
+        "custom_data": {},
+        "additional_context": null,
+        "raw_text": "| Silicon revision | REV_ID in DBGMCU_IDC[31:16] | Revision code on the marking | Status |",
+        "sentences": []
+      },
+      {
+        "index": 185,
+        "custom_data": {},
+        "additional_context": null,
+        "raw_text": "| A | 0x1000 | A | Engineering samples, not for production |",
+        "sentences": []
+      },
+      {
+        "index": 186,
+        "custom_data": {},
+        "additional_context": null,
+        "raw_text": "| B | 0x1001 | B | Production, end of life under PCN-2611 |",
+        "sentences": []
+      },
+      {
+        "index": 187,
+        "custom_data": {},
+        "additional_context": null,
+        "raw_text": "| C | 0x1003 | Y | Production, from date code 2634 |",
+        "sentences": []
+      },
+      {
+        "index": 188,
+        "custom_data": {},
+        "additional_context": null,
+        "raw_text": "II.2 The revision code \"C\" is not used on markings, to avoid confusion with the ceramic-package prefix of the test parts: a marking that shows \"C\" belongs to a test part, not to a production device.",
+        "sentences": []
+      },
+      {
+        "index": 189,
+        "custom_data": {},
+        "additional_context": null,
+        "raw_text": "II.3 Each device limitation has an impact class: 1, no functional impact; 2, a function deviates from the specification and a simple workaround exists; 3, a function is degraded and the workaround has an impact on the application; 4, a function is unusable in some conditions until a workaround with system-level impact is applied; 5, no workaround exists.",
+        "sentences": []
+      },
+      {
+        "index": 190,
+        "custom_data": {},
+        "additional_context": null,
+        "raw_text": "Table E2. Summary of device limitations",
+        "sentences": []
+      },
+      {
+        "index": 191,
+        "custom_data": {},
+        "additional_context": null,
+        "raw_text": "| ID | Function | Limitation | Impact class | Revision A | Revision B | Revision C |",
+        "sentences": []
+      },
+      {
+        "index": 192,
+        "custom_data": {},
+        "additional_context": null,
+        "raw_text": "| ES-01 | Debug | A breakpoint is lost when the core enters WFI during a halt request | 1 | Present | Fixed | Fixed |",
+        "sentences": []
+      },
+      {
+        "index": 193,
+        "custom_data": {},
+        "additional_context": null,
+        "raw_text": "| ES-02 | PLL | PLL1 can lose lock below Tj = 0 °C with fVCO above 836 MHz | 3 | Present | Present | Fixed |",
+        "sentences": []
+      },
+      {
+        "index": 194,
+        "custom_data": {},
+        "additional_context": null,
+        "raw_text": "| ES-03 | Flash | SYSCLK limited to 360 MHz in VOS1 above Ta = 85 °C | 3 | Present | Present | Fixed |",
+        "sentences": []
+      },
+      {
+        "index": 195,
+        "custom_data": {},
+        "additional_context": null,
+        "raw_text": "| ES-04 | ADC | INL up to ±6 LSB above 2.0 Msps with VDDA below 2.0 V | 3 | Present | Present | Present |",
+        "sentences": []
+      },
+      {
+        "index": 196,
+        "custom_data": {},
+        "additional_context": null,
+        "raw_text": "| ES-05 | USART | Receiver timeout flag set one bit period early with OVER8 = 1 | 2 | Present | Present | Present |",
+        "sentences": []
+      },
+      {
+        "index": 197,
+        "custom_data": {},
+        "additional_context": null,
+        "raw_text": "| ES-06 | I2C | SMBus clock-low timeout not detected in fast-mode plus | 2 | Present | Fixed | Fixed |",
+        "sentences": []
+      },
+      {
+        "index": 198,
+        "custom_data": {},
+        "additional_context": null,
+        "raw_text": "| ES-07 | SPI | CRC error flag not cleared at the end of a TI-mode frame | 2 | Present | Present | Fixed |",
+        "sentences": []
+      },
+      {
+        "index": 199,
+        "custom_data": {},
+        "additional_context": null,
+        "raw_text": "| ES-08 | FDCAN | Transmitter delay compensation offset cleared by the bus-off recovery | 4 | Not present | Not present | Present |",
+        "sentences": []
+      },
+      {
+        "index": 200,
+        "custom_data": {},
+        "additional_context": null,
+        "raw_text": "| ES-09 | Power | BOR level 3 falling threshold below the specification after operation at Tj above 125 °C | 3 | Not present | Present | Present |",
+        "sentences": []
+      },
+      {
+        "index": 201,
+        "custom_data": {},
+        "additional_context": null,
+        "raw_text": "ES-01 Debug: on revision A, a breakpoint that is set while a halt request is pending is lost if the core executes WFI before the halt takes effect. Workaround: set breakpoints while the core is halted. Fixed in revision B.",
+        "sentences": []
+      },
+      {
+        "index": 202,
+        "custom_data": {},
+        "additional_context": null,
+        "raw_text": "ES-02 PLL: on revisions A and B, PLL1 can lose lock when Tj is below 0 °C and fVCO of PLL1 is above 836 MHz; SYSCLK then switches to HSI, and no clock-security interrupt is raised. Conditions: a PLL1 configuration with fVCO above 836 MHz, in an application whose junction temperature can fall below 0 °C. Workaround: keep fVCO of PLL1 at or below 836 MHz. PLL2 and PLL3 are not affected. Fixed in revision C.",
+        "sentences": []
+      },
+      {
+        "index": 203,
+        "custom_data": {},
+        "additional_context": null,
+        "raw_text": "ES-03 Flash: on revisions A and B, the read margin of the flash is insufficient in VOS1 when SYSCLK is above 360 MHz and Ta is above 85 °C. Workaround: limit SYSCLK to 360 MHz in VOS1 when Ta can exceed 85 °C, or use VOS0 where Table 6 permits it. Fixed in revision C, for which Table 6 applies without change.",
+        "sentences": []
+      },
+      {
+        "index": 204,
+        "custom_data": {},
+        "additional_context": null,
+        "raw_text": "ES-04 ADC: the INL of ADC1 and ADC2 can reach ±6 LSB when the sampling rate fS is above 2.0 Msps and VDDA is below 2.0 V. Conditions: both, on any channel; the DNL is not affected. Workaround: limit fS to 2.0 Msps while VDDA is below 2.0 V, or supply VDDA at 2.0 V or more. With the workaround, the INL of Table 17 applies; without it, the maximum INL is ±6 LSB. Present in all revisions.",
+        "sentences": []
+      },
+      {
+        "index": 205,
+        "custom_data": {},
+        "additional_context": null,
+        "raw_text": "ES-05 USART: with OVER8 = 1 and the receiver timeout enabled (RTOEN = 1), RTOF is set one bit period before the programmed timeout. Workaround: program USART_RTOR.RTO with the wanted value plus one. With OVER8 = 0 the timeout is correct. Present in all revisions.",
+        "sentences": []
+      },
+      {
+        "index": 206,
+        "custom_data": {},
+        "additional_context": null,
+        "raw_text": "ES-06 I2C: on revision A, the SMBus clock-low timeout is not detected in fast-mode plus. Workaround: use fast mode for SMBus traffic. Fixed in revision B.",
+        "sentences": []
+      },
+      {
+        "index": 207,
+        "custom_data": {},
+        "additional_context": null,
+        "raw_text": "ES-07 SPI: on revisions A and B, the CRCERR flag is not cleared at the end of a TI-mode frame and reports a CRC error for the next frame. Workaround: clear CRCERR by software after each TI-mode frame, before the next frame starts. Fixed in revision C.",
+        "sentences": []
+      },
+      {
+        "index": 208,
+        "custom_data": {},
+        "additional_context": null,
+        "raw_text": "ES-08 FDCAN: on revision C, the bus-off recovery sequence clears the transmitter delay compensation offset TDCO in FDCAN_TDCR, so that transmissions with a data phase above 1 Mbit/s then fail with bit errors. Conditions: TDC enabled, and a bus-off recovery, automatic or by software. Workaround: write FDCAN_TDCR again after each bus-off recovery, before INIT is cleared. Field reports of July 2026 showed that the failure stops all CAN FD traffic of the node until the workaround runs; this revision of the errata sheet therefore raises the impact class of ES-08 from 2 to 4.",
+        "sentences": []
+      },
+      {
+        "index": 209,
+        "custom_data": {},
+        "additional_context": null,
+        "raw_text": "ES-09 Power: on revisions B and C, after a cumulative 1 000 hours of operation at a Tj above 125 °C, the falling threshold of BOR level 3 can be up to 90 mV below the minimum of Table 8. Conditions: BOR level 3 selected, and operation at a Tj above 125 °C, which only grade A devices permit. Workaround: select BOR level 2 and supervise VDD externally. Levels 1 and 2 are not affected. Earlier documents listed ES-09 as fixed in revision C; tests of production lots of revision C showed the drift as well.",
+        "sentences": []
+      },
+      {
+        "index": 210,
+        "custom_data": {},
+        "additional_context": null,
+        "raw_text": "DC-1: Section 2.2 of the datasheet: on the QFN-48 package, the HBM rating of pins PB12 to PB15 is 1000 V (class 1C), not 2000 V. All other pins, and all the pins of the LQFP-64 package, are rated 2000 V.",
+        "sentences": []
+      },
+      {
+        "index": 211,
+        "custom_data": {},
+        "additional_context": null,
+        "raw_text": "DC-2: Table 14 of the datasheet: in VOS1, the HCLK maximum for 2 wait states is 165 MHz, not 185 MHz. The other entries of Table 14 are correct.",
+        "sentences": []
+      },
+      {
+        "index": 212,
+        "custom_data": {},
+        "additional_context": null,
+        "raw_text": "DC-3: Section 8.2 of the datasheet: for a QFN-48 whose exposed pad is not soldered, add 18 °C/W to θJA, not 14 °C/W.",
+        "sentences": []
+      },
+      {
+        "index": 213,
+        "custom_data": {},
+        "additional_context": null,
+        "raw_text": "DC-4: Table 23 of the datasheet: VOL and VOH are specified with a VDD of 3.0 V or more, at IIO = 8 mA and IIO = −8 mA respectively, not with a VDD of 2.7 V or more.",
+        "sentences": []
+      },
+      {
+        "index": 214,
+        "custom_data": {},
+        "additional_context": null,
+        "raw_text": "Table E3. Revision history of the errata sheet",
+        "sentences": []
+      },
+      {
+        "index": 215,
+        "custom_data": {},
+        "additional_context": null,
+        "raw_text": "| Date | Revision | Changes |",
+        "sentences": []
+      },
+      {
+        "index": 216,
+        "custom_data": {},
+        "additional_context": null,
+        "raw_text": "| 3 March 2026 | 1 | Initial release, for silicon revisions A and B. |",
+        "sentences": []
+      },
+      {
+        "index": 217,
+        "custom_data": {},
+        "additional_context": null,
+        "raw_text": "| 20 June 2026 | 2 | Added silicon revision C and ES-08, of impact class 2; added DC-2. |",
+        "sentences": []
+      },
+      {
+        "index": 218,
+        "custom_data": {},
+        "additional_context": null,
+        "raw_text": "| 9 September 2026 | 3 | Raised the impact class of ES-08 to 4; ES-09 is present in revision C; added DC-1, DC-3 and DC-4. |",
+        "sentences": []
+      },
+      {
+        "index": 219,
+        "custom_data": {},
+        "additional_context": null,
+        "raw_text": "PART III - PRODUCT CHANGE NOTIFICATION PCN-2611 AND AMENDMENT PCN-2611-A1",
+        "sentences": []
+      },
+      {
+        "index": 220,
+        "custom_data": {},
+        "additional_context": null,
+        "raw_text": "III.1 PCN-2611, dated 15 June 2026: introduction of silicon revision C and end of life of silicon revision B, for all TSV7H part numbers.",
+        "sentences": []
+      },
+      {
+        "index": 221,
+        "custom_data": {},
+        "additional_context": null,
+        "raw_text": "III.2 Description of the change: revision C is made on the same 40 nm process, with a revised flash sense amplifier, a revised PLL1 loop filter and a revised FDCAN transmitter delay compensation block. The packages, the pinout, the part numbers and the software interface are unchanged; REV_ID becomes 0x1003.",
+        "sentences": []
+      },
+      {
+        "index": 222,
+        "custom_data": {},
+        "additional_context": null,
+        "raw_text": "III.3 Errata status: revision C fixes ES-02, ES-03, ES-07 and ES-09, and introduces ES-08 (FDCAN transmitter delay compensation, impact class 2). ES-04 and ES-05 remain.",
+        "sentences": []
+      },
+      {
+        "index": 223,
+        "custom_data": {},
+        "additional_context": null,
+        "raw_text": "III.4 Characterization changes for revision C: the falling threshold of BOR level 2 becomes 2.28 V typical and 2.21 V minimum, and the flash data retention after 10 000 cycles at Ta = 85 °C becomes 15 years. All other values of the datasheet are unchanged.",
+        "sentences": []
+      },
+      {
+        "index": 224,
+        "custom_data": {},
+        "additional_context": null,
+        "raw_text": "III.5 First shipments of revision C are from date code 2634. Shipments may mix revisions B and C until the last shipment of revision B.",
+        "sentences": []
+      },
+      {
+        "index": 225,
+        "custom_data": {},
+        "additional_context": null,
+        "raw_text": "III.6 Last-time-buy (LTB) orders for revision B are accepted until 90 calendar days after the date of this PCN.",
+        "sentences": []
+      },
+      {
+        "index": 226,
+        "custom_data": {},
+        "additional_context": null,
+        "raw_text": "III.7 The last shipments of revision B (last-time-ship, LTS) are made until 180 calendar days after the LTB date. LTB orders are non-cancellable and non-returnable.",
+        "sentences": []
+      },
+      {
+        "index": 227,
+        "custom_data": {},
+        "additional_context": null,
+        "raw_text": "III.8 Qualification: revision C passed the qualification plan QP-7H-C, with HTOL of 1 000 h at Tj = 140 °C, 1 000 temperature cycles from −65 to +150 °C, and ESD and latch-up tests as in Section 2 of the datasheet.",
+        "sentences": []
+      },
+      {
+        "index": 228,
+        "custom_data": {},
+        "additional_context": null,
+        "raw_text": "III.9 PCN-2611-A1, dated 24 July 2026, amends PCN-2611 as follows. For a customer that registered a revision B demand forecast with Tessaline by 31 July 2026, LTB orders are accepted until 30 calendar days after the LTB date of PCN-2611, and the LTS date stays the date that PCN-2611 sets. For other customers, PCN-2611 applies unchanged.",
+        "sentences": []
+      },
+      {
+        "index": 229,
+        "custom_data": {},
+        "additional_context": null,
+        "raw_text": "III.10 The other terms of PCN-2611 are unchanged by PCN-2611-A1.",
+        "sentences": []
+      },
+      {
+        "index": 230,
+        "custom_data": {},
+        "additional_context": null,
+        "raw_text": "PART IV - APPLICATION NOTE AN-7712 REVISION 2 (EXTRACT)",
+        "sentences": []
+      },
+      {
+        "index": 231,
+        "custom_data": {},
+        "additional_context": null,
+        "raw_text": "IV.1 AN-7712 gives guidelines for the clock and thermal design of TSV7H applications. It is informative.",
+        "sentences": []
+      },
+      {
+        "index": 232,
+        "custom_data": {},
+        "additional_context": null,
+        "raw_text": "IV.2 For a first thermal estimate on a typical four-layer board, a θJA of 38 °C/W can be assumed for the LQFP-64 package and of 26 °C/W for the QFN-48 package, with the typical IDD of the datasheet. A design is verified with the method of Section 8 of the datasheet.",
+        "sentences": []
+      },
+      {
+        "index": 233,
+        "custom_data": {},
+        "additional_context": null,
+        "raw_text": "IV.3 With a 25 MHz crystal and DIVM1 = 5, the PLL1 input frequency is 5 MHz, which requires PLL1RGE = 10. N1 = 160 and P1 = 2 then give a SYSCLK of 400 MHz.",
+        "sentences": []
+      },
+      {
+        "index": 234,
+        "custom_data": {},
+        "additional_context": null,
+        "raw_text": "IV.4 With HPRE = 2, a SYSCLK of 400 MHz gives an HCLK of 200 MHz, which needs 3 wait states in VOS1.",
+        "sentences": []
+      },
+      {
+        "index": 235,
+        "custom_data": {},
+        "additional_context": null,
+        "raw_text": "IV.5 In laboratory tests of revision B and C devices at VDDA = 1.8 V and fS = 2.57 Msps, the INL stayed within ±5 LSB, inside the limit of ES-04.",
+        "sentences": []
+      },
+      {
+        "index": 236,
+        "custom_data": {},
+        "additional_context": null,
+        "raw_text": "IV.6 A guard band of at least 10 °C between the computed Tj and the Tj max of the temperature grade is recommended.",
+        "sentences": []
+      },
+      {
+        "index": 237,
+        "custom_data": {},
+        "additional_context": null,
+        "raw_text": "IV.7 For the HSE, use a crystal with a load capacitance of 6 to 12 pF and an ESR below 60 Ω at 25 MHz, and place its load capacitors within 5 mm of the OSC_IN and OSC_OUT pins.",
+        "sentences": []
+      },
+      {
+        "index": 238,
+        "custom_data": {},
+        "additional_context": null,
+        "raw_text": "IV.8 Decoupling: place one 100 nF capacitor at each VDD pin and one 4.7 µF bulk capacitor; VDDA needs a 1 µF and a 10 nF capacitor in parallel, fed from VDD through a ferrite bead.",
+        "sentences": []
+      },
+      {
+        "index": 239,
+        "custom_data": {},
+        "additional_context": null,
+        "raw_text": "IV.9 For CAN FD at 5 Mbit/s, keep each stub shorter than 0.3 m and terminate both ends of the bus with 120 Ω.",
+        "sentences": []
+      },
+      {
+        "index": 240,
+        "custom_data": {},
+        "additional_context": null,
+        "raw_text": "PART V - DESIGN REVIEW AND PURCHASING RECORDS OF HALYARD DRIVES AS",
+        "sentences": []
+      },
+      {
+        "index": 241,
+        "custom_data": {},
+        "additional_context": null,
+        "raw_text": "DR-114 - SERVO DRIVE CONTROLLER HD-SC3 REVISION 3",
+        "sentences": []
+      },
+      {
+        "index": 242,
+        "custom_data": {},
+        "additional_context": null,
+        "raw_text": "DR-114.1 Board HD-SC3 revision 3 is a servo drive controller fitted with a TSV7H8LX. Prototype lot P1 (40 boards, built in April 2026) carries devices marked \"B 2611\". Production lot P2, which is the subject of this review unless an entry says otherwise, carries devices marked \"Y 2636\".",
+        "sentences": []
+      },
+      {
+        "index": 243,
+        "custom_data": {},
+        "additional_context": null,
+        "raw_text": "DR-114.2 Supply: VDD and VDDA are supplied from one 1.8 V rail with a tolerance of ±3 %. BOR level 0 is selected. VCORE runs in the voltage-scaling range VOS1.",
+        "sentences": []
+      },
+      {
+        "index": 244,
+        "custom_data": {},
+        "additional_context": null,
+        "raw_text": "DR-114.3 Environment: the board is mounted in a sealed drive enclosure without forced air flow, where the ambient temperature is from +5 °C to +95 °C. The board has four layers, two of which are internal ground and power planes.",
+        "sentences": []
+      },
+      {
+        "index": 245,
+        "custom_data": {},
+        "additional_context": null,
+        "raw_text": "DR-114.4 Clock configuration: HSE crystal of 25 MHz; DIVM1 = 5; PLL1RGE = 01; PLL1VCOSEL = 0; N1 = 140; P1 = 2; SYSCLK from the P output of PLL1; HPRE = 2; PPRE1 = 2; PPRE2 = 2; FLASH_ACR.LATENCY = 2.",
+        "sentences": []
+      },
+      {
+        "index": 246,
+        "custom_data": {},
+        "additional_context": null,
+        "raw_text": "DR-114.5 Peripherals: ADC1 and ADC2 convert continuously with fADC = 36 MHz from PLL2P and a sampling time of 2.5 cycles. FDCAN1 runs at 1 Mbit/s in the arbitration phase and 5 Mbit/s in the data phase, with transmitter delay compensation and automatic bus-off recovery. FDCAN2 is clocked for an expansion port but carries no traffic. USART1 is the service port, at 6 Mbit/s with OVER8 = 1 and the receiver timeout enabled. The CORDIC runs the field-oriented control loop continuously, and TIM1 drives the PWM outputs. No other peripheral is clocked.",
+        "sentences": []
+      },
+      {
+        "index": 247,
+        "custom_data": {},
+        "additional_context": null,
+        "raw_text": "DR-114.6 The board team computed the power of the I/O pins, PIO, as 52 mW at the highest ambient temperature.",
+        "sentences": []
+      },
+      {
+        "index": 248,
+        "custom_data": {},
+        "additional_context": null,
+        "raw_text": "DR-114.7 Halyard design rule HDR-7: the junction temperature computed with the method of the datasheet must be at least 20 °C below the Tj max of the temperature grade of the device. Design rule HDR-9: the firmware must implement the workaround of every erratum that is present in the silicon revision fitted and whose conditions the configuration of the board meets.",
+        "sentences": []
+      },
+      {
+        "index": 249,
+        "custom_data": {},
+        "additional_context": null,
+        "raw_text": "DR-114.8 Firmware release candidate FW 2.3.0 implements the workarounds of ES-02 and ES-05, and of no other erratum.",
+        "sentences": []
+      },
+      {
+        "index": 250,
+        "custom_data": {},
+        "additional_context": null,
+        "raw_text": "DR-114.9 On a prototype board of lot P1 at an ambient temperature of 95 °C, the on-chip temperature sensor read 104 °C after one hour at full load.",
+        "sentences": []
+      },
+      {
+        "index": 251,
+        "custom_data": {},
+        "additional_context": null,
+        "raw_text": "DR-114.10 EMC: the conducted emissions of the drive passed EN 55011 class A, and its radiated immunity was tested at 10 V/m.",
+        "sentences": []
+      },
+      {
+        "index": 252,
+        "custom_data": {},
+        "additional_context": null,
+        "raw_text": "DR-114.11 Mechanical: the board is fixed at six points, and passed the vibration test of IEC 60068-2-6 at 5 g from 10 to 500 Hz without damage.",
+        "sentences": []
+      },
+      {
+        "index": 253,
+        "custom_data": {},
+        "additional_context": null,
+        "raw_text": "DR-114.12 The service port of USART1 is routed to an isolated connector, which passed the IEC 61000-4-2 test at ±8 kV contact discharge.",
+        "sentences": []
+      },
+      {
+        "index": 254,
+        "custom_data": {},
+        "additional_context": null,
+        "raw_text": "DR-115 - SENSOR HUB HD-SH1 REVISION 1",
+        "sentences": []
+      },
+      {
+        "index": 255,
+        "custom_data": {},
+        "additional_context": null,
+        "raw_text": "DR-115.1 Board HD-SH1 revision 1 is an outdoor sensor hub fitted with a TSV7H4QI. All the boards built carry devices marked \"B 2618\".",
+        "sentences": []
+      },
+      {
+        "index": 256,
+        "custom_data": {},
+        "additional_context": null,
+        "raw_text": "DR-115.2 Supply: VDD and VDDA are both 3.3 V, from a regulator with a tolerance of ±2 %. BOR level 3 is selected. VCORE runs in VOS0.",
+        "sentences": []
+      },
+      {
+        "index": 257,
+        "custom_data": {},
+        "additional_context": null,
+        "raw_text": "DR-115.3 Environment: outdoor enclosure with natural convection, where the ambient temperature is from −25 °C to +70 °C. The board has two layers and no internal planes; the exposed pad of the device is soldered to a copper area with thermal vias.",
+        "sentences": []
+      },
+      {
+        "index": 258,
+        "custom_data": {},
+        "additional_context": null,
+        "raw_text": "DR-115.4 Clock configuration: HSE crystal of 24 MHz; DIVM1 = 4; PLL1RGE = 10; PLL1VCOSEL = 0; N1 = 144; P1 = 2; SYSCLK from the P output of PLL1; HPRE = 2; FLASH_ACR.LATENCY = 3.",
+        "sentences": []
+      },
+      {
+        "index": 259,
+        "custom_data": {},
+        "additional_context": null,
+        "raw_text": "DR-115.5 Peripherals: ADC1 converts with fADC = 50 MHz and a sampling time of 1.5 cycles; SPI2 reads the pressure sensor in TI mode; USART2 runs the modem link with OVER8 = 0; I2C1 polls a humidity sensor in fast-mode plus, without SMBus. No other peripheral is clocked.",
+        "sentences": []
+      },
+      {
+        "index": 260,
+        "custom_data": {},
+        "additional_context": null,
+        "raw_text": "DR-115.6 The board team computed PIO as 38 mW at the highest ambient temperature.",
+        "sentences": []
+      },
+      {
+        "index": 261,
+        "custom_data": {},
+        "additional_context": null,
+        "raw_text": "DR-115.7 The pressure sensor is read every 10 ms, and the modem link sends a report every 15 minutes.",
+        "sentences": []
+      },
+      {
+        "index": 262,
+        "custom_data": {},
+        "additional_context": null,
+        "raw_text": "DR-115.8 The enclosure is rated IP67, and the board is conformally coated.",
+        "sentences": []
+      },
+      {
+        "index": 263,
+        "custom_data": {},
+        "additional_context": null,
+        "raw_text": "PURCHASING RECORDS",
+        "sentences": []
+      },
+      {
+        "index": 264,
+        "custom_data": {},
+        "additional_context": null,
+        "raw_text": "P-1 Halyard registered a revision B demand forecast of 40 000 units with Tessaline on form F-11 on 29 July 2026, and sent a revised forecast of 46 000 units on 5 August 2026.",
+        "sentences": []
+      },
+      {
+        "index": 265,
+        "custom_data": {},
+        "additional_context": null,
+        "raw_text": "P-2 Purchase order PO-5521 for 12 000 TSV7H8LX devices of revision B was placed with Tessaline on 2 October 2026 as an LTB order.",
+        "sentences": []
+      },
+      {
+        "index": 266,
+        "custom_data": {},
+        "additional_context": null,
+        "raw_text": "P-3 Purchase order PO-5530 for 8 000 TSV7H4QI devices was placed on 20 October 2026, without a revision requirement.",
+        "sentences": []
+      },
+      {
+        "index": 267,
+        "custom_data": {},
+        "additional_context": null,
+        "raw_text": "P-4 Tessaline confirmed PO-5530 on 22 October 2026, for delivery from date code 2648.",
+        "sentences": []
+      }
+    ],
+    "custom_data": {
+      "gold_version": 1,
+      "validation": "source_checked",
+      "source_sha256": "f83df5c6968394909e7a64d34aa78b297f34f5104abf9df89bafe8f49024b5ca",
+      "review_scope": "All 27 concept targets and seven aspect selections authored with the case; junction temperatures, clock frequencies, wait states, sampling rates and calendar dates recomputed by script.",
+      "evidence_policy": "Select the governing specifications, corrections, changes and records needed by the target, including superseded values where the target depends on the change. Exclude headings, table column headers, informative guidance that the datasheet method replaces, and rules of other revisions or boards. Nested concept evidence lies within its aspect."
+    },
+    "paragraph_segmentation_mode": "newlines",
+    "sat_model_id": "sat-3l-sm",
+    "pre_segment_sentences": false,
+    "images": [],
+    "concepts": [
+      {
+        "type": "NumericalConcept",
+        "name": "Lowest HBM rating of a QFN-48 pin in V",
+        "description": "The lowest human-body-model ESD rating, in V, of any pin of a TSV7H device in the QFN-48 package",
+        "add_justifications": true,
+        "justification_depth": "brief",
+        "justification_max_sents": 2,
+        "llm_role": "extractor_text",
+        "add_references": true,
+        "reference_depth": "paragraphs",
+        "singular_occurrence": true,
+        "numeric_type": "int",
+        "reviewed": true,
+        "items": [
+          {
+            "value": 1000,
+            "justification": "DC-1 corrects the datasheet: pins PB12 to PB15 of the QFN-48 package are rated 1000 V HBM.",
+            "reference_paragraphs": [
+              23,
+              210
+            ],
+            "reference_sentences": [],
+            "references_reviewed": true
+          }
+        ],
+        "custom_data": {
+          "source_clauses": [
+            "2.2",
+            "DC-1"
+          ]
+        }
+      },
+      {
+        "type": "NumericalConcept",
+        "name": "Revision C BOR level 2 minimum falling threshold in V",
+        "description": "The minimum falling threshold of BOR level 2, in V, of silicon revision C devices",
+        "add_justifications": true,
+        "justification_depth": "brief",
+        "justification_max_sents": 2,
+        "llm_role": "extractor_text",
+        "add_references": true,
+        "reference_depth": "paragraphs",
+        "singular_occurrence": true,
+        "numeric_type": "float",
+        "reviewed": true,
+        "items": [
+          {
+            "value": 2.21,
+            "justification": "PCN-2611 sets the minimum falling threshold of BOR level 2 of revision C to 2.21 V, in place of the 2.26 V of Table 8.",
+            "reference_paragraphs": [
+              41,
+              223
+            ],
+            "reference_sentences": [],
+            "references_reviewed": true
+          }
+        ],
+        "custom_data": {
+          "source_clauses": [
+            "Table 8: Level 2",
+            "III.4"
+          ]
+        }
+      },
+      {
+        "type": "BooleanConcept",
+        "name": "VOS0 permitted at a VDD of 1.8 V",
+        "description": "Whether the voltage-scaling range VOS0 can be used with a VDD of 1.8 V",
+        "add_justifications": true,
+        "justification_depth": "brief",
+        "justification_max_sents": 2,
+        "llm_role": "extractor_text",
+        "add_references": true,
+        "reference_depth": "paragraphs",
+        "singular_occurrence": true,
+        "reviewed": true,
+        "items": [
+          {
+            "value": false,
+            "justification": "VOS0 needs a VDD of at least 1.95 V.",
+            "reference_paragraphs": [
+              26,
+              29
+            ],
+            "reference_sentences": [],
+            "references_reviewed": true
+          }
+        ],
+        "custom_data": {
+          "source_clauses": [
+            "3.2",
+            "Table 6: VOS0"
+          ]
+        }
+      },
+      {
+        "type": "LabelConcept",
+        "name": "Marking code of revision C",
+        "description": "The revision code on the top marking of the production devices of silicon revision C",
+        "add_justifications": true,
+        "justification_depth": "brief",
+        "justification_max_sents": 2,
+        "llm_role": "extractor_text",
+        "add_references": true,
+        "reference_depth": "paragraphs",
+        "singular_occurrence": true,
+        "labels": [
+          "A",
+          "B",
+          "C",
+          "X",
+          "Y"
+        ],
+        "classification_type": "multi_class",
+        "reviewed": true,
+        "items": [
+          {
+            "value": [
+              "Y"
+            ],
+            "justification": "Table E1 gives Y as the revision code on the marking of revision C.",
+            "reference_paragraphs": [
+              11,
+              187,
+              188
+            ],
+            "reference_sentences": [],
+            "references_reviewed": true
+          }
+        ],
+        "custom_data": {
+          "source_clauses": [
+            "1.5",
+            "Table E1: C",
+            "II.2"
+          ]
+        }
+      },
+      {
+        "type": "NumericalConcept",
+        "name": "DR-115 junction temperature in °C",
+        "description": "The junction temperature of the DR-115 boards at their highest ambient temperature, computed with the method of the datasheet, in °C rounded to the nearest whole degree",
+        "add_justifications": true,
+        "justification_depth": "brief",
+        "justification_max_sents": 2,
+        "llm_role": "extractor_text",
+        "add_references": true,
+        "reference_depth": "paragraphs",
+        "singular_occurrence": true,
+        "numeric_type": "int",
+        "reviewed": true,
+        "items": [
+          {
+            "value": 100,
+            "justification": "SYSCLK is 24 / 4 × 144 / 2 = 432 MHz in VOS0; IDD = 156 + 4.6 + 0.9 + 0.6 + 0.4 = 162.5 mA; PD = 3.366 V × 162.5 mA + 38 mW = 585 mW; Tj = 70 + 52 × 0.585 = 100.4 °C on the 1s board.",
+            "reference_paragraphs": [
+              9,
+              47,
+              90,
+              93,
+              95,
+              96,
+              99,
+              103,
+              112,
+              115,
+              116,
+              117,
+              120,
+              255,
+              256,
+              257,
+              258,
+              259,
+              260
+            ],
+            "reference_sentences": [],
+            "references_reviewed": true
+          }
+        ],
+        "custom_data": {
+          "source_clauses": [
+            "1.3",
+            "5.3",
+            "8.1",
+            "Table 19: QFN-48, exposed pad soldered",
+            "8.2",
+            "8.3",
+            "9.1",
+            "Table 18: VOS0",
+            "Table 20: ADC1 or ADC2",
+            "Table 20: USART1 to USART4",
+            "Table 20: SPI1 to SPI3",
+            "Table 20: I2C1 or I2C2",
+            "9.2",
+            "DR-115.1",
+            "DR-115.2",
+            "DR-115.3",
+            "DR-115.4",
+            "DR-115.5",
+            "DR-115.6"
+          ]
+        }
+      },
+      {
+        "type": "DateConcept",
+        "name": "Start of the first revision C date code",
+        "description": "The first day, a Monday, of the week given by the first date code from which revision C devices are shipped",
+        "add_justifications": true,
+        "justification_depth": "brief",
+        "justification_max_sents": 2,
+        "llm_role": "extractor_text",
+        "add_references": true,
+        "reference_depth": "paragraphs",
+        "singular_occurrence": true,
+        "reviewed": true,
+        "items": [
+          {
+            "value": "2026-08-17",
+            "justification": "Revision C ships from date code 2634, ISO week 34 of 2026, which starts on Monday 17 August 2026.",
+            "reference_paragraphs": [
+              4,
+              187,
+              224
+            ],
+            "reference_sentences": [],
+            "references_reviewed": true
+          }
+        ],
+        "custom_data": {
+          "source_clauses": [
+            "Conventions",
+            "Table E1: C",
+            "III.5"
+          ]
+        }
+      }
+    ],
+    "aspects": [
+      {
+        "type": "Aspect",
+        "name": "Device limitations of revision C",
+        "description": "Tessaline's documentation of the device limitations that are present in silicon revision C: their conditions, workarounds and impact classes, the definition of the impact classes, and the changes of their status or impact class between documents",
+        "add_justifications": false,
+        "justification_depth": "brief",
+        "justification_max_sents": 2,
+        "llm_role": "extractor_text",
+        "reference_depth": "paragraphs",
+        "reviewed": true,
+        "reference_paragraphs": [
+          189,
+          195,
+          196,
+          199,
+          200,
+          204,
+          205,
+          208,
+          209,
+          217,
+          218,
+          222
+        ],
+        "reference_sentences": [],
+        "items": [],
+        "custom_data": {},
+        "concepts": [
+          {
+            "type": "JsonObjectConcept",
+            "name": "Limitations present in revision C",
+            "description": "One object per device limitation present in silicon revision C: its ID (e.g. ES-01), the function that it affects as the errata sheet names it, its current impact class, and the silicon revisions in which it is present",
+            "add_justifications": false,
+            "justification_depth": "brief",
+            "justification_max_sents": 2,
+            "llm_role": "extractor_text",
+            "add_references": true,
+            "reference_depth": "paragraphs",
+            "singular_occurrence": false,
+            "structure": {
+              "id": "str",
+              "function": "str",
+              "impact_class": "int",
+              "affected_revisions": "list[literal[\"A\", \"B\", \"C\"]]"
+            },
+            "examples": [],
+            "reviewed": true,
+            "items": [
+              {
+                "value": {
+                  "id": "ES-04",
+                  "function": "ADC",
+                  "impact_class": 3,
+                  "affected_revisions": [
+                    "A",
+                    "B",
+                    "C"
+                  ]
+                },
+                "justification": "Table E2 lists ES-04 as present in all revisions, with impact class 3.",
+                "reference_paragraphs": [
+                  195,
+                  204
+                ],
+                "reference_sentences": [],
+                "references_reviewed": true
+              },
+              {
+                "value": {
+                  "id": "ES-05",
+                  "function": "USART",
+                  "impact_class": 2,
+                  "affected_revisions": [
+                    "A",
+                    "B",
+                    "C"
+                  ]
+                },
+                "justification": "Table E2 lists ES-05 as present in all revisions, with impact class 2.",
+                "reference_paragraphs": [
+                  196,
+                  205
+                ],
+                "reference_sentences": [],
+                "references_reviewed": true
+              },
+              {
+                "value": {
+                  "id": "ES-08",
+                  "function": "FDCAN",
+                  "impact_class": 4,
+                  "affected_revisions": [
+                    "C"
+                  ]
+                },
+                "justification": "ES-08 is present in revision C only; revision 3 of the errata sheet raised its impact class from 2 to 4.",
+                "reference_paragraphs": [
+                  199,
+                  208,
+                  217,
+                  218,
+                  222
+                ],
+                "reference_sentences": [],
+                "references_reviewed": true
+              },
+              {
+                "value": {
+                  "id": "ES-09",
+                  "function": "Power",
+                  "impact_class": 3,
+                  "affected_revisions": [
+                    "B",
+                    "C"
+                  ]
+                },
+                "justification": "ES-09 is present in revisions B and C: the errata sheet of September 2026 prevails over the PCN of June 2026, which listed it as fixed.",
+                "reference_paragraphs": [
+                  200,
+                  209,
+                  218,
+                  222
+                ],
+                "reference_sentences": [],
+                "references_reviewed": true
+              }
+            ],
+            "custom_data": {
+              "source_clauses": [
+                "Table E2: ES-04",
+                "Table E2: ES-05",
+                "Table E2: ES-08",
+                "Table E2: ES-09",
+                "ES-04",
+                "ES-05",
+                "ES-08",
+                "ES-09",
+                "Table E3: 20 June 2026",
+                "Table E3: 9 September 2026",
+                "III.3"
+              ],
+              "object_key": "id"
+            }
+          },
+          {
+            "type": "RatingConcept",
+            "name": "Impact class of ES-08",
+            "description": "The current impact class of the device limitation ES-08, on the scale of the errata sheet",
+            "add_justifications": true,
+            "justification_depth": "brief",
+            "justification_max_sents": 2,
+            "llm_role": "extractor_text",
+            "add_references": true,
+            "reference_depth": "paragraphs",
+            "singular_occurrence": true,
+            "rating_scale": [
+              1,
+              5
+            ],
+            "reviewed": true,
+            "items": [
+              {
+                "value": 4,
+                "justification": "Revision 3 of the errata sheet, the latest document, raised the impact class of ES-08 from 2 to 4; the PCN's class 2 is older.",
+                "reference_paragraphs": [
+                  189,
+                  199,
+                  208,
+                  217,
+                  218,
+                  222
+                ],
+                "reference_sentences": [],
+                "references_reviewed": true
+              }
+            ],
+            "custom_data": {
+              "source_clauses": [
+                "II.3",
+                "Table E2: ES-08",
+                "ES-08",
+                "Table E3: 20 June 2026",
+                "Table E3: 9 September 2026",
+                "III.3"
+              ]
+            }
+          },
+          {
+            "type": "BooleanConcept",
+            "name": "ES-09 present in revision C",
+            "description": "Whether the device limitation ES-09 is present in silicon revision C",
+            "add_justifications": true,
+            "justification_depth": "brief",
+            "justification_max_sents": 2,
+            "llm_role": "extractor_text",
+            "add_references": true,
+            "reference_depth": "paragraphs",
+            "singular_occurrence": true,
+            "reviewed": true,
+            "items": [
+              {
+                "value": true,
+                "justification": "The errata sheet of 9 September 2026 lists ES-09 as present in revision C and prevails over the PCN of 15 June 2026, which listed it as fixed.",
+                "reference_paragraphs": [
+                  200,
+                  209,
+                  218,
+                  222
+                ],
+                "reference_sentences": [],
+                "references_reviewed": true
+              }
+            ],
+            "custom_data": {
+              "source_clauses": [
+                "Table E2: ES-09",
+                "ES-09",
+                "Table E3: 9 September 2026",
+                "III.3"
+              ]
+            }
+          },
+          {
+            "type": "StringConcept",
+            "name": "ES-08 workaround",
+            "description": "The workaround of ES-08, in one sentence",
+            "add_justifications": true,
+            "justification_depth": "brief",
+            "justification_max_sents": 2,
+            "llm_role": "extractor_text",
+            "add_references": true,
+            "reference_depth": "paragraphs",
+            "singular_occurrence": true,
+            "examples": [],
+            "reviewed": true,
+            "items": [
+              {
+                "value": "Write FDCAN_TDCR again after each bus-off recovery, before INIT is cleared.",
+                "justification": "The workaround stated in the description of ES-08.",
+                "reference_paragraphs": [
+                  208
+                ],
+                "reference_sentences": [],
+                "references_reviewed": true,
+                "accepted_values": [
+                  "Rewrite FDCAN_TDCR after each bus-off recovery, before clearing INIT.",
+                  "Write FDCAN_TDCR again (restoring the TDCO offset) after each bus-off recovery, before INIT is cleared.",
+                  "Write FDCAN_TDCR again after every bus-off recovery, before INIT is cleared.",
+                  "Reprogram FDCAN_TDCR after each bus-off recovery, before INIT is cleared."
+                ]
+              }
+            ],
+            "custom_data": {
+              "source_clauses": [
+                "ES-08"
+              ]
+            }
+          }
+        ],
+        "aspects": []
+      },
+      {
+        "type": "Aspect",
+        "name": "Flash memory specifications",
+        "description": "Tessaline's specifications of the embedded flash memory: read latency and wait states, endurance and data retention, with the corrections and changes that apply to them",
+        "add_justifications": false,
+        "justification_depth": "brief",
+        "justification_max_sents": 2,
+        "llm_role": "extractor_text",
+        "reference_depth": "paragraphs",
+        "reviewed": true,
+        "reference_paragraphs": [
+          60,
+          63,
+          64,
+          65,
+          66,
+          67,
+          71,
+          72,
+          73,
+          74,
+          75,
+          76,
+          211,
+          223
+        ],
+        "reference_sentences": [],
+        "items": [],
+        "custom_data": {},
+        "concepts": [
+          {
+            "type": "NumericalConcept",
+            "name": "HCLK maximum for 2 wait states in VOS1 in MHz",
+            "description": "The highest HCLK frequency, in MHz, at which 2 flash wait states are sufficient in the voltage-scaling range VOS1",
+            "add_justifications": true,
+            "justification_depth": "brief",
+            "justification_max_sents": 2,
+            "llm_role": "extractor_text",
+            "add_references": true,
+            "reference_depth": "paragraphs",
+            "singular_occurrence": true,
+            "numeric_type": "int",
+            "reviewed": true,
+            "items": [
+              {
+                "value": 165,
+                "justification": "DC-2 corrects Table 14: in VOS1, 2 wait states are sufficient up to 165 MHz, not 185 MHz.",
+                "reference_paragraphs": [
+                  65,
+                  211
+                ],
+                "reference_sentences": [],
+                "references_reviewed": true
+              }
+            ],
+            "custom_data": {
+              "source_clauses": [
+                "Table 14: 2",
+                "DC-2"
+              ]
+            }
+          },
+          {
+            "type": "NumericalConcept",
+            "name": "Revision C retention after 10 000 cycles at 85 °C",
+            "description": "The guaranteed minimum flash data retention, in years, of a silicon revision C device after 10 000 cycles at Ta = 85 °C",
+            "add_justifications": true,
+            "justification_depth": "brief",
+            "justification_max_sents": 2,
+            "llm_role": "extractor_text",
+            "add_references": true,
+            "reference_depth": "paragraphs",
+            "singular_occurrence": true,
+            "numeric_type": "int",
+            "reviewed": true,
+            "items": [
+              {
+                "value": 15,
+                "justification": "PCN-2611 raises the retention after 10 000 cycles at 85 °C from 10 to 15 years for revision C.",
+                "reference_paragraphs": [
+                  75,
+                  223
+                ],
+                "reference_sentences": [],
+                "references_reviewed": true
+              }
+            ],
+            "custom_data": {
+              "source_clauses": [
+                "Table 15: tRET, data retention",
+                "III.4"
+              ]
+            }
+          },
+          {
+            "type": "NumericalConcept",
+            "name": "Revision C retention after 1 000 cycles at 105 °C",
+            "description": "The guaranteed minimum flash data retention, in years, of a silicon revision C device after 1 000 cycles at Ta = 105 °C",
+            "add_justifications": true,
+            "justification_depth": "brief",
+            "justification_max_sents": 2,
+            "llm_role": "extractor_text",
+            "add_references": true,
+            "reference_depth": "paragraphs",
+            "singular_occurrence": true,
+            "numeric_type": "int",
+            "reviewed": true,
+            "items": [
+              {
+                "value": 20,
+                "justification": "Table 15 gives 20 years; PCN-2611 changes only the retention after 10 000 cycles at 85 °C and leaves the other values unchanged.",
+                "reference_paragraphs": [
+                  73,
+                  223
+                ],
+                "reference_sentences": [],
+                "references_reviewed": true
+              }
+            ],
+            "custom_data": {
+              "source_clauses": [
+                "Table 15: tRET, data retention",
+                "III.4"
+              ]
+            }
+          }
+        ],
+        "aspects": []
+      },
+      {
+        "type": "Aspect",
+        "name": "DR-114 clock configuration",
+        "description": "What is needed to determine the highest SYSCLK frequency permitted for the DR-114 production boards, whether their PLL1 configuration is within the specification, and how many flash wait states they require: the clock, PLL, voltage-scaling, bus-clock and flash-latency rules, the errata, corrections and changes that affect them, and the DR-114 records",
+        "add_justifications": false,
+        "justification_depth": "brief",
+        "justification_max_sents": 2,
+        "llm_role": "extractor_text",
+        "reference_depth": "paragraphs",
+        "reviewed": true,
+        "reference_paragraphs": [
+          9,
+          11,
+          26,
+          29,
+          30,
+          31,
+          32,
+          33,
+          34,
+          45,
+          46,
+          47,
+          51,
+          52,
+          54,
+          57,
+          60,
+          63,
+          64,
+          65,
+          66,
+          187,
+          193,
+          194,
+          202,
+          203,
+          211,
+          222,
+          233,
+          242,
+          243,
+          244,
+          245
+        ],
+        "reference_sentences": [],
+        "items": [],
+        "custom_data": {},
+        "concepts": [
+          {
+            "type": "NumericalConcept",
+            "name": "DR-114 maximum permitted SYSCLK in MHz",
+            "description": "The highest SYSCLK frequency, in MHz, that the documentation permits for the DR-114 production boards in any voltage-scaling range, under their supply and ambient conditions",
+            "add_justifications": true,
+            "justification_depth": "brief",
+            "justification_max_sents": 2,
+            "llm_role": "extractor_text",
+            "add_references": true,
+            "reference_depth": "paragraphs",
+            "singular_occurrence": true,
+            "numeric_type": "int",
+            "reviewed": true,
+            "items": [
+              {
+                "value": 400,
+                "justification": "VDD of at most 1.854 V excludes VOS0, which needs 1.95 V; at the 95 °C ambient of the grade X device, VOS1 permits 400 MHz, and ES-03 is fixed in revision C, which the marking Y denotes.",
+                "reference_paragraphs": [
+                  9,
+                  11,
+                  26,
+                  29,
+                  30,
+                  33,
+                  187,
+                  194,
+                  203,
+                  242,
+                  243,
+                  244
+                ],
+                "reference_sentences": [],
+                "references_reviewed": true
+              }
+            ],
+            "custom_data": {
+              "source_clauses": [
+                "1.3",
+                "1.5",
+                "3.2",
+                "Table 6: VOS0",
+                "Table 6: VOS1",
+                "3.3",
+                "Table E1: C",
+                "Table E2: ES-03",
+                "ES-03",
+                "DR-114.1",
+                "DR-114.2",
+                "DR-114.3"
+              ]
+            }
+          },
+          {
+            "type": "BooleanConcept",
+            "name": "DR-114 PLL1 configuration within specification",
+            "description": "Whether every PLL1 setting recorded for the DR-114 boards is within the specification",
+            "add_justifications": true,
+            "justification_depth": "brief",
+            "justification_max_sents": 2,
+            "llm_role": "extractor_text",
+            "add_references": true,
+            "reference_depth": "paragraphs",
+            "singular_occurrence": true,
+            "reviewed": true,
+            "items": [
+              {
+                "value": false,
+                "justification": "DIVM1 = 5 gives fREF = 5 MHz from the 25 MHz crystal, which PLL1RGE = 01 (2 to 4 MHz) does not contain; the range must be 10.",
+                "reference_paragraphs": [
+                  47,
+                  51,
+                  52,
+                  57,
+                  245
+                ],
+                "reference_sentences": [],
+                "references_reviewed": true
+              }
+            ],
+            "custom_data": {
+              "source_clauses": [
+                "5.3",
+                "Table 10: fREF, PLL input frequency",
+                "Table 10: fREF, PLL input frequency",
+                "5.4",
+                "DR-114.4"
+              ]
+            }
+          },
+          {
+            "type": "NumericalConcept",
+            "name": "DR-114 required flash wait states",
+            "description": "The smallest number of flash wait states (LATENCY) that the documentation permits for the DR-114 production boards with their configured clocks",
+            "add_justifications": true,
+            "justification_depth": "brief",
+            "justification_max_sents": 2,
+            "llm_role": "extractor_text",
+            "add_references": true,
+            "reference_depth": "paragraphs",
+            "singular_occurrence": true,
+            "numeric_type": "int",
+            "reviewed": true,
+            "items": [
+              {
+                "value": 3,
+                "justification": "SYSCLK is 25 / 5 × 140 / 2 = 350 MHz and HCLK 175 MHz in VOS1; DC-2 limits 2 wait states to 165 MHz, so 3 are needed.",
+                "reference_paragraphs": [
+                  34,
+                  47,
+                  60,
+                  65,
+                  66,
+                  211,
+                  243,
+                  245
+                ],
+                "reference_sentences": [],
+                "references_reviewed": true
+              }
+            ],
+            "custom_data": {
+              "source_clauses": [
+                "3.4",
+                "5.3",
+                "6.1",
+                "Table 14: 2",
+                "Table 14: 3",
+                "DC-2",
+                "DR-114.2",
+                "DR-114.4"
+              ]
+            }
+          }
+        ],
+        "aspects": []
+      },
+      {
+        "type": "Aspect",
+        "name": "DR-114 thermal assessment",
+        "description": "What is needed to compute the junction temperature of the DR-114 production boards and to check it against Halyard's design rule HDR-7: the junction-temperature method, the thermal-resistance, current-consumption and temperature-limit values, and the DR-114 records",
+        "add_justifications": false,
+        "justification_depth": "brief",
+        "justification_max_sents": 2,
+        "llm_role": "extractor_text",
+        "reference_depth": "paragraphs",
+        "reviewed": true,
+        "reference_paragraphs": [
+          9,
+          90,
+          94,
+          95,
+          96,
+          97,
+          99,
+          105,
+          113,
+          114,
+          115,
+          118,
+          119,
+          120,
+          242,
+          243,
+          244,
+          245,
+          246,
+          247,
+          248
+        ],
+        "reference_sentences": [],
+        "items": [],
+        "custom_data": {},
+        "concepts": [
+          {
+            "type": "NumericalConcept",
+            "name": "DR-114 junction temperature in °C",
+            "description": "The junction temperature of the DR-114 production boards at their highest ambient temperature, computed with the method of the datasheet, in °C rounded to the nearest whole degree",
+            "add_justifications": true,
+            "justification_depth": "brief",
+            "justification_max_sents": 2,
+            "llm_role": "extractor_text",
+            "add_references": true,
+            "reference_depth": "paragraphs",
+            "singular_occurrence": true,
+            "numeric_type": "int",
+            "reviewed": true,
+            "items": [
+              {
+                "value": 108,
+                "justification": "IDD = 119 + 2 × 3.4 + 2 × 2.2 + 0.6 + 1.8 + 1.5 = 134.1 mA, counting the clocked FDCAN2; PD = 1.854 V × 134.1 mA + 52 mW = 300.6 mW; Tj = 95 + 44 × 0.3006 = 108.2 °C on the 2s2p board.",
+                "reference_paragraphs": [
+                  9,
+                  90,
+                  94,
+                  95,
+                  96,
+                  99,
+                  105,
+                  113,
+                  114,
+                  115,
+                  118,
+                  119,
+                  120,
+                  242,
+                  243,
+                  244,
+                  245,
+                  246,
+                  247
+                ],
+                "reference_sentences": [],
+                "references_reviewed": true
+              }
+            ],
+            "custom_data": {
+              "source_clauses": [
+                "1.3",
+                "8.1",
+                "Table 19: LQFP-64",
+                "8.2",
+                "8.3",
+                "9.1",
+                "Table 18: VOS1",
+                "Table 20: ADC1 or ADC2",
+                "Table 20: FDCAN1 or FDCAN2",
+                "Table 20: USART1 to USART4",
+                "Table 20: CORDIC",
+                "Table 20: TIM1",
+                "9.2",
+                "DR-114.1",
+                "DR-114.2",
+                "DR-114.3",
+                "DR-114.4",
+                "DR-114.5",
+                "DR-114.6"
+              ]
+            }
+          },
+          {
+            "type": "BooleanConcept",
+            "name": "DR-114 meets HDR-7",
+            "description": "Whether the DR-114 production boards meet Halyard's design rule HDR-7",
+            "add_justifications": true,
+            "justification_depth": "brief",
+            "justification_max_sents": 2,
+            "llm_role": "extractor_text",
+            "add_references": true,
+            "reference_depth": "paragraphs",
+            "singular_occurrence": true,
+            "reviewed": true,
+            "items": [
+              {
+                "value": false,
+                "justification": "The computed Tj of about 108 °C is only about 17 °C below the Tj max of 125 °C of grade X, less than the 20 °C that HDR-7 requires.",
+                "reference_paragraphs": [
+                  9,
+                  90,
+                  94,
+                  95,
+                  96,
+                  97,
+                  99,
+                  105,
+                  113,
+                  114,
+                  115,
+                  118,
+                  119,
+                  120,
+                  242,
+                  243,
+                  244,
+                  245,
+                  246,
+                  247,
+                  248
+                ],
+                "reference_sentences": [],
+                "references_reviewed": true
+              }
+            ],
+            "custom_data": {
+              "source_clauses": [
+                "1.3",
+                "8.1",
+                "Table 19: LQFP-64",
+                "8.2",
+                "8.3",
+                "8.4",
+                "9.1",
+                "Table 18: VOS1",
+                "Table 20: ADC1 or ADC2",
+                "Table 20: FDCAN1 or FDCAN2",
+                "Table 20: USART1 to USART4",
+                "Table 20: CORDIC",
+                "Table 20: TIM1",
+                "9.2",
+                "DR-114.1",
+                "DR-114.2",
+                "DR-114.3",
+                "DR-114.4",
+                "DR-114.5",
+                "DR-114.6",
+                "DR-114.7"
+              ]
+            }
+          }
+        ],
+        "aspects": []
+      },
+      {
+        "type": "Aspect",
+        "name": "DR-114 errata and firmware",
+        "description": "What is needed to decide which errata apply to the DR-114 production boards, the maximum INL of their ADC configuration, and whether firmware FW 2.3.0 meets Halyard's design rule HDR-9: the device identification, the errata and their conditions, the ADC sampling and accuracy rules, and the DR-114 records",
+        "add_justifications": false,
+        "justification_depth": "brief",
+        "justification_max_sents": 2,
+        "llm_role": "extractor_text",
+        "reference_depth": "paragraphs",
+        "reviewed": true,
+        "reference_paragraphs": [
+          11,
+          79,
+          83,
+          187,
+          192,
+          193,
+          194,
+          195,
+          196,
+          197,
+          198,
+          199,
+          200,
+          204,
+          205,
+          208,
+          209,
+          242,
+          243,
+          246,
+          248,
+          249
+        ],
+        "reference_sentences": [],
+        "items": [],
+        "custom_data": {},
+        "concepts": [
+          {
+            "type": "LabelConcept",
+            "name": "Errata applicable to the DR-114 production boards",
+            "description": "Every erratum that is present in the silicon revision of the DR-114 production boards and whose conditions their configuration meets",
+            "add_justifications": true,
+            "justification_depth": "brief",
+            "justification_max_sents": 2,
+            "llm_role": "extractor_text",
+            "add_references": true,
+            "reference_depth": "paragraphs",
+            "singular_occurrence": true,
+            "labels": [
+              "ES-01",
+              "ES-02",
+              "ES-03",
+              "ES-04",
+              "ES-05",
+              "ES-06",
+              "ES-07",
+              "ES-08",
+              "ES-09"
+            ],
+            "classification_type": "multi_label",
+            "reviewed": true,
+            "items": [
+              {
+                "value": [
+                  "ES-04",
+                  "ES-05",
+                  "ES-08"
+                ],
+                "justification": "Revision C (marking Y) has ES-04, ES-05, ES-08 and ES-09. fS = 36 / 15 = 2.4 Msps at VDDA below 2.0 V meets ES-04, OVER8 = 1 with the timeout meets ES-05, and TDC with bus-off recovery meets ES-08; ES-09 needs BOR level 3, and level 0 is selected.",
+                "reference_paragraphs": [
+                  11,
+                  79,
+                  187,
+                  192,
+                  193,
+                  194,
+                  195,
+                  196,
+                  197,
+                  198,
+                  199,
+                  200,
+                  204,
+                  205,
+                  208,
+                  209,
+                  242,
+                  243,
+                  246
+                ],
+                "reference_sentences": [],
+                "references_reviewed": true
+              }
+            ],
+            "custom_data": {
+              "source_clauses": [
+                "1.5",
+                "7.2",
+                "Table E1: C",
+                "Table E2: ES-01",
+                "Table E2: ES-02",
+                "Table E2: ES-03",
+                "Table E2: ES-04",
+                "Table E2: ES-05",
+                "Table E2: ES-06",
+                "Table E2: ES-07",
+                "Table E2: ES-08",
+                "Table E2: ES-09",
+                "ES-04",
+                "ES-05",
+                "ES-08",
+                "ES-09",
+                "DR-114.1",
+                "DR-114.2",
+                "DR-114.5"
+              ]
+            }
+          },
+          {
+            "type": "NumericalConcept",
+            "name": "DR-114 maximum ADC INL in LSB",
+            "description": "The maximum magnitude of the INL, in LSB, that the documentation gives for the ADC configuration of the DR-114 production boards with firmware FW 2.3.0",
+            "add_justifications": true,
+            "justification_depth": "brief",
+            "justification_max_sents": 2,
+            "llm_role": "extractor_text",
+            "add_references": true,
+            "reference_depth": "paragraphs",
+            "singular_occurrence": true,
+            "numeric_type": "int",
+            "reviewed": true,
+            "items": [
+              {
+                "value": 6,
+                "justification": "fS = 36 / (2.5 + 12.5) = 2.4 Msps above 2.0 Msps with VDDA below 2.0 V meets ES-04, whose workaround FW 2.3.0 does not implement, so the maximum INL is ±6 LSB instead of ±4 LSB.",
+                "reference_paragraphs": [
+                  79,
+                  83,
+                  204,
+                  243,
+                  246,
+                  249
+                ],
+                "reference_sentences": [],
+                "references_reviewed": true
+              }
+            ],
+            "custom_data": {
+              "source_clauses": [
+                "7.2",
+                "Table 17: INL, integral non-linearity",
+                "ES-04",
+                "DR-114.2",
+                "DR-114.5",
+                "DR-114.8"
+              ]
+            }
+          },
+          {
+            "type": "BooleanConcept",
+            "name": "FW 2.3.0 meets HDR-9 for the DR-114 production boards",
+            "description": "Whether firmware FW 2.3.0 meets Halyard's design rule HDR-9 for the DR-114 production boards",
+            "add_justifications": true,
+            "justification_depth": "brief",
+            "justification_max_sents": 2,
+            "llm_role": "extractor_text",
+            "add_references": true,
+            "reference_depth": "paragraphs",
+            "singular_occurrence": true,
+            "reviewed": true,
+            "items": [
+              {
+                "value": false,
+                "justification": "HDR-9 requires the workarounds of ES-04, ES-05 and ES-08; FW 2.3.0 implements those of ES-02 and ES-05 only.",
+                "reference_paragraphs": [
+                  11,
+                  79,
+                  187,
+                  192,
+                  193,
+                  194,
+                  195,
+                  196,
+                  197,
+                  198,
+                  199,
+                  200,
+                  204,
+                  205,
+                  208,
+                  209,
+                  242,
+                  243,
+                  246,
+                  248,
+                  249
+                ],
+                "reference_sentences": [],
+                "references_reviewed": true
+              }
+            ],
+            "custom_data": {
+              "source_clauses": [
+                "1.5",
+                "7.2",
+                "Table E1: C",
+                "Table E2: ES-01",
+                "Table E2: ES-02",
+                "Table E2: ES-03",
+                "Table E2: ES-04",
+                "Table E2: ES-05",
+                "Table E2: ES-06",
+                "Table E2: ES-07",
+                "Table E2: ES-08",
+                "Table E2: ES-09",
+                "ES-04",
+                "ES-05",
+                "ES-08",
+                "ES-09",
+                "DR-114.1",
+                "DR-114.2",
+                "DR-114.5",
+                "DR-114.7",
+                "DR-114.8"
+              ]
+            }
+          }
+        ],
+        "aspects": []
+      },
+      {
+        "type": "Aspect",
+        "name": "DR-115 errata and PLL1 limits",
+        "description": "What is needed to decide which errata apply to the DR-115 boards, the highest PLL1 VCO frequency permitted for them, and whether their PLL1 configuration is within all the limits that apply to them: the device identification, the errata and their conditions, the PLL rules, and the DR-115 records",
+        "add_justifications": false,
+        "justification_depth": "brief",
+        "justification_max_sents": 2,
+        "llm_role": "extractor_text",
+        "reference_depth": "paragraphs",
+        "reviewed": true,
+        "reference_paragraphs": [
+          9,
+          11,
+          45,
+          46,
+          47,
+          52,
+          54,
+          57,
+          186,
+          192,
+          193,
+          194,
+          195,
+          196,
+          197,
+          198,
+          199,
+          200,
+          202,
+          203,
+          204,
+          205,
+          207,
+          209,
+          255,
+          256,
+          257,
+          258,
+          259
+        ],
+        "reference_sentences": [],
+        "items": [],
+        "custom_data": {},
+        "concepts": [
+          {
+            "type": "LabelConcept",
+            "name": "Errata applicable to the DR-115 boards",
+            "description": "Every erratum that is present in the silicon revision of the DR-115 boards and whose conditions their configuration and environment meet",
+            "add_justifications": true,
+            "justification_depth": "brief",
+            "justification_max_sents": 2,
+            "llm_role": "extractor_text",
+            "add_references": true,
+            "reference_depth": "paragraphs",
+            "singular_occurrence": true,
+            "labels": [
+              "ES-01",
+              "ES-02",
+              "ES-03",
+              "ES-04",
+              "ES-05",
+              "ES-06",
+              "ES-07",
+              "ES-08",
+              "ES-09"
+            ],
+            "classification_type": "multi_label",
+            "reviewed": true,
+            "items": [
+              {
+                "value": [
+                  "ES-02",
+                  "ES-07"
+                ],
+                "justification": "Revision B has ES-02, ES-03, ES-04, ES-05, ES-07 and ES-09. fVCO = 6 × 144 = 864 MHz above 836 MHz with an ambient down to −25 °C meets ES-02, and the TI mode of SPI2 meets ES-07; VOS0, VDDA of 3.3 V, OVER8 = 0 and a grade I device whose Tj stays below 125 °C exclude the others.",
+                "reference_paragraphs": [
+                  9,
+                  11,
+                  47,
+                  186,
+                  192,
+                  193,
+                  194,
+                  195,
+                  196,
+                  197,
+                  198,
+                  199,
+                  200,
+                  202,
+                  203,
+                  204,
+                  205,
+                  207,
+                  209,
+                  255,
+                  256,
+                  257,
+                  258,
+                  259
+                ],
+                "reference_sentences": [],
+                "references_reviewed": true
+              }
+            ],
+            "custom_data": {
+              "source_clauses": [
+                "1.3",
+                "1.5",
+                "5.3",
+                "Table E1: B",
+                "Table E2: ES-01",
+                "Table E2: ES-02",
+                "Table E2: ES-03",
+                "Table E2: ES-04",
+                "Table E2: ES-05",
+                "Table E2: ES-06",
+                "Table E2: ES-07",
+                "Table E2: ES-08",
+                "Table E2: ES-09",
+                "ES-02",
+                "ES-03",
+                "ES-04",
+                "ES-05",
+                "ES-07",
+                "ES-09",
+                "DR-115.1",
+                "DR-115.2",
+                "DR-115.3",
+                "DR-115.4",
+                "DR-115.5"
+              ]
+            }
+          },
+          {
+            "type": "NumericalConcept",
+            "name": "DR-115 maximum PLL1 VCO frequency in MHz",
+            "description": "The highest PLL1 VCO frequency, in MHz, permitted for the DR-115 boards, including the limits of the errata that apply to them",
+            "add_justifications": true,
+            "justification_depth": "brief",
+            "justification_max_sents": 2,
+            "llm_role": "extractor_text",
+            "add_references": true,
+            "reference_depth": "paragraphs",
+            "singular_occurrence": true,
+            "numeric_type": "int",
+            "reviewed": true,
+            "items": [
+              {
+                "value": 836,
+                "justification": "The wide VCO range allows 960 MHz, but ES-02 applies to the revision B devices, whose junction temperature can fall below 0 °C at an ambient of −25 °C: its workaround keeps fVCO at or below 836 MHz.",
+                "reference_paragraphs": [
+                  54,
+                  186,
+                  193,
+                  202,
+                  255,
+                  257
+                ],
+                "reference_sentences": [],
+                "references_reviewed": true
+              }
+            ],
+            "custom_data": {
+              "source_clauses": [
+                "Table 10: fVCO, wide VCO range",
+                "Table E1: B",
+                "Table E2: ES-02",
+                "ES-02",
+                "DR-115.1",
+                "DR-115.3"
+              ]
+            }
+          },
+          {
+            "type": "BooleanConcept",
+            "name": "DR-115 PLL1 configuration within its limits",
+            "description": "Whether the PLL1 configuration recorded for the DR-115 boards is within every limit that applies to them, including the workarounds of the errata",
+            "add_justifications": true,
+            "justification_depth": "brief",
+            "justification_max_sents": 2,
+            "llm_role": "extractor_text",
+            "add_references": true,
+            "reference_depth": "paragraphs",
+            "singular_occurrence": true,
+            "reviewed": true,
+            "items": [
+              {
+                "value": false,
+                "justification": "fREF = 24 / 4 = 6 MHz fits PLL1RGE = 10, but fVCO = 6 × 144 = 864 MHz is above the 836 MHz that the workaround of ES-02 permits.",
+                "reference_paragraphs": [
+                  47,
+                  52,
+                  54,
+                  57,
+                  186,
+                  193,
+                  202,
+                  255,
+                  257,
+                  258
+                ],
+                "reference_sentences": [],
+                "references_reviewed": true
+              }
+            ],
+            "custom_data": {
+              "source_clauses": [
+                "5.3",
+                "Table 10: fREF, PLL input frequency",
+                "Table 10: fVCO, wide VCO range",
+                "5.4",
+                "Table E1: B",
+                "Table E2: ES-02",
+                "ES-02",
+                "DR-115.1",
+                "DR-115.3",
+                "DR-115.4"
+              ]
+            }
+          }
+        ],
+        "aspects": []
+      },
+      {
+        "type": "Aspect",
+        "name": "Revision B end of life",
+        "description": "What is needed to establish Halyard's last-time-buy date and the last-shipment date of revision B devices, and whether purchase order PO-5521 is a valid last-time-buy order: the PCN terms and their amendment, the counting of calendar days, and the Halyard purchasing records",
+        "add_justifications": false,
+        "justification_depth": "brief",
+        "justification_max_sents": 2,
+        "llm_role": "extractor_text",
+        "reference_depth": "paragraphs",
+        "reviewed": true,
+        "reference_paragraphs": [
+          4,
+          220,
+          225,
+          226,
+          228,
+          264,
+          265
+        ],
+        "reference_sentences": [],
+        "items": [],
+        "custom_data": {},
+        "concepts": [
+          {
+            "type": "DateConcept",
+            "name": "Halyard last-time-buy date for revision B",
+            "description": "The last date on which Halyard Drives AS can place a last-time-buy order for revision B devices",
+            "add_justifications": true,
+            "justification_depth": "brief",
+            "justification_max_sents": 2,
+            "llm_role": "extractor_text",
+            "add_references": true,
+            "reference_depth": "paragraphs",
+            "singular_occurrence": true,
+            "reviewed": true,
+            "items": [
+              {
+                "value": "2026-10-13",
+                "justification": "The LTB date of PCN-2611 is 90 days after 15 June 2026, i.e. 13 September 2026; Halyard registered its forecast on 29 July, by 31 July, so PCN-2611-A1 extends it by 30 days to 13 October 2026.",
+                "reference_paragraphs": [
+                  4,
+                  220,
+                  225,
+                  228,
+                  264
+                ],
+                "reference_sentences": [],
+                "references_reviewed": true
+              }
+            ],
+            "custom_data": {
+              "source_clauses": [
+                "Conventions",
+                "III.1",
+                "III.6",
+                "III.9",
+                "P-1"
+              ]
+            }
+          },
+          {
+            "type": "DateConcept",
+            "name": "Last-shipment date of revision B",
+            "description": "The last date on which revision B devices are shipped to Halyard Drives AS",
+            "add_justifications": true,
+            "justification_depth": "brief",
+            "justification_max_sents": 2,
+            "llm_role": "extractor_text",
+            "add_references": true,
+            "reference_depth": "paragraphs",
+            "singular_occurrence": true,
+            "reviewed": true,
+            "items": [
+              {
+                "value": "2027-03-12",
+                "justification": "The LTS date is 180 days after the LTB date of PCN-2611, 13 September 2026, i.e. 12 March 2027; PCN-2611-A1 leaves it unchanged.",
+                "reference_paragraphs": [
+                  4,
+                  220,
+                  225,
+                  226,
+                  228
+                ],
+                "reference_sentences": [],
+                "references_reviewed": true
+              }
+            ],
+            "custom_data": {
+              "source_clauses": [
+                "Conventions",
+                "III.1",
+                "III.6",
+                "III.7",
+                "III.9"
+              ]
+            }
+          },
+          {
+            "type": "BooleanConcept",
+            "name": "PO-5521 valid last-time-buy order",
+            "description": "Whether purchase order PO-5521 is accepted as a last-time-buy order for revision B devices",
+            "add_justifications": true,
+            "justification_depth": "brief",
+            "justification_max_sents": 2,
+            "llm_role": "extractor_text",
+            "add_references": true,
+            "reference_depth": "paragraphs",
+            "singular_occurrence": true,
+            "reviewed": true,
+            "items": [
+              {
+                "value": true,
+                "justification": "PO-5521 was placed on 2 October 2026, within the LTB period extended to 13 October 2026 for Halyard, which registered its forecast by 31 July 2026.",
+                "reference_paragraphs": [
+                  4,
+                  220,
+                  225,
+                  228,
+                  264,
+                  265
+                ],
+                "reference_sentences": [],
+                "references_reviewed": true
+              }
+            ],
+            "custom_data": {
+              "source_clauses": [
+                "Conventions",
+                "III.1",
+                "III.6",
+                "III.9",
+                "P-1",
+                "P-2"
+              ]
+            }
+          }
+        ],
+        "aspects": []
+      }
+    ]
+  }
+}
