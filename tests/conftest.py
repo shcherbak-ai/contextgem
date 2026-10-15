@@ -164,6 +164,86 @@ def _cassette_exists(cassette_path: str) -> bool:
     return os.path.exists(cassette_path)
 
 
+def records_cassette(request: pytest.FixtureRequest) -> bool:
+    """
+    Returns whether a test records its cassette, i.e. sends live requests: it is
+    marked with ``@pytest.mark.vcr`` and its cassette does not exist yet. A test
+    whose cassette exists replays it.
+
+    :param request: pytest request object
+    :return: True if the test records its cassette, False otherwise
+    :rtype: bool
+    """
+    return bool(request.node.get_closest_marker("vcr")) and not _cassette_exists(
+        _get_cassette_path(request)
+    )
+
+
+# The cassettes of the VCR-marked tests of the session, by their paths, each with
+# whether its test records it, in the stash of the config of the session (see
+# `_note_cassette`)
+_SESSION_CASSETTES = pytest.StashKey[dict[str, bool]]()
+
+
+@pytest.fixture(autouse=True)
+def _note_cassette(request):
+    """
+    Notes the cassette of a VCR-marked test, and whether the test records it or
+    replays it, so that what the requests of the cassettes of the session cost is
+    reported at its end (see `pytest_terminal_summary`).
+
+    A recorded cassette is written when the test ends, after the fixtures of this
+    module are finalized, so it is looked for at the end of the session. vcrpy
+    also runs its recording hooks when it loads an existing cassette, so these
+    hooks cannot tell a recording from a replay.
+    """
+    if request.node.get_closest_marker("vcr"):
+        request.config.stash.setdefault(_SESSION_CASSETTES, {})[
+            _get_cassette_path(request)
+        ] = records_cassette(request)
+
+
+def pytest_terminal_summary(terminalreporter, config):
+    """
+    Reports what the requests of the cassettes of the session cost, after
+    the results of the tests, priced from the usage in the recorded responses at
+    the current prices (see `tests/cassette_costs.py`): a table of the requests
+    recorded in the session, if any test recorded its cassette, and the total of
+    the requests replayed, i.e. what they would cost if they were sent live.
+    A session without VCR-marked tests reports nothing.
+    """
+    cassettes = config.stash.get(_SESSION_CASSETTES, {})
+    if not cassettes:
+        return
+    # A test that recorded no request has written no cassette
+    recorded = [
+        path
+        for path, is_recorded in cassettes.items()
+        if is_recorded and _cassette_exists(path)
+    ]
+    replayed = [path for path, is_recorded in cassettes.items() if not is_recorded]
+    # Imported here, as `tests.cassette_costs` imports from this module
+    from tests.cassette_costs import (
+        count_cassettes,
+        format_costs,
+        format_replayed_costs,
+        price_cassettes,
+    )
+
+    terminalreporter.write_sep("=", "cost of the requests in the cassettes")
+    if recorded:
+        for line in format_costs(
+            price_cassettes(recorded),
+            f"Requests recorded in this session, in {count_cassettes(len(recorded))}",
+        ):
+            terminalreporter.write_line(line)
+        terminalreporter.write_line("")
+    else:
+        terminalreporter.write_line("No request was recorded in this session.")
+    if replayed:
+        terminalreporter.write_line(format_replayed_costs(price_cassettes(replayed)))
+
+
 # Hosts that SaT models are downloaded from (HuggingFace)
 _SAT_MODEL_DOWNLOAD_HOSTS = ("huggingface.co", "*.huggingface.co", "hf.co", "*.hf.co")
 

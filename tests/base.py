@@ -24,6 +24,7 @@ from contextgem.public import (
     ModelPricing,
     StringConcept,
 )
+from tests.conftest import records_cassette
 from tests.utils import (
     TestUtils,
     get_project_root_path,
@@ -195,6 +196,14 @@ class BaseTest(TestUtils):
         ),
         images=[test_img_png_invoice],
     )
+
+    @pytest.fixture(autouse=True)
+    def note_cassette_recording(self, request):
+        """
+        Notes whether the test records its cassette, i.e. sends live requests, for
+        the helpers that set the LLMs up for replayed responses only.
+        """
+        self.records_cassette = records_cassette(request)
 
     @pytest.fixture(autouse=True)
     def reset_llms_usage_and_cost(self):

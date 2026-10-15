@@ -354,6 +354,33 @@ def get_provenance() -> dict[str, Any]:
     return {"litellm": metadata.version("litellm"), "prompts": prompts}
 
 
+def get_usage_record(model: DocumentLLM | DocumentDecisionModel) -> dict[str, Any]:
+    """
+    Returns the usage of a model as a result records it: the requests, the tokens
+    and the cost.
+
+    :param model: The model, with the requests of the result recorded in its usage.
+    :type model: DocumentLLM | DocumentDecisionModel
+    :return: The number of requests and of those without a response, the input,
+        output and cache tokens, and the cost in USD as a string, which is 0 for
+        a model without prices, i.e. a local one.
+    :rtype: dict[str, Any]
+    """
+    usage = model.get_usage()[0].usage
+    cost = model.get_cost()[0].cost
+    return {
+        "requests": len(usage.calls),
+        "requests_without_response": sum(
+            call.timestamp_received is None for call in usage.calls
+        ),
+        "input_tokens": usage.input,
+        "output_tokens": usage.output,
+        "cache_read_tokens": usage.cache_read,
+        "cache_write_tokens": usage.cache_write,
+        "cost_total": str(cost.total),
+    }
+
+
 def get_model_slug(model: str) -> str:
     """
     Returns a model identifier in a form that can be a part of a file name.

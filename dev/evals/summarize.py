@@ -14,7 +14,8 @@ uv run python -m dev.evals.summarize --label my_experiment
 
 Writes ``results/<label>/summary.md`` and ``results/<label>/summary.json``, and
 prints the summary. The verdicts of the judge on the runs (``results/<label>/judgments/``,
-written by ``dev.evals.judge``) are summarized too, where they exist.
+written by ``dev.evals.judge``) are summarized too, where they exist, and what
+the requests of the experiment cost (see ``dev.evals.costs``).
 """
 
 from __future__ import annotations
@@ -25,6 +26,7 @@ import statistics
 from collections import defaultdict
 from typing import Any
 
+from dev.evals.costs import PART_NAMES, get_costs, get_total
 from dev.evals.harness import RESULTS_DIR, write_json
 
 
@@ -176,6 +178,49 @@ def _get_judged_lines(
     return lines
 
 
+def _get_cost_lines(label: str) -> list[str]:
+    """
+    Returns the section of the summary on what the requests of the experiment
+    cost: the runs, the judge and the passes of ``decision_probabilities``, and
+    the total.
+
+    :param label: The label of the experiment.
+    :type label: str
+    :return: The lines of the section.
+    :rtype: list[str]
+    """
+    costs = get_costs(label)
+    lines = [
+        "",
+        "## Cost",
+        "",
+        "| Part | Files | Requests | Cost (USD) |",
+        "|---|---|---|---|",
+    ]
+    for part, name in PART_NAMES.items():
+        cost = costs[part]
+        if not cost.files:
+            continue
+        recorded = cost.files - cost.files_without_cost
+        lines.append(
+            f"| {name} | {cost.files} | "
+            f"{f'{cost.requests:,}' if recorded else 'n/a'} | "
+            f"{f'{cost.cost:.4f}' if recorded else 'not recorded'} |"
+        )
+    lines.append(f"| Total | | | {get_total(costs):.4f} |")
+    n_without_cost = sum(cost.files_without_cost for cost in costs.values())
+    if n_without_cost:
+        lines += [
+            "",
+            (
+                f"{n_without_cost} files record no cost (the passes of "
+                "`decision_probabilities` recorded before 2026-10-15): the total "
+                "leaves them out."
+            ),
+        ]
+    return lines
+
+
 def summarize(label: str) -> tuple[str, list[dict[str, Any]]]:
     """
     Summarizes the runs of an experiment.
@@ -268,6 +313,8 @@ def summarize(label: str) -> tuple[str, list[dict[str, Any]]]:
 
     if judgments:
         lines += _get_judged_lines(groups, judgments)
+
+    lines += _get_cost_lines(label)
 
     lines += ["", "## Concepts missed", ""]
     for (case, model, mode), group in sorted(groups.items()):

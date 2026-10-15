@@ -16,6 +16,7 @@ Measures the quality and the cost of extraction on evaluation cases with referen
 | `scoring.py` | Scores an extracted document against the reference answers |
 | `run_eval.py` | Extracts a case with a model and scores it (**live requests**) |
 | `summarize.py` | Summary of the runs of a label (offline) |
+| `costs.py` | What the requests of each label cost, from the costs that its results record (offline) |
 | `rescore.py` | Scores the recorded runs of a label again, after a change in the reference answers (offline) |
 | `decision_probabilities.py` | Probabilities of a decision model for the aspects of a case (**live requests**) |
 | `threshold_sweep.py` | Decision threshold sweep over the recorded probabilities (offline) |
@@ -66,6 +67,10 @@ uv run python -m dev.evals.run_eval --case complex_nda --kind decision --model s
 # Summary of the runs of a label (offline)
 uv run python -m dev.evals.summarize --label my_experiment
 
+# What the requests of every label, or of one, cost (offline)
+uv run python -m dev.evals.costs
+uv run python -m dev.evals.costs --label my_experiment
+
 # Score the recorded runs again after a change in the reference answers (offline)
 uv run python -m dev.evals.rescore --label my_experiment
 
@@ -95,7 +100,7 @@ uv run python -m dev.evals.check_scorer
   The judge is asked one yes/no question at a time, with the questions of `judge.py`, not with the prompts of the library, so that a change of the library does not change the judge. A verdict is "correct" at a probability of 0.5 or more; the probability is kept. The judgment of a run records the judge, a hash of its questions and of the reference answers it judged against, and its cost. Decision models give no strings, objects or justifications, so their runs are not judged.
 - **The judge is checked before it is used**: `cases/judge_checks.json` has candidate answers of the three cases whose verdict is known, right ones in other words and wrong ones with the mistakes a capable model makes. `judge --checks` records how often the judge agrees, for each kind, in `results/<label>/judge_checks.json`. Read a judged score with that agreement in mind.
 - **References of concepts**: F1 of the referenced paragraphs.
-- **Cost**: requests, input, cached and output tokens, seconds, retries for invalid data.
+- **Cost**: requests, input, cached and output tokens, seconds, retries for invalid data, and the cost in USD, which each run, judgment, check of the judge and pass of `decision_probabilities` records (the passes recorded before 2026-10-15 have none). The summary of a label adds them up (Cost), and `costs` does so for every label; `uv run fab costs` prints it with what the requests recorded for the tests cost.
 - **Decision models** extract all the aspects, and of the concepts only the Boolean, label and rating ones (the closed concepts), without justifications and references. Their concept counts are not comparable with those of the LLMs: compare the two kinds of model on the aspects and on the column "Closed concepts correct" of the summary, which counts the closed concepts only, for every model. The judged columns are of LLMs only, and no score adds them up with the others, so a decision model loses nothing for what it does not extract.
 - **The aspects of the cases favour models that read the whole document**: most are defined by what is needed to answer a question about a board, an incident or a claim, which a decision model, judging each paragraph on its own, cannot see. On `complex_mcu`, the decision models score an aspect F1 of 0.40 to 0.66 on the four aspects of the boards, and 0.66 to 0.84 on the other three; the hosted LLMs 0.85 to 0.95, and 0.95 to 1.00. A difference between the two kinds of model on the aspects is partly this.
 

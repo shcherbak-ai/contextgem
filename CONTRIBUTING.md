@@ -83,6 +83,7 @@ uv run fab docs-live       # Start live documentation server
 uv run fab readme          # Regenerate README.md from template
 uv run fab readme-preview  # Serve README.md as GitHub renders it
 uv run fab social-preview  # Render social/github-social-preview.png from its SVG
+uv run fab costs           # Report what the recorded requests of the tests and evals cost
 uv run fab install-hooks   # Install pre-commit hooks
 ```
 
@@ -119,6 +120,7 @@ contextgem/
 ├── tests/
 │   ├── cassettes/                # 📼 VCR recordings (auto-generated)
 │   ├── base.py                   # 🧱 Base class of feature/integration tests (shared test objects)
+│   ├── cassette_costs.py         # 💰 Prices the requests recorded in the cassettes
 │   ├── test_<area>.py            # ✅ Feature/integration tests, one module per feature area
 │   ├── test_properties.py        # 🎲 Hypothesis property tests for pure helpers
 │   ├── test_units.py             # 🔬 Example-based unit tests for pure helpers
@@ -364,7 +366,7 @@ When you change how the output of a model is read, how the calls are retried or 
 
 ### 📊 Extraction Evaluation
 
-The tests check what the extraction does; **`dev/evals/`** measures how well it does it, and at what cost. It extracts evaluation cases, i.e. complex documents with reference answers (two contracts and the technical documentation of a microcontroller), with real models, and scores the aspects, the concepts and their references against the answers. A decision model, used as a judge, scores what cannot be compared exactly: narrative answers, justifications and text fields. Recorded baselines give the scores and the costs of the models at one state of the library. The harness is not a part of the package, and the tests do not run it.
+The tests check what the extraction does; **`dev/evals/`** measures how well it does it, and at what cost. It extracts evaluation cases, i.e. complex documents with reference answers (two contracts and the technical documentation of a microcontroller), with real models, and scores the aspects, the concepts and their references against the answers. A decision model, used as a judge, scores what cannot be compared exactly: narrative answers, justifications and text fields. Recorded baselines give the scores and the costs of the models at one state of the library, and `uv run fab costs` adds up the costs that the results record. The harness is not a part of the package, and the tests do not run it.
 
 A change that can affect the quality of the extraction, e.g. to a prompt template, to how the output of a model is read, or to a default, is measured there: the version with the change and the version without it are run at the same time and compared. The harness sends live requests, which are paid for and need the API keys of the providers, so the maintainer runs it; say in your pull request if you think a change needs it. Its rules, commands and baselines are in [dev/evals/AGENTS.md](dev/evals/AGENTS.md).
 
@@ -518,7 +520,7 @@ Based on the test results and your changes, you'll fall into one of these four s
    uv run pytest
    ```
 
-> ⚠️ **Important:** This will use significant API quota and may incur substantial costs!
+> ⚠️ **Important:** This will use significant API quota and may incur substantial costs! Before deleting the cassettes, run `uv run fab costs` to see what recording them again costs (see [Important Notes](#important-notes)).
 
 ---
 
@@ -559,6 +561,8 @@ The host of TypeSafe (`api.typesafe.ai`) is on the list of the hosts allowed whi
 #### Important Notes
 
 > **💰 Cost Warning:** Recording cassettes for test methods that use live LLM API (non-local LLMs) uses your API keys and **will incur charges**. Scenario 4 (re-recording all cassettes) can be particularly expensive.
+>
+> **💵 What recording costs:** Each recorded response keeps the usage of its request, so the cost of the cassettes is computed from them, without sending a request. `uv run fab costs` prices the requests in all the cassettes at the current prices of `genai-prices`, i.e. what recording them again would cost, by model and for the most expensive cassettes. `uv run fab costs --changed` prices only the cassettes that differ from the last commit. A test run reports at its end, after the results of the tests, what the requests of the cassettes it recorded cost, by model, and what those of the cassettes it replayed would cost if they were sent live. Requests to local models are free. A model that `genai-prices` has no price for gets its price in `tests/cassette_costs.py`: the report names the models that have none.
 >
 > **📼 Cassette names:** Cassette files are named `<TestClass>.<test name>.yaml`. If you move a test that calls LLM APIs to another test class, rename its cassette files accordingly (with `git mv`) in the same change. Otherwise, the test will not find its cassette and will record a new one.
 

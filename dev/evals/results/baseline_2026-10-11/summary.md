@@ -27,6 +27,16 @@ Decision models extract only the closed concepts (Boolean, label and rating conc
 | complex_nda | strands_decider/nimble | decision_default | 1 | 0.692 | 3/6 | 3/6 | n/a | 76 | 286,023 | 0 | 388 | 44 | 0 |
 | complex_nda | typesafe/jev-latest | decision_default | 2 | 0.824 (0.817-0.830) | 3/6 | 3/6 | n/a | 76 | 65,312 (65,306-65,318) | 0 | 5,652 | 18 (18-18) | 0 |
 
+## Cost
+
+| Part | Files | Requests | Cost (USD) |
+|---|---|---|---|
+| Runs | 44 | 2,188 | 0.6329 |
+| Decision probabilities | 10 | n/a | not recorded |
+| Total | | | 0.6329 |
+
+10 files record no cost (the passes of `decision_probabilities` recorded before 2026-10-15): the total leaves them out.
+
 ## Concepts missed
 
 - **complex_dpa, azure_ai/ms-decision-model, decision_default** (2 runs): Applicable initial notification regime (LabelConcept): 2x

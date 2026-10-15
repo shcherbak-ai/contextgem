@@ -140,6 +140,7 @@ When adding or modifying functionality:
 - Cassette files are named `<TestClass>.<test name>.yaml`: when moving a VCR test to another test class, rename its cassettes with `git mv` in the same change (a test whose cassette is missing records live)
 - If tests fail due to cassette mismatches, **inform the user** that cassettes need re-recording
 - The user will handle cassette re-recording themselves (requires API keys and may incur costs)
+- **What recording costs is computed offline, never by recording**: `uv run fab costs` prices the usage in the recorded responses at the current prices (`--changed` for the cassettes that differ from the last commit), and adds up the costs recorded in the results of `dev/evals/`. A test run reports at its end what the cassettes it recorded cost, and what those it replayed would cost if sent live
 - See [CONTRIBUTING.md - VCR Cassette Management](CONTRIBUTING.md#-vcr-cassette-management) for scenarios
 
 ## Git Policy
@@ -169,6 +170,7 @@ uv sync --all-groups                    # Install dependencies
 npm ci                                  # Install the development tools of package.json
 uv run pre-commit run --all-files       # Run all linters/formatters
 uv run fab readme-preview               # Serve README.md as GitHub renders it
+uv run fab costs                        # What the recorded requests of the tests and evals cost
 uv run pytest                           # Run tests (uses recorded cassettes)
 uv run pytest --cov=contextgem          # Run tests with coverage
 uv run pytest tests/test_extraction.py::TestExtraction::test_specific  # Run specific test

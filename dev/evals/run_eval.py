@@ -38,6 +38,7 @@ from dev.evals.harness import (
     create_model,
     get_model_slug,
     get_provenance,
+    get_usage_record,
     load_case,
     scrub,
     write_json,
@@ -174,8 +175,6 @@ def run_once(
     seconds = time.time() - started
 
     warning_messages = [str(warning.message) for warning in caught_warnings]
-    usage = extractor.get_usage()[0].usage
-    cost = extractor.get_cost()[0].cost
     return {
         "case": case,
         "model": model,
@@ -185,17 +184,7 @@ def run_once(
         "run": run,
         "error": error,
         "seconds": round(seconds, 1),
-        "usage": {
-            "requests": len(usage.calls),
-            "requests_without_response": sum(
-                call.timestamp_received is None for call in usage.calls
-            ),
-            "input_tokens": usage.input,
-            "output_tokens": usage.output,
-            "cache_read_tokens": usage.cache_read,
-            "cache_write_tokens": usage.cache_write,
-            "cost_total": str(cost.total),
-        },
+        "usage": get_usage_record(extractor),
         "retries_for_invalid_data": sum(
             message.startswith("Retrying ") for message in log_capture.messages
         ),

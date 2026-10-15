@@ -57,10 +57,6 @@ from contextgem.public import (
 from tests.conftest import VCR_DUMMY_ENDPOINT_PREFIX, VCR_REDACTION_MARKER
 
 
-# A global VCR recordings counter
-vcr_new_recording_count = 0
-
-
 VCR_FILTER_HEADERS = {
     "api-key",
     "apim-request-id",
@@ -116,18 +112,6 @@ _FOUNDRY_RESOURCE_URI_START_PATTERN = re.compile(
 _FOUNDRY_PROJECT_PATH_PATTERN = re.compile(
     r"/api/projects/[^/?#]+", flags=re.IGNORECASE
 )
-
-
-def vcr_count_recording(response):
-    """
-    Counts VCR recordings by incrementing the global counter.
-
-    :param response: The VCR response object.
-    :return: The unmodified response object.
-    """
-    global vcr_new_recording_count
-    vcr_new_recording_count += 1
-    return response
 
 
 def vcr_before_record_request(request):
@@ -242,7 +226,6 @@ def vcr_before_record_response(response):
             logger.debug(
                 "Could not redact response body - not valid JSON or unexpected structure"
             )
-    vcr_count_recording(response)
     return response
 
 
@@ -356,6 +339,10 @@ class TestUtils:
     """
     Class with tests-related utility functions.
     """
+
+    # Whether the running test records its cassette, i.e. sends live requests (set
+    # before each test of `BaseTest`)
+    records_cassette = False
 
     def check_instance_serialization_and_cloning(self, instance: _InstanceBase) -> None:
         """
@@ -1404,8 +1391,8 @@ class TestUtils:
             llm.output_language = output_language
         logger.debug(f"LLM output language set to `{output_language}`")
 
-    @staticmethod
     def config_llm_async_limiter_for_mock_responses(
+        self,
         llm: DocumentModelGroup | DocumentLLM,
     ) -> None:
         """
@@ -1413,13 +1400,17 @@ class TestUtils:
         DocumentLLM instance or DocumentModelGroup. The limiter is applied to the primary model
         and its fallback models, if applicable.
 
+        It is configured when the running test replays its cassette, or sends no
+        requests. A test that records its cassette sends live requests, so the limiter
+        is left as it is.
+
         :param llm: A DocumentLLM or DocumentModelGroup instance, representing the LLM
             models to configure.
         :type llm: DocumentModelGroup | DocumentLLM
         :return: None
         :rtype: None
         """
-        if vcr_new_recording_count:
+        if not self.records_cassette:
             limiter = AsyncLimiter(
                 100, 60
             )  # considerably increase the rate limit comparing to default limiter, as all responses are mock

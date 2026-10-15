@@ -45,6 +45,17 @@ String values, justifications and text fields of objects, over all the runs judg
 | complex_nda | openai/gpt-6-luna | default | 3 | 9/9 (1.00) | 62/63 (0.98) | 12/12 (1.00) | 70 | 0.0015 |
 | complex_nda | openai/gpt-6.1-sol | default | 1 | 3/3 (1.00) | 21/21 (1.00) | 4/4 (1.00) | 22 | 0.0005 |
 
+## Cost
+
+| Part | Files | Requests | Cost (USD) |
+|---|---|---|---|
+| Runs | 48 | 3,476 | 1.3253 |
+| Judge | 31 | 790 | 0.0169 |
+| Decision probabilities | 9 | n/a | not recorded |
+| Total | | | 1.3422 |
+
+9 files record no cost (the passes of `decision_probabilities` recorded before 2026-10-15): the total leaves them out.
+
 ## Concepts missed
 
 - **complex_dpa, azure_ai/ms-decision-model, decision_default** (2 runs): Applicable initial notification regime (LabelConcept): 2x

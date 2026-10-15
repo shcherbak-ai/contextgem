@@ -19,8 +19,8 @@ uv run python -m dev.evals.decision_probabilities --case complex_nda \
     --model typesafe/jev-latest --label my_experiment
 ```
 
-Writes ``results/<label>/decision_probabilities/<case>__<model>.json``. A pass
-whose file exists is skipped.
+Writes ``results/<label>/decision_probabilities/<case>__<model>.json``, with
+the usage and the cost of the pass. A pass whose file exists is skipped.
 """
 
 from __future__ import annotations
@@ -37,6 +37,7 @@ from dev.evals.harness import (
     create_model,
     get_model_slug,
     get_provenance,
+    get_usage_record,
     load_case,
     write_json,
 )
@@ -150,6 +151,7 @@ def main() -> None:
     # The score is printed only: the probabilities do not depend on the reference
     # answers, which a score recorded with them would
     aspect_f1 = score_document(document, gold)["summary"]["aspect_f1"]
+    usage = get_usage_record(model)
     write_json(
         path,
         {
@@ -158,14 +160,16 @@ def main() -> None:
             "aspects": [aspect.name for aspect in document.aspects],
             "probabilities": probabilities,
             "seconds": seconds,
+            "usage": usage,
             "provenance": get_provenance(),
         },
     )
     n_refused = sum(probability is None for row in probabilities for probability in row)
     print(
         f"{path.name}: {len(probabilities)} paragraphs x {len(document.aspects)} "
-        f"aspects, {n_refused} refused, {seconds} s, aspect F1 at the default "
-        f"threshold {aspect_f1:.3f}",
+        f"aspects, {n_refused} refused, {seconds} s, {usage['input_tokens']} input "
+        f"tokens, USD {usage['cost_total']}, aspect F1 at the default threshold "
+        f"{aspect_f1:.3f}",
         flush=True,
     )
 

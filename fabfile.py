@@ -357,6 +357,32 @@ def docs_live(c: Context, port: int = 9000) -> None:
 
 
 @task
+def costs(c: Context, changed: bool = False) -> None:
+    """
+    Report what the requests recorded for the tests and the evaluations cost.
+
+    The requests in the VCR cassettes are priced from the usage in their
+    responses, at the current prices of genai-prices, i.e. what recording them
+    again would cost (tests/cassette_costs.py). The costs of the evaluations are
+    the ones recorded in their results (dev/evals/costs.py). Sends no request.
+
+    Args:
+        changed: Price only the cassettes that differ from the last commit, i.e.
+            the ones recorded since, and leave out the evaluations
+
+    Example:
+        uv run fab costs
+        uv run fab costs --changed
+    """
+    if changed:
+        c.run("uv run python -m tests.cassette_costs --changed")
+        return
+    c.run("uv run python -m tests.cassette_costs")
+    print()
+    c.run("uv run python -m dev.evals.costs")
+
+
+@task
 def readme(c: Context) -> None:
     """Regenerate README.md from template."""
     c.run("uv run python dev/populate_project_readme.py")
