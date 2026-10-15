@@ -159,8 +159,16 @@ html_theme_options = {
     "use_download_button": True,
     "show_navbar_depth": 2,
     "pygments_dark_style": "github-dark-high-contrast",
-    # Footer customization
-    "extra_footer": f"<p><strong>⚠️ Official Documentation Notice:</strong> <a href='{site_url}'>{site_url}</a> is the only official source of ContextGem documentation. Be aware of unauthorized copies or mirrors.</p>",
+    # Footer customization: the theme's "By <author>" line is left out, as the
+    # extra footer names the author with the company and links to the company,
+    # which the © line cannot do (the theme escapes `copyright`)
+    "footer_content_items": [
+        "copyright.html",
+        "last-updated.html",
+        "extra-footer.html",
+    ],
+    "extra_footer": "<p>Developed by Sergii Shcherbak at <a href='https://shcherbak.ai/'>Shcherbak AI</a>.</p>"
+    f"<p><strong>⚠️ Official Documentation Notice:</strong> <a href='{site_url}'>{site_url}</a> is the only official source of ContextGem documentation. Be aware of unauthorized copies or mirrors.</p>",
 }
 html_link_suffix = "/"
 sitemap_url_scheme = "{link}"

@@ -305,7 +305,7 @@ ContextGem relies on these excellent open-source packages: [aiolimiter](https://
 
 Apache 2.0 License - see the [LICENSE](LICENSE) and [NOTICE](NOTICE) files for details.
 
-© 2025 [Shcherbak AI AS](https://shcherbak.ai) — Enterprise AI Engineering. We build AI agents that transform how enterprises operate.
+© 2025 [Shcherbak AI AS](https://shcherbak.ai) — Enterprise AI Engineering. We build AI agents to fit your enterprise — each verified, constrained, and governed.
 
 <!-- markdownlint-disable MD033 -->
 <p align="center"><img src="assets/contextgem-separator.svg" alt="" width="456" height="26"></p>
