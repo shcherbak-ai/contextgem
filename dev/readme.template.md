@@ -3,10 +3,10 @@
   <a href="https://contextgem.shcherbak.ai"><img src="docs/source/_static/contextgem_wordmark.svg" alt="ContextGem" width="576"></a>
 </p>
 
-<h1 align="center">Effortless LLM extraction from documents</h1>
+<h1 align="center">Extract structured data and insights from documents<br>using LLMs and decision models</h1>
 
 <p align="center">
-  Minimal code · Automated prompts · Multi-model
+  Describe, don't prompt.
 </p>
 
 <p align="center">
@@ -35,7 +35,7 @@
 >
 > **Upgrading from 0.x?** Some classes and parameters are renamed or removed, some defaults have changed, and Python 3.10 is no longer supported. Follow the [migration guide](https://contextgem.shcherbak.ai/migration_v1/), or point a coding agent at [llms.txt](https://contextgem.shcherbak.ai/llms.txt), the index of the documentation.
 
-ContextGem is a free, open-source framework that makes it radically easier to extract structured data and insights from documents with LLMs and decision models — with minimal code. You describe *what* to extract, and ContextGem handles *how*: the prompts, the data models, the source references and the justifications.
+ContextGem is a free, open-source framework that does the work around the models for you: the prompts, the data models, the source references and the justifications, with minimal code.
 
 <!-- markdownlint-disable MD033 -->
 <p align="center"><img src="assets/contextgem-separator.svg" alt="" width="456" height="26"></p>

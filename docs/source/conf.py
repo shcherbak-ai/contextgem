@@ -94,7 +94,7 @@ extensions = [
 # every page beside its HTML one. A page's line in it is its description.
 llms_txt_description = (
     "ContextGem is a free, open-source framework for extracting structured data "
-    "and insights from documents with LLMs and decision models: you describe "
+    "and insights from documents using LLMs and decision models: you describe "
     "what to extract as aspects and concepts, and ContextGem handles the "
     "prompts, the data models, the source references and the justifications."
 )
@@ -169,16 +169,19 @@ sitemap_url_scheme = "{link}"
 ogp_site_url = site_url
 ogp_image = f"{site_url}github-social-preview.png"
 ogp_image_alt = (
-    "The ContextGem wordmark and the line Effortless LLM extraction from documents, "
-    "beside a pixel-art duck in a hard hat that reads a document and holds up a gem, "
-    "by crates of documents and a mine cart heaped with gems."
+    "The ContextGem wordmark and the line Extract structured data and insights from "
+    "documents using LLMs and decision models, beside a pixel-art page of a document "
+    "whose two marked lines lead to an LLM and a decision model, and on to a gem."
 )
 ogp_custom_meta_tags = [
     '<meta property="og:image:width" content="1280">',
     '<meta property="og:image:height" content="640">',
     '<meta name="twitter:card" content="summary_large_image">',
 ]
-ogp_description = "ContextGem: Effortless LLM extraction from documents"
+ogp_description = (
+    "ContextGem: Extract structured data and insights from documents "
+    "using LLMs and decision models"
+)
 ogp_description_length = 200
 ogp_type = "website"
 ogp_use_first_image = False

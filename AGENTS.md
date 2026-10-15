@@ -11,7 +11,7 @@ For detailed contribution procedures, see `CONTRIBUTING.md`, which covers:
 
 ## Project Overview
 
-**ContextGem** is a Python framework for extracting structured data from documents with LLMs and decision models, using long context windows (not RAG-based).
+**ContextGem** is a Python framework for extracting structured data and insights from documents using LLMs and decision models, with long context windows (not RAG-based).
 
 - **Python**: 3.11-3.14
 - **License**: Apache 2.0

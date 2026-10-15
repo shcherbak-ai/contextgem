@@ -1,6 +1,6 @@
 # ContextGem
 
-Effortless LLM extraction from documents. ContextGem is a free, open-source framework that makes it radically easier to extract structured data and insights from documents with LLMs and decision models — with minimal code. You describe what to extract, and ContextGem handles the prompts, the data models, the source references and the justifications.
+Describe, don't prompt. ContextGem is a free, open-source framework that does the work around the models for you: you describe what to extract, and it handles the prompts, the data models, the source references and the justifications, with minimal code.
 
 **Upgrading from 0.x?** ContextGem 1.0 renames and removes classes and parameters, changes some defaults and drops Python 3.10, so code and serialized data written for 0.x may need changes. Follow the [migration guide](https://contextgem.shcherbak.ai/migration_v1/).
 

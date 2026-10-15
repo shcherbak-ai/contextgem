@@ -6,7 +6,7 @@
 Why ContextGem?
 ================
 
-ContextGem is a framework for extracting structured data and insights from documents with LLMs and decision models, designed to strike the right balance between ease of use, customizability, and accuracy.
+ContextGem is a framework for extracting structured data and insights from documents using LLMs and decision models, designed to strike the right balance between ease of use, customizability, and accuracy.
 
 You describe *what* to extract in natural language, and ContextGem handles *how* — prompt construction, data modelling, output parsing, source reference mapping, justifications, and pipeline orchestration are all built in.
 

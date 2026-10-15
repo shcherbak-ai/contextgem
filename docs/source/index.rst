@@ -1,7 +1,7 @@
-:og:description: ContextGem: Effortless LLM extraction from documents
+:og:description: ContextGem: Extract structured data and insights from documents using LLMs and decision models
 
 .. meta::
-   :description: ContextGem is a free, open-source framework for extracting structured data and insights from documents with LLMs and decision models: start here for the guides, examples and API reference.
+   :description: ContextGem is a free, open-source framework for extracting structured data and insights from documents using LLMs and decision models: start here for the guides, examples and API reference.
 
 .. image:: _static/contextgem_wordmark.svg
    :width: 576px
@@ -14,7 +14,7 @@
 Welcome to ContextGem Documentation!
 =====================================
 
-ContextGem is a free, open-source framework that makes it radically easier to extract structured data and insights from documents with LLMs and decision models — with minimal code.
+ContextGem is a free, open-source framework that makes it radically easier to extract structured data and insights from documents using LLMs and decision models — with minimal code.
 
 .. note::
    **New in 1.0: decision models.** Next to LLMs, ContextGem now works with :doc:`decision models <decision_models/decision_models>`, which answer closed questions (yes/no, one of your labels, a level of a scale) with the probability of each possible answer, fast and at a low cost.

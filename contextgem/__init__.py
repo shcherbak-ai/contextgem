@@ -2,7 +2,7 @@
 # SPDX-License-Identifier: Apache-2.0
 
 """
-ContextGem - Effortless LLM extraction from documents
+ContextGem - Extract structured data and insights from documents using LLMs and decision models
 """
 
 __version__ = "0.27.0"
