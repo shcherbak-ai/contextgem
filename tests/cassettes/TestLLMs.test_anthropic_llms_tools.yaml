@@ -1,0 +1,934 @@
+interactions:
+- request:
+    body: '{"model": "claude-haiku-5-5", "messages": [{"role": "user", "content":
+      [{"type": "text", "text": "Use the available tools to compute a final amount.
+      Call `get_order_total` and `get_discount_amount` with order_id=''ORD-123''.
+      Then call `compute_final_amount` using the exact outputs returned by these tools
+      as order_total and discount. Reply only with the number returned by `compute_final_amount`,
+      nothing else. Do not guess any values; you must call the tools."}]}], "tools":
+      [{"name": "get_order_total", "input_schema": {"type": "object", "properties":
+      {"order_id": {"type": "string"}}, "required": ["order_id"]}, "type": "custom",
+      "description": "Returns the total amount of the order."}, {"name": "get_discount_amount",
+      "input_schema": {"type": "object", "properties": {"order_id": {"type": "string"}},
+      "required": ["order_id"]}, "type": "custom", "description": "Returns the discount
+      amount for the order."}, {"name": "compute_final_amount", "input_schema": {"type":
+      "object", "properties": {"order_total": {"type": "string"}, "discount": {"type":
+      "string"}}, "required": ["order_total", "discount"]}, "type": "custom", "description":
+      "Computes the final amount as the order total minus the discount."}], "max_tokens":
+      128000}'
+    headers:
+      accept:
+      - application/json
+      accept-encoding:
+      - gzip, deflate
+      anthropic-version:
+      - '2023-06-01'
+      connection:
+      - keep-alive
+      content-length:
+      - '1229'
+      content-type:
+      - application/json
+      host:
+      - DUMMY
+      user-agent:
+      - litellm/1.105.1
+      x-api-key:
+      - DUMMY
+    method: POST
+    uri: https://api.anthropic.com/v1/messages
+  response:
+    body:
+      string: !!binary |
+        H4sIAAAAAAAA/6VSXU/jMBD8L35upaYkIHi843SID1Eq8QAnZBl7m5g63mCv+ar631kHIgin0z3w
+        lGRmPLOZ9Ua0aMCJA6GdSgamjbLrNK2mlZgIaxhvYy1nRfGzLrurhSe9svOndXt6ulw8tqyh5w6y
+        CmJUNTAQ0GVAxWgjKU8MafQE/HbwZzPoCdHJFGFIyd+Jc45WcPxy93xy1jye2R3CvcVliZZVXrX5
+        XA0kMRgIkpCUy8d9l9h6I97g3u18eTgt5jtiy9nKOQiZf082NoAmsd1O/jtMeXG9WP7+oe7ScVdS
+        9Us/+Xk1Hw9jbNSYPEnV5sd3Brp5a0pZn3mfnJuISNjJACqiHw/aExHuE3gNI7UBtnBxwFK/F47r
+        5+La1uCZ3N0r8yy6AanZnyx6OVbMBp5p8y9uOJsDoGughaCcrNq/9R9s0XxluRZM9BkqZvtfsI//
+        4uYa69fW1yOHCOHBapBkc30iXz6jguk3soKQe5I1YN6bw9v+7sQOwHzWso2xqvYYyer3Crevtf1O
+        iiQDAAA=
+    headers:
+      anthropic-organization-id:
+      - DUMMY
+      anthropic-ratelimit-input-tokens-limit:
+      - DUMMY
+      anthropic-ratelimit-input-tokens-remaining:
+      - DUMMY
+      anthropic-ratelimit-input-tokens-reset:
+      - '2026-10-15T22:35:06Z'
+      anthropic-ratelimit-output-tokens-limit:
+      - DUMMY
+      anthropic-ratelimit-output-tokens-remaining:
+      - DUMMY
+      anthropic-ratelimit-output-tokens-reset:
+      - '2026-10-15T22:35:07Z'
+      anthropic-ratelimit-requests-limit:
+      - DUMMY
+      anthropic-ratelimit-requests-remaining:
+      - DUMMY
+      anthropic-ratelimit-requests-reset:
+      - '2026-10-15T22:35:06Z'
+      anthropic-ratelimit-tokens-limit:
+      - DUMMY
+      anthropic-ratelimit-tokens-remaining:
+      - DUMMY
+      anthropic-ratelimit-tokens-reset:
+      - '2026-10-15T22:35:06Z'
+      anthropic-workspace-id:
+      - DUMMY
+      cf-cache-status:
+      - DYNAMIC
+      cf-ray:
+      - DUMMY
+      connection:
+      - keep-alive
+      content-encoding:
+      - gzip
+      content-security-policy:
+      - default-src 'none'; frame-ancestors 'none'
+      content-type:
+      - application/json
+      date:
+      - DUMMY
+      request-id:
+      - DUMMY
+      server:
+      - cloudflare
+      strict-transport-security:
+      - max-age=31536000; includeSubDomains; preload
+      traceresponse:
+      - DUMMY
+      transfer-encoding:
+      - chunked
+      vary:
+      - Accept-Encoding
+      x-robots-tag:
+      - none
+    status:
+      code: 200
+      message: OK
+- request:
+    body: '{"model": "claude-haiku-5-5", "messages": [{"role": "user", "content":
+      [{"type": "text", "text": "Use the available tools to compute a final amount.
+      Call `get_order_total` and `get_discount_amount` with order_id=''ORD-123''.
+      Then call `compute_final_amount` using the exact outputs returned by these tools
+      as order_total and discount. Reply only with the number returned by `compute_final_amount`,
+      nothing else. Do not guess any values; you must call the tools."}]}, {"role":
+      "assistant", "content": [{"type": "tool_use", "id": "toolu_01HfeJzjyKMhwMi3to7PU4oi",
+      "name": "get_order_total", "input": {"order_id": "ORD-123"}}, {"type": "tool_use",
+      "id": "toolu_014QZPRGBajuJp4t5Ecxn252", "name": "get_discount_amount", "input":
+      {"order_id": "ORD-123"}}]}, {"role": "user", "content": [{"type": "tool_result",
+      "tool_use_id": "toolu_01HfeJzjyKMhwMi3to7PU4oi", "content": "9"}, {"type": "tool_result",
+      "tool_use_id": "toolu_014QZPRGBajuJp4t5Ecxn252", "content": "4"}]}], "tools":
+      [{"name": "get_order_total", "input_schema": {"type": "object", "properties":
+      {"order_id": {"type": "string"}}, "required": ["order_id"]}, "type": "custom",
+      "description": "Returns the total amount of the order."}, {"name": "get_discount_amount",
+      "input_schema": {"type": "object", "properties": {"order_id": {"type": "string"}},
+      "required": ["order_id"]}, "type": "custom", "description": "Returns the discount
+      amount for the order."}, {"name": "compute_final_amount", "input_schema": {"type":
+      "object", "properties": {"order_total": {"type": "string"}, "discount": {"type":
+      "string"}}, "required": ["order_total", "discount"]}, "type": "custom", "description":
+      "Computes the final amount as the order total minus the discount."}], "max_tokens":
+      128000}'
+    headers:
+      accept:
+      - application/json
+      accept-encoding:
+      - gzip, deflate
+      anthropic-version:
+      - '2023-06-01'
+      connection:
+      - keep-alive
+      content-length:
+      - '1726'
+      content-type:
+      - application/json
+      host:
+      - DUMMY
+      user-agent:
+      - litellm/1.105.1
+      x-api-key:
+      - DUMMY
+    method: POST
+    uri: https://api.anthropic.com/v1/messages
+  response:
+    body:
+      string: !!binary |
+        H4sIAAAAAAAA/3VR0U4CMRD8lz5DAoET4U2Jia8EXtCYprbrXUPbPdsthpD7d7cnF0Xj293M7M50
+        9iw8GnBiJbRT2cC4UfaQx9W4EiNhDeM+1XIyna7rebvffdREM789+KZdU7tjDZ1aKCpISdXAQERX
+        AJWSTaQCMaQxEPDX6vk86AnRyZxgcCn/mX0e72c3W1Xt9w8bDMdlujs9bWZHVgXly5xG32YC+WaD
+        clJ5zL2DDYyK1VlgNBAlIanypiVTxibdq1ZiLjoOo5yDWLSXKMZG0CS67uUrqbKh8CE7NxKJsJUR
+        VMJwnbonErxnCBqu1AZ4hUsDlvte2K7PyNEOEJi8nS9KFt2A1LyfLAZ5rZgMPNPmP26YLQbQNuAh
+        ci+V/6v/ZqfNb5ZrwUw/oUX1C/p+FhfX2HCwob5akCAerQZJtrQnyu2NiqY/zhvEUpOsAZmqHb7y
+        eXikBTA/tV05l6oDJrL60mD3Cdkw3kejAgAA
+    headers:
+      anthropic-organization-id:
+      - DUMMY
+      anthropic-ratelimit-input-tokens-limit:
+      - DUMMY
+      anthropic-ratelimit-input-tokens-remaining:
+      - DUMMY
+      anthropic-ratelimit-input-tokens-reset:
+      - '2026-10-15T22:35:07Z'
+      anthropic-ratelimit-output-tokens-limit:
+      - DUMMY
+      anthropic-ratelimit-output-tokens-remaining:
+      - DUMMY
+      anthropic-ratelimit-output-tokens-reset:
+      - '2026-10-15T22:35:07Z'
+      anthropic-ratelimit-requests-limit:
+      - DUMMY
+      anthropic-ratelimit-requests-remaining:
+      - DUMMY
+      anthropic-ratelimit-requests-reset:
+      - '2026-10-15T22:35:07Z'
+      anthropic-ratelimit-tokens-limit:
+      - DUMMY
+      anthropic-ratelimit-tokens-remaining:
+      - DUMMY
+      anthropic-ratelimit-tokens-reset:
+      - '2026-10-15T22:35:07Z'
+      anthropic-workspace-id:
+      - DUMMY
+      cf-cache-status:
+      - DYNAMIC
+      cf-ray:
+      - DUMMY
+      connection:
+      - keep-alive
+      content-encoding:
+      - gzip
+      content-security-policy:
+      - default-src 'none'; frame-ancestors 'none'
+      content-type:
+      - application/json
+      date:
+      - DUMMY
+      request-id:
+      - DUMMY
+      server:
+      - cloudflare
+      strict-transport-security:
+      - max-age=31536000; includeSubDomains; preload
+      traceresponse:
+      - DUMMY
+      transfer-encoding:
+      - chunked
+      vary:
+      - Accept-Encoding
+      x-robots-tag:
+      - none
+    status:
+      code: 200
+      message: OK
+- request:
+    body: '{"model": "claude-haiku-5-5", "messages": [{"role": "user", "content":
+      [{"type": "text", "text": "Use the available tools to compute a final amount.
+      Call `get_order_total` and `get_discount_amount` with order_id=''ORD-123''.
+      Then call `compute_final_amount` using the exact outputs returned by these tools
+      as order_total and discount. Reply only with the number returned by `compute_final_amount`,
+      nothing else. Do not guess any values; you must call the tools."}]}, {"role":
+      "assistant", "content": [{"type": "tool_use", "id": "toolu_01HfeJzjyKMhwMi3to7PU4oi",
+      "name": "get_order_total", "input": {"order_id": "ORD-123"}}, {"type": "tool_use",
+      "id": "toolu_014QZPRGBajuJp4t5Ecxn252", "name": "get_discount_amount", "input":
+      {"order_id": "ORD-123"}}]}, {"role": "user", "content": [{"type": "tool_result",
+      "tool_use_id": "toolu_01HfeJzjyKMhwMi3to7PU4oi", "content": "9"}, {"type": "tool_result",
+      "tool_use_id": "toolu_014QZPRGBajuJp4t5Ecxn252", "content": "4"}]}, {"role":
+      "assistant", "content": [{"type": "tool_use", "id": "toolu_01HB36Sa5YYEQonv9sAyZQ3v",
+      "name": "compute_final_amount", "input": {"order_total": "9", "discount": "4"}}]},
+      {"role": "user", "content": [{"type": "tool_result", "tool_use_id": "toolu_01HB36Sa5YYEQonv9sAyZQ3v",
+      "content": "5"}]}], "tools": [{"name": "get_order_total", "input_schema": {"type":
+      "object", "properties": {"order_id": {"type": "string"}}, "required": ["order_id"]},
+      "type": "custom", "description": "Returns the total amount of the order."},
+      {"name": "get_discount_amount", "input_schema": {"type": "object", "properties":
+      {"order_id": {"type": "string"}}, "required": ["order_id"]}, "type": "custom",
+      "description": "Returns the discount amount for the order."}, {"name": "compute_final_amount",
+      "input_schema": {"type": "object", "properties": {"order_total": {"type": "string"},
+      "discount": {"type": "string"}}, "required": ["order_total", "discount"]}, "type":
+      "custom", "description": "Computes the final amount as the order total minus
+      the discount."}], "max_tokens": 128000}'
+    headers:
+      accept:
+      - application/json
+      accept-encoding:
+      - gzip, deflate
+      anthropic-version:
+      - '2023-06-01'
+      connection:
+      - keep-alive
+      content-length:
+      - '2025'
+      content-type:
+      - application/json
+      host:
+      - DUMMY
+      user-agent:
+      - litellm/1.105.1
+      x-api-key:
+      - DUMMY
+    method: POST
+    uri: https://api.anthropic.com/v1/messages
+  response:
+    body:
+      string: !!binary |
+        H4sIAAAAAAAA/3WRTUsDMRCG/8uct9CqC3VvIuJB8CSoiISYjNm02UnMhyhl/7uT2qUf4mnD+zyZ
+        JO9uYPAaHXSgnCwaZ7206zJrZy00YDXnQzJivlhcm4vw/PTwaG6WCsPV7ere3q3Yyd8Bq4UpSYMc
+        RO9qIFOyKUvKHClPGXnVvWwmP+NXJdtPBy2Mr7+atIQROirONZCyDyKiTJ5YQtIil0iwAwk/CpLC
+        I1sjj3Bpysr2Ut0GLIWSRfZrJIaXZ0s+TqoeheL52XoSx8Z84oz1f2zaWw/A0OOAUTrRDn/9PV30
+        p3RswJd8GJ2fJPtXcX+9pbUlc7Q/Yfy0CkW2tTyovWsZdf2F9I6xtiQMekbG+TfpaoUBUR+6PEZb
+        acinbNWuwPEHOeRQLR8CAAA=
+    headers:
+      anthropic-organization-id:
+      - DUMMY
+      anthropic-ratelimit-input-tokens-limit:
+      - DUMMY
+      anthropic-ratelimit-input-tokens-remaining:
+      - DUMMY
+      anthropic-ratelimit-input-tokens-reset:
+      - '2026-10-15T22:35:08Z'
+      anthropic-ratelimit-output-tokens-limit:
+      - DUMMY
+      anthropic-ratelimit-output-tokens-remaining:
+      - DUMMY
+      anthropic-ratelimit-output-tokens-reset:
+      - '2026-10-15T22:35:08Z'
+      anthropic-ratelimit-requests-limit:
+      - DUMMY
+      anthropic-ratelimit-requests-remaining:
+      - DUMMY
+      anthropic-ratelimit-requests-reset:
+      - '2026-10-15T22:35:08Z'
+      anthropic-ratelimit-tokens-limit:
+      - DUMMY
+      anthropic-ratelimit-tokens-remaining:
+      - DUMMY
+      anthropic-ratelimit-tokens-reset:
+      - '2026-10-15T22:35:08Z'
+      anthropic-workspace-id:
+      - DUMMY
+      cf-cache-status:
+      - DYNAMIC
+      cf-ray:
+      - DUMMY
+      connection:
+      - keep-alive
+      content-encoding:
+      - gzip
+      content-security-policy:
+      - default-src 'none'; frame-ancestors 'none'
+      content-type:
+      - application/json
+      date:
+      - DUMMY
+      request-id:
+      - DUMMY
+      server:
+      - cloudflare
+      strict-transport-security:
+      - max-age=31536000; includeSubDomains; preload
+      traceresponse:
+      - DUMMY
+      transfer-encoding:
+      - chunked
+      vary:
+      - Accept-Encoding
+      x-robots-tag:
+      - none
+    status:
+      code: 200
+      message: OK
+- request:
+    body: '{"model": "claude-haiku-5-5", "messages": [{"role": "user", "content":
+      [{"type": "text", "text": "Use the available tools to compute a final amount.
+      Call `get_order_total` and `get_discount_amount` with order_id=''ORD-123''.
+      Then call `compute_final_amount` using the exact outputs returned by these tools
+      as order_total and discount. Reply only with the number returned by `compute_final_amount`,
+      nothing else. Do not guess any values; you must call the tools."}]}, {"role":
+      "assistant", "content": [{"type": "tool_use", "id": "toolu_01HfeJzjyKMhwMi3to7PU4oi",
+      "name": "get_order_total", "input": {"order_id": "ORD-123"}}, {"type": "tool_use",
+      "id": "toolu_014QZPRGBajuJp4t5Ecxn252", "name": "get_discount_amount", "input":
+      {"order_id": "ORD-123"}}]}, {"role": "user", "content": [{"type": "tool_result",
+      "tool_use_id": "toolu_01HfeJzjyKMhwMi3to7PU4oi", "content": "9"}, {"type": "tool_result",
+      "tool_use_id": "toolu_014QZPRGBajuJp4t5Ecxn252", "content": "4"}]}, {"role":
+      "assistant", "content": [{"type": "tool_use", "id": "toolu_01HB36Sa5YYEQonv9sAyZQ3v",
+      "name": "compute_final_amount", "input": {"order_total": "9", "discount": "4"}}]},
+      {"role": "user", "content": [{"type": "tool_result", "tool_use_id": "toolu_01HB36Sa5YYEQonv9sAyZQ3v",
+      "content": "5"}]}, {"role": "assistant", "content": [{"type": "text", "text":
+      "5"}]}, {"role": "user", "content": [{"type": "text", "text": "What was the
+      final amount? Reply only with the number."}]}], "tools": [{"name": "get_order_total",
+      "input_schema": {"type": "object", "properties": {"order_id": {"type": "string"}},
+      "required": ["order_id"]}, "type": "custom", "description": "Returns the total
+      amount of the order."}, {"name": "get_discount_amount", "input_schema": {"type":
+      "object", "properties": {"order_id": {"type": "string"}}, "required": ["order_id"]},
+      "type": "custom", "description": "Returns the discount amount for the order."},
+      {"name": "compute_final_amount", "input_schema": {"type": "object", "properties":
+      {"order_total": {"type": "string"}, "discount": {"type": "string"}}, "required":
+      ["order_total", "discount"]}, "type": "custom", "description": "Computes the
+      final amount as the order total minus the discount."}], "max_tokens": 128000}'
+    headers:
+      accept:
+      - application/json
+      accept-encoding:
+      - gzip, deflate
+      anthropic-version:
+      - '2023-06-01'
+      connection:
+      - keep-alive
+      content-length:
+      - '2207'
+      content-type:
+      - application/json
+      host:
+      - DUMMY
+      user-agent:
+      - litellm/1.105.1
+      x-api-key:
+      - DUMMY
+    method: POST
+    uri: https://api.anthropic.com/v1/messages
+  response:
+    body:
+      string: !!binary |
+        H4sIAAAAAAAA/3VUW6+iSBj8L7w6E7kjJ9kHQEAEFLmIuNkYhJZ701xFT85/X5ydM5fd7AOhqaqu
+        Dh9UvWNVHYMSe8OiMhxi8DUNs2L4ynxlsC9YFs941SUXnCCkhEZBKMrH5MzZyHx4kh05s6Z/IPBS
+        ga4LEzADbV2+gLDrsq4PYT9DUQ17MK/e/nz/1PdpBosMJi+Hz+UbNj91WQLDfmhfIkk4OOju6bKQ
+        OKqg0YKnabGaomvVz1fkrFVj/TBIyAsRGuSdydq12QVal3r5yMMtYEXJ1PI1taKWNFmdz1kDYni8
+        WomCHvZzc05VFg1pto9RdVB3TZww3pTuTWskJMh37rpxD0mvaM0kOCxfHStP3HOEXOpD74ZKkDn2
+        nqrvNJ1PIh3sEmikoPCEViMQPfCl4mp9Hge10RClVKbjzVhYx6IhJcsN+R1h+Ft+fcozyoL7E64w
+        y7XMbVrKoLPNTVlN0TJ7BKKV+vqxGYrcEDgtiHaAUlZaazC31M+nR02qVbA76RsnghvJbffS3UW7
+        MgC2aHm3jcO2ukgxdJ0mm2I7yMhuUGBY1ZqwRTcokr7tO85xIjzQCIKKbHyEoBbygT3Id4rInFzj
+        rGybd7yHErsSFHo5lQpp4mm3Inc8o4f3Db0mSYW/5ZW5xJ8ZN/pFkT/8ZdXjMDKTjfccCCbHjcfm
+        fLCTpjEf8lbUimsp9YnRkX5s6tod8mKily4ftpCWWbU0o0nSQDp/+ure4nFU7Hyu758RTRLawvS5
+        GylOwF5ri4GVKenIqzd+2Rh6i4tRHiIQbkWwHs/XyjovO+UoxOlqZKXECYlNs5raq6/653GrnhfB
+        ox8Uz65lKtjo7T4+dYeHoVnmqThR8z8uM6s9t8mXNm9X6aoj+r3v7k53dCjhbbE4JdtrYq9GepHo
+        lgRbRymbqF4hsOECiPiaZY/jqDyvOLD3nRch3HTDG69JN4IZheCsn2uTLKpFrTY9gmgfrWlfVOPh
+        eSD9tnxa3FmIF9OwvdvNbevNbgrNli6XaUibGINqqZulSrItJ8SwJ+uCqRO6K9g0XypcCOhgqlYM
+        l5LPLtzqpnUSeXTaooh5sidbX1SuEgqHa4U7Z75gfPEQb12v4aNYD/ePuQq6adgJOM0d6MMpY0ZE
+        hBrXPxmyZHNVkP/APr78DDGYXvH+dnvDGOzjr3+yHmYQtNgbHMpyDnRfo0sLwq6GswjA+DKnG2Lf
+        iQ40A4AR+E0dg9mi7D6x4VuzvL1jGURDf+nrAsCZ5Bl8Pi6MUnCJZv8+q+Hld8UPfqbj/+M+974O
+        ACgFFWjD8sJU/9X/ZIn03+zHF6we+l8hkv0X9PO13n903k81NTt0oB2zCFz67DU+7FWfcdjGryaG
+        N9C+5nRJQD1TSVlfw/I1RARA/Kt2tomzMIF112fR9xF+/A1NdbYd5gUAAA==
+    headers:
+      anthropic-organization-id:
+      - DUMMY
+      anthropic-ratelimit-input-tokens-limit:
+      - DUMMY
+      anthropic-ratelimit-input-tokens-remaining:
+      - DUMMY
+      anthropic-ratelimit-input-tokens-reset:
+      - '2026-10-15T22:35:09Z'
+      anthropic-ratelimit-output-tokens-limit:
+      - DUMMY
+      anthropic-ratelimit-output-tokens-remaining:
+      - DUMMY
+      anthropic-ratelimit-output-tokens-reset:
+      - '2026-10-15T22:35:09Z'
+      anthropic-ratelimit-requests-limit:
+      - DUMMY
+      anthropic-ratelimit-requests-remaining:
+      - DUMMY
+      anthropic-ratelimit-requests-reset:
+      - '2026-10-15T22:35:08Z'
+      anthropic-ratelimit-tokens-limit:
+      - DUMMY
+      anthropic-ratelimit-tokens-remaining:
+      - DUMMY
+      anthropic-ratelimit-tokens-reset:
+      - '2026-10-15T22:35:09Z'
+      anthropic-workspace-id:
+      - DUMMY
+      cf-cache-status:
+      - DYNAMIC
+      cf-ray:
+      - DUMMY
+      connection:
+      - keep-alive
+      content-encoding:
+      - gzip
+      content-security-policy:
+      - default-src 'none'; frame-ancestors 'none'
+      content-type:
+      - application/json
+      date:
+      - DUMMY
+      request-id:
+      - DUMMY
+      server:
+      - cloudflare
+      strict-transport-security:
+      - max-age=31536000; includeSubDomains; preload
+      traceresponse:
+      - DUMMY
+      transfer-encoding:
+      - chunked
+      vary:
+      - Accept-Encoding
+      x-robots-tag:
+      - none
+    status:
+      code: 200
+      message: OK
+- request:
+    body: '{"model": "claude-sonnet-5-5", "messages": [{"role": "user", "content":
+      [{"type": "text", "text": "Use the available tools to compute a final amount.
+      Call `get_order_total` and `get_discount_amount` with order_id=''ORD-123''.
+      Then call `compute_final_amount` using the exact outputs returned by these tools
+      as order_total and discount. Reply only with the number returned by `compute_final_amount`,
+      nothing else. Do not guess any values; you must call the tools."}]}], "tools":
+      [{"name": "get_order_total", "input_schema": {"type": "object", "properties":
+      {"order_id": {"type": "string"}}, "required": ["order_id"]}, "type": "custom",
+      "description": "Returns the total amount of the order."}, {"name": "get_discount_amount",
+      "input_schema": {"type": "object", "properties": {"order_id": {"type": "string"}},
+      "required": ["order_id"]}, "type": "custom", "description": "Returns the discount
+      amount for the order."}, {"name": "compute_final_amount", "input_schema": {"type":
+      "object", "properties": {"order_total": {"type": "string"}, "discount": {"type":
+      "string"}}, "required": ["order_total", "discount"]}, "type": "custom", "description":
+      "Computes the final amount as the order total minus the discount."}], "thinking":
+      {"type": "adaptive", "display": "summarized"}, "output_config": {"effort": "low"},
+      "max_tokens": 128000}'
+    headers:
+      accept:
+      - application/json
+      accept-encoding:
+      - gzip, deflate
+      anthropic-version:
+      - '2023-06-01'
+      connection:
+      - keep-alive
+      content-length:
+      - '1325'
+      content-type:
+      - application/json
+      host:
+      - DUMMY
+      user-agent:
+      - litellm/1.105.1
+      x-api-key:
+      - DUMMY
+    method: POST
+    uri: https://api.anthropic.com/v1/messages
+  response:
+    body:
+      string: !!binary |
+        H4sIAAAAAAAA/6VS0U7bMBT9Fz+3UtNRuvG4sA0h1nVsUlVNk2XsS+rFuU597dKp6r9zHYggoGkP
+        PCU55/icm3N9EI034MSZ0E4lA2PyiBDHs/FMjIQ1TDRUyUlRlNVJu75dTst6Xa6+f9rv5tOfX1kT
+        /7aQVUCkKmAgeJcBRWQpKowMaY8R+O3s16HXR++dTAR9Sv5OnFNe4mfcLt7vqdLr6+UVLD7+MVtW
+        oWryuQqi9MFAkNFH5fJxbBNbH8QD3Ll9uz4fF9N34sjZyjkImX9MNjaAjuJ4HP13mOLi8seqXNK+
+        ruEOruaL3eoufRkOYyxpnzBK1eTHWwb6/dCUsph5TM6NBEXfygCK9zIctCMItglQw0BtgC0c9Vjq
+        9sJx3VxcWw3I5On8JM+iNyA1+0frUQ4Vk55n2vyL68/mAGg30EBQTs6a1/ontti8ZLkWn+JzqJh8
+        eIE9/Rc3t7FYW6wGDgRhZzXIaHN9Il8+o4LpNnILIfckK/B5b87fdHeHWgDzXMs2xqoKPUWrHys8
+        3gOGwrWtJQMAAA==
+    headers:
+      anthropic-organization-id:
+      - DUMMY
+      anthropic-ratelimit-input-tokens-limit:
+      - DUMMY
+      anthropic-ratelimit-input-tokens-remaining:
+      - DUMMY
+      anthropic-ratelimit-input-tokens-reset:
+      - '2026-10-15T22:35:10Z'
+      anthropic-ratelimit-output-tokens-limit:
+      - DUMMY
+      anthropic-ratelimit-output-tokens-remaining:
+      - DUMMY
+      anthropic-ratelimit-output-tokens-reset:
+      - '2026-10-15T22:35:11Z'
+      anthropic-ratelimit-requests-limit:
+      - DUMMY
+      anthropic-ratelimit-requests-remaining:
+      - DUMMY
+      anthropic-ratelimit-requests-reset:
+      - '2026-10-15T22:35:10Z'
+      anthropic-ratelimit-tokens-limit:
+      - DUMMY
+      anthropic-ratelimit-tokens-remaining:
+      - DUMMY
+      anthropic-ratelimit-tokens-reset:
+      - '2026-10-15T22:35:10Z'
+      anthropic-workspace-id:
+      - DUMMY
+      cf-cache-status:
+      - DYNAMIC
+      cf-ray:
+      - DUMMY
+      connection:
+      - keep-alive
+      content-encoding:
+      - gzip
+      content-security-policy:
+      - default-src 'none'; frame-ancestors 'none'
+      content-type:
+      - application/json
+      date:
+      - DUMMY
+      request-id:
+      - DUMMY
+      server:
+      - cloudflare
+      strict-transport-security:
+      - max-age=31536000; includeSubDomains; preload
+      traceresponse:
+      - DUMMY
+      transfer-encoding:
+      - chunked
+      vary:
+      - Accept-Encoding
+      x-robots-tag:
+      - none
+    status:
+      code: 200
+      message: OK
+- request:
+    body: '{"model": "claude-sonnet-5-5", "messages": [{"role": "user", "content":
+      [{"type": "text", "text": "Use the available tools to compute a final amount.
+      Call `get_order_total` and `get_discount_amount` with order_id=''ORD-123''.
+      Then call `compute_final_amount` using the exact outputs returned by these tools
+      as order_total and discount. Reply only with the number returned by `compute_final_amount`,
+      nothing else. Do not guess any values; you must call the tools."}]}, {"role":
+      "assistant", "content": [{"type": "tool_use", "id": "toolu_01CJnFnqN8xsgcYRPLeNBjdq",
+      "name": "get_order_total", "input": {"order_id": "ORD-123"}}, {"type": "tool_use",
+      "id": "toolu_011HJSWCPsxkkeweL7NvWwuG", "name": "get_discount_amount", "input":
+      {"order_id": "ORD-123"}}]}, {"role": "user", "content": [{"type": "tool_result",
+      "tool_use_id": "toolu_01CJnFnqN8xsgcYRPLeNBjdq", "content": "9"}, {"type": "tool_result",
+      "tool_use_id": "toolu_011HJSWCPsxkkeweL7NvWwuG", "content": "4"}]}], "tools":
+      [{"name": "get_order_total", "input_schema": {"type": "object", "properties":
+      {"order_id": {"type": "string"}}, "required": ["order_id"]}, "type": "custom",
+      "description": "Returns the total amount of the order."}, {"name": "get_discount_amount",
+      "input_schema": {"type": "object", "properties": {"order_id": {"type": "string"}},
+      "required": ["order_id"]}, "type": "custom", "description": "Returns the discount
+      amount for the order."}, {"name": "compute_final_amount", "input_schema": {"type":
+      "object", "properties": {"order_total": {"type": "string"}, "discount": {"type":
+      "string"}}, "required": ["order_total", "discount"]}, "type": "custom", "description":
+      "Computes the final amount as the order total minus the discount."}], "thinking":
+      {"type": "adaptive", "display": "summarized"}, "output_config": {"effort": "low"},
+      "max_tokens": 128000}'
+    headers:
+      accept:
+      - application/json
+      accept-encoding:
+      - gzip, deflate
+      anthropic-version:
+      - '2023-06-01'
+      connection:
+      - keep-alive
+      content-length:
+      - '1822'
+      content-type:
+      - application/json
+      host:
+      - DUMMY
+      user-agent:
+      - litellm/1.105.1
+      x-api-key:
+      - DUMMY
+    method: POST
+    uri: https://api.anthropic.com/v1/messages
+  response:
+    body:
+      string: !!binary |
+        H4sIAAAAAAAA/3VRXUvDQBD8L/fcQgMptXkTHwSxIhrUInKcd9vk6OU23kdpLfnv7sWGfohvyczs
+        ztzsnjWowLCCSSOigrFHayGMp+MpGzGtiGh8xSdZdlPl7bK533zPtduWs6eXkL2uSBN2LSQVeC8q
+        IMChSYDwXvsgbCBIog1AX8X7ftAHRMOjh8El/UfyuW6xfC5jnt1ty1vxuFssF28PNamsaNKcxKaN
+        AfhKW2G4aDD2DtoSyoo9Q6fA8YBBpEfNiVLay15VsJx1FEYYAy5pD1GUdiAD67qP36RC28TbaMyI
+        +YAtdyCol/PUPeHhK4KVcKZWQCuMH7DY90J2fUaKtgZL5FU+S1lkDVzS/qDR8nPFZOCJVv9xw2wy
+        gLaGBhz1Mm3+6o9sVl+yVAvGcArNphfQ8VlUXK3tWtvqbIEHt9ESeNCpPZZur4RT/XFW4FJNvAIk
+        qjL4SeehkRZAnWq7dC5RWfRBy0OD3Q9rAqoTpAIAAA==
+    headers:
+      anthropic-organization-id:
+      - DUMMY
+      anthropic-ratelimit-input-tokens-limit:
+      - DUMMY
+      anthropic-ratelimit-input-tokens-remaining:
+      - DUMMY
+      anthropic-ratelimit-input-tokens-reset:
+      - '2026-10-15T22:35:11Z'
+      anthropic-ratelimit-output-tokens-limit:
+      - DUMMY
+      anthropic-ratelimit-output-tokens-remaining:
+      - DUMMY
+      anthropic-ratelimit-output-tokens-reset:
+      - '2026-10-15T22:35:12Z'
+      anthropic-ratelimit-requests-limit:
+      - DUMMY
+      anthropic-ratelimit-requests-remaining:
+      - DUMMY
+      anthropic-ratelimit-requests-reset:
+      - '2026-10-15T22:35:11Z'
+      anthropic-ratelimit-tokens-limit:
+      - DUMMY
+      anthropic-ratelimit-tokens-remaining:
+      - DUMMY
+      anthropic-ratelimit-tokens-reset:
+      - '2026-10-15T22:35:11Z'
+      anthropic-workspace-id:
+      - DUMMY
+      cf-cache-status:
+      - DYNAMIC
+      cf-ray:
+      - DUMMY
+      connection:
+      - keep-alive
+      content-encoding:
+      - gzip
+      content-security-policy:
+      - default-src 'none'; frame-ancestors 'none'
+      content-type:
+      - application/json
+      date:
+      - DUMMY
+      request-id:
+      - DUMMY
+      server:
+      - cloudflare
+      strict-transport-security:
+      - max-age=31536000; includeSubDomains; preload
+      traceresponse:
+      - DUMMY
+      transfer-encoding:
+      - chunked
+      vary:
+      - Accept-Encoding
+      x-robots-tag:
+      - none
+    status:
+      code: 200
+      message: OK
+- request:
+    body: '{"model": "claude-sonnet-5-5", "messages": [{"role": "user", "content":
+      [{"type": "text", "text": "Use the available tools to compute a final amount.
+      Call `get_order_total` and `get_discount_amount` with order_id=''ORD-123''.
+      Then call `compute_final_amount` using the exact outputs returned by these tools
+      as order_total and discount. Reply only with the number returned by `compute_final_amount`,
+      nothing else. Do not guess any values; you must call the tools."}]}, {"role":
+      "assistant", "content": [{"type": "tool_use", "id": "toolu_01CJnFnqN8xsgcYRPLeNBjdq",
+      "name": "get_order_total", "input": {"order_id": "ORD-123"}}, {"type": "tool_use",
+      "id": "toolu_011HJSWCPsxkkeweL7NvWwuG", "name": "get_discount_amount", "input":
+      {"order_id": "ORD-123"}}]}, {"role": "user", "content": [{"type": "tool_result",
+      "tool_use_id": "toolu_01CJnFnqN8xsgcYRPLeNBjdq", "content": "9"}, {"type": "tool_result",
+      "tool_use_id": "toolu_011HJSWCPsxkkeweL7NvWwuG", "content": "4"}]}, {"role":
+      "assistant", "content": [{"type": "tool_use", "id": "toolu_01ApoTSTu41JxTGaPyMYMXNh",
+      "name": "compute_final_amount", "input": {"order_total": "9", "discount": "4"}}]},
+      {"role": "user", "content": [{"type": "tool_result", "tool_use_id": "toolu_01ApoTSTu41JxTGaPyMYMXNh",
+      "content": "5"}]}], "tools": [{"name": "get_order_total", "input_schema": {"type":
+      "object", "properties": {"order_id": {"type": "string"}}, "required": ["order_id"]},
+      "type": "custom", "description": "Returns the total amount of the order."},
+      {"name": "get_discount_amount", "input_schema": {"type": "object", "properties":
+      {"order_id": {"type": "string"}}, "required": ["order_id"]}, "type": "custom",
+      "description": "Returns the discount amount for the order."}, {"name": "compute_final_amount",
+      "input_schema": {"type": "object", "properties": {"order_total": {"type": "string"},
+      "discount": {"type": "string"}}, "required": ["order_total", "discount"]}, "type":
+      "custom", "description": "Computes the final amount as the order total minus
+      the discount."}], "thinking": {"type": "adaptive", "display": "summarized"},
+      "output_config": {"effort": "low"}, "max_tokens": 128000}'
+    headers:
+      accept:
+      - application/json
+      accept-encoding:
+      - gzip, deflate
+      anthropic-version:
+      - '2023-06-01'
+      connection:
+      - keep-alive
+      content-length:
+      - '2121'
+      content-type:
+      - application/json
+      host:
+      - DUMMY
+      user-agent:
+      - litellm/1.105.1
+      x-api-key:
+      - DUMMY
+    method: POST
+    uri: https://api.anthropic.com/v1/messages
+  response:
+    body:
+      string: !!binary |
+        H4sIAAAAAAAA/3WRTU8DIRCG/wvnNumqG+tePXhoYrwaYwjCyJKyA4Wh0Wz2vzvUbvphPLF5n4eB
+        fRnFEAx40QntVTGwzAERaNkuW7EQzjAYspWrpnm0d/F19/Jk1tsGn/V+E8p9ZIe+I1QLclYWOEjB
+        10Dl7DIpJI50QAL+6t7G2Sf4quSwdKIV0/uvphxCEh0W7xciU4gygeJLsQRoJJWE4ggy7Aqghgvb
+        AI/wec7K4VLdKBzGQpLCFpDhw82aj1O6B6l5PrmA8tJYzZyx+Y/Ne+sBEHsYICkv2+Gvf6JNf02n
+        hQiFzqPbq+T0V9xf73Dr0F7sz5D2ToMkV8sTtXejkqlPiJ+QakvSQmBkffhQvlYYAcy5y2OMUxZD
+        JqePBU4/YYlzyyACAAA=
+    headers:
+      anthropic-organization-id:
+      - DUMMY
+      anthropic-ratelimit-input-tokens-limit:
+      - DUMMY
+      anthropic-ratelimit-input-tokens-remaining:
+      - DUMMY
+      anthropic-ratelimit-input-tokens-reset:
+      - '2026-10-15T22:35:12Z'
+      anthropic-ratelimit-output-tokens-limit:
+      - DUMMY
+      anthropic-ratelimit-output-tokens-remaining:
+      - DUMMY
+      anthropic-ratelimit-output-tokens-reset:
+      - '2026-10-15T22:35:12Z'
+      anthropic-ratelimit-requests-limit:
+      - DUMMY
+      anthropic-ratelimit-requests-remaining:
+      - DUMMY
+      anthropic-ratelimit-requests-reset:
+      - '2026-10-15T22:35:12Z'
+      anthropic-ratelimit-tokens-limit:
+      - DUMMY
+      anthropic-ratelimit-tokens-remaining:
+      - DUMMY
+      anthropic-ratelimit-tokens-reset:
+      - '2026-10-15T22:35:12Z'
+      anthropic-workspace-id:
+      - DUMMY
+      cf-cache-status:
+      - DYNAMIC
+      cf-ray:
+      - DUMMY
+      connection:
+      - keep-alive
+      content-encoding:
+      - gzip
+      content-security-policy:
+      - default-src 'none'; frame-ancestors 'none'
+      content-type:
+      - application/json
+      date:
+      - DUMMY
+      request-id:
+      - DUMMY
+      server:
+      - cloudflare
+      strict-transport-security:
+      - max-age=31536000; includeSubDomains; preload
+      traceresponse:
+      - DUMMY
+      transfer-encoding:
+      - chunked
+      vary:
+      - Accept-Encoding
+      x-robots-tag:
+      - none
+    status:
+      code: 200
+      message: OK
+- request:
+    body: '{"model": "claude-sonnet-5-5", "messages": [{"role": "user", "content":
+      [{"type": "text", "text": "Use the available tools to compute a final amount.
+      Call `get_order_total` and `get_discount_amount` with order_id=''ORD-123''.
+      Then call `compute_final_amount` using the exact outputs returned by these tools
+      as order_total and discount. Reply only with the number returned by `compute_final_amount`,
+      nothing else. Do not guess any values; you must call the tools."}]}, {"role":
+      "assistant", "content": [{"type": "tool_use", "id": "toolu_01CJnFnqN8xsgcYRPLeNBjdq",
+      "name": "get_order_total", "input": {"order_id": "ORD-123"}}, {"type": "tool_use",
+      "id": "toolu_011HJSWCPsxkkeweL7NvWwuG", "name": "get_discount_amount", "input":
+      {"order_id": "ORD-123"}}]}, {"role": "user", "content": [{"type": "tool_result",
+      "tool_use_id": "toolu_01CJnFnqN8xsgcYRPLeNBjdq", "content": "9"}, {"type": "tool_result",
+      "tool_use_id": "toolu_011HJSWCPsxkkeweL7NvWwuG", "content": "4"}]}, {"role":
+      "assistant", "content": [{"type": "tool_use", "id": "toolu_01ApoTSTu41JxTGaPyMYMXNh",
+      "name": "compute_final_amount", "input": {"order_total": "9", "discount": "4"}}]},
+      {"role": "user", "content": [{"type": "tool_result", "tool_use_id": "toolu_01ApoTSTu41JxTGaPyMYMXNh",
+      "content": "5"}]}, {"role": "assistant", "content": [{"type": "text", "text":
+      "5"}]}, {"role": "user", "content": [{"type": "text", "text": "What was the
+      final amount? Reply only with the number."}]}], "tools": [{"name": "get_order_total",
+      "input_schema": {"type": "object", "properties": {"order_id": {"type": "string"}},
+      "required": ["order_id"]}, "type": "custom", "description": "Returns the total
+      amount of the order."}, {"name": "get_discount_amount", "input_schema": {"type":
+      "object", "properties": {"order_id": {"type": "string"}}, "required": ["order_id"]},
+      "type": "custom", "description": "Returns the discount amount for the order."},
+      {"name": "compute_final_amount", "input_schema": {"type": "object", "properties":
+      {"order_total": {"type": "string"}, "discount": {"type": "string"}}, "required":
+      ["order_total", "discount"]}, "type": "custom", "description": "Computes the
+      final amount as the order total minus the discount."}], "thinking": {"type":
+      "adaptive", "display": "summarized"}, "output_config": {"effort": "low"}, "max_tokens":
+      128000}'
+    headers:
+      accept:
+      - application/json
+      accept-encoding:
+      - gzip, deflate
+      anthropic-version:
+      - '2023-06-01'
+      connection:
+      - keep-alive
+      content-length:
+      - '2303'
+      content-type:
+      - application/json
+      host:
+      - DUMMY
+      user-agent:
+      - litellm/1.105.1
+      x-api-key:
+      - DUMMY
+    method: POST
+    uri: https://api.anthropic.com/v1/messages
+  response:
+    body:
+      string: !!binary |
+        H4sIAAAAAAAA/3WRTUsDMRRF/0vWLbTogM5OXAjiWhGRkCbXmdDMy5i8FEvpf/eltvZDXGW45+Ql
+        c7NRQ3QIqlU2mOIwzZEIPG2mjZoo7wQMudOz+fy+ux5f+Wb9zE93oGJXL4+LB3F4PaJayNl0kCDF
+        UAOTs89siCWykRjy1b5tDj7jq5Ld0qpGbd9/NOMJSbVUQpiozHHUCUYuJRLIaS6J1B5kfBaQxZnt
+        ICNCPmRld6l2ozyNhTXHJUjgbTOT44ztoa3MZx9Jnxu/XLD7jx321gMw9hiQTNDN8Nc/0nl/SbcT
+        FQufRlcXyfGvpL/e09JTd7Y/I628hWZfy1O1d2eSq09IH0i1Jd0hCupCXJhQKxwBd+rKGOdNRzGz
+        t/sCt9/mqI2/IAIAAA==
+    headers:
+      anthropic-organization-id:
+      - DUMMY
+      anthropic-ratelimit-input-tokens-limit:
+      - DUMMY
+      anthropic-ratelimit-input-tokens-remaining:
+      - DUMMY
+      anthropic-ratelimit-input-tokens-reset:
+      - '2026-10-15T22:35:13Z'
+      anthropic-ratelimit-output-tokens-limit:
+      - DUMMY
+      anthropic-ratelimit-output-tokens-remaining:
+      - DUMMY
+      anthropic-ratelimit-output-tokens-reset:
+      - '2026-10-15T22:35:13Z'
+      anthropic-ratelimit-requests-limit:
+      - DUMMY
+      anthropic-ratelimit-requests-remaining:
+      - DUMMY
+      anthropic-ratelimit-requests-reset:
+      - '2026-10-15T22:35:13Z'
+      anthropic-ratelimit-tokens-limit:
+      - DUMMY
+      anthropic-ratelimit-tokens-remaining:
+      - DUMMY
+      anthropic-ratelimit-tokens-reset:
+      - '2026-10-15T22:35:13Z'
+      anthropic-workspace-id:
+      - DUMMY
+      cf-cache-status:
+      - DYNAMIC
+      cf-ray:
+      - DUMMY
+      connection:
+      - keep-alive
+      content-encoding:
+      - gzip
+      content-security-policy:
+      - default-src 'none'; frame-ancestors 'none'
+      content-type:
+      - application/json
+      date:
+      - DUMMY
+      request-id:
+      - DUMMY
+      server:
+      - cloudflare
+      strict-transport-security:
+      - max-age=31536000; includeSubDomains; preload
+      traceresponse:
+      - DUMMY
+      transfer-encoding:
+      - chunked
+      vary:
+      - Accept-Encoding
+      x-robots-tag:
+      - none
+    status:
+      code: 200
+      message: OK
+version: 1

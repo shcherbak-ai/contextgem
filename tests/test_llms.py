@@ -15,8 +15,9 @@ import re
 import types
 import warnings
 from concurrent.futures import ThreadPoolExecutor
+from datetime import date
 from pathlib import Path
-from typing import Any
+from typing import Any, ClassVar
 from unittest.mock import patch
 
 import pytest
@@ -41,23 +42,435 @@ from contextgem.internal.utils import (
 from contextgem.public import (
     Aspect,
     BooleanConcept,
+    ChatSession,
+    DateConcept,
     Document,
     DocumentLLM,
     DocumentModelGroup,
+    JsonObjectConcept,
+    LabelConcept,
     ModelPricing,
+    NumericalConcept,
     Paragraph,
+    RatingConcept,
     StringConcept,
     register_tool,
 )
 from tests.base import BaseTest
+from tests.conftest import VCR_REDACTION_MARKER
 from tests.utils import REDACTED_VALUE, get_project_root_path
 
 
 class TestLLMs(BaseTest):
     """
-    Tests for the configuration of LLMs, local LLMs, prompts, token limits,
-    retries of API requests and rate limiting.
+    Tests for the configuration of LLMs, local LLMs, LLMs of Anthropic, prompts,
+    token limits, retries of API requests and rate limiting.
     """
+
+    # LLMs of Anthropic: Claude Haiku as the extractor (no role) and Claude Sonnet
+    # as the reasoner, as the LLMs of OpenAI in the other tests. The tests replay
+    # their cassettes with a dummy key if the environment has no key of Anthropic.
+    _anthropic_api_key = (
+        os.getenv("CONTEXTGEM_ANTHROPIC_API_KEY") or VCR_REDACTION_MARKER
+    )
+    _llm_extractor_kwargs_anthropic: ClassVar[dict[str, Any]] = {
+        "model": "anthropic/claude-haiku-5-5",
+        "api_key": _anthropic_api_key,
+        "auto_pricing": True,
+        "auto_pricing_refresh": False,  # avoid network auto-refresh during tests
+    }
+    _llm_reasoner_kwargs_anthropic: ClassVar[dict[str, Any]] = {
+        "model": "anthropic/claude-sonnet-5-5",
+        "api_key": _anthropic_api_key,
+        "role": "reasoner",
+        "reasoning_effort": "low",
+        "auto_pricing": True,
+        "auto_pricing_refresh": False,  # avoid network auto-refresh during tests
+    }
+
+    def create_anthropic_model_group(self) -> DocumentModelGroup:
+        """
+        Creates a model group of the LLMs of Anthropic: Claude Haiku as the extractor
+        and Claude Sonnet as the reasoner.
+
+        :return: The model group, set up for replayed responses if the test replays
+            its cassette.
+        :rtype: DocumentModelGroup
+        """
+        model_group = DocumentModelGroup(
+            models=[
+                DocumentLLM(**self._llm_extractor_kwargs_anthropic),
+                DocumentLLM(**self._llm_reasoner_kwargs_anthropic),
+            ]
+        )
+        self.config_llm_async_limiter_for_mock_responses(model_group)
+        return model_group
+
+    @staticmethod
+    def check_usage_and_cost_of_each_model(model_group: DocumentModelGroup) -> None:
+        """
+        Checks that each model of a group sent requests, and that their tokens
+        are priced.
+
+        :param model_group: The model group.
+        :type model_group: DocumentModelGroup
+        :return: None
+        :rtype: None
+        """
+        usages = model_group.get_usage()
+        assert len(usages) == len(model_group.models)
+        for usage_item in usages:
+            assert usage_item.usage.calls
+            assert usage_item.usage.input > 0 and usage_item.usage.output > 0
+        for cost_item in model_group.get_cost():
+            assert cost_item.cost.input > 0 and cost_item.cost.output > 0
+
+    @pytest.mark.vcr
+    def test_anthropic_llms_text(self):
+        """
+        Tests for extracting aspects and concepts of every type from a text with
+        a model group of LLMs of Anthropic, with references and justifications.
+        """
+        model_group = self.create_anthropic_model_group()
+
+        document = self.document.clone()  # clone for method-scoped state modification
+        document.add_aspects(
+            [
+                Aspect(
+                    name="Liability",
+                    description="Clauses on the liability of the parties",
+                    add_justifications=True,
+                    concepts=[
+                        NumericalConcept(
+                            name="Liability cap amount",
+                            description="Fixed amount of the total liability cap, in USD",
+                            numeric_type="int",
+                            add_references=True,
+                            reference_depth="sentences",
+                        ),
+                        NumericalConcept(
+                            name="Liquidated damages",
+                            description="Liquidated damages for each instance of "
+                            "unauthorized disclosure, in USD",
+                            numeric_type="int",
+                            model_role="reasoner",
+                            add_justifications=True,
+                        ),
+                    ],
+                ),
+            ]
+        )
+        document.add_concepts(
+            [
+                BooleanConcept(
+                    name="Is a contract",
+                    description="Document is a contract",
+                    model_role="reasoner",
+                ),
+                DateConcept(
+                    name="Effective date",
+                    description="Date as of which the agreement is made and entered into",
+                    add_references=True,
+                ),
+                StringConcept(
+                    name="Governing law",
+                    description="Law that governs the agreement",
+                    add_references=True,
+                    reference_depth="sentences",
+                    add_justifications=True,
+                ),
+                LabelConcept(
+                    name="Contract type",
+                    description="Type of the contract",
+                    labels=["NDA", "Supply agreement", "Employment agreement"],
+                    classification_type="multi_class",
+                ),
+                RatingConcept(
+                    name="Strength of confidentiality protection",
+                    description="How well the agreement protects confidential information",
+                    rating_scale=(1, 10),
+                    model_role="reasoner",
+                    add_justifications=True,
+                ),
+                JsonObjectConcept(
+                    name="Party B",
+                    description="Details of Party B",
+                    structure={"name": str, "city": str, "contact_person": str},
+                ),
+                NumericalConcept(
+                    name="Agreement term",
+                    description="Term of the agreement, in years",
+                    numeric_type="int",
+                ),
+            ]
+        )
+
+        model_group.extract_all(document)
+
+        # Aspect and its concepts
+        liability = document.get_aspect_by_name("Liability")
+        assert liability.extracted_items
+        assert all(i.justification for i in liability.extracted_items)
+        liability_cap = liability.get_concept_by_name("Liability cap amount")
+        self.log_extracted_items_for_instance(liability_cap)
+        assert 100_000 in [i.value for i in liability_cap.extracted_items]
+        assert all(i.reference_sentences for i in liability_cap.extracted_items)
+        liquidated_damages = liability.get_concept_by_name("Liquidated damages")
+        self.log_extracted_items_for_instance(liquidated_damages)
+        assert 25_000 in [i.value for i in liquidated_damages.extracted_items]
+        assert all(i.justification for i in liquidated_damages.extracted_items)
+
+        # Document concepts
+        for concept in document.concepts:
+            self.log_extracted_items_for_instance(concept)
+            assert concept.extracted_items, f"No items extracted for `{concept.name}`"
+        assert [
+            i.value
+            for i in document.get_concept_by_name("Is a contract").extracted_items
+        ] == [True]
+        effective_date = document.get_concept_by_name("Effective date")
+        assert date(2024, 7, 16) in [i.value for i in effective_date.extracted_items]
+        assert all(i.reference_paragraphs for i in effective_date.extracted_items)
+        governing_law = document.get_concept_by_name("Governing law")
+        assert any("California" in i.value for i in governing_law.extracted_items)
+        assert all(
+            i.reference_sentences and i.justification
+            for i in governing_law.extracted_items
+        )
+        contract_type = document.get_concept_by_name("Contract type")
+        assert contract_type.extracted_items[0].value == ["NDA"]
+        rating = document.get_concept_by_name("Strength of confidentiality protection")
+        assert all(
+            1 <= i.value <= 10 and i.justification for i in rating.extracted_items
+        )
+        party_b = document.get_concept_by_name("Party B")
+        assert any("Example.Com" in i.value["name"] for i in party_b.extracted_items)
+        agreement_term = document.get_concept_by_name("Agreement term")
+        assert 5 in [i.value for i in agreement_term.extracted_items]
+
+        # Both models sent requests, priced by auto-pricing
+        self.check_usage_and_cost_of_each_model(model_group)
+        self.check_usage(model_group)
+        self.check_cost(model_group)
+
+        # Check serialization of the model group
+        self._check_deserialized_llm_config_eq(model_group)
+
+    @pytest.mark.vcr
+    def test_anthropic_llms_vision(self):
+        """
+        Tests for extracting concepts from an image, and for chat with an image,
+        with LLMs of Anthropic.
+        """
+        model_group = self.create_anthropic_model_group()
+
+        document = Document(
+            images=[self.test_img_png_invoice],
+            concepts=[
+                StringConcept(
+                    name="Invoice number",
+                    description="Number of the invoice",
+                    modality="image",
+                    add_justifications=True,
+                ),
+                JsonObjectConcept(
+                    name="Service items",
+                    description="Service items, their quantity and price",
+                    structure={"service_name": str, "quantity": int, "price": str},
+                    modality="image",
+                ),
+                NumericalConcept(
+                    name="Total invoice amount",
+                    description="Total amount of the invoice",
+                    numeric_type="int",
+                    model_role="reasoner",
+                    modality="image",
+                    add_justifications=True,
+                ),
+            ],
+        )
+
+        model_group.extract_concepts_from_document(document)
+        for concept in document.concepts:
+            self.log_extracted_items_for_instance(concept)
+        invoice_number = document.get_concept_by_name("Invoice number")
+        assert any("1234" in i.value for i in invoice_number.extracted_items)
+        assert all(i.justification for i in invoice_number.extracted_items)
+        service_items = document.get_concept_by_name("Service items")
+        assert {
+            i.value["service_name"].lower() for i in service_items.extracted_items
+        } == {"branding design", "web design", "brochure"}
+        total_amount = document.get_concept_by_name("Total invoice amount")
+        assert [i.value for i in total_amount.extracted_items] == [4800]
+
+        # Both models sent requests, priced by auto-pricing
+        self.check_usage_and_cost_of_each_model(model_group)
+
+        # Chat with an image, in a chat session
+        llm_reasoner = next(m for m in model_group.models if m.role == "reasoner")
+        assert isinstance(llm_reasoner, DocumentLLM)
+        chat_session = ChatSession()
+        with pytest.warns(UserWarning, match="default system message"):
+            answer = llm_reasoner.chat(
+                "What's the type of this document? Reply in one word.",
+                images=[self.test_img_png_invoice],
+                chat_session=chat_session,
+            )
+        assert answer and "invoice" in answer.lower()
+        with pytest.warns(UserWarning, match="default system message"):
+            answer = llm_reasoner.chat(
+                "What is the name of the company that issued it? "
+                "Reply only with the name.",
+                chat_session=chat_session,
+            )
+        assert answer and "platypus" in answer.lower()
+        assert [m.role for m in chat_session.messages] == [
+            "system",
+            "user",
+            "assistant",
+            "user",
+            "assistant",
+        ]
+
+    @pytest.mark.vcr
+    def test_anthropic_llms_tools(self):
+        """
+        Tests for chat with tools with LLMs of Anthropic, in a chat session. The LLM
+        has to call the tools one after another, using the results of the previous
+        tool calls in the next one, and then to answer a second question from
+        the history of the session, which has the tool calls of the first turn.
+
+        Claude Haiku thinks by default, and Claude Sonnet thinks as its reasoning
+        effort is set, i.e. the thinking blocks of the LLM are returned with
+        the tool calls.
+        """
+
+        tool_runs: list[str] = []
+
+        @register_tool
+        def get_order_total(order_id: str) -> str:
+            """
+            Returns the total amount of the order.
+            """
+            tool_runs.append("total")
+            return {"ORD-123": "9"}.get(order_id, "0")
+
+        @register_tool
+        def get_discount_amount(order_id: str) -> str:
+            """
+            Returns the discount amount for the order.
+            """
+            tool_runs.append("discount")
+            return {"ORD-123": "4"}.get(order_id, "0")
+
+        @register_tool
+        def compute_final_amount(order_total: str, discount: str) -> str:
+            """
+            Computes the final amount as the order total minus the discount.
+            """
+            tool_runs.append("final")
+            return str(int(float(order_total)) - int(float(discount)))
+
+        for llm_kwargs in (
+            self._llm_extractor_kwargs_anthropic,
+            self._llm_reasoner_kwargs_anthropic,
+        ):
+            tool_runs.clear()
+            llm = DocumentLLM(
+                **llm_kwargs,
+                system_message="",
+                tools=[get_order_total, get_discount_amount, compute_final_amount],
+            )
+            self.config_llm_async_limiter_for_mock_responses(llm)
+            chat_session = ChatSession()
+
+            answer = llm.chat(
+                "Use the available tools to compute a final amount. "
+                "Call `get_order_total` and `get_discount_amount` with "
+                "order_id='ORD-123'. Then call `compute_final_amount` using the exact "
+                "outputs returned by these tools as order_total and discount. "
+                "Reply only with the number returned by `compute_final_amount`, "
+                "nothing else. Do not guess any values; you must call the tools.",
+                chat_session=chat_session,
+            )
+            logger.debug(f"Answer of {llm.model} with tools: {answer}")
+
+            # Each tool is called once, the last one after the tools it depends on
+            assert sorted(tool_runs[:2]) == ["discount", "total"]
+            assert tool_runs[2:] == ["final"]
+            # Expected: 9 - 4 = 5
+            assert answer and "5" in answer
+
+            # The LLM is called at least for the two tool rounds and for the final answer
+            usage = llm.get_usage()[0].usage
+            assert len(usage.calls) >= 3
+            assert usage.input > 0 and usage.output > 0
+            self.check_cost(llm)
+
+            # The tool calls and their results are kept in the history of the session,
+            # between the prompt and the answer, but are not listed in its messages
+            history_roles = [m.role for m in chat_session._messages]
+            assert history_roles[0] == "user" and history_roles[-1] == "assistant"
+            assert "tool" in history_roles
+            assert [m.role for m in chat_session.messages] == ["user", "assistant"]
+
+            # Second turn, in the same session: the history sent with it has the tool
+            # calls of the first turn, i.e. the LLM answers without calling the tools
+            # again
+            answer = llm.chat(
+                "What was the final amount? Reply only with the number.",
+                chat_session=chat_session,
+            )
+            assert answer and "5" in answer
+            assert len(tool_runs) == 3
+            assert [m.role for m in chat_session.messages] == [
+                "user",
+                "assistant",
+                "user",
+                "assistant",
+            ]
+
+            # Check serialization of LLM with registered tools
+            self._check_deserialized_llm_config_eq(llm)
+
+    @pytest.mark.vcr
+    def test_anthropic_llms_fallback(self):
+        """
+        Tests for extraction with Claude Haiku whose requests are rejected by the API
+        of Anthropic (invalid API key), with Claude Sonnet as its fallback LLM.
+        """
+        main_kwargs: dict[str, Any] = {
+            **self._llm_extractor_kwargs_anthropic,
+            "api_key": "invalid_api_key",
+        }
+        # A fallback LLM has the role of its main LLM
+        fallback_kwargs = {
+            k: v for k, v in self._llm_reasoner_kwargs_anthropic.items() if k != "role"
+        }
+        llm = DocumentLLM(
+            **main_kwargs,
+            fallback_models=[DocumentLLM(**fallback_kwargs, is_fallback=True)],
+        )
+        self.config_llm_async_limiter_for_mock_responses(llm)
+
+        document = self.document.clone()  # clone for method-scoped state modification
+        document.add_concepts(
+            [StringConcept(name="Title", description="Title of the contract")]
+        )
+        llm.extract_concepts_from_document(document)
+
+        title = document.get_concept_by_name("Title")
+        self.log_extracted_items_for_instance(title)
+        assert any(
+            "non-disclosure agreement" in i.value.lower() for i in title.extracted_items
+        )
+
+        # The request of the main LLM failed, the fallback LLM answered
+        main_usage, fallback_usage = llm.get_usage()
+        assert not main_usage.is_fallback and fallback_usage.is_fallback
+        assert main_usage.usage.calls and main_usage.usage.input == 0
+        assert fallback_usage.usage.input > 0 and fallback_usage.usage.output > 0
+        self.check_cost(llm)
 
     @pytest.mark.vcr
     def test_local_llms_text(self):

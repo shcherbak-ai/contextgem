@@ -64,6 +64,7 @@ CASSETTES_DIR = Path(__file__).parent / "cassettes"
 # in the identifiers of the models
 _HOST_PROVIDERS = {
     "api.openai.com": "openai",
+    "api.anthropic.com": "anthropic",
     "api.typesafe.ai": "typesafe",
     # The host that the host of a Microsoft Foundry resource is replaced with
     urlsplit(VCR_DUMMY_ENDPOINT_PREFIX).hostname: "azure_ai",
@@ -293,6 +294,13 @@ def _add_interaction(
     input_tokens = int(usage.get("prompt_tokens", usage.get("input_tokens")) or 0)
     output_tokens = int(usage.get("completion_tokens", usage.get("output_tokens")) or 0)
     cache_read_tokens = int(details.get("cached_tokens") or 0)
+    cache_write_tokens = 0
+    if "cache_read_input_tokens" in usage or "cache_creation_input_tokens" in usage:
+        # The Messages API of Anthropic counts the input tokens read from and written
+        # to the prompt cache apart from the other input tokens
+        cache_read_tokens = int(usage.get("cache_read_input_tokens") or 0)
+        cache_write_tokens = int(usage.get("cache_creation_input_tokens") or 0)
+        input_tokens += cache_read_tokens + cache_write_tokens
     if provider == _LOCAL:
         cost, priced_by = Decimal(0), _PRICED_AS_LOCAL
     else:
@@ -300,6 +308,7 @@ def _add_interaction(
             input_tokens=input_tokens,
             output_tokens=output_tokens,
             cache_read_tokens=cache_read_tokens,
+            cache_write_tokens=cache_write_tokens,
         )
         cost, priced_by = _price_request(provider, model, kind, tokens)
     name = f"{provider}/{model}"

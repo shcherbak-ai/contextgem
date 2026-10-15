@@ -58,6 +58,16 @@ from tests.conftest import VCR_DUMMY_ENDPOINT_PREFIX, VCR_REDACTION_MARKER
 
 
 VCR_FILTER_HEADERS = {
+    "anthropic-organization-id",
+    "anthropic-ratelimit-input-tokens-limit",
+    "anthropic-ratelimit-input-tokens-remaining",
+    "anthropic-ratelimit-output-tokens-limit",
+    "anthropic-ratelimit-output-tokens-remaining",
+    "anthropic-ratelimit-requests-limit",
+    "anthropic-ratelimit-requests-remaining",
+    "anthropic-ratelimit-tokens-limit",
+    "anthropic-ratelimit-tokens-remaining",
+    "anthropic-workspace-id",
     "api-key",
     "apim-request-id",
     "authorization",
@@ -75,8 +85,10 @@ VCR_FILTER_HEADERS = {
     "host",
     "openai-organization",
     "openai-project",
+    "request-id",
     "set-cookie",
     "Set-Cookie",
+    "traceresponse",
     "uri",
     "x-aml-cluster",
     "x-ms-client-request-id",
@@ -89,6 +101,7 @@ VCR_FILTER_HEADERS = {
     "x-ratelimit-remaining-requests",
     "x-ratelimit-remaining-tokens",
     "x-ms-rai-invoked",
+    "x-api-key",
     "x-request-id",
     "x-typesafe-request-id",
     "x-stainless-os",
@@ -218,6 +231,9 @@ def vcr_before_record_response(response):
             body = json.loads(response["body"]["string"])
             if "id" in body:
                 body["id"] = f"chatcmpl-{VCR_REDACTION_MARKER}"
+            # The ID of the request in an error response of Anthropic
+            if "request_id" in body:
+                body["request_id"] = VCR_REDACTION_MARKER
             response["body"]["string"] = redact_home_dir(
                 json.dumps(body, ensure_ascii=False)
             )
@@ -1513,6 +1529,7 @@ def set_dummy_env_variables_for_testing_from_cassettes() -> None:
 
     default_env_vars = {
         "CONTEXTGEM_OPENAI_API_KEY": "DUMMY",
+        "CONTEXTGEM_ANTHROPIC_API_KEY": "DUMMY",
         # The key of the decision models of TypeSafe: a request for which no key
         # is passed is rejected by litellm before it is sent, i.e. before it can
         # be replayed

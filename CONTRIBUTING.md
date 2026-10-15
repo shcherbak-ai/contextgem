@@ -433,6 +433,9 @@ Based on the test results and your changes, you'll fall into one of these four s
    # For OpenAI API tests
    CONTEXTGEM_OPENAI_API_KEY=your_openai_api_key
 
+   # For Anthropic API tests
+   CONTEXTGEM_ANTHROPIC_API_KEY=your_anthropic_api_key
+
    # For TypeSafe API tests (decision models)
    CONTEXTGEM_TYPESAFE_API_KEY=your_typesafe_api_key
 
@@ -528,10 +531,10 @@ Based on the test results and your changes, you'll fall into one of these four s
 
 **What is redacted automatically:**
 
-- `CONTEXTGEM_OPENAI_API_KEY`, `CONTEXTGEM_TYPESAFE_API_KEY` and `CONTEXTGEM_AZURE_AI_API_KEY`: the headers that carry these keys (`Authorization`, `api-key`) are among the headers listed in `VCR_FILTER_HEADERS` (`tests/utils.py`), whose values are redacted in the recorded requests and responses. A key that is sent in another header, in the URL or in the body of a request is not redacted.
+- `CONTEXTGEM_OPENAI_API_KEY`, `CONTEXTGEM_ANTHROPIC_API_KEY`, `CONTEXTGEM_TYPESAFE_API_KEY` and `CONTEXTGEM_AZURE_AI_API_KEY`: the headers that carry these keys (`Authorization`, `x-api-key`, `api-key`) are among the headers listed in `VCR_FILTER_HEADERS` (`tests/utils.py`), whose values are redacted in the recorded requests and responses. A key that is sent in another header, in the URL or in the body of a request is not redacted.
 - `CONTEXTGEM_AZURE_AI_API_BASE`: the host of a Microsoft Foundry resource, which has the name of the resource, is replaced with a dummy host (`dummy-endpoint.local`) in the recorded requests, and the name of a project of the resource with a dummy name, if the endpoint has it
 
-The response headers in which Azure names the deployment, the region and the cluster that served a request are redacted too. The name of your home directory is also redacted in the file paths found in the recorded responses, e.g. in the paths of the model files that a local LLM server returns.
+The response headers in which Azure names the deployment, the region and the cluster that served a request are redacted too, as are those in which Anthropic names the organization and the workspace of the key, and the rate limits of the account. The name of your home directory is also redacted in the file paths found in the recorded responses, e.g. in the paths of the model files that a local LLM server returns.
 
 #### Local LLM Testing
 
@@ -541,6 +544,10 @@ For local LLM testing, install the following tools and download the relevant mod
 - [LM Studio](https://lmstudio.ai/)
 
 > ⚠️ **Important:** Your system needs to have an appropriate GPU capacity to run such local LLMs.
+
+#### Anthropic LLM Testing
+
+Most tests of LLMs send their requests to OpenAI. The tests `test_anthropic_llms_*` in `tests/test_llms.py` send theirs to Anthropic (`anthropic/claude-haiku-5-5` and `anthropic/claude-sonnet-5-5`): recording their cassettes needs `CONTEXTGEM_ANTHROPIC_API_KEY` in your `.env` file. A dummy `CONTEXTGEM_ANTHROPIC_API_KEY` is set when no `.env` file is present, and the tests use the same dummy key if your `.env` file has no key of Anthropic, so these tests replay without the variable. The host of the API of Anthropic (`api.anthropic.com`) is on the list of the hosts allowed while recording (see [Network Egress Control](#network-egress-control)).
 
 #### Decision Model Testing
 

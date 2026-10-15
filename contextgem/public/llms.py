@@ -208,4 +208,12 @@ class ChatSession(_ChatSession):
         message of the session is sent with each request of the session, also by any
         other LLM that the session is used with, instead of the system message
         of that LLM.
+
+        In a chat with tools, the history of the session keeps the tool calls
+        of each answered turn and their results, which are sent to the LLM with
+        the next turns. The results include the errors of the tools, which the LLM
+        receives as it calls them. A turn that ends without an answer, e.g. on
+        an error of the LLM API, is started over when it is sent again, i.e. its
+        tool calls are not kept. ``messages`` lists the messages of the user and
+        the answers of the LLM, without the tool calls.
     """

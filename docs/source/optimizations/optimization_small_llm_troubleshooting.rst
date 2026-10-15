@@ -33,7 +33,7 @@ Smaller language models, such as many that run locally, often struggle with Cont
 ---------------------------------
 
 **What the Model Needs**
-    ContextGem is tested with ``openai/gpt-6-luna`` as the baseline model. For reliable structured extraction, your model should:
+    ContextGem is tested with ``openai/gpt-6-luna``, its baseline model, and with ``anthropic/claude-haiku-5-5``. For reliable structured extraction, your model should:
 
     - Be able to follow detailed JSON schema instructions consistently
     - Have a sufficient context window to ingest the detailed prompt and the document content

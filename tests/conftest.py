@@ -257,6 +257,7 @@ _TETHERED_REPLAY_ALLOW = list(_SAT_MODEL_DOWNLOAD_HOSTS)
 
 _TETHERED_RECORDING_ALLOW = [
     "api.openai.com",  # OpenAI
+    "api.anthropic.com",  # Anthropic
     "api.typesafe.ai",  # TypeSafe (decision models)
     *_GENAI_PRICES_REFRESH_HOSTS,  # genai-prices auto-refresh
     *_TETHERED_REPLAY_ALLOW,

@@ -28,7 +28,7 @@ A tool is a Python function decorated with ``@register_tool``. The function defi
 * A tool function must have a docstring and type hints for all its parameters, and must not have positional-only parameters, ``*args`` or ``**kwargs``
 * A parameter that has a default value, or is typed as ``Optional``, is optional for the LLM
 * Tool handlers must return a non-empty string (serialize structured data with ``json.dumps`` if needed)
-* Use :class:`~contextgem.public.llms.ChatSession` to maintain conversation history across turns
+* Use :class:`~contextgem.public.llms.ChatSession` to maintain conversation history across turns. The history keeps the tool calls of each turn and their results, so the LLM is sent them with the next turns and does not need to call the tools again for what it already found. ``ChatSession.messages`` lists the messages of the user and the answers of the LLM, without the tool calls
 
 
 Docstring Formats

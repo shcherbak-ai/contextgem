@@ -34,7 +34,7 @@ For local LLMs, you'll need to specify the provider, model name, and the appropr
    :caption: Using local LLM providers
 
 .. note::
-   **Choosing a model**: ContextGem is tested with hosted LLMs such as ``gpt-6-luna``. A smaller LLM, such as many that run locally, may not follow the detailed extraction instructions: check it on a sample of your documents, and see the :doc:`troubleshooting guide <../optimizations/optimization_small_llm_troubleshooting>` if it falls short.
+   **Choosing a model**: ContextGem is tested with hosted LLMs such as ``gpt-6-luna`` (OpenAI) and ``claude-haiku-5-5`` (Anthropic). A smaller LLM, such as many that run locally, may not follow the detailed extraction instructions: check it on a sample of your documents, and see the :doc:`troubleshooting guide <../optimizations/optimization_small_llm_troubleshooting>` if it falls short.
 
 .. note::
    **Vision Models with Ollama**: For local vision models that process images, use the ``ollama/`` prefix instead of ``ollama_chat/``, as the latter does not yet support image inputs. For more details, see the relevant Ollama GitHub issues `#10255 <https://github.com/ollama/ollama/issues/10255>`_ and `#6451 <https://github.com/ollama/ollama/issues/6451>`_.

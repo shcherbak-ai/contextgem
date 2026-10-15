@@ -592,7 +592,8 @@ class _DocumentLLM(_DocumentModel):
                 user_message_obj._response_succeeded = False  # set as not yet answered
                 chat_session._append_message(user_message_obj)
 
-            # Use the chat session's messages as the context for the LLM call
+            # Use the history of the chat session as the context for the LLM call,
+            # with the tool calls of the previous turns and their results
             messages = [*chat_session._messages]
         else:
             # Build system + user messages explicitly
@@ -660,7 +661,9 @@ class _DocumentLLM(_DocumentModel):
         # If response is None, the caller will try with the next fallback LLM
         if response is not None and chat_session is not None:
             user_message_obj._response_succeeded = True  # set as answered
-            chat_session._append_message(_Message(role="assistant", content=response))
+            # The tool calls of the turn, if any, are kept in the history before
+            # the answer, i.e. they are sent to the LLM with the next turns
+            chat_session._add_answer(response)
 
         return response
 
@@ -1715,8 +1718,9 @@ class _DocumentLLM(_DocumentModel):
         :param drop_params: Whether to drop unsupported parameters when calling the LLM API.
             Used internally for automatic retry when UnsupportedParamsError occurs.
         :type drop_params: bool
-        :param chat_session: Optional chat session object used to persist tool messages during the
-            tool-calling loop. If provided, assistant and tool messages are recorded on the session.
+        :param chat_session: Optional chat session of the turn being answered. If provided,
+            the tool calls of the LLM and their results are recorded on the session, to be
+            kept in its history when the turn is answered.
         :type chat_session: _ChatSession | None
         :param use_tools: Whether the tools of the LLM are sent with the requests, i.e.
             whether the tool calls requested by the LLM are executed. Defaults to False.
@@ -1773,6 +1777,11 @@ class _DocumentLLM(_DocumentModel):
                 raise
             return answer, tool_calls
 
+        # The tool calls of the turn are recorded from the start of the request,
+        # i.e. not those of a previous attempt to answer the turn
+        if chat_session is not None:
+            chat_session._discard_pending_tool_messages()
+
         # Initial send
         answer, tool_calls = await send_and_record(model_call_obj)
         if not (use_tools and self.tools):
@@ -1816,15 +1825,15 @@ class _DocumentLLM(_DocumentModel):
                 tool_calls=tool_calls_serialized,
             )
             request_messages.append(assistant_msg_obj._to_message_dict())
-            if chat_session is not None:
-                chat_session._append_tool_message(assistant_msg_obj)
 
             tool_messages = await self._execute_tool_calls(tool_calls)
 
             # Append tool results
             request_messages.extend([tm._to_message_dict() for tm in tool_messages])
             if chat_session is not None:
-                chat_session._extend_tool_messages(tool_messages)
+                chat_session._add_pending_tool_messages(
+                    [assistant_msg_obj, *tool_messages]
+                )
 
             followup_call = _ModelCall(prompt_kwargs={}, prompt="<tools_round_trip>")
             answer, tool_calls = await send_and_record(
@@ -1877,8 +1886,9 @@ class _DocumentLLM(_DocumentModel):
             due to an error in the LLM API. If False, a warning is logged instead, and no data
             will be returned. Defaults to True.
         :type raise_exception_on_model_api_error: bool, optional
-        :param chat_session: Optional chat session object used to persist tool messages during the
-            tool-calling loop. If provided, assistant and tool messages are recorded on the session.
+        :param chat_session: Optional chat session of the turn being answered. If provided,
+            the tool calls of the LLM and their results are recorded on the session, to be
+            kept in its history when the turn is answered.
         :type chat_session: _ChatSession | None
         :param has_fallback_pending: Whether a fallback model will be tried if this call fails.
             If True, an error in the LLM API is logged without being raised or warned about,
@@ -2137,25 +2147,46 @@ class _DocumentLLM(_DocumentModel):
         ).render({"output_language": output_language or self.output_language})  # type: ignore[attr-defined]
 
 
+def _is_tool_exchange_message(message: _Message) -> bool:
+    """
+    Returns whether a message of a chat is a part of the tool calls of a turn:
+    a message of the LLM that requests tool calls, or the result of a tool call.
+
+    :param message: The message.
+    :type message: _Message
+    :return: True if the message is a part of the tool calls of a turn.
+    :rtype: bool
+    """
+    return message.role == "tool" or (
+        message.role == "assistant" and bool(message.tool_calls)
+    )
+
+
 @_disable_direct_initialization
 class _ChatSession(_InstanceBase):
     """
     Internal implementation of the ``ChatSession`` class.
     """
 
+    # The history of the chat, as sent to the LLM: with the tool calls of each
+    # answered turn and their results, between the user message and the answer
     _messages: list[_Message] = PrivateAttr(default_factory=list)
-    # Tool-enabled assistant calls and tool messages as Message objects
-    _tool_messages: list[_Message] = PrivateAttr(default_factory=list)
+    # The tool calls and their results of the turn being answered, which are added
+    # to the history only when the turn is answered (see `_add_answer()`)
+    _pending_tool_messages: list[_Message] = PrivateAttr(default_factory=list)
 
     @property
     def messages(self) -> list[_Message]:
         """
-        Returns the list of messages in the session.
+        Returns the list of messages in the session: the system message, if any,
+        and the messages of the user and the answers of the LLM. The tool calls
+        of the LLM and their results are not listed, although they are kept in
+        the history of the chat that is sent to the LLM.
 
         :return: The list of messages in the session.
         :rtype: list[_Message]
         """
-        return list(self._messages)
+        return [m for m in self._messages if not _is_tool_exchange_message(m)]
 
     def _validate_system_message_constraints(self) -> None:
         """
@@ -2208,29 +2239,45 @@ class _ChatSession(_InstanceBase):
         self._validate_system_message_constraints()
         self._validate_list_uniqueness(cast(list, self._messages))
 
-    def _append_tool_message(self, message: _Message) -> None:
+    def _add_pending_tool_messages(self, messages: list[_Message]) -> None:
         """
-        Append a tool-related message (assistant acknowledging tool calls or tool message)
-        to internal tool messages storage.
+        Adds messages of the tool calls of the turn being answered: an assistant
+        message with tool calls, or the results of the tool calls. They are added
+        to the history when the turn is answered (see `_add_answer()`).
 
-        :param message: Message object representing the tool-related entry
-        :type message: _Message
-        :return: None
-        :rtype: None
-        """
-        self._tool_messages.append(message)
-
-    def _extend_tool_messages(self, messages: list[_Message]) -> None:
-        """
-        Extend the tool message history with multiple tool-related messages.
-
-        :param messages: Tool-related messages to add to the internal tool messages storage.
+        :param messages: The messages to add.
         :type messages: list[_Message]
         :return: None
         :rtype: None
         """
-        if messages:
-            self._tool_messages.extend(messages)
+        self._pending_tool_messages.extend(messages)
+
+    def _discard_pending_tool_messages(self) -> None:
+        """
+        Discards the messages of the tool calls of the turn being answered, e.g.
+        when the turn is answered again from its start, by another LLM or after
+        a failed attempt. The tools are then called again in the new attempt.
+
+        :return: None
+        :rtype: None
+        """
+        self._pending_tool_messages = []
+
+    def _add_answer(self, answer: str) -> None:
+        """
+        Adds the answer of the LLM to the turn being answered, after the tool calls
+        that the LLM made and their results, if any, which are thus kept
+        in the history of the chat.
+
+        :param answer: The answer of the LLM.
+        :type answer: str
+        :return: None
+        :rtype: None
+        """
+        self._extend_messages(
+            [*self._pending_tool_messages, _Message(role="assistant", content=answer)]
+        )
+        self._discard_pending_tool_messages()
 
     def _extend_messages(self, messages: list[_Message]) -> None:
         """
@@ -2255,3 +2302,4 @@ class _ChatSession(_InstanceBase):
         :rtype: None
         """
         self._set_messages([])
+        self._discard_pending_tool_messages()

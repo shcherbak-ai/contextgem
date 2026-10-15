@@ -991,10 +991,11 @@ class TestChat(BaseTest):
         logger.info(f"Usage calls: {len(usage_calls)}")
         assert len(usage_calls) == (3 if parallel_tool_calls else 7)
 
-        # Tool messages are stored separately when session is used
+        # The tool calls and their results are kept in the history of the session,
+        # but are not listed in its messages
         if use_session:
             assert cs is not None
-            tool_msgs = cs._tool_messages
+            tool_msgs = [m for m in cs._messages if m not in cs.messages]
             assert tool_msgs and any(
                 m.role == "assistant" and m.tool_calls for m in tool_msgs
             )
@@ -1110,11 +1111,131 @@ class TestChat(BaseTest):
         assert tool_message["role"] == "tool"
         assert tool_message["content"] == "shipped"
 
-        # The same messages are stored in the chat session
-        assert [(m.role, m.content) for m in chat_session._tool_messages] == [
+        # The same messages are kept in the history of the chat session, between
+        # the prompt and the answer, and are not listed in its messages
+        assert [(m.role, m.content) for m in chat_session._messages] == [
+            ("user", "What is the status of the order ORD-123?"),
             ("assistant", text_with_tool_call),
             ("tool", "shipped"),
+            ("assistant", "The order is shipped."),
         ]
+        assert [m.role for m in chat_session.messages] == ["user", "assistant"]
+
+    def test_chat_session_keeps_tool_calls_in_history(self):
+        """
+        Tests that the tool calls of an answered turn of a chat session and their
+        results are kept in the history of the session, and are sent to the LLM
+        with the next turns, while those of a turn that failed are not kept.
+        The history is kept when the session is serialized or cloned.
+
+        LLM API calls are stubbed, i.e. no cassette is required.
+        """
+
+        litellm = llms_module.litellm
+        tool_runs: list[str] = []
+
+        @register_tool
+        def get_order_status(order_id: str) -> str:
+            """
+            Returns the status of the order.
+            """
+            tool_runs.append(order_id)
+            return "shipped"
+
+        llm = _create_llm_for_stubbed_chat(
+            with_fallback=False, tools=[get_order_status]
+        )
+        chat_session = ChatSession()
+        prompt_1 = "What is the status of the order ORD-123?"
+        prompt_2 = "And of the order ORD-456?"
+        prompt_3 = "What did you find for the first order?"
+        acompletion_stub, requests = _stub_llm_api(
+            {
+                _MAIN_MODEL: [
+                    # Turn 1: a tool call, then the answer
+                    _create_completion(
+                        None, ("get_order_status", '{"order_id": "ORD-123"}')
+                    ),
+                    _create_completion("The order ORD-123 is shipped."),
+                    # Turn 2: a tool call, then a failed request
+                    _create_completion(
+                        None, ("get_order_status", '{"order_id": "ORD-456"}')
+                    ),
+                    _StubbedLLMAPIError("Authentication failed"),
+                    # Turn 2 sent again: answered without a tool call
+                    _create_completion("I cannot check the order ORD-456."),
+                    # Turn 3: answered from the history
+                    _create_completion("The order ORD-123 is shipped."),
+                ]
+            }
+        )
+        with patch.object(litellm, "acompletion", new=acompletion_stub):
+            llm.chat(prompt_1, chat_session=chat_session)
+            with pytest.raises(ModelAPIError):
+                llm.chat(prompt_2, chat_session=chat_session)
+            llm.chat(prompt_2, chat_session=chat_session)
+            answer = llm.chat(prompt_3, chat_session=chat_session)
+        assert answer == "The order ORD-123 is shipped."
+        assert tool_runs == ["ORD-123", "ORD-456"]
+
+        # Turn 1 is sent with the next turns with its tool call and the result
+        # of the tool, between the prompt and the answer. The tool call of turn 2,
+        # which failed, is not sent when the turn is sent again.
+        expected_history = [
+            ("user", prompt_1),
+            ("assistant", None),
+            ("tool", "shipped"),
+            ("assistant", "The order ORD-123 is shipped."),
+        ]
+        assert [(m["role"], m["content"]) for m in requests[4]["messages"]] == [
+            *expected_history,
+            ("user", prompt_2),
+        ]
+        sent_tool_call = requests[4]["messages"][1]["tool_calls"][0]
+        assert sent_tool_call["function"]["name"] == "get_order_status"
+        assert requests[4]["messages"][2]["tool_call_id"] == sent_tool_call["id"]
+        expected_history += [
+            ("user", prompt_2),
+            ("assistant", "I cannot check the order ORD-456."),
+        ]
+        assert [(m["role"], m["content"]) for m in requests[5]["messages"]] == [
+            *expected_history,
+            ("user", prompt_3),
+        ]
+        expected_history += [("user", prompt_3), ("assistant", answer)]
+
+        # The messages of the session do not list the tool calls
+        assert [(m.role, m.content) for m in chat_session._messages] == (
+            expected_history
+        )
+        assert [m.role for m in chat_session.messages] == [
+            "user",
+            "assistant",
+            "user",
+            "assistant",
+            "user",
+            "assistant",
+        ]
+
+        # The history is kept when the session is serialized or cloned
+        self.check_instance_serialization_and_cloning(chat_session)
+        for restored_session in (
+            ChatSession.from_dict(chat_session.to_dict()),
+            ChatSession.from_json(chat_session.to_json()),
+            chat_session.clone(),
+        ):
+            assert [(m.role, m.content) for m in restored_session._messages] == (
+                expected_history
+            )
+            assert restored_session._messages[1].tool_calls == (
+                chat_session._messages[1].tool_calls
+            )
+            assert len(restored_session.messages) == len(chat_session.messages)
+
+        # Resetting the session removes the whole history
+        chat_session.reset()
+        assert not chat_session._messages
+        assert not chat_session.messages
 
     def test_chat_tool_call_arguments_are_validated(self):
         """
@@ -1324,15 +1445,16 @@ class TestChat(BaseTest):
         assert (fallback_usage.input, fallback_usage.output) == (20, 10)
         assert len(fallback_usage.calls) == 2
 
-        # The chat session has the prompt and the answer once, and the tool calls
-        # of both LLMs with their results
+        # The chat session has the prompt and the answer once, and in its history
+        # the tool call of the fallback LLM that answered with its result, but not
+        # the tool call of the main LLM that failed
         if chat_session is not None:
             assert [m.role for m in chat_session.messages] == ["user", "assistant"]
-            assert [m.role for m in chat_session._tool_messages] == [
+            assert [m.role for m in chat_session._messages] == [
+                "user",
                 "assistant",
                 "tool",
                 "assistant",
-                "tool",
             ]
 
     @pytest.mark.parametrize(
