@@ -434,6 +434,108 @@ class TestLLMs(BaseTest):
             self._check_deserialized_llm_config_eq(llm)
 
     @pytest.mark.vcr
+    def test_anthropic_llms_thinking_blocks(self):
+        """
+        Tests for chat with tools with Claude Sonnet at a high reasoning effort, which
+        thinks before it calls the tools: the thinking blocks that it returns with
+        a tool call are sent back with the tool call in the next tool rounds, and with
+        the history of the session in the next turn.
+        """
+
+        tool_runs: list[str] = []
+
+        @register_tool
+        def get_order_total(order_id: str) -> str:
+            """
+            Returns the total amount of the order.
+            """
+            tool_runs.append("total")
+            return {"ORD-15": "9"}.get(order_id, "0")
+
+        @register_tool
+        def get_discount_amount(order_id: str) -> str:
+            """
+            Returns the discount amount for the order.
+            """
+            tool_runs.append("discount")
+            return {"ORD-15": "4"}.get(order_id, "0")
+
+        llm_kwargs: dict[str, Any] = {
+            **self._llm_reasoner_kwargs_anthropic,
+            "reasoning_effort": "high",
+        }
+        llm = DocumentLLM(
+            **llm_kwargs,
+            system_message="",
+            tools=[get_order_total, get_discount_amount],
+        )
+        self.config_llm_async_limiter_for_mock_responses(llm)
+
+        # The messages of the requests, as they are passed to litellm
+        sent_messages: list[list[dict[str, Any]]] = []
+        send_request = llms_module.litellm.acompletion
+
+        async def record_and_send(*args: Any, **kwargs: Any) -> Any:
+            """
+            Records the messages of a request, and sends it.
+            """
+            sent_messages.append(list(kwargs["messages"]))
+            return await send_request(*args, **kwargs)
+
+        chat_session = ChatSession()
+        with patch.object(llms_module.litellm, "acompletion", new=record_and_send):
+            answer = llm.chat(
+                "The order ID is ORD- followed by the number of prime numbers below "
+                "50. Work out the order ID first. Then get the total and the discount "
+                "of the order with the tools, one tool per step, and reply only with "
+                "the total minus the discount.",
+                chat_session=chat_session,
+            )
+            assert answer and "5" in answer
+            assert sorted(tool_runs) == ["discount", "total"]
+
+            # The thinking blocks returned with a tool call, with the text that
+            # the model returns when a reasoning effort is set
+            tool_call_messages = [
+                m
+                for m in chat_session._messages
+                if m.role == "assistant" and m.tool_calls
+            ]
+            thinking_messages = [m for m in tool_call_messages if m.thinking_blocks]
+            assert thinking_messages, "The model returned no thinking blocks"
+            thinking_blocks = thinking_messages[0].thinking_blocks
+            assert thinking_blocks is not None
+            assert any(
+                block.get("type") == "thinking" and block.get("thinking", "").strip()
+                for block in thinking_blocks
+            )
+
+            def count_requests_with(blocks: list[dict[str, Any]]) -> int:
+                """
+                Returns the number of requests that sent the thinking blocks back.
+                """
+                return sum(
+                    any(m.get("thinking_blocks") == blocks for m in messages)
+                    for messages in sent_messages
+                )
+
+            # They are sent back with the tool call in the next tool rounds
+            n_requests_in_turn = len(sent_messages)
+            assert count_requests_with(thinking_blocks) >= 1
+
+            # ...and in the next turn, with the history of the session
+            answer = llm.chat(
+                "What was the discount? Reply only with the number.",
+                chat_session=chat_session,
+            )
+            assert answer and "4" in answer
+            assert len(tool_runs) == 2  # no tool is called again
+            assert len(sent_messages) == n_requests_in_turn + 1
+            assert any(
+                m.get("thinking_blocks") == thinking_blocks for m in sent_messages[-1]
+            )
+
+    @pytest.mark.vcr
     def test_anthropic_llms_fallback(self):
         """
         Tests for extraction with Claude Haiku whose requests are rejected by the API

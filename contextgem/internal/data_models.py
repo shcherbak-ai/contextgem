@@ -246,6 +246,15 @@ class _Message(_AbstractInstanceBase):
     :ivar name: The function name for a tool message. Required by providers for
         tool replies. Must be set when ``role == 'tool'``; otherwise must be ``None``.
     :vartype name: str | None
+    :ivar thinking_blocks: The thinking blocks that the model returned with this
+        ``assistant`` message, as litellm returns them, e.g. those of Claude. They are
+        sent back unchanged with the message. Applicable only for ``assistant`` messages.
+    :vartype thinking_blocks: list[dict[str, Any]] | None
+    :ivar thinking_blocks_key: Identifies the model, the API endpoint, the tools and
+        the system message of the request that the thinking blocks were returned for.
+        The thinking blocks are sent back only in requests with the same ones, as
+        the provider may reject them otherwise. Must be set when ``thinking_blocks`` is.
+    :vartype thinking_blocks_key: str | None
     """
 
     role: MessageRole = Field(..., frozen=True)
@@ -258,6 +267,12 @@ class _Message(_AbstractInstanceBase):
     tool_calls: list[dict[NonEmptyStr, Any]] | None = Field(default=None, frozen=True)
     # Optional for tool messages: function name for the tool response
     name: NonEmptyStr | None = Field(default=None, frozen=True)
+    # Optional for assistant messages: the thinking blocks returned with the message,
+    # and what identifies the request they were returned for
+    thinking_blocks: list[dict[NonEmptyStr, Any]] | None = Field(
+        default=None, frozen=True
+    )
+    thinking_blocks_key: NonEmptyStr | None = Field(default=None, frozen=True)
 
     _time_created: datetime = PrivateAttr(default_factory=lambda: datetime.now(UTC))
     _response_succeeded: StrictBool | None = PrivateAttr(default=None)
@@ -348,6 +363,8 @@ class _Message(_AbstractInstanceBase):
         - When role != "tool", tool_call_id must be None.
         - When role == "assistant", tool_calls may be provided; otherwise, it must be None.
         - Content may be None only when role == "assistant" and tool_calls are provided.
+        - thinking_blocks may be provided only when role == "assistant", as a non-empty
+          list, together with thinking_blocks_key.
         """
         if self.content is None and not (self.role == "assistant" and self.tool_calls):
             raise ValueError(
@@ -376,12 +393,32 @@ class _Message(_AbstractInstanceBase):
             raise ValueError(
                 "`tool_calls` is only allowed for messages with role 'assistant'."
             )
+        if self.thinking_blocks is not None:
+            if self.role != "assistant":
+                raise ValueError(
+                    "`thinking_blocks` is only allowed for messages with role "
+                    "'assistant'."
+                )
+            if not self.thinking_blocks:
+                raise ValueError("`thinking_blocks` must not be an empty list.")
+        if (self.thinking_blocks is None) != (self.thinking_blocks_key is None):
+            raise ValueError(
+                "`thinking_blocks` and `thinking_blocks_key` must be set together."
+            )
         return self
 
-    def _to_message_dict(self) -> dict[str, Any]:
+    def _to_message_dict(
+        self, thinking_blocks_key: str | None = None
+    ) -> dict[str, Any]:
         """
         Render this message to an OpenAI-compatible dictionary.
 
+        :param thinking_blocks_key: Identifies the model, the API endpoint, the tools
+            and the system message of the request that the message is sent in.
+            The thinking blocks of the message are included only if they were
+            returned for a request with the same ones. Defaults to None (the thinking
+            blocks are not included).
+        :type thinking_blocks_key: str | None
         :return: A dict with keys 'role' and 'content' suitable for chat APIs.
             The content is None for an assistant message that has tool calls and no text.
         :rtype: dict[str, Any]
@@ -392,4 +429,10 @@ class _Message(_AbstractInstanceBase):
             data["name"] = self.name
         if self.role == "assistant" and self.tool_calls is not None:
             data["tool_calls"] = self.tool_calls
+        if (
+            self.thinking_blocks is not None
+            and thinking_blocks_key is not None
+            and self.thinking_blocks_key == thinking_blocks_key
+        ):
+            data["thinking_blocks"] = self.thinking_blocks
         return data

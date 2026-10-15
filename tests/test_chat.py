@@ -61,12 +61,16 @@ class _StubbedLLMAPIError(Exception):
 
 
 def _create_completion(
-    content: str | None, *tool_calls: tuple[str, str], finish_reason: str = "stop"
+    content: str | None,
+    *tool_calls: tuple[str, str],
+    finish_reason: str = "stop",
+    thinking_blocks: list[dict[str, Any]] | None = None,
 ) -> Any:
     """
     Creates a completion, as returned by the LLM API, that has the given text
-    and the calls of the tools given as (name, arguments in JSON). The finish reason
-    is "length" for a response cut off at the max output tokens.
+    and the calls of the tools given as (name, arguments in JSON), and the given
+    thinking blocks, as litellm returns them. The finish reason is "length"
+    for a response cut off at the max output tokens.
     """
     return types.SimpleNamespace(
         choices=[
@@ -82,6 +86,7 @@ def _create_completion(
                         for i, (name, arguments) in enumerate(tool_calls)
                     ]
                     or None,
+                    thinking_blocks=thinking_blocks,
                 ),
                 finish_reason=finish_reason,
             )
@@ -405,6 +410,61 @@ class TestChat(BaseTest):
         assert asst_from_j.tool_call_id is None
         assert asst_from_j.unique_id == asst_msg.unique_id
         assert asst_from_j.time_created == asst_msg.time_created
+
+        # An assistant message may have the thinking blocks returned with it, which
+        # are rendered only for a request with the same key
+        thinking_blocks = [
+            {"type": "thinking", "thinking": "Search first.", "signature": "sig"},
+            {"type": "redacted_thinking", "data": "encrypted"},
+        ]
+        asst_msg_thinking = _Message(
+            role="assistant",
+            content=None,
+            tool_calls=tool_calls,
+            thinking_blocks=thinking_blocks,
+            thinking_blocks_key="key-1",
+        )
+        assert asst_msg_thinking._to_message_dict("key-1") == {
+            "role": "assistant",
+            "content": None,
+            "tool_calls": tool_calls,
+            "thinking_blocks": thinking_blocks,
+        }
+        for other_key in ("key-2", None):
+            assert "thinking_blocks" not in asst_msg_thinking._to_message_dict(
+                other_key
+            )
+        assert "thinking_blocks" not in asst_msg_thinking._to_message_dict()
+        for restored in (
+            _Message.from_dict(asst_msg_thinking.to_dict()),
+            _Message.from_json(asst_msg_thinking.to_json()),
+        ):
+            assert restored == asst_msg_thinking
+            assert restored.thinking_blocks == thinking_blocks
+            assert restored.thinking_blocks_key == "key-1"
+        with pytest.raises(
+            ValueError,
+            match="`thinking_blocks` is only allowed for messages with role 'assistant'",
+        ):
+            _Message(
+                role="user",
+                content="hi",
+                thinking_blocks=thinking_blocks,
+                thinking_blocks_key="key-1",
+            )
+        with pytest.raises(ValueError, match="must not be an empty list"):
+            _Message(
+                role="assistant",
+                content="ok",
+                thinking_blocks=[],
+                thinking_blocks_key="key-1",
+            )
+        for invalid_kwargs in [
+            {"thinking_blocks": thinking_blocks},
+            {"thinking_blocks_key": "key-1"},
+        ]:
+            with pytest.raises(ValueError, match="must be set together"):
+                _Message(role="assistant", content="ok", **invalid_kwargs)  # ty: ignore[invalid-argument-type]
 
     def test_init_chat_session(self):
         """
@@ -1236,6 +1296,117 @@ class TestChat(BaseTest):
         chat_session.reset()
         assert not chat_session._messages
         assert not chat_session.messages
+
+    def test_chat_sends_thinking_blocks_back(self):
+        """
+        Tests that the thinking blocks that the LLM returns with its tool calls and
+        answers are sent back unchanged: in the next tool rounds of the same chat call,
+        and in the next turns of a chat session, but only to the same model with
+        the same tools and system message. A response without thinking blocks leaves
+        the messages as they were.
+
+        LLM API calls are stubbed, i.e. no cassette is required.
+        """
+
+        litellm = llms_module.litellm
+
+        @register_tool
+        def get_order_status(order_id: str) -> str:
+            """
+            Returns the status of the order.
+            """
+            return "shipped"
+
+        @register_tool
+        def get_order_total(order_id: str) -> str:
+            """
+            Returns the total amount of the order.
+            """
+            return "9"
+
+        thinking_tool_call = [
+            {"type": "thinking", "thinking": "Check the status.", "signature": "sig-1"}
+        ]
+        thinking_answer = [{"type": "redacted_thinking", "data": "encrypted"}]
+        llm = _create_llm_for_stubbed_chat(
+            with_fallback=False, tools=[get_order_status, get_order_total]
+        )
+        other_llm = DocumentLLM(
+            model=_FALLBACK_MODEL,
+            api_key="test_api_key",
+            system_message="",
+            tools=[get_order_status],
+            num_retries_failed_request=0,
+        )
+        chat_session = ChatSession()
+        acompletion_stub, requests = _stub_llm_api(
+            {
+                _MAIN_MODEL: [
+                    # Turn 1: a tool call and an answer, each with thinking blocks
+                    _create_completion(
+                        None,
+                        ("get_order_status", '{"order_id": "ORD-123"}'),
+                        thinking_blocks=thinking_tool_call,
+                    ),
+                    _create_completion(
+                        "The order is shipped.", thinking_blocks=thinking_answer
+                    ),
+                    # Turn 2: an answer without thinking blocks
+                    _create_completion("It is on its way."),
+                    # Turn 3, after the tools of the LLM are changed
+                    _create_completion("Yes."),
+                    # Turn 5, with the tools of turn 1 again, in another order
+                    _create_completion("Shipped."),
+                ],
+                # Turn 4, by another LLM
+                _FALLBACK_MODEL: [_create_completion("Shipped.")],
+            }
+        )
+        with patch.object(litellm, "acompletion", new=acompletion_stub):
+            llm.chat("What is the status of ORD-123?", chat_session=chat_session)
+            llm.chat("Where is it now?", chat_session=chat_session)
+            llm.tools = [get_order_status]
+            llm.chat("Is it shipped?", chat_session=chat_session)
+            other_llm.chat("Is it shipped?", chat_session=chat_session)
+            llm.tools = [get_order_total, get_order_status]
+            llm.chat("Is it shipped?", chat_session=chat_session)
+        assert [request["model"] for request in requests] == [
+            *[_MAIN_MODEL] * 4,
+            _FALLBACK_MODEL,
+            _MAIN_MODEL,
+        ]
+
+        def get_sent_thinking_blocks(request: dict[str, Any]) -> list[Any]:
+            """
+            Returns the thinking blocks sent with each message of a request.
+            """
+            return [message.get("thinking_blocks") for message in request["messages"]]
+
+        # The thinking blocks of the tool call are sent back in the next tool round
+        assert get_sent_thinking_blocks(requests[1]) == [
+            None,
+            thinking_tool_call,
+            None,
+        ]
+        # The thinking blocks of turn 1 are sent with turn 2, and the answer
+        # of turn 2, which has none, is sent as it was
+        expected_turn_blocks = [None, thinking_tool_call, None, thinking_answer]
+        assert get_sent_thinking_blocks(requests[2]) == [*expected_turn_blocks, None]
+        # They are not sent after the tools are changed, nor to another LLM
+        for request in (requests[3], requests[4]):
+            assert all(b is None for b in get_sent_thinking_blocks(request))
+        # They are sent again with the tools of turn 1, in whichever order
+        assert get_sent_thinking_blocks(requests[5])[:4] == expected_turn_blocks
+        assert all(b is None for b in get_sent_thinking_blocks(requests[5])[4:])
+
+        # The session keeps the thinking blocks when it is serialized
+        restored_session = ChatSession.from_json(chat_session.to_json())
+        assert [m.thinking_blocks for m in restored_session._messages[:4]] == (
+            expected_turn_blocks
+        )
+        assert [m.thinking_blocks_key for m in restored_session._messages] == [
+            m.thinking_blocks_key for m in chat_session._messages
+        ]
 
     def test_chat_tool_call_arguments_are_validated(self):
         """

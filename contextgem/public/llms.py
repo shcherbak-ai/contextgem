@@ -216,4 +216,10 @@ class ChatSession(_ChatSession):
         an error of the LLM API, is started over when it is sent again, i.e. its
         tool calls are not kept. ``messages`` lists the messages of the user and
         the answers of the LLM, without the tool calls.
+
+        The history also keeps the thinking blocks that an LLM returns with its tool
+        calls and answers, e.g. those of Claude when ``reasoning_effort`` is set.
+        They are sent back unchanged, so that the LLM keeps its reasoning across
+        tool rounds and turns, but only to the same model with the same tools and
+        system message: a provider may reject them otherwise.
     """

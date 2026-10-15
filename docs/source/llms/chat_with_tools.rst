@@ -29,6 +29,7 @@ A tool is a Python function decorated with ``@register_tool``. The function defi
 * A parameter that has a default value, or is typed as ``Optional``, is optional for the LLM
 * Tool handlers must return a non-empty string (serialize structured data with ``json.dumps`` if needed)
 * Use :class:`~contextgem.public.llms.ChatSession` to maintain conversation history across turns. The history keeps the tool calls of each turn and their results, so the LLM is sent them with the next turns and does not need to call the tools again for what it already found. ``ChatSession.messages`` lists the messages of the user and the answers of the LLM, without the tool calls
+* The thinking blocks that an LLM returns with its tool calls and answers, e.g. those of Claude when ``reasoning_effort`` is set, are sent back to it unchanged in the next tool rounds and, in a chat session, in the next turns, so that it keeps its reasoning. They are sent back only to the same model with the same tools and system message, as a provider may reject them otherwise
 
 
 Docstring Formats

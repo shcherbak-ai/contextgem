@@ -16,6 +16,7 @@ from __future__ import annotations
 
 import asyncio
 import functools
+import hashlib
 import inspect
 import json
 import warnings
@@ -1319,16 +1320,81 @@ class _DocumentLLM(_DocumentModel):
                 stacklevel=2,
             )
 
-    def _messages_to_request(self, messages: list[_Message]) -> list[dict[str, Any]]:
+    def _messages_to_request(
+        self, messages: list[_Message], thinking_blocks_key: str | None = None
+    ) -> list[dict[str, Any]]:
         """
         Converts internal message objects to provider-ready dictionaries.
 
         :param messages: List of message objects
         :type messages: list[_Message]
+        :param thinking_blocks_key: Identifies the request that the messages are sent in
+            (see `_get_thinking_blocks_key()`). The thinking blocks of an assistant
+            message are included only if they were returned for a request with the same
+            key. Defaults to None (no thinking blocks are included).
+        :type thinking_blocks_key: str | None
         :return: List of request-compatible messages as dictionaries
         :rtype: list[dict[str, Any]]
         """
-        return [m._to_message_dict() for m in messages]
+        return [m._to_message_dict(thinking_blocks_key) for m in messages]
+
+    def _get_tool_definitions(self) -> list[dict[str, Any]]:
+        """
+        Returns the tool definitions generated from the functions passed as tools.
+
+        :return: The tool definitions, in the order of the tools.
+        :rtype: list[dict[str, Any]]
+        """
+        return [
+            registration["definition"] for registration in self._tool_registry.values()
+        ]
+
+    def _get_thinking_blocks_key(
+        self, messages: list[_Message], *, use_tools: bool = False
+    ) -> str:
+        """
+        Returns what identifies a request to the LLM for the thinking blocks returned
+        with its responses: the model, the API endpoint, the tools and the system message
+        of the request.
+
+        A model may return thinking blocks with its responses (e.g. Claude), which are
+        to be sent back unchanged with the messages they came with. The provider may
+        reject a thinking block in a request whose model, tools or system message differ
+        from those of the request that the block was returned for, e.g. when a chat
+        session is continued by another LLM, or after the tools of the LLM are changed.
+        A thinking block is therefore sent back only in requests with the same key
+        as the request it was returned for. The order of the tools does not matter.
+
+        :param messages: The messages of the request.
+        :type messages: list[_Message]
+        :param use_tools: Whether the tools of the LLM are sent with the request.
+            Defaults to False.
+        :type use_tools: bool
+        :return: The key, a SHA-256 hash.
+        :rtype: str
+        """
+        tools = (
+            sorted(
+                json.dumps(definition, sort_keys=True, ensure_ascii=False, default=str)
+                for definition in self._get_tool_definitions()
+            )
+            if use_tools and self.tools is not None
+            else []
+        )
+        identity = {
+            "model": self.model,
+            "api_base": self.api_base,
+            "deployment_id": self.deployment_id,
+            "tools": tools,
+            "system_message": next(
+                (m.content for m in messages if m.role == "system"), None
+            ),
+        }
+        return hashlib.sha256(
+            json.dumps(
+                identity, sort_keys=True, ensure_ascii=False, default=str
+            ).encode("utf-8")
+        ).hexdigest()
 
     def _build_request_config(self, *, use_tools: bool = False) -> dict[str, Any]:
         """
@@ -1384,10 +1450,7 @@ class _DocumentLLM(_DocumentModel):
 
         if self.tools is not None:
             # The tool definitions generated from the functions passed as tools
-            request_config["tools"] = [
-                registration["definition"]
-                for registration in self._tool_registry.values()
-            ]
+            request_config["tools"] = self._get_tool_definitions()
         if self.tool_choice is not None:
             request_config["tool_choice"] = self.tool_choice
         if self.parallel_tool_calls is not None:
@@ -1677,6 +1740,25 @@ class _DocumentLLM(_DocumentModel):
             tool_calls.extend(getattr(choice.message, "tool_calls", None) or [])
         return answer, tool_calls or None
 
+    @staticmethod
+    def _get_thinking_blocks(chat_completion: Any) -> list[dict[str, Any]] | None:
+        """
+        Returns the thinking blocks of a completion, as litellm returns them, from all
+        its choices (see `_get_answer_and_tool_calls()`), e.g. the thinking blocks
+        of Claude. They are to be sent back unchanged with the message they came with.
+
+        :param chat_completion: The raw completion object from the LLM.
+        :type chat_completion: Any
+        :return: The thinking blocks, or None if the completion has none.
+        :rtype: list[dict[str, Any]] | None
+        """
+        thinking_blocks: list[dict[str, Any]] = []
+        for choice in chat_completion.choices:
+            for block in getattr(choice.message, "thinking_blocks", None) or []:
+                if isinstance(block, dict):
+                    thinking_blocks.append(dict(block))
+        return thinking_blocks or None
+
     async def _send_messages_with_tools(
         self,
         *,
@@ -1690,11 +1772,15 @@ class _DocumentLLM(_DocumentModel):
         drop_params: bool = False,
         chat_session: _ChatSession | None = None,
         use_tools: bool = False,
+        thinking_blocks_key: str | None = None,
     ) -> tuple[str | None, bool]:
         """
         Sends the initial request, processes any tool-calling loops up to the
         configured max rounds, and returns the final answer along with a flag
         indicating whether tool calls were still requested after the loop ended.
+
+        The thinking blocks that the LLM returns with a tool call are sent back with it
+        in the next requests (see `_get_thinking_blocks_key()`).
 
         Each request is recorded in the usage object: with the tokens used and
         the response if it succeeds, or as an unfinished call if it fails.
@@ -1725,6 +1811,10 @@ class _DocumentLLM(_DocumentModel):
         :param use_tools: Whether the tools of the LLM are sent with the requests, i.e.
             whether the tool calls requested by the LLM are executed. Defaults to False.
         :type use_tools: bool
+        :param thinking_blocks_key: Identifies the requests that are sent (see
+            `_get_thinking_blocks_key()`). The thinking blocks returned with the responses
+            are kept only if it is provided. Defaults to None.
+        :type thinking_blocks_key: str | None
         :return: The tuple containing the answer and whether tool calls were still requested.
         :rtype: tuple[str | None, bool]
         :raises _ToolReturnValueError: If a tool returns a value other than a non-empty
@@ -1733,7 +1823,7 @@ class _DocumentLLM(_DocumentModel):
 
         async def send_and_record(
             call_obj: _ModelCall, drop_tool_choice: bool = False
-        ) -> tuple[str | None, list[Any] | None]:
+        ) -> tuple[str | None, list[Any] | None, list[dict[str, Any]] | None]:
             """
             Sends a request with the current messages and records the call
             in the usage object.
@@ -1742,8 +1832,9 @@ class _DocumentLLM(_DocumentModel):
             :type call_obj: _ModelCall
             :param drop_tool_choice: Whether to remove tool_choice in this request.
             :type drop_tool_choice: bool
-            :return: The tuple containing the answer text and the tool calls.
-            :rtype: tuple[str | None, list[Any] | None]
+            :return: The tuple containing the answer text, the tool calls, and
+                the thinking blocks of the response.
+            :rtype: tuple[str | None, list[Any] | None, list[dict[str, Any]] | None]
             """
             # The coroutine of the request is created only when it is awaited, i.e.
             # when the limiter lets the request through: a coroutine created before
@@ -1765,6 +1856,11 @@ class _DocumentLLM(_DocumentModel):
                 else:
                     chat_completion = await send_completion()
                 answer, tool_calls = self._get_answer_and_tool_calls(chat_completion)
+                thinking_blocks = (
+                    self._get_thinking_blocks(chat_completion)
+                    if thinking_blocks_key is not None
+                    else None
+                )
                 self._record_usage_call(
                     usage=usage,
                     answer_text=answer,
@@ -1775,15 +1871,15 @@ class _DocumentLLM(_DocumentModel):
                 # Record the call details (call unfinished)
                 usage.calls.append(call_obj)
                 raise
-            return answer, tool_calls
+            return answer, tool_calls, thinking_blocks
 
         # The tool calls of the turn are recorded from the start of the request,
         # i.e. not those of a previous attempt to answer the turn
         if chat_session is not None:
-            chat_session._discard_pending_tool_messages()
+            chat_session._discard_pending_turn()
 
         # Initial send
-        answer, tool_calls = await send_and_record(model_call_obj)
+        answer, tool_calls, thinking_blocks = await send_and_record(model_call_obj)
         if not (use_tools and self.tools):
             tool_calls = None
 
@@ -1817,14 +1913,19 @@ class _DocumentLLM(_DocumentModel):
             # A placeholder text is not used: an LLM may repeat it in its responses,
             # and with some chat templates a text replaces the tool calls
             # in the conversation rendered for the LLM.
+            # The thinking blocks returned with the tool calls are sent back with them
             assistant_msg_obj = _Message(
                 role="assistant",
                 content=answer
                 if (isinstance(answer, str) and answer.strip())
                 else None,
                 tool_calls=tool_calls_serialized,
+                thinking_blocks=thinking_blocks,
+                thinking_blocks_key=thinking_blocks_key if thinking_blocks else None,
             )
-            request_messages.append(assistant_msg_obj._to_message_dict())
+            request_messages.append(
+                assistant_msg_obj._to_message_dict(thinking_blocks_key)
+            )
 
             tool_messages = await self._execute_tool_calls(tool_calls)
 
@@ -1836,8 +1937,14 @@ class _DocumentLLM(_DocumentModel):
                 )
 
             followup_call = _ModelCall(prompt_kwargs={}, prompt="<tools_round_trip>")
-            answer, tool_calls = await send_and_record(
+            answer, tool_calls, thinking_blocks = await send_and_record(
                 followup_call, drop_tool_choice=True
+            )
+
+        # The thinking blocks returned with the answer are kept with it in the session
+        if chat_session is not None and thinking_blocks and thinking_blocks_key:
+            chat_session._set_pending_answer_thinking_blocks(
+                thinking_blocks, thinking_blocks_key
             )
 
         return answer, bool(tool_calls)
@@ -1912,7 +2019,13 @@ class _DocumentLLM(_DocumentModel):
 
         # Validate vision support and convert messages
         self._ensure_vision_support_for_messages(messages)
-        request_messages = self._messages_to_request(messages)
+        # What identifies the request for the thinking blocks of the model: those
+        # of earlier responses are sent back only to the same model, with the same
+        # tools and system message
+        thinking_blocks_key = self._get_thinking_blocks_key(
+            messages, use_tools=use_tools
+        )
+        request_messages = self._messages_to_request(messages, thinking_blocks_key)
 
         # Create an empty usage dict in case the call fails without the possibility to retrieve usage tokens
         usage = _ModelUsage()
@@ -1971,6 +2084,7 @@ class _DocumentLLM(_DocumentModel):
                 drop_params=drop_params,
                 chat_session=chat_session,
                 use_tools=use_tools,
+                thinking_blocks_key=thinking_blocks_key,
             )
 
             if tool_calls_remaining:
@@ -2174,6 +2288,12 @@ class _ChatSession(_InstanceBase):
     # The tool calls and their results of the turn being answered, which are added
     # to the history only when the turn is answered (see `_add_answer()`)
     _pending_tool_messages: list[_Message] = PrivateAttr(default_factory=list)
+    # The thinking blocks returned with the answer of the turn being answered, with
+    # the key of the request they were returned for (see `_add_answer()`)
+    _pending_answer_thinking_blocks: list[dict[str, Any]] | None = PrivateAttr(
+        default=None
+    )
+    _pending_answer_thinking_blocks_key: str | None = PrivateAttr(default=None)
 
     @property
     def messages(self) -> list[_Message]:
@@ -2252,32 +2372,58 @@ class _ChatSession(_InstanceBase):
         """
         self._pending_tool_messages.extend(messages)
 
-    def _discard_pending_tool_messages(self) -> None:
+    def _set_pending_answer_thinking_blocks(
+        self, thinking_blocks: list[dict[str, Any]], thinking_blocks_key: str
+    ) -> None:
         """
-        Discards the messages of the tool calls of the turn being answered, e.g.
-        when the turn is answered again from its start, by another LLM or after
-        a failed attempt. The tools are then called again in the new attempt.
+        Sets the thinking blocks returned with the answer of the turn being answered,
+        which are kept with the answer when it is added (see `_add_answer()`).
+
+        :param thinking_blocks: The thinking blocks.
+        :type thinking_blocks: list[dict[str, Any]]
+        :param thinking_blocks_key: Identifies the request that the thinking blocks
+            were returned for.
+        :type thinking_blocks_key: str
+        :return: None
+        :rtype: None
+        """
+        self._pending_answer_thinking_blocks = thinking_blocks
+        self._pending_answer_thinking_blocks_key = thinking_blocks_key
+
+    def _discard_pending_turn(self) -> None:
+        """
+        Discards the messages of the tool calls of the turn being answered, and
+        the thinking blocks of its answer, e.g. when the turn is answered again from
+        its start, by another LLM or after a failed attempt. The tools are then called
+        again in the new attempt.
 
         :return: None
         :rtype: None
         """
         self._pending_tool_messages = []
+        self._pending_answer_thinking_blocks = None
+        self._pending_answer_thinking_blocks_key = None
 
     def _add_answer(self, answer: str) -> None:
         """
         Adds the answer of the LLM to the turn being answered, after the tool calls
         that the LLM made and their results, if any, which are thus kept
-        in the history of the chat.
+        in the history of the chat. The thinking blocks returned with the tool calls
+        and the answer are kept with them.
 
         :param answer: The answer of the LLM.
         :type answer: str
         :return: None
         :rtype: None
         """
-        self._extend_messages(
-            [*self._pending_tool_messages, _Message(role="assistant", content=answer)]
+        answer_message = _Message(
+            role="assistant",
+            content=answer,
+            thinking_blocks=self._pending_answer_thinking_blocks,
+            thinking_blocks_key=self._pending_answer_thinking_blocks_key,
         )
-        self._discard_pending_tool_messages()
+        self._extend_messages([*self._pending_tool_messages, answer_message])
+        self._discard_pending_turn()
 
     def _extend_messages(self, messages: list[_Message]) -> None:
         """
@@ -2302,4 +2448,4 @@ class _ChatSession(_InstanceBase):
         :rtype: None
         """
         self._set_messages([])
-        self._discard_pending_tool_messages()
+        self._discard_pending_turn()
