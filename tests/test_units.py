@@ -15,6 +15,8 @@ type-hint serialization/normalization.
 
 from __future__ import annotations
 
+import ast
+import inspect
 import re
 import warnings
 from dataclasses import dataclass
@@ -36,7 +38,8 @@ import pytest
 from pydantic import Field, StringConstraints
 from vcr.request import Request as VCRRequest
 
-from contextgem import Aspect, Document, StringConcept
+import contextgem
+from contextgem import Aspect, ContextGemWarning, Document, StringConcept
 from contextgem.internal.tools.docstring_parser import _ParsedDocstring
 from contextgem.internal.tools.schema_generator import (
     _class_to_json_schema,
@@ -52,6 +55,7 @@ from contextgem.internal.typings.types_to_strings import (
     _raise_json_serializable_type_error,
     _serialize_type_hint,
 )
+from contextgem.internal.utils import _warn_from_caller_code
 from tests.conftest import (
     _FOUNDRY_API_BASE_ENV_VAR_NAME,
     _TETHERED_RECORDING_ALLOW,
@@ -1332,3 +1336,47 @@ def test_recording_allowlist_has_foundry_resource_of_environment(
     assert allow == [*listed, *([foundry_host] if foundry_host else [])]
     # The list of the approved destinations is not changed itself
     assert listed == _TETHERED_RECORDING_ALLOW
+
+
+# ---------------------------------------------------------------------------
+# warnings
+# ---------------------------------------------------------------------------
+
+
+def test_every_warning_of_the_package_has_its_category() -> None:
+    """Every warning that the package issues has the ``ContextGemWarning``
+    category, which is exported from ``contextgem``: the calling code can filter
+    the warnings by it, while a warning about the configuration is attributed to
+    the calling code, i.e. a filter by the module of the package misses it."""
+    assert issubclass(ContextGemWarning, UserWarning)
+    assert "ContextGemWarning" in contextgem.__all__
+    # The helper that attributes a warning to the calling code issues it with
+    # the category it is given, ContextGemWarning by default
+    helper_category = inspect.signature(_warn_from_caller_code).parameters["category"]
+    assert helper_category.default is ContextGemWarning
+
+    calls = []
+    for path in Path(contextgem.__file__).parent.rglob("*.py"):
+        tree = ast.parse(path.read_text(encoding="utf-8"))
+        calls.extend(
+            (path, node)
+            for node in ast.walk(tree)
+            if isinstance(node, ast.Call)
+            and isinstance(node.func, ast.Attribute)
+            and node.func.attr == "warn"
+            and isinstance(node.func.value, ast.Name)
+            and node.func.value.id == "warnings"
+        )
+    assert calls
+    for path, node in calls:
+        keyword_categories = [k.value for k in node.keywords if k.arg == "category"]
+        category = (
+            node.args[1] if len(node.args) > 1 else next(iter(keyword_categories), None)
+        )
+        # The helper passes on the category it is given
+        allowed = {"ContextGemWarning"} | (
+            {"category"} if path.name == "utils.py" else set()
+        )
+        assert isinstance(category, ast.Name) and category.id in allowed, (
+            f"{path.name}:{node.lineno}: a warning without the ContextGemWarning category"
+        )

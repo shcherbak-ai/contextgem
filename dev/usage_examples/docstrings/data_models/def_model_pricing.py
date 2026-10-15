@@ -1,12 +1,13 @@
 from contextgem import ModelPricing
 
 
-# Create a pricing model for an LLM (openai/gpt-6-luna example)
+# Create a pricing model for an LLM, with the prices of your provider
+# (example values)
 pricing = ModelPricing(
-    input_per_1m_tokens=0.10,  # $0.10 per million input tokens
-    output_per_1m_tokens=0.50,  # $0.50 per million output tokens
-    # Optional: $0.01 per million input tokens read from the provider's prompt cache
-    cache_read_per_1m_tokens=0.01,
+    input_per_1m_tokens=1.00,  # $1.00 per million input tokens
+    output_per_1m_tokens=2.00,  # $2.00 per million output tokens
+    # Optional: $0.10 per million input tokens read from the provider's prompt cache
+    cache_read_per_1m_tokens=0.10,
 )
 
 # ModelPricing objects are immutable

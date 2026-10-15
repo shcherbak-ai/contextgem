@@ -75,7 +75,7 @@ class ModelExtractionError(_BaseModelError):
       to answer a question of a concept. A decision model is not asked again.
 
     If ``raise_exception_on_extraction_error=False`` is passed to the extraction
-    method, a warning is issued instead.
+    method, a warning is logged instead.
 
     Can be imported from ``contextgem``.
 
@@ -105,7 +105,7 @@ class ModelAPIError(_BaseModelError):
       or is empty in a chat.
 
     During extraction, if ``raise_exception_on_extraction_error=False`` is passed
-    to the extraction method, a warning is issued instead.
+    to the extraction method, a warning is logged instead.
 
     Can be imported from ``contextgem``.
 
@@ -129,6 +129,30 @@ class LLMToolLoopLimitError(_BaseModelError):
     Typically indicates that the LLM is stuck in a loop or needs more rounds to
     complete the workflow. Consider increasing ``tool_max_rounds`` or adjusting
     the tool instructions or the tool choice.
+
+    Can be imported from ``contextgem``.
+    """
+
+
+# Warnings
+
+
+class ContextGemWarning(UserWarning):
+    """
+    Category of the warnings that the framework issues for something in the calling
+    code that will not have the expected effect, e.g. tools set on an LLM that is
+    used for extraction, or an output language set together with a custom system
+    message. Such a warning is attributed to the line of the calling code that
+    caused it, where possible.
+
+    The warnings are Python warnings, not log messages, i.e. the logging level does
+    not affect them. To filter them, use this category, e.g.
+    ``warnings.filterwarnings("ignore", category=ContextGemWarning)``, or make them
+    errors, e.g. in the tests of the calling code: a filter by the module of
+    the framework does not match a warning attributed to the calling code.
+    What happens while the framework runs, e.g. an extraction that fails when
+    ``raise_exception_on_extraction_error=False`` is passed to the extraction
+    method, is logged instead.
 
     Can be imported from ``contextgem``.
     """

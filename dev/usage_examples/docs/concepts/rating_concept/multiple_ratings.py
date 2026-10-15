@@ -67,8 +67,12 @@ for concept in extracted_concepts:
     if concept.extracted_items:
         print(f"{concept.name}: {concept.extracted_items[0].value}/5")
 
-# Calculate and print overall average rating
-average_rating = sum(
-    concept.extracted_items[0].value for concept in extracted_concepts
-) / len(extracted_concepts)
-print(f"\nOverall Rating: {average_rating:.1f}/5")
+# Calculate and print overall average rating of the extracted ratings
+ratings = [
+    concept.extracted_items[0].value
+    for concept in extracted_concepts
+    if concept.extracted_items
+]
+if ratings:
+    average_rating = sum(ratings) / len(ratings)
+    print(f"\nOverall Rating: {average_rating:.1f}/5")

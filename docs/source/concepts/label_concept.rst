@@ -19,11 +19,11 @@ LabelConcept
 
 This concept type supports two classification modes:
 
-* **Multi-class**: Always selects exactly one label from the predefined set (mutually exclusive labels) - used for classifying the content into a single type or category. A label is always returned, even if none perfectly fit the content.
+* **Multi-class**: Selects exactly one label from the predefined set (mutually exclusive labels) - used for classifying the content into a single type or category. The model is to select the closest label even if none fits perfectly: a decision model always does, while an LLM can still return no item, so check that ``extracted_items`` is not empty.
 * **Multi-label**: Selects zero, one, or multiple labels from the predefined set (non-exclusive labels) - used when multiple topics or attributes can apply simultaneously. Returns only applicable labels, or no labels if none apply (the ``extracted_items`` list is then empty).
 
 .. important::
-   **For multi-class classification**: Since multi-class classification will always return exactly one label, you should consider including a general "other" label (such as "N/A", "misc", "unspecified", etc.) to handle cases where none of the specific labels apply, unless your labels are broad enough to cover all cases, or you know that the classified content always falls under one of the predefined labels without edge cases. This ensures appropriate classification even when the content doesn't clearly fit into any of the predefined specific categories.
+   **For multi-class classification**: Since multi-class classification selects exactly one label, you should consider including a general "other" label (such as "N/A", "misc", "unspecified", etc.) to handle cases where none of the specific labels apply, unless your labels are broad enough to cover all cases, or you know that the classified content always falls under one of the predefined labels without edge cases. This ensures appropriate classification even when the content doesn't clearly fit into any of the predefined specific categories.
 
 
 💻 Usage Example
@@ -71,11 +71,11 @@ When creating a :class:`~contextgem.public.concepts.LabelConcept`, you can speci
    * - ``modality``
      - ``str``
      - ``"text"``
-     - The document content the concept is extracted from. Available values: ``"text"``, ``"image"``, ``"multimodal"`` (text and/or images, whichever the document has). ``"image"`` and ``"multimodal"`` are supported for document-level concepts only, and require an LLM that supports vision when the document has images. For more details, see :ref:`concept-modality-label`.
+     - The document content the concept is extracted from. Available values: ``"text"``, ``"image"``, ``"multimodal"`` (text and/or images, whichever the document has). ``"image"`` and ``"multimodal"`` are supported for document-level concepts only, and require an LLM that supports vision when the document has images. A concept with ``"image"`` cannot have ``add_references=True``. A decision model extracts from text only, and rejects ``"image"`` and ``"multimodal"`` with ``ValueError`` before any request is sent (see :ref:`decision-models-supported-label`). For more details, see :ref:`concept-modality-label`.
    * - ``add_justifications``
      - ``bool``
      - ``False``
-     - Whether to include justifications for extracted items. Justifications provide explanations of why specific labels were selected and the reasoning behind the classification decision.
+     - Whether to include justifications for extracted items. Justifications provide explanations of why specific labels were selected and the reasoning behind the classification decision. A decision model provides no justifications, and rejects ``True`` with ``ValueError`` before any request is sent (see :ref:`decision-models-supported-label`).
    * - ``justification_depth``
      - ``str``
      - ``"brief"``
@@ -87,7 +87,7 @@ When creating a :class:`~contextgem.public.concepts.LabelConcept`, you can speci
    * - ``add_references``
      - ``bool``
      - ``False``
-     - Whether to include source references for extracted items. References indicate the specific locations in the document that informed the classification decision.
+     - Whether to include source references for extracted items. References indicate the specific locations in the document that informed the classification decision. A decision model provides no references for concepts, and rejects ``True`` with ``ValueError`` before any request is sent (see :ref:`decision-models-supported-label`).
    * - ``reference_depth``
      - ``str``
      - ``"paragraphs"``

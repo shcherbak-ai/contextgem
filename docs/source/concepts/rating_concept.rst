@@ -58,7 +58,7 @@ When creating a :class:`~contextgem.public.concepts.RatingConcept`, you can spec
    * - ``rating_scale``
      - ``tuple[int, int]``
      - (Required)
-     - Defines the boundaries for valid ratings as a tuple of (start, end) values (e.g., ``(1, 5)`` for a 1-5 star rating, or ``(0, 100)`` for a percentage-based evaluation). This parameter establishes the numerical range within which all ratings must fall, ensuring consistency across evaluations.
+     - Defines the boundaries for valid ratings as a tuple of (start, end) values (e.g., ``(1, 5)`` for a 1-5 star rating, or ``(0, 100)`` for a percentage-based evaluation with an LLM). This parameter establishes the numerical range within which all ratings must fall, ensuring consistency across evaluations. The start must be 0 or more, and the end greater than the start. A decision model accepts only as many levels as ``litellm`` allows in a question, and rejects a larger scale with ``ValueError`` before any request is sent (see :ref:`decision-models-limits-label`).
    * - ``model_role``
      - ``str | None``
      - ``None``
@@ -66,11 +66,11 @@ When creating a :class:`~contextgem.public.concepts.RatingConcept`, you can spec
    * - ``modality``
      - ``str``
      - ``"text"``
-     - The document content the concept is extracted from. Available values: ``"text"``, ``"image"``, ``"multimodal"`` (text and/or images, whichever the document has). ``"image"`` and ``"multimodal"`` are supported for document-level concepts only, and require an LLM that supports vision when the document has images. For more details, see :ref:`concept-modality-label`.
+     - The document content the concept is extracted from. Available values: ``"text"``, ``"image"``, ``"multimodal"`` (text and/or images, whichever the document has). ``"image"`` and ``"multimodal"`` are supported for document-level concepts only, and require an LLM that supports vision when the document has images. A concept with ``"image"`` cannot have ``add_references=True``. A decision model extracts from text only, and rejects ``"image"`` and ``"multimodal"`` with ``ValueError`` before any request is sent (see :ref:`decision-models-supported-label`). For more details, see :ref:`concept-modality-label`.
    * - ``add_justifications``
      - ``bool``
      - ``False``
-     - Whether to include justifications for extracted items. Justifications provide explanations of why the LLM assigned specific rating values and the reasoning behind the evaluation, which is especially useful for understanding the factors that influenced the rating. For example, a justification might explain that a smartphone received an 8/10 quality rating based on its premium build materials, advanced camera system, and long battery life, despite lacking expandable storage.
+     - Whether to include justifications for extracted items. Justifications provide explanations of why the LLM assigned specific rating values and the reasoning behind the evaluation, which is especially useful for understanding the factors that influenced the rating. For example, a justification might explain that a smartphone received an 8/10 quality rating based on its premium build materials, advanced camera system, and long battery life, despite lacking expandable storage. A decision model provides no justifications, and rejects ``True`` with ``ValueError`` before any request is sent (see :ref:`decision-models-supported-label`).
    * - ``justification_depth``
      - ``str``
      - ``"brief"``
@@ -82,7 +82,7 @@ When creating a :class:`~contextgem.public.concepts.RatingConcept`, you can spec
    * - ``add_references``
      - ``bool``
      - ``False``
-     - Whether to include source references for extracted items. References indicate the specific locations in the document that provided information or evidence used to determine the rating. This is particularly useful for understanding which parts of the document influenced the rating assessment, allowing to trace back evaluations to relevant content that supports the numerical value assigned.
+     - Whether to include source references for extracted items. References indicate the specific locations in the document that provided information or evidence used to determine the rating. This is particularly useful for understanding which parts of the document influenced the rating assessment, allowing to trace back evaluations to relevant content that supports the numerical value assigned. A decision model provides no references for concepts, and rejects ``True`` with ``ValueError`` before any request is sent (see :ref:`decision-models-supported-label`).
    * - ``reference_depth``
      - ``str``
      - ``"paragraphs"``

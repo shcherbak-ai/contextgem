@@ -28,6 +28,7 @@ from typing import (
 
 from pydantic.fields import FieldInfo
 
+from contextgem.internal.exceptions import ContextGemWarning
 from contextgem.internal.tools.docstring_parser import _ParsedDocstring
 
 
@@ -636,7 +637,7 @@ def _generate_tool_schema(
                 "if you need set behavior: `{} = set({})`".format(
                     param_name, param_name
                 ),
-                UserWarning,
+                ContextGemWarning,
                 stacklevel=4,
             )
         elif _contains_collection_type(type_hint, (tuple,)):
@@ -647,7 +648,7 @@ def _generate_tool_schema(
                 "if you need tuple behavior: `{} = tuple({})`".format(
                     param_name, param_name
                 ),
-                UserWarning,
+                ContextGemWarning,
                 stacklevel=4,
             )
 

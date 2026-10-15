@@ -2,17 +2,14 @@
 
 import os
 
-from contextgem import DocumentLLM, ModelPricing
+from contextgem import DocumentLLM
 
 
 llm = DocumentLLM(
     model="openai/gpt-6-luna",
     api_key=os.environ.get("CONTEXTGEM_OPENAI_API_KEY"),
-    pricing_details=ModelPricing(
-        input_per_1m_tokens=0.10,
-        output_per_1m_tokens=0.50,
-    ),  # add pricing details to track costs
-    # or set `auto_pricing=True` to calculate the costs automatically with `genai-prices`
+    auto_pricing=True,  # calculate the costs with `genai-prices`, to track them
+    # or set `pricing_details=ModelPricing(...)` with the prices of your provider
 )
 
 # ... use the LLM for extraction ...

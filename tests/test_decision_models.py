@@ -4599,12 +4599,11 @@ class TestDecisionModels(BaseTest):
             assert exc_info.value.original_error is auth_error
             assert len(last_extraction[0][0].requests) == 3  # one per concept
 
-            # A warning is issued if `raise_exception_on_extraction_error` is False,
+            # A warning is logged if `raise_exception_on_extraction_error` is False,
             # without sending the failed request again: only the warning on
             # the failed request, as the model returned no response to report
             for extraction_kwargs in [{}, {"use_concurrency": True}]:
-                with warnings.catch_warnings(record=True) as caught_warnings:
-                    warnings.simplefilter("always")
+                with _capture_logs(stdlib_logging.WARNING) as captured_logs:
                     decisions_stub, document, decision_model = extract(
                         [rate_limit_error],
                         document=create_document(n_concepts=2),
@@ -4612,12 +4611,8 @@ class TestDecisionModels(BaseTest):
                         max_items_per_call=1,
                         **extraction_kwargs,  # ty: ignore[invalid-argument-type]
                     )
-                warning_messages = [
-                    str(caught_warning.message)
-                    for caught_warning in caught_warnings
-                    if "concepts" in str(caught_warning.message)
-                    or "API" in str(caught_warning.message)
-                ]
+                # The warnings tell the retries, unlike the errors logged before them
+                warning_messages = [log for log in captured_logs if "retries)" in log]
                 assert len(warning_messages) == 2  # one per concept, i.e. per call
                 for warning_message in warning_messages:
                     assert "calling decision model API" in warning_message
@@ -4637,21 +4632,16 @@ class TestDecisionModels(BaseTest):
             completions_stub = _CompletionsAPIStub({_LLM_MODEL: [llm_auth_error]})
             with (
                 patch.object(litellm, "acompletion", new=completions_stub),
-                warnings.catch_warnings(record=True) as caught_warnings,
+                _capture_logs(stdlib_logging.WARNING) as captured_logs,
             ):
-                warnings.simplefilter("always")
                 llm.extract_concepts_from_document(
                     document,
                     raise_exception_on_extraction_error=False,
                     max_items_per_call=1,
                     **extraction_kwargs,  # ty: ignore[invalid-argument-type]
                 )
-            warning_messages = [
-                str(caught_warning.message)
-                for caught_warning in caught_warnings
-                if "concepts" in str(caught_warning.message)
-                or "API" in str(caught_warning.message)
-            ]
+            # The warnings tell the retries, unlike the errors logged before them
+            warning_messages = [log for log in captured_logs if "retries)" in log]
             assert len(warning_messages) == 2  # one per concept, i.e. per call
             for warning_message in warning_messages:
                 assert "calling LLM API" in warning_message
@@ -4917,20 +4907,23 @@ class TestDecisionModels(BaseTest):
         assert len(usage.calls) == 3
         assert all(call.timestamp_received is not None for call in usage.calls)
 
-        # A warning is issued if `raise_exception_on_extraction_error` is False
+        # A warning is logged if `raise_exception_on_extraction_error` is False
         decision_model = _create_decision_model()
         document = _create_document(concepts=concepts)
         decisions_stub = _DecisionsAPIStub({_DECISION_MODEL: [invalid_outcomes[0][0]]})
         with (
             patch.object(litellm, "adecisions", new=decisions_stub),
-            pytest.warns(
-                UserWarning,
-                match=r"an invalid response returned by decision model.*\(0 retries\)",
-            ),
+            _capture_logs(stdlib_logging.WARNING) as captured_logs,
         ):
             decision_model.extract_concepts_from_document(
                 document, raise_exception_on_extraction_error=False
             )
+        assert any(
+            re.search(
+                r"an invalid response returned by decision model.*\(0 retries\)", log
+            )
+            for log in captured_logs
+        ), captured_logs
         assert len(decisions_stub.requests) == 1
         assert not any(concept._is_processed for concept in document.concepts)
 
@@ -5291,13 +5284,16 @@ class TestDecisionModels(BaseTest):
                 {_LLM_MODEL: [llm_auth_error]},
             )
         assert exc_info.value.original_error is auth_error
-        with pytest.warns(UserWarning, match=r"decision model API.*0 retries"):
+        with _capture_logs(stdlib_logging.WARNING) as captured_logs:
             document, _ = extract(
                 create_llm_with_decision_model_fallback(),
                 {_DECISION_MODEL: [auth_error]},
                 {_LLM_MODEL: [llm_auth_error]},
                 raise_exception_on_extraction_error=False,
             )
+        assert any(
+            re.search(r"decision model API.*0 retries", log) for log in captured_logs
+        ), captured_logs
         assert not document.concepts[0]._is_processed
 
         # === Several fallback models of both kinds, tried in the given order ===
@@ -9578,27 +9574,21 @@ class TestDecisionModels(BaseTest):
             check_usage(decision_model, finished_before_failed, [failed_position])
             check_not_extracted(document)
 
-            # ... or a warning is issued, if no exception is to be raised
+            # ... or a warning is logged, if no exception is to be raised
             decision_model = _create_decision_model()
             document = create_document()
             decisions_stub.requests.clear()
             with (
                 patch.object(litellm, "adecisions", new=decisions_stub),
-                warnings.catch_warnings(record=True) as caught_warnings,
+                _capture_logs(stdlib_logging.WARNING) as captured_logs,
             ):
-                warnings.simplefilter("always")
                 decision_model.extract_aspects_from_document(
                     document,
                     raise_exception_on_extraction_error=False,
                     **extraction_kwargs,  # ty: ignore[invalid-argument-type]
                 )
-            warning_messages = [
-                str(caught_warning.message)
-                for caught_warning in caught_warnings
-                if "aspects" in str(caught_warning.message)
-                or "API" in str(caught_warning.message)
-            ]
-            (warning_message,) = warning_messages
+            # The warning tells the retries, unlike the errors logged before it
+            (warning_message,) = [log for log in captured_logs if "retries)" in log]
             assert "calling decision model API" in warning_message
             assert "(0 retries)" in warning_message
             assert len(decisions_stub.requests) == n_requests_until_failed
@@ -10777,28 +10767,22 @@ class TestDecisionModels(BaseTest):
             check_usage(decision_model, [0, 1], [failed_position])
             check_not_extracted(document)
 
-            # ... or a warning is issued, if no exception is to be raised: only
+            # ... or a warning is logged, if no exception is to be raised: only
             # the one on the failed request, as no response is there to report
             decision_model = _create_decision_model()
             document = create_document()
             decisions_stub.requests.clear()
             with (
                 patch.object(litellm, "adecisions", new=decisions_stub),
-                warnings.catch_warnings(record=True) as caught_warnings,
+                _capture_logs(stdlib_logging.WARNING) as captured_logs,
             ):
-                warnings.simplefilter("always")
                 decision_model.extract_aspects_from_document(
                     document,
                     raise_exception_on_extraction_error=False,
                     **extraction_kwargs,  # ty: ignore[invalid-argument-type]
                 )
-            warning_messages = [
-                str(caught_warning.message)
-                for caught_warning in caught_warnings
-                if "aspects" in str(caught_warning.message)
-                or "API" in str(caught_warning.message)
-            ]
-            (warning_message,) = warning_messages
+            # The warning tells the retries, unlike the errors logged before it
+            (warning_message,) = [log for log in captured_logs if "retries)" in log]
             assert "calling decision model API" in warning_message
             assert "(0 retries)" in warning_message
             assert len(decisions_stub.requests) == failed_position + 1
@@ -11316,18 +11300,12 @@ class TestDecisionModels(BaseTest):
             )
             # One warning for each aspect with refused answers, which names
             # the aspect and the paragraphs, by their indices in the document
-            assert (
-                refusal_warnings
-                == refusal_logs
-                == [
-                    get_refusal_warning(
-                        "Termination", "1 of 5 paragraphs (indices: [0])"
-                    ),
-                    get_refusal_warning(
-                        "Payment", "2 of 5 paragraphs (indices: [1, 4])"
-                    ),
-                ]
-            )
+            # Logged only, i.e. not issued as Python warnings
+            assert refusal_warnings == []
+            assert refusal_logs == [
+                get_refusal_warning("Termination", "1 of 5 paragraphs (indices: [0])"),
+                get_refusal_warning("Payment", "2 of 5 paragraphs (indices: [1, 4])"),
+            ]
             # The refused answers are recorded in the usage as returned
             usage = decision_model.get_usage()[0].usage
             assert len(usage.calls) == n_paragraphs
@@ -11371,15 +11349,13 @@ class TestDecisionModels(BaseTest):
             document.paragraphs[2].raw_text
         ]
         # The index is the one among the two paragraphs extracted for the parent
-        assert (
-            refusal_warnings
-            == refusal_logs
-            == [
-                get_refusal_warning(
-                    "Notice of termination", "1 of 2 paragraphs (indices: [1])"
-                )
-            ]
-        )
+        # Logged only, i.e. not issued as Python warnings
+        assert refusal_warnings == []
+        assert refusal_logs == [
+            get_refusal_warning(
+                "Notice of termination", "1 of 2 paragraphs (indices: [1])"
+            )
+        ]
 
         # === Refused answers on every paragraph, for one of the aspects ===
         # Nothing is known about the aspect, i.e. the response cannot be used:
@@ -11454,7 +11430,7 @@ class TestDecisionModels(BaseTest):
         ]
         assert len(termination.extracted_items) == 2
 
-        # A warning is issued instead, if no exception is to be raised
+        # A warning is logged instead, if no exception is to be raised
         decision_model = _create_decision_model()
         document = create_document(yes_probabilities)
         with (
@@ -11463,11 +11439,14 @@ class TestDecisionModels(BaseTest):
                 "adecisions",
                 new=_DecisionsAPIStub({_DECISION_MODEL: [respond_refusing]}),
             ),
-            pytest.warns(UserWarning, match="Some aspects could not be processed"),
+            _capture_logs(stdlib_logging.WARNING) as captured_logs,
         ):
             decision_model.extract_aspects_from_document(
                 document, raise_exception_on_extraction_error=False
             )
+        assert any(
+            "Some aspects could not be processed" in log for log in captured_logs
+        ), captured_logs
         assert not any(aspect._is_processed for aspect in document.aspects)
 
         # === Aspects with sentences as their items ===
@@ -11545,18 +11524,16 @@ class TestDecisionModels(BaseTest):
             assert termination.reference_paragraphs == [paragraphs[1], paragraphs[3]]
             # The sentences are counted out of those asked about for the aspect,
             # and each is given by the indices of its paragraph and of itself
-            assert (
-                refusal_warnings
-                == refusal_logs
-                == [
-                    get_refusal_warning(
-                        "Termination",
-                        "1 of 5 paragraphs (indices: [0]) and on 2 of 5 sentences "
-                        "(paragraph index, sentence index: [(1, 1), (3, 0)])",
-                    ),
-                    get_refusal_warning("Payment", "1 of 5 paragraphs (indices: [4])"),
-                ]
-            )
+            # Logged only, i.e. not issued as Python warnings
+            assert refusal_warnings == []
+            assert refusal_logs == [
+                get_refusal_warning(
+                    "Termination",
+                    "1 of 5 paragraphs (indices: [0]) and on 2 of 5 sentences "
+                    "(paragraph index, sentence index: [(1, 1), (3, 0)])",
+                ),
+                get_refusal_warning("Payment", "1 of 5 paragraphs (indices: [4])"),
+            ]
             self.check_instance_serialization_and_cloning(document)
 
         # Refused answers on every sentence asked about: the aspect is extracted,
@@ -11572,11 +11549,15 @@ class TestDecisionModels(BaseTest):
         decisions_stub = _DecisionsAPIStub(
             {_DECISION_MODEL: [_create_sentences_responder(sentence_probabilities)]}
         )
-        refusal_warnings, _ = extract_aspects(decision_model, document, decisions_stub)
+        refusal_warnings, refusal_logs = extract_aspects(
+            decision_model, document, decisions_stub
+        )
         (termination,) = document.aspects
         assert termination._is_processed and not termination.extracted_items
         assert len(decisions_stub.requests) == 5 + 3
-        assert refusal_warnings == [
+        # Logged only, i.e. not issued as a Python warning
+        assert refusal_warnings == []
+        assert refusal_logs == [
             get_refusal_warning(
                 "Termination",
                 "3 of 3 sentences (paragraph index, sentence index: "

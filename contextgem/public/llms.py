@@ -59,6 +59,10 @@ class DocumentLLM(_DocumentLLM):
         when the LLM is used on its own, as it then extracts all aspects/concepts.
     :vartype role: str | None
     :ivar system_message: Preparatory system-level message to set context for LLM responses.
+        Defaults to None, in which case the default system message for extraction is set,
+        rendered for the output language, also when the output language is changed later.
+        Assigning None restores the default system message, while an empty string disables
+        the system message, i.e. none is sent.
     :vartype system_message: str | None
     :ivar temperature: Sampling temperature (0.0 or higher; the upper limit depends on
         the model) controlling response creativity.
@@ -71,7 +75,7 @@ class DocumentLLM(_DocumentLLM):
         models, the reasoning tokens count towards this limit. Defaults to None, in which case
         no limit is sent with the requests, and the default of the model applies (for most
         providers, the maximum output of the model). A response cut off at the limit
-        fails the extraction, and is returned with a warning in a chat.
+        fails the extraction, and is returned with a warning logged in a chat.
     :vartype max_tokens: int | None
     :ivar reasoning_effort: The effort level for the LLM to reason about the input. Can be set to
         ``"none"``, ``"minimal"``, ``"low"``, ``"medium"``, ``"high"``, ``"xhigh"``, or
@@ -139,7 +143,8 @@ class DocumentLLM(_DocumentLLM):
     :vartype fallback_models: list[DocumentLLM | DocumentDecisionModel]
     :ivar output_language: Language for produced output text (justifications, explanations).
         Can be "en" (English) or "adapt" (adapts to document/image language). Defaults to "en".
-        Applies only when DocumentLLM's default system message is used.
+        Applies to the extraction prompts, and to the default system message: with a custom
+        system message, it applies to the extraction prompts only.
     :vartype output_language: LanguageRequirement
     :ivar async_limiter: Controls frequency of async LLM API requests for concurrent tasks.
         Defaults to allowing 10 acquisitions per 10-second period to prevent rate limit issues.

@@ -90,8 +90,8 @@ def _raise_json_serializable_type_error(
     # Default supported types list
     if custom_supported_types is None:
         supported_types = (
-            "- Basic types: str, int, float, bool, None\n"
-            "- Union types: str | int, Optional[str], etc.\n"
+            "- Basic types: str, int, float, bool\n"
+            "- Union types: str | int, str | None, Optional[str], etc.\n"
             "- Collection types: list[T], dict[K, V] where T, K, V are supported types\n"
             "- Literal types: Literal['value1', 'value2'], Literal[1, 2, 3]\n"
             "- Classes with type annotations (including dataclasses and Pydantic models)\n"
@@ -378,8 +378,8 @@ class _JsonObjectItemStructure:
                 # Validate that the item type is JSON serializable
                 if not _is_json_serializable_type(typ[0]):
                     list_instance_supported_types = (
-                        "- Basic types: str, int, float, bool, None\n"
-                        "- Union types: str | int, Optional[str], etc.\n"
+                        "- Basic types: str, int, float, bool\n"
+                        "- Union types: str | int, str | None, Optional[str], etc.\n"
                         "- Literal types: Literal['value1', 'value2'], Literal[1, 2, 3]\n"
                         "- Typed classes: Pydantic models, dataclasses, etc."
                     )

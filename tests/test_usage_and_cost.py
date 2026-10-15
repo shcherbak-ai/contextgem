@@ -193,12 +193,18 @@ class TestUsageAndCost(BaseTest):
                         document, max_paragraphs_to_analyze_per_call=1
                     )
             else:
-                with pytest.warns(UserWarning, match="Authentication failed"):
+                with patch.object(
+                    logger, "warning", wraps=logger.warning
+                ) as log_warning:
                     llm.extract_concepts_from_document(
                         document,
                         max_paragraphs_to_analyze_per_call=1,
                         raise_exception_on_extraction_error=False,
                     )
+                assert any(
+                    "Authentication failed" in str(call.args[0])
+                    for call in log_warning.call_args_list
+                )
         assert len(requests) == 2
 
         # The usage has the request that succeeded, and the request that failed

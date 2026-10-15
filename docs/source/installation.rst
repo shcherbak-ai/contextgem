@@ -45,13 +45,19 @@ For development, clone the repository and use uv:
     # Install uv if you don't have it:
     # https://docs.astral.sh/uv/getting-started/installation/
 
-    # Install dependencies including development extras
+    # Install the dependencies, including the development dependency groups
     uv sync --all-groups
 
 ✅ Verifying Installation
 --------------------------
 
-To verify that ContextGem is installed correctly, run:
+To verify that ContextGem is installed correctly, run in your project:
+
+.. code-block:: bash
+
+    uv run python -c "import contextgem; print(contextgem.__version__)"
+
+Or, if you installed it with pip, in the environment you installed it in:
 
 .. code-block:: bash
 

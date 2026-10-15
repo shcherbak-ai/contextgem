@@ -20,7 +20,6 @@ from __future__ import annotations
 import asyncio
 import importlib
 import json
-import warnings
 from collections.abc import Sequence
 from dataclasses import dataclass
 from typing import Any, cast
@@ -941,7 +940,7 @@ class _DocumentDecisionModel(_DocumentModel):
         :type async_limiter: AsyncLimiter | None
         :param raise_exception_on_extraction_error: Whether to raise an exception
             if a request fails due to an error in the API of the model. If False,
-            a warning is issued instead, and no items are extracted. Defaults to True.
+            a warning is logged instead, and no items are extracted. Defaults to True.
         :type raise_exception_on_extraction_error: bool
         :param has_fallback_pending: Whether a fallback model will be tried if
             the call to this model fails. If True, a model API error is logged
@@ -1046,10 +1045,6 @@ class _DocumentDecisionModel(_DocumentModel):
                         + f" ({n_retries} retries)."
                     )
                     logger.warning(warning_msg)
-                    warnings.warn(
-                        warning_msg,
-                        stacklevel=2,
-                    )
             return None, usage
 
         # The requests are made: whatever fails from here on, their usage is counted
@@ -1128,7 +1123,6 @@ class _DocumentDecisionModel(_DocumentModel):
                     answers_of_sentences=answers_of_sentences,
                 ):
                     logger.warning(warning_msg)
-                    warnings.warn(warning_msg, stacklevel=2)
         except Exception:
             # e.g. an aspect or a concept that was processed by another call while
             # the requests of this call were made. No usage is returned when

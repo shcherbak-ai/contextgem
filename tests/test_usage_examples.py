@@ -91,7 +91,6 @@ _EXAMPLES_WITHOUT_REQUESTS = [
     "docs.llm_config.tracking_usage_and_cost",
     "docs.llms.llm_init.llm_api",
     "docs.llms.llm_init.llm_local",
-    "docs.llms.llm_init.lm_studio_connection_error_fix",
     "docs.optimizations.optimization_choosing_llm",
     "docs.optimizations.optimization_cost",
     "docs.optimizations.optimization_long_docs",

@@ -28,6 +28,7 @@ from jinja2 import Environment, Template, nodes
 from wtpsplit_lite import SaT
 
 from contextgem.internal.data_models import _ModelUsage
+from contextgem.internal.exceptions import ContextGemWarning
 from contextgem.internal.llm_output_structs.aspect_structs import (
     _get_aspect_extraction_output_struct,
 )
@@ -611,7 +612,9 @@ def _run_sync(coro: Coroutine[Any, Any, T]) -> T:
         return asyncio.run(coro)
 
 
-def _warn_from_caller_code(message: str, category: type[Warning] = UserWarning) -> None:
+def _warn_from_caller_code(
+    message: str, category: type[Warning] = ContextGemWarning
+) -> None:
     """
     Issues a warning attributed to the code that called the framework, i.e. to
     the first frame of the call stack outside the framework and Pydantic, e.g.
@@ -626,7 +629,7 @@ def _warn_from_caller_code(message: str, category: type[Warning] = UserWarning) 
 
     :param message: The message of the warning.
     :type message: str
-    :param category: The category of the warning. Defaults to ``UserWarning``.
+    :param category: The category of the warning. Defaults to ``ContextGemWarning``.
     :type category: type[Warning]
     :return: None
     :rtype: None

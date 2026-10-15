@@ -26,6 +26,7 @@ import dataclasses
 import functools
 import json
 import keyword
+import logging as stdlib_logging
 import math
 import operator
 import re
@@ -71,6 +72,7 @@ from litellm.types.decisions import (
 from contextgem.internal.base import decision_models as decision_models_module
 from contextgem.internal.base import llms as llms_module
 from contextgem.internal.exceptions import ModelAPIError, ModelExtractionError
+from contextgem.internal.loggers import logger
 from contextgem.internal.typings.types import (
     ClassificationType,
     JustificationDepth,
@@ -463,31 +465,58 @@ def _api_error(transient: bool, model: str) -> Exception:
 
 
 @contextmanager
-def _recorded_warnings() -> Generator[list[warnings.WarningMessage]]:
+def _recorded_warnings() -> Generator[list[str]]:
     """
-    Records all the warnings issued while the context is entered.
+    Records the texts of the warnings reported while the context is entered:
+    the messages that the framework logs at the WARNING level, e.g. for a call
+    of an extraction that failed, and the Python warnings, e.g. for
+    a configuration that does not have the expected effect. The Python warnings
+    are added when the context is exited.
 
-    :return: Context with the list of the warnings recorded.
-    :rtype: Generator[list[warnings.WarningMessage]]
+    :return: Context with the list of the texts of the warnings recorded.
+    :rtype: Generator[list[str]]
     """
-    with warnings.catch_warnings(record=True) as caught:
-        warnings.simplefilter("always")
-        yield caught
+    recorded: list[str] = []
+
+    class _WarningLogHandler(stdlib_logging.Handler):
+        """
+        Records the messages logged at the WARNING level.
+        """
+
+        def emit(self, record: stdlib_logging.LogRecord) -> None:
+            """
+            Adds the message of a record at the WARNING level to the recorded ones.
+
+            :param record: The log record.
+            :type record: stdlib_logging.LogRecord
+            """
+            if record.levelno == stdlib_logging.WARNING:
+                recorded.append(record.getMessage())
+
+    handler = _WarningLogHandler()
+    logger.addHandler(handler)
+    try:
+        with warnings.catch_warnings(record=True) as caught:
+            warnings.simplefilter("always")
+            yield recorded
+        recorded.extend(str(warning.message) for warning in caught)
+    finally:
+        logger.removeHandler(handler)
 
 
-def _get_messages(caught: list[warnings.WarningMessage]) -> list[str]:
+def _get_messages(recorded: list[str]) -> list[str]:
     """
     Returns the texts of recorded warnings.
 
-    :param caught: Recorded warnings.
-    :type caught: list[warnings.WarningMessage]
+    :param recorded: Texts of the recorded warnings.
+    :type recorded: list[str]
     :return: Texts of the warnings.
     :rtype: list[str]
     """
-    return [str(warning.message) for warning in caught]
+    return list(recorded)
 
 
-# The warnings that an extraction issues for a call that failed, or for what
+# The warnings that an extraction logs for a call that failed, or for what
 # a decision model refused to answer on
 _RE_EXTRACTION_WARNING = re.compile(
     r"could not be processed|Exception occurred while calling"
@@ -495,14 +524,14 @@ _RE_EXTRACTION_WARNING = re.compile(
 )
 
 
-def _get_extraction_warnings(caught: list[warnings.WarningMessage]) -> list[str]:
+def _get_extraction_warnings(caught: list[str]) -> list[str]:
     """
-    Returns the texts of the recorded warnings that an extraction issues for
+    Returns the texts of the recorded warnings that an extraction logs for
     a call that failed, or for refused answers, leaving out any other warning,
     e.g. a deprecation warning of a dependency.
 
-    :param caught: Recorded warnings.
-    :type caught: list[warnings.WarningMessage]
+    :param caught: Texts of the recorded warnings.
+    :type caught: list[str]
     :return: Texts of the warnings.
     :rtype: list[str]
     """

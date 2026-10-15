@@ -19,3 +19,10 @@ llm_deepseek = DocumentLLM(
     api_base="http://localhost:11434",
     # see DocumentLLM API reference for all configuration options
 )
+
+# Example - Using Mistral Small 3.2 via LM Studio (no API key is needed)
+llm_mistral = DocumentLLM(
+    model="lm_studio/mistralai/mistral-small-3.2",
+    api_base="http://localhost:1234/v1",  # Default LM Studio endpoint
+    # see DocumentLLM API reference for all configuration options
+)

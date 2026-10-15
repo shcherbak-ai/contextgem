@@ -62,7 +62,7 @@ When creating a :class:`~contextgem.public.concepts.JsonObjectConcept`, you can 
    * - ``modality``
      - ``str``
      - ``"text"``
-     - The document content the concept is extracted from. Available values: ``"text"``, ``"image"``, ``"multimodal"`` (text and/or images, whichever the document has). ``"image"`` and ``"multimodal"`` are supported for document-level concepts only, and require an LLM that supports vision when the document has images. For more details, see :ref:`concept-modality-label`.
+     - The document content the concept is extracted from. Available values: ``"text"``, ``"image"``, ``"multimodal"`` (text and/or images, whichever the document has). ``"image"`` and ``"multimodal"`` are supported for document-level concepts only, and require an LLM that supports vision when the document has images. A concept with ``"image"`` cannot have ``add_references=True``. For more details, see :ref:`concept-modality-label`.
    * - ``add_justifications``
      - ``bool``
      - ``False``
@@ -128,7 +128,7 @@ When using nested class definitions, all classes in the structure must inherit f
 
 **Supported types and validation**
 
-- The types of the fields are JSON types: ``str``, ``int``, ``float``, ``bool``, ``None``, ``Literal`` of such values, unions of types (``X | Y`` or ``Union[X, Y]``), lists (``list[X]``, or ``[X]`` for an ``X`` that is not a list or a mapping), mappings (``dict[str, X]``), nested structures, and lists of nested structures. ``Optional[X]`` (or ``X | None``) is supported for the primitive types and ``Literal`` only; a field of such a type may be left out of an extracted value.
+- The types of the fields are JSON types: ``str``, ``int``, ``float``, ``bool``, ``Literal`` of such values or of ``None``, unions of types (``X | Y`` or ``Union[X, Y]``, e.g. ``str | None`` for a value that the document may not have), lists (``list[X]``, or ``[X]`` for an ``X`` that is not a list or a mapping), mappings (``dict[str, X]``), nested structures, and lists of nested structures. ``Optional[X]`` (or ``X | None``) is supported for the primitive types and ``Literal`` only; a field of such a type may be left out of an extracted value.
 - The keys of a mapping must be strings, i.e. of type ``str`` or a ``Literal`` of strings, as the keys of a JSON object are strings. A structure with a mapping with keys of another type, e.g. ``dict[int, str]``, is rejected.
 - A field name can be any non-empty string that does not start with an underscore, e.g. ``"model name"`` or ``"json"``.
 - The extracted values are validated strictly: a value is not converted to the type of its field, except that an integer is accepted for a ``float``, and a ``Literal`` accepts a value only of the type of its own value, e.g. ``Literal[1]`` does not accept ``true`` or ``1.0``. A value that does not conform to the structure, e.g. that has a field that the structure does not have, is invalid data, which the LLM is asked again for.
@@ -152,6 +152,32 @@ You can configure a :class:`~contextgem.public.concepts.JsonObjectConcept` to in
 
 .. literalinclude:: ../../../dev/usage_examples/docs/concepts/json_object_concept/refs_and_justifications.py
    :language: python
+
+
+📊 Extracted Items
+--------------------
+
+When a :class:`~contextgem.public.concepts.JsonObjectConcept` is extracted, it is populated with **a list of extracted items** accessible through the ``.extracted_items`` property. Each item is an instance of the ``_JsonObjectItem`` class with the following attributes:
+
+.. list-table::
+   :widths: 20 20 60
+   :header-rows: 1
+
+   * - Attribute
+     - Type
+     - Description
+   * - ``value``
+     - dict
+     - The extracted JSON object, which conforms to the structure of the concept
+   * - ``justification``
+     - str
+     - Explanation of why this object was extracted (only if ``add_justifications=True``)
+   * - ``reference_paragraphs``
+     - list[:class:`~contextgem.public.paragraphs.Paragraph`]
+     - List of paragraph objects that informed the extraction (only if ``add_references=True``)
+   * - ``reference_sentences``
+     - list[:class:`~contextgem.public.sentences.Sentence`]
+     - List of sentence objects that informed the extraction (only if ``add_references=True`` and ``reference_depth="sentences"``)
 
 .. note::
    To find the position of a reference paragraph or sentence in the document, e.g. to cite it or to retrieve its surrounding context, see :ref:`locating-paras-and-sents`.

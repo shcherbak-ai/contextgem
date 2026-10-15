@@ -12,6 +12,7 @@ import json
 import os
 import re
 import types
+import warnings
 from contextlib import contextmanager
 from typing import Any, Literal
 from unittest.mock import patch
@@ -24,7 +25,11 @@ from contextgem.internal.base import llms as llms_module
 from contextgem.internal.base import models as models_module
 from contextgem.internal.base.concepts import _Concept
 from contextgem.internal.data_models import _Message, _ModelCall, _ModelUsage
-from contextgem.internal.exceptions import ModelAPIError, ModelExtractionError
+from contextgem.internal.exceptions import (
+    ContextGemWarning,
+    ModelAPIError,
+    ModelExtractionError,
+)
 from contextgem.internal.loggers import logger
 from contextgem.internal.utils import _split_text_into_paragraphs
 from contextgem.public import (
@@ -2936,15 +2941,19 @@ class TestExtraction(BaseTest):
                     # The fallback LLM is tried for the first concept
                     error = asyncio.run(extract(llm, document))
                 else:
-                    # A warning is issued for the first concept
-                    with pytest.warns(
-                        UserWarning, match="Exception occurred while calling LLM API"
-                    ):
+                    # A warning is logged for the first concept
+                    with patch.object(
+                        logger, "warning", wraps=logger.warning
+                    ) as log_warning:
                         error = asyncio.run(
                             extract(
                                 llm, document, raise_exception_on_extraction_error=False
                             )
                         )
+                    assert any(
+                        "Exception occurred while calling LLM API" in str(call.args[0])
+                        for call in log_warning.call_args_list
+                    )
                 assert error is None
                 check_outcome(
                     llm,
@@ -2980,16 +2989,22 @@ class TestExtraction(BaseTest):
                     # The fallback LLM is tried for the first concept
                     error = asyncio.run(extract(llm, document))
                 else:
-                    # A warning is issued for the first concept
-                    with pytest.warns(
-                        UserWarning,
-                        match=r"invalid JSON.*\(0 retries\)\. If you want to raise",
-                    ):
+                    # A warning is logged for the first concept
+                    with patch.object(
+                        logger, "warning", wraps=logger.warning
+                    ) as log_warning:
                         error = asyncio.run(
                             extract(
                                 llm, document, raise_exception_on_extraction_error=False
                             )
                         )
+                    assert any(
+                        re.search(
+                            r"invalid JSON.*\(0 retries\)\. If you want to raise",
+                            str(call.args[0]),
+                        )
+                        for call in log_warning.call_args_list
+                    )
                 assert error is None
                 check_outcome(
                     llm,
@@ -3205,7 +3220,6 @@ class TestExtraction(BaseTest):
             request_outcomes: dict[str, list[Any]] | None = None,
             with_small_context_window: bool = False,
             raise_exception: bool = True,
-            expected_warning: str | None = None,
             extracted: bool = True,
             **model_kwargs: Any,
         ) -> None:
@@ -3216,7 +3230,8 @@ class TestExtraction(BaseTest):
             Checks that each call is logged with the expected lines, and that
             nothing else is logged. A line is expected by its level and
             the beginning of its message, with the type of what is extracted
-            in place of ``{type}``.
+            in place of ``{type}``. The events of the calls are logged only,
+            i.e. no warning of ContextGem is issued for them.
             """
             for instance_type in ("aspect", "concept"):
                 expected = [line.format(type=instance_type) for line in expected_log]
@@ -3241,12 +3256,17 @@ class TestExtraction(BaseTest):
                         "use_concurrency": use_concurrency,
                         "raise_exception_on_extraction_error": raise_exception,
                     }
-                    with capture_logs() as captured_logs:
-                        if expected_warning:
-                            with pytest.warns(UserWarning, match=expected_warning):
-                                extract(document, **extraction_kwargs)
-                        else:
-                            extract(document, **extraction_kwargs)
+                    with (
+                        capture_logs() as captured_logs,
+                        warnings.catch_warnings(record=True) as caught_warnings,
+                    ):
+                        warnings.simplefilter("always")
+                        extract(document, **extraction_kwargs)
+                    assert not [
+                        caught_warning
+                        for caught_warning in caught_warnings
+                        if issubclass(caught_warning.category, ContextGemWarning)
+                    ]
                     # Each line logged, as the expected line it begins with, if any
                     logged = [
                         next(
@@ -3280,6 +3300,11 @@ class TestExtraction(BaseTest):
         cut_off_response = (
             f"ERROR: The response of LLM `{primary_model}` was cut off at the max "
             f"output tokens"
+        )
+        # ... and the warning that the call failed, when no exception is raised
+        cut_off_warning = (
+            f"WARNING: The response of LLM `{primary_model}` was cut off at the "
+            f"max output tokens"
         )
         # An LLM that returned a response that is not a valid JSON
         not_valid_json = [
@@ -3320,7 +3345,7 @@ class TestExtraction(BaseTest):
                     [f"ERROR: {llm_api_error}", fallback_pending, trying_fallback],
                     request_outcomes={primary_model: [api_error]},
                 )
-            # The request of the fallback LLM fails too, and a warning is issued
+            # The request of the fallback LLM fails too, and a warning is logged
             check_log(
                 [primary_model, fallback_model],
                 [
@@ -3335,16 +3360,14 @@ class TestExtraction(BaseTest):
                     fallback_model: [api_error],
                 },
                 raise_exception=False,
-                expected_warning=r"calling LLM API.*\(0 retries\)",
                 extracted=False,
             )
-            # No fallback model, and a warning is issued
+            # No fallback model, and a warning is logged
             check_log(
                 [primary_model],
                 [f"ERROR: {llm_api_error}", f"WARNING: {llm_api_error}"],
                 request_outcomes={primary_model: [api_error]},
                 raise_exception=False,
-                expected_warning=r"calling LLM API.*\(0 retries\)",
                 extracted=False,
             )
             # The params of the request are not supported for the model, and
@@ -3372,13 +3395,12 @@ class TestExtraction(BaseTest):
                 [cut_off_response, fallback_pending, trying_fallback_llm],
                 request_outcomes={primary_model: [cut_off_answer]},
             )
-            # No fallback model, and a warning is issued
+            # No fallback model, and a warning is logged
             check_log(
                 [primary_model],
-                [cut_off_response],
+                [cut_off_response, cut_off_warning],
                 request_outcomes={primary_model: [cut_off_answer]},
                 raise_exception=False,
-                expected_warning="was cut off at the max output tokens",
                 extracted=False,
             )
 
@@ -3774,8 +3796,10 @@ class TestExtraction(BaseTest):
                             assert get_calls() == [expected_call, []]
                             assert logged == expected_log
 
-                        # A warning is issued for each call instead
-                        with pytest.warns(UserWarning) as warning_records:
+                        # A warning is logged for each call instead
+                        with patch.object(
+                            logger, "warning", wraps=logger.warning
+                        ) as log_warning:
                             document = extract(
                                 chain,
                                 instance_type,
@@ -3783,9 +3807,9 @@ class TestExtraction(BaseTest):
                                 raise_exception=False,
                             )
                         warning_messages = [
-                            str(record.message)
-                            for record in warning_records
-                            if "could not be processed" in str(record.message)
+                            str(call.args[0])
+                            for call in log_warning.call_args_list
+                            if "could not be processed" in str(call.args[0])
                         ]
                         assert len(warning_messages) == n_instances
                         assert all(
@@ -4366,13 +4390,17 @@ class TestExtraction(BaseTest):
                 llm.extract_aspects_from_document(document)
             assert not responses
 
-            # ... or a warning is issued, and nothing is extracted
+            # ... or a warning is logged, and nothing is extracted
             document = create_document()
             responses.append(malformed_response)
-            with pytest.warns(UserWarning, match="invalid JSON"):
+            with patch.object(logger, "warning", wraps=logger.warning) as log_warning:
                 (aspect,) = llm.extract_aspects_from_document(
                     document, raise_exception_on_extraction_error=False
                 )
+            assert any(
+                "invalid JSON" in str(call.args[0])
+                for call in log_warning.call_args_list
+            )
             assert not responses
             assert not aspect.extracted_items
 

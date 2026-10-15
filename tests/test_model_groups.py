@@ -17,6 +17,7 @@ import pytest
 from contextgem.internal.base.concepts import _Concept
 from contextgem.internal.base.llms import _DocumentLLM
 from contextgem.internal.exceptions import ModelAPIError
+from contextgem.internal.loggers import logger
 from contextgem.public import (
     Aspect,
     BooleanConcept,
@@ -875,17 +876,20 @@ class TestModelGroups(BaseTest):
         with pytest.raises(ModelAPIError):
             primary.extract_concepts_from_document(document, overwrite_existing=True)
         assert called_models == expected_models
-        # But a warning is issued if `raise_exception_on_extraction_error` is False
+        # But a warning is logged if `raise_exception_on_extraction_error` is False
         called_models.clear()
         document_unprocessed = Document(raw_text=document.raw_text)
         document_unprocessed.concepts = [
             StringConcept(name="Title", description="Contract title")
         ]
-        with pytest.warns(UserWarning, match="LLM API"):
+        with patch.object(logger, "warning", wraps=logger.warning) as log_warning:
             primary.extract_concepts_from_document(
                 document_unprocessed,
                 raise_exception_on_extraction_error=False,
             )
+        assert any(
+            "LLM API" in str(call.args[0]) for call in log_warning.call_args_list
+        )
         assert called_models == expected_models
         assert not any(i.extracted_items for i in document_unprocessed.concepts)
 

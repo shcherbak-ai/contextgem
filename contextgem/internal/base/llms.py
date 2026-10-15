@@ -41,6 +41,7 @@ from contextgem.internal.data_models import (
 )
 from contextgem.internal.decorators import _disable_direct_initialization
 from contextgem.internal.exceptions import (
+    ContextGemWarning,
     LLMToolLoopLimitError,
     ModelAPIError,
     _ToolReturnValueError,
@@ -135,7 +136,8 @@ class _DocumentLLM(_DocumentModel):
         description=(
             "Language for generated textual output (justifications, explanations). "
             "'en' forces English; 'adapt' matches document/image language. "
-            "Applies only when DocumentLLM's default system message is used."
+            "Applies to the extraction prompts, and to the default system message: "
+            "with a custom system message, to the extraction prompts only."
         ),
     )
     temperature: StrictFloat | None = Field(
@@ -316,6 +318,70 @@ class _DocumentLLM(_DocumentModel):
         self._set_prompts()
         self._set_capabilities()
 
+    def _check_request_params(self, *, use_tools: bool = False) -> None:
+        """
+        Checks the params that the requests of the LLM are sent with, as they are
+        checked when a request is built, without sending a request: the max output
+        tokens against the max output of the model, and the request config.
+
+        :param use_tools: Whether the requests are sent with the tools of the LLM,
+            i.e. in a chat. Defaults to False.
+        :type use_tools: bool
+        :return: None
+        :rtype: None
+        :raises ValueError: If a param of the requests is invalid, e.g. ``max_tokens``
+            above the max output of the model.
+        """
+        self._validate_output_tokens()
+        self._build_request_config(use_tools=use_tools)
+
+    def __setattr__(self, name: str, value: Any) -> None:
+        """
+        Assigns the value to the attribute, keeping the default system message
+        in line with the output language once the LLM is created.
+
+        ``None`` assigned to ``system_message`` stands for the default system message,
+        as when the LLM is created without a system message. When ``output_language``
+        is assigned to an LLM that has the default system message, the default system
+        message is rendered for the new output language in the same assignment, as it
+        depends on the output language. A custom system message, including an empty
+        one, is kept as it is.
+
+        :param name: The name of the attribute to set.
+        :type name: str
+        :param value: The value to assign to the attribute.
+        :type value: Any
+        :return: None
+        :rtype: None
+        """
+        if not self._private_attrs_initialized:
+            # The LLM is being created: its default system message is set once
+            # its params are validated
+            super().__setattr__(name, value)
+            return
+
+        if name == "system_message" and value is None:
+            value = self._get_default_system_message()
+        elif (
+            name == "output_language"
+            and value != self.output_language
+            and self.system_message == self._get_default_system_message()
+        ):
+            # Both params are changed in one assignment, so that the checks that
+            # involve both, e.g. the comparison with the fallback LLMs, see them
+            # in line, and both are restored if the new output language is rejected
+            fields_snapshot = self._get_fields_snapshot()
+            # Validated together with the output language, by the assignment below
+            self.__dict__["system_message"] = self._get_default_system_message(value)
+            try:
+                super().__setattr__(name, value)
+            except Exception:
+                self._restore_fields(fields_snapshot)
+                raise
+            return
+
+        super().__setattr__(name, value)
+
     def chat(
         self,
         prompt: str,
@@ -336,7 +402,7 @@ class _DocumentLLM(_DocumentModel):
         :param chat_session: Optional stateful chat session to preserve and use history.
         :type chat_session: _ChatSession | None
         :return: The LLM's response. A response cut off at the max output tokens
-            is returned incomplete, with a warning.
+            is returned incomplete, with a warning logged.
         :rtype: str
         :raises ValueError: If the prompt is empty or not a string
         :raises ValueError: If images parameter is not a list of Image instances
@@ -374,7 +440,7 @@ class _DocumentLLM(_DocumentModel):
         :param chat_session: Optional stateful chat session to preserve and use history.
         :type chat_session: _ChatSession | None
         :return: The LLM's response. A response cut off at the max output tokens
-            is returned incomplete, with a warning.
+            is returned incomplete, with a warning logged.
         :rtype: str
         :raises ValueError: If the prompt is empty or not a string
         :raises ValueError: If images parameter is not a list of Image instances
@@ -412,8 +478,7 @@ class _DocumentLLM(_DocumentModel):
         # param of a fallback LLM would otherwise go unnoticed until then. The request
         # params of this LLM are checked when its request is built.
         for fallback_llm in fallback_llms:
-            fallback_llm._validate_output_tokens()
-            fallback_llm._build_request_config(use_tools=True)
+            fallback_llm._check_request_params(use_tools=True)
 
         # Try this LLM first, then each fallback LLM in the given order
         llms_to_try = [self, *fallback_llms]
@@ -546,6 +611,7 @@ class _DocumentLLM(_DocumentModel):
                 "You are using the default system message optimized for extraction tasks. "
                 "For simple chat interactions, consider setting system_message='' to disable it, "
                 "or provide your own custom system message.",
+                ContextGemWarning,
                 stacklevel=2,
             )
 
@@ -590,7 +656,6 @@ class _DocumentLLM(_DocumentModel):
                 f"The response is returned incomplete."
             )
             logger.warning(warning_msg)
-            warnings.warn(warning_msg, stacklevel=2)
 
         # If response is None, the caller will try with the next fallback LLM
         if response is not None and chat_session is not None:
@@ -611,6 +676,7 @@ class _DocumentLLM(_DocumentModel):
             warnings.warn(
                 f"Tool calling for model `{self.model}` is ignored during extraction workflows. "
                 f"Tools are only supported in `llm.chat(...)`.",
+                ContextGemWarning,
                 stacklevel=2,
             )
 
@@ -1039,17 +1105,22 @@ class _DocumentLLM(_DocumentModel):
                 f"manually set `_supports_parallel_tool_calls=True` on the LLM instance.",
             )
 
-        # Warn that output language param will take no effect if system message is not
-        # the default one. With the default output language, nothing that is set
-        # is left without effect, e.g. when the system message is disabled for chat.
+        # Warn that the output language applies to the extraction prompts only if
+        # the system message is not the default one, which is what has the instruction
+        # on the language of the output, e.g. in a chat. With the default output
+        # language, nothing that is set is left without effect, e.g. when the system
+        # message is disabled for chat.
         if (
             self.output_language != type(self).model_fields["output_language"].default
             and self.system_message != self._get_default_system_message()
         ):
             _warn_from_caller_code(
-                "`output_language` parameter will take no effect if system message is not the default one. "
-                "This setting primarily affects extraction workflows that rely on the default system message; "
-                "for simple chat interactions, you can ignore this warning.",
+                "`output_language` applies to the extraction prompts only, as the system message is not the default "
+                "one: the system message gives no instruction on the language of the "
+                "output, and in a chat, where no extraction prompt is sent, "
+                "`output_language` has no effect. To apply it to the system message as "
+                "well, use the default system message (`system_message=None`), or give "
+                "such an instruction in your own system message.",
             )
 
     def _validate_input_tokens(self, messages: list[dict[str, str]]) -> None:
@@ -1241,6 +1312,7 @@ class _DocumentLLM(_DocumentModel):
                 "`ollama/` prefix instead. "
                 "See https://github.com/ollama/ollama/issues/10255 and "
                 "https://github.com/ollama/ollama/issues/6451 for more details.",
+                ContextGemWarning,
                 stacklevel=2,
             )
 
@@ -1802,7 +1874,7 @@ class _DocumentLLM(_DocumentModel):
             Used internally for automatic retry when UnsupportedParamsError occurs.
         :type drop_params: bool
         :param raise_exception_on_model_api_error: Whether to raise an exception if the LLM call fails
-            due to an error in the LLM API. If False, a warning will be issued instead, and no data
+            due to an error in the LLM API. If False, a warning is logged instead, and no data
             will be returned. Defaults to True.
         :type raise_exception_on_model_api_error: bool, optional
         :param chat_session: Optional chat session object used to persist tool messages during the
@@ -1933,9 +2005,9 @@ class _DocumentLLM(_DocumentModel):
                 # If drop_params was already True and we still got UnsupportedParamsError,
                 # fall through to regular error handling
                 record_failed_call()
-                # Logged, and warned of, as any other failed request is:
-                # the log would otherwise say only that the request is sent
-                # without the unsupported params, and a warning is issued only
+                # Logged as any other failed request is: the log would
+                # otherwise say only that the request is sent without
+                # the unsupported params, and a warning is logged only
                 # instead of the exception, i.e. not when a fallback model is
                 # yet to be tried and not when the exception is raised
                 logger.error(
@@ -1958,10 +2030,6 @@ class _DocumentLLM(_DocumentModel):
                             + f" ({n_retries} retries)."
                         )
                         logger.warning(warning_msg)
-                        warnings.warn(
-                            warning_msg,
-                            stacklevel=2,
-                        )
         except LLMToolLoopLimitError:
             # Propagate tool loop limit errors without wrapping
             await self._update_usage_and_cost((None, usage))
@@ -1997,10 +2065,6 @@ class _DocumentLLM(_DocumentModel):
                         + f" ({n_retries} retries)."
                     )
                     logger.warning(warning_msg)
-                    warnings.warn(
-                        warning_msg,
-                        stacklevel=2,
-                    )
 
         # The failed call is recorded in the usage as unfinished at this point
         return None, usage
@@ -2052,16 +2116,25 @@ class _DocumentLLM(_DocumentModel):
         """
         self.system_message = self._get_default_system_message()
 
-    def _get_default_system_message(self) -> str:
+    def _get_default_system_message(
+        self, output_language: LanguageRequirement | None = None
+    ) -> str:
         """
-        Retrieves the default system message for the LLM.
+        Retrieves the default system message for the LLM, rendered for its output
+        language or for the given one.
+
+        :param output_language: The output language to render the default system
+            message for. Defaults to None (the output language of the LLM).
+        :type output_language: LanguageRequirement | None
+        :return: The default system message.
+        :rtype: str
         """
         # _get_template returns a Template object when template_extension == "j2"
         return _get_template(  # ty: ignore[unresolved-attribute]
             "default_system_message",
             template_type="system",
             template_extension="j2",
-        ).render({"output_language": self.output_language})  # type: ignore[attr-defined]
+        ).render({"output_language": output_language or self.output_language})  # type: ignore[attr-defined]
 
 
 @_disable_direct_initialization

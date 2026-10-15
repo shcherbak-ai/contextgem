@@ -55,7 +55,11 @@ from contextgem.internal.decorators import (
     _post_init_method,
     _timer_decorator,
 )
-from contextgem.internal.exceptions import ModelAPIError, ModelExtractionError
+from contextgem.internal.exceptions import (
+    ContextGemWarning,
+    ModelAPIError,
+    ModelExtractionError,
+)
 from contextgem.internal.items import _ExtractedItem, _StringItem
 from contextgem.internal.loggers import logger
 from contextgem.internal.registry import _publicize
@@ -1599,6 +1603,13 @@ class _GenericModelProcessor(_AbstractGenericModelProcessor):
                     routed_in_group=self.is_group,
                     max_paragraphs_to_analyze_per_call=max_paragraphs_to_analyze_per_call,
                 )
+            # A fallback model is used only if the model it is a fallback for fails,
+            # i.e. an invalid param of the requests of a fallback model would otherwise
+            # go unnoticed until then, after the requests to that model are sent, as
+            # before a chat. The request params of the model itself are checked when
+            # its first request is built.
+            for fallback_model in model.fallback_models:
+                fallback_model._check_request_params()
 
     @staticmethod
     def _get_all_instances_of_document(
@@ -2249,6 +2260,7 @@ class _GenericModelProcessor(_AbstractGenericModelProcessor):
                                 "when extracting from text. When extracting from images, "
                                 "references will not be added, as there is no text content "
                                 "to reference.",
+                                ContextGemWarning,
                                 stacklevel=2,
                             )
                         elif has_images and not has_text:
@@ -2256,6 +2268,7 @@ class _GenericModelProcessor(_AbstractGenericModelProcessor):
                                 "References will not be added for multimodal concepts "
                                 "when extracting from images only, as there is no text "
                                 "content to reference.",
+                                ContextGemWarning,
                                 stacklevel=2,
                             )
                     else:
@@ -2547,7 +2560,7 @@ class _GenericModelProcessor(_AbstractGenericModelProcessor):
                 # sent, as the prompt exceeds its context window. This is reported
                 # by the LLM when it occurs (see `_query_llm`), and is returned as
                 # a result only when it is not final, i.e. a fallback model is yet
-                # to be tried, or when a warning is issued for it instead of
+                # to be tried, or when a warning is logged for it instead of
                 # an exception. There is no response to process, and the failure
                 # is not to be reported as invalid JSON returned by the LLM as well.
                 return None, all_usage_data
@@ -2591,7 +2604,12 @@ class _GenericModelProcessor(_AbstractGenericModelProcessor):
                         await llm._update_usage_and_cost((None, all_usage_data))
                         raise ModelAPIError(error_msg)
                     else:
-                        warnings.warn(error_msg, stacklevel=2)
+                        # The call fails without an exception, as other failed
+                        # calls do
+                        logger.warning(
+                            f"{error_msg} If you want to raise an exception instead, "
+                            f"set `raise_exception_on_extraction_error` to True."
+                        )
                 else:
                     logger.error(
                         f"LLM did not return valid JSON for {extracted_item_type}s"
@@ -3358,10 +3376,6 @@ class _GenericModelProcessor(_AbstractGenericModelProcessor):
                                     "set `raise_exception_on_extraction_error` to True."
                                 )
                                 logger.warning(warning_msg)
-                                warnings.warn(
-                                    warning_msg,
-                                    stacklevel=2,
-                                )
                         return False
                 return True
 
@@ -3458,7 +3472,7 @@ class _GenericModelProcessor(_AbstractGenericModelProcessor):
                 """
                 Reports the output that cannot be used, returned by the model for
                 a call that is not made again, as the model has no retries for such
-                output and no fallback model: raises the error, or issues a warning
+                output and no fallback model: raises the error, or logs a warning
                 instead if `raise_exception_on_extraction_error` is False.
 
                 :param instances: The instances of the call, which could not be
@@ -3477,10 +3491,6 @@ class _GenericModelProcessor(_AbstractGenericModelProcessor):
                     "set `raise_exception_on_extraction_error` to True."
                 )
                 logger.warning(warning_msg)
-                warnings.warn(
-                    warning_msg,
-                    stacklevel=3,
-                )
 
             if use_concurrency:
                 # default - each item in a separate call
@@ -4240,6 +4250,21 @@ class _DocumentModel(_GenericModelProcessor):
         """
         return
 
+    def _check_request_params(self, *, use_tools: bool = False) -> None:
+        """
+        Checks the params that the requests of the model are sent with, without
+        sending a request. Does nothing by default: to be overridden in the
+        subclasses of the kinds of models that have such params to check.
+
+        :param use_tools: Whether the requests are sent with the tools of the model,
+            for the kinds of models that have tools. Defaults to False.
+        :type use_tools: bool
+        :return: None
+        :rtype: None
+        :raises ValueError: If a param of the requests is invalid.
+        """
+        return
+
     def _group_instances_for_calls(
         self,
         instance_type: ExtractedInstanceType,
@@ -4869,6 +4894,7 @@ class _DocumentModel(_GenericModelProcessor):
                     )
                     warnings.warn(
                         warning_msg,
+                        ContextGemWarning,
                         stacklevel=2,
                     )
 
@@ -5052,7 +5078,8 @@ class _DocumentModelGroup(_GenericModelProcessor):
             "Language for generated textual output (justifications, explanations). "
             "'en' forces English; 'adapt' matches document/image language. "
             "Must be consistent across all LLMs in the group. "
-            "Applies only when DocumentLLMs' default system messages are used."
+            "Applies to the extraction prompts of the LLMs, and to their default "
+            "system messages."
         ),
     )
 
@@ -5164,6 +5191,7 @@ class _DocumentModelGroup(_GenericModelProcessor):
                 "Tool calling is ignored during extraction workflows. "
                 f"Models with tools configured: {models_with_tools_list}. "
                 "Tools are only supported in `llm.chat(...)`.",
+                ContextGemWarning,
                 stacklevel=2,
             )
 

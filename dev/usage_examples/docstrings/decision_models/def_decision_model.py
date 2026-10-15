@@ -2,7 +2,6 @@ from contextgem import (
     DocumentDecisionModel,
     DocumentLLM,
     DocumentModelGroup,
-    ModelPricing,
 )
 
 
@@ -12,9 +11,7 @@ decision_model = DocumentDecisionModel(
     model="typesafe/jev-latest",
     api_key="your-typesafe-api-key",  # Replace with your actual API key
     role="decide",  # A label of your choice, needed for routing in a model group
-    pricing_details=ModelPricing(  # optional
-        input_per_1m_tokens=0.042, output_per_1m_tokens=0.0
-    ),
+    auto_pricing=True,  # optional, to calculate the costs with `genai-prices`
 )
 
 # Create a fallback LLM in case the decision model fails. It extracts

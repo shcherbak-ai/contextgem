@@ -76,11 +76,11 @@ Performs comprehensive extraction by processing a :class:`~contextgem.public.doc
    * - ``max_images_to_analyze_per_call``
      - ``int``
      - ``0``
-     - Maximum :class:`~contextgem.public.images.Image` instances to analyze in a single LLM call (single LLM prompt). ``0`` means all images. A negative value raises ``ValueError``. This parameter is crucial when working with documents containing multiple images that might exceed the LLM's context window. By limiting the number of images per call, you can ensure the LLM processes the document's visual content in manageable batches. Relevant only when extracting document-level concepts from document images. See :ref:`vision-concept-extraction-label` for an example of extracting concepts from document images.
+     - Maximum :class:`~contextgem.public.images.Image` instances to analyze in a single LLM call (single LLM prompt). ``0`` means all images. A negative value raises ``ValueError``. This parameter is crucial when working with documents containing multiple images that might exceed the LLM's context window. By limiting the number of images per call, you can ensure the LLM processes the document's visual content in manageable batches. Relevant only when extracting document-level concepts with the ``"image"`` or ``"multimodal"`` modality from document images. See :ref:`vision-concept-extraction-label` for an example of extracting concepts from document images.
    * - ``raise_exception_on_extraction_error``
      - ``bool``
      - ``True``
-     - Whether to raise an exception if the extraction fails due to invalid data returned by a model or an error in the model API. If True (default): if the model returns invalid data, :class:`~contextgem.public.exceptions.ModelExtractionError` will be raised, and if the model API call fails, :class:`~contextgem.public.exceptions.ModelAPIError` will be raised (both can be imported from ``contextgem``). If False, a warning will be issued instead, and no extracted items will be returned.
+     - Whether to raise an exception if the extraction fails due to invalid data returned by a model or an error in the model API. If True (default): if the model returns invalid data, :class:`~contextgem.public.exceptions.ModelExtractionError` will be raised, and if the model API call fails or the response is cut off at the max output tokens, :class:`~contextgem.public.exceptions.ModelAPIError` will be raised (both can be imported from ``contextgem``). If False, a warning is logged instead, and no extracted items are returned.
 
 |
 
@@ -160,7 +160,7 @@ Extracts :class:`~contextgem.public.aspects.Aspect` instances from a :class:`~co
    * - ``raise_exception_on_extraction_error``
      - ``bool``
      - ``True``
-     - Whether to raise an exception if the extraction fails due to invalid data returned by a model or an error in the model API. If True (default): if the model returns invalid data, :class:`~contextgem.public.exceptions.ModelExtractionError` will be raised, and if the model API call fails, :class:`~contextgem.public.exceptions.ModelAPIError` will be raised (both can be imported from ``contextgem``). If False, a warning will be issued instead, and no extracted items will be returned.
+     - Whether to raise an exception if the extraction fails due to invalid data returned by a model or an error in the model API. If True (default): if the model returns invalid data, :class:`~contextgem.public.exceptions.ModelExtractionError` will be raised, and if the model API call fails or the response is cut off at the max output tokens, :class:`~contextgem.public.exceptions.ModelAPIError` will be raised (both can be imported from ``contextgem``). If False, a warning is logged instead, and no extracted items are returned.
 
 |
 
@@ -241,11 +241,11 @@ Extracts :class:`~contextgem.internal.base.concepts._Concept` instances from a :
    * - ``max_images_to_analyze_per_call``
      - ``int``
      - ``0``
-     - Maximum images to include in a single LLM call (single LLM prompt). ``0`` means all images. A negative value raises ``ValueError``. This parameter is crucial when extracting concepts from documents with multiple images using vision-capable LLMs. It helps prevent overwhelming the model with too many visual inputs at once, manages token usage more effectively, and enables more focused concept extraction from visual content. See :ref:`vision-concept-extraction-label` for an example of extracting concepts from document images.
+     - Maximum images to include in a single LLM call (single LLM prompt). ``0`` means all images. A negative value raises ``ValueError``. This parameter is crucial when extracting concepts from documents with multiple images using vision-capable LLMs. It helps prevent overwhelming the model with too many visual inputs at once, manages token usage more effectively, and enables more focused concept extraction from visual content. Relevant only for concepts with the ``"image"`` or ``"multimodal"`` modality. See :ref:`vision-concept-extraction-label` for an example of extracting concepts from document images.
    * - ``raise_exception_on_extraction_error``
      - ``bool``
      - ``True``
-     - Whether to raise an exception if the extraction fails due to invalid data returned by a model or an error in the model API. If True (default): if the model returns invalid data, :class:`~contextgem.public.exceptions.ModelExtractionError` will be raised, and if the model API call fails, :class:`~contextgem.public.exceptions.ModelAPIError` will be raised (both can be imported from ``contextgem``). If False, a warning will be issued instead, and no extracted items will be returned.
+     - Whether to raise an exception if the extraction fails due to invalid data returned by a model or an error in the model API. If True (default): if the model returns invalid data, :class:`~contextgem.public.exceptions.ModelExtractionError` will be raised, and if the model API call fails or the response is cut off at the max output tokens, :class:`~contextgem.public.exceptions.ModelAPIError` will be raised (both can be imported from ``contextgem``). If False, a warning is logged instead, and no extracted items are returned.
 
 |
 
@@ -327,7 +327,7 @@ The aspect must be previously processed before concept extraction can occur. Thi
    * - ``raise_exception_on_extraction_error``
      - ``bool``
      - ``True``
-     - Whether to raise an exception if the extraction fails due to invalid data returned by a model or an error in the model API. If True (default): if the model returns invalid data, :class:`~contextgem.public.exceptions.ModelExtractionError` will be raised, and if the model API call fails, :class:`~contextgem.public.exceptions.ModelAPIError` will be raised (both can be imported from ``contextgem``). If False, a warning will be issued instead, and no extracted items will be returned.
+     - Whether to raise an exception if the extraction fails due to invalid data returned by a model or an error in the model API. If True (default): if the model returns invalid data, :class:`~contextgem.public.exceptions.ModelExtractionError` will be raised, and if the model API call fails or the response is cut off at the max output tokens, :class:`~contextgem.public.exceptions.ModelAPIError` will be raised (both can be imported from ``contextgem``). If False, a warning is logged instead, and no extracted items are returned.
 
 |
 

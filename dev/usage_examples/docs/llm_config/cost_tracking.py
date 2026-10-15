@@ -5,11 +5,11 @@ from contextgem import DocumentLLM, ModelPricing
 llm = DocumentLLM(
     model="openai/gpt-6-luna",
     api_key="<your-openai-api-key>",
-    pricing_details=ModelPricing(
-        input_per_1m_tokens=0.10,  # Cost per 1M input tokens
-        output_per_1m_tokens=0.50,  # Cost per 1M output tokens
+    pricing_details=ModelPricing(  # example values: set the prices of your provider
+        input_per_1m_tokens=1.00,  # Cost per 1M input tokens
+        output_per_1m_tokens=2.00,  # Cost per 1M output tokens
         # Optional: cost per 1M input tokens read from the provider's prompt cache
-        cache_read_per_1m_tokens=0.01,
+        cache_read_per_1m_tokens=0.10,
     ),
 )
 

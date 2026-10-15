@@ -2,19 +2,18 @@
 
 import os
 
-from contextgem import BooleanConcept, Document, DocumentDecisionModel, ModelPricing
+from contextgem import BooleanConcept, Document, DocumentDecisionModel
 
 
-# Configure the decision model with the prices for cost calculation
+# Configure the decision model with automatic pricing for cost calculation
 decision_model = DocumentDecisionModel(
     model="typesafe/jev-latest",
     api_key=os.getenv("CONTEXTGEM_TYPESAFE_API_KEY"),
-    pricing_details=ModelPricing(
-        input_per_1m_tokens=0.042,  # Cost per 1M input tokens
-        output_per_1m_tokens=0.0,  # No charge for output tokens
-    ),
-    # or set `auto_pricing=True` instead of `pricing_details`, for a model whose
-    # prices of decision requests genai-prices has, e.g. the TypeSafe models
+    # The prices of the decision requests of the TypeSafe models are in
+    # `genai-prices`. For a model whose prices it does not have, e.g. a model
+    # deployed in Microsoft Foundry, set `pricing_details=ModelPricing(...)`
+    # with the prices of your provider instead
+    auto_pricing=True,
 )
 
 # Perform an extraction task

@@ -337,7 +337,7 @@ When ``chat(...)`` raises an error, or is cancelled (e.g. on a timeout set by th
 Tools and Fallback LLMs
 ------------------------
 
-An LLM with tools can have fallback LLMs (see :ref:`llm-fallback-llms-label`). Each fallback LLM must have the same tools as the primary LLM, in any order, and the same ``tool_choice`` and ``parallel_tool_calls``, which is checked when the fallback LLMs are set. Before any request of a chat is sent, it is also checked that each fallback LLM with ``parallel_tool_calls`` set supports parallel tool calls.
+An LLM with tools can have fallback LLMs (see :ref:`llm-fallback-llms-label`). Each fallback LLM must have the same tools as the primary LLM, in any order, the same ``tool_choice`` and ``parallel_tool_calls``, and the same support for tool calls, as detected by ``litellm`` with ``litellm.supports_function_calling()`` or set manually with ``_supports_tools=True`` on the LLM instance. This is checked when the fallback LLMs are set. Before any request of a chat is sent, it is also checked that each fallback LLM with ``parallel_tool_calls`` set supports parallel tool calls.
 
 A fallback LLM takes over when a request to the current LLM fails, at any point of the chat, or when the current LLM returns an empty response. The fallback LLM starts the chat over: it is sent the prompt, without the tool calls made by the LLM that failed and without their results.
 
@@ -345,3 +345,5 @@ A fallback LLM takes over when a request to the current LLM fails, at any point 
    If an LLM fails after it has called tools, the fallback LLM may call the same tools again, i.e. a tool can be called more than once in a single ``chat(...)`` call. Make sure that the tools that change something (e.g. send a message or create a record) can be safely called again with the same arguments.
 
 A fallback LLM is not tried when the chat is stopped for a reason other than a failure of the LLM, i.e. when a tool function returns an invalid value, or when ``tool_max_rounds`` is reached (see :ref:`llm-tools-errors-label`).
+
+An empty response is handled as a failure of the LLM: the next fallback LLM is tried, and ``ModelAPIError`` is raised if there is none left to try. A response cut off at the max output tokens is returned as it is, with a warning logged (see :ref:`llm-max-output-tokens-label`).

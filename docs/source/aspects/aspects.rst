@@ -99,7 +99,7 @@ When creating an :class:`~contextgem.public.aspects.Aspect`, you can configure t
    * - ``add_justifications``
      - ``bool``
      - ``False``
-     - Whether the LLM will output justification for each extracted item. Justifications provide valuable insights into why specific text segments were extracted for the aspect, helping you understand the LLM's reasoning, verify extraction accuracy, and debug unexpected results. This is particularly useful when working with complex aspects.
+     - Whether the LLM will output justification for each extracted item. Justifications provide valuable insights into why specific text segments were extracted for the aspect, helping you understand the LLM's reasoning, verify extraction accuracy, and debug unexpected results. This is particularly useful when working with complex aspects. A decision model provides no justifications, and rejects ``True`` with ``ValueError`` before any request is sent (see :ref:`decision-models-supported-label`).
    * - ``justification_depth``
      - ``str``
      - ``"brief"``

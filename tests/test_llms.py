@@ -28,7 +28,11 @@ from contextgem.internal import utils as utils_module
 from contextgem.internal.base import llms as llms_module
 from contextgem.internal.base import models as models_module
 from contextgem.internal.base.mixins import _redact_api_key_in_validation_error
-from contextgem.internal.exceptions import ModelAPIError, ModelExtractionError
+from contextgem.internal.exceptions import (
+    ContextGemWarning,
+    ModelAPIError,
+    ModelExtractionError,
+)
 from contextgem.internal.loggers import logger
 from contextgem.internal.utils import (
     _get_model_api_retry_delay,
@@ -447,7 +451,8 @@ class TestLLMs(BaseTest):
 
         # Warnings
         with pytest.warns(
-            UserWarning, match="`output_language` parameter will take no effect"
+            UserWarning,
+            match="`output_language` applies to the extraction prompts only",
         ):
             DocumentLLM(
                 model="openai/gpt-6-luna",
@@ -456,7 +461,8 @@ class TestLLMs(BaseTest):
                 system_message="",
             )
         with pytest.warns(
-            UserWarning, match="`output_language` parameter will take no effect"
+            UserWarning,
+            match="`output_language` applies to the extraction prompts only",
         ):
             DocumentLLM(
                 model="openai/gpt-6-luna",
@@ -634,6 +640,141 @@ class TestLLMs(BaseTest):
         with patch.object(llms_module.litellm, "get_model_info") as get_model_info:
             llm_excessive_output._validate_output_tokens()
         get_model_info.assert_not_called()
+
+    def test_fallback_request_params_checked_before_extraction(self):
+        """
+        Tests that the request params of the fallback LLMs are checked before any
+        request of an extraction is sent, as before a chat: a fallback LLM with max
+        output tokens above the limit of its model raises ``ValueError`` before
+        the primary LLM is sent a request.
+
+        LLM API calls are stubbed, i.e. no cassette is required.
+        """
+        fallback_llm = DocumentLLM(
+            model="openai/gpt-5.6-luna",
+            api_key="...",  # dummy key (no LLM calls are made)
+            max_tokens=999999,
+            is_fallback=True,
+        )
+        llm = DocumentLLM(
+            model="openai/gpt-6-luna",
+            api_key="...",
+            fallback_models=[fallback_llm],
+        )
+        document = Document(raw_text="This agreement is governed by Norwegian law.")
+        document.add_concepts(
+            [StringConcept(name="Governing law", description="The governing law")]
+        )
+        requests = []
+
+        async def acompletion_stub(**kwargs: Any) -> Any:
+            """
+            Records a request, which none of the calls below is to send.
+            """
+            requests.append(kwargs)
+            raise AssertionError("No request is to be sent")
+
+        with (
+            patch.object(llms_module.litellm, "acompletion", new=acompletion_stub),
+            pytest.raises(
+                ValueError,
+                match="exceeds the model's maximum output tokens .* `openai/gpt-5.6-luna`",
+            ),
+        ):
+            llm.extract_concepts_from_document(document)
+        assert requests == []
+        assert not document.concepts[0].extracted_items
+
+        # With max output tokens within the limit of the model, the check passes
+        fallback_llm.max_tokens = 8000
+        fallback_llm._check_request_params()
+
+    def test_default_system_message_follows_output_language(self):
+        """
+        Tests that the default system message of an LLM is rendered again when its
+        output language is changed after the LLM is created, also in a model group,
+        that ``None`` assigned to the system message restores the default one, and
+        that a custom or an empty system message is kept as it is.
+        """
+        llm = DocumentLLM(
+            model="openai/gpt-6-luna",
+            api_key=os.getenv("CONTEXTGEM_OPENAI_API_KEY"),
+        )
+        # No warning that the output language takes no effect, as it does
+        with warnings.catch_warnings(record=True) as caught_warnings:
+            warnings.simplefilter("always")
+            llm.output_language = "adapt"
+        assert not [
+            caught_warning
+            for caught_warning in caught_warnings
+            if "`output_language`" in str(caught_warning.message)
+        ]
+        assert llm.system_message == self.default_system_message_non_en
+        llm.output_language = "en"
+        assert llm.system_message == self.default_system_message_en
+
+        # None stands for the default system message, as when the LLM is created
+        llm.output_language = "adapt"
+        llm.system_message = ""
+        assert llm.system_message == ""
+        llm.system_message = None
+        assert llm.system_message == self.default_system_message_non_en
+
+        # A custom or an empty system message is kept
+        for custom_system_message in ("Be concise.", ""):
+            llm_with_custom_message = DocumentLLM(
+                model="openai/gpt-6-luna",
+                api_key=os.getenv("CONTEXTGEM_OPENAI_API_KEY"),
+                system_message=custom_system_message,
+            )
+            with pytest.warns(ContextGemWarning, match="`output_language`"):
+                llm_with_custom_message.output_language = "adapt"
+            assert llm_with_custom_message.system_message == custom_system_message
+
+        # A fallback LLM must have the same output language and system message as
+        # the primary LLM: the output language of the fallback LLM is changed first.
+        # An output language that is rejected leaves both params as they were.
+        fallback_llm = DocumentLLM(
+            model="openai/gpt-5.6-luna",
+            api_key=os.getenv("CONTEXTGEM_OPENAI_API_KEY"),
+            is_fallback=True,
+        )
+        primary_llm = DocumentLLM(
+            model="openai/gpt-6-luna",
+            api_key=os.getenv("CONTEXTGEM_OPENAI_API_KEY"),
+            fallback_models=[fallback_llm],
+        )
+        with pytest.raises(ValueError, match="same output language"):
+            primary_llm.output_language = "adapt"
+        assert primary_llm.output_language == "en"
+        assert primary_llm.system_message == self.default_system_message_en
+        fallback_llm.output_language = "adapt"
+        primary_llm.output_language = "adapt"
+        assert (
+            primary_llm.system_message
+            == fallback_llm.system_message
+            == self.default_system_message_non_en
+        )
+
+        # The LLMs of a model group
+        model_group = DocumentModelGroup(
+            models=[
+                DocumentLLM(
+                    model="openai/gpt-6-luna",
+                    api_key=os.getenv("CONTEXTGEM_OPENAI_API_KEY"),
+                ),
+                DocumentLLM(
+                    model="openai/gpt-5.6-luna",
+                    api_key=os.getenv("CONTEXTGEM_OPENAI_API_KEY"),
+                    role="reasoner",
+                ),
+            ]
+        )
+        model_group.group_update_output_language("adapt")
+        assert all(
+            model.system_message == self.default_system_message_non_en
+            for model in model_group.models
+        )
 
     @pytest.mark.vcr
     def test_system_messages(self):
@@ -968,14 +1109,18 @@ class TestLLMs(BaseTest):
             assert exc_info.value.original_error is auth_error
             assert requested_models() == [primary_model] * 2  # each sent once
 
-            # Extraction: a warning is issued if `raise_exception_on_extraction_error`
+            # Extraction: a warning is logged if `raise_exception_on_extraction_error`
             # is False, without sending the failed request again
             set_outcomes({primary_model: [rate_limit_error]})
             document = create_document()
-            with pytest.warns(UserWarning, match=r"LLM API.*3 retries"):
+            with patch.object(logger, "warning", wraps=logger.warning) as log_warning:
                 create_llm().extract_concepts_from_document(
                     document, raise_exception_on_extraction_error=False
                 )
+            assert any(
+                re.search(r"LLM API.*3 retries", str(call.args[0]))
+                for call in log_warning.call_args_list
+            )
             assert requested_models() == [primary_model] * 4
             assert not document.concepts[0].extracted_items
 
@@ -1143,14 +1288,19 @@ class TestLLMs(BaseTest):
                 )
             assert requests == [primary_model] * 2  # each sent once
 
-            # A warning is issued if `raise_exception_on_extraction_error` is False,
-            # without sending the request again
+            # The error is logged, and not raised, if
+            # `raise_exception_on_extraction_error` is False, without sending
+            # the request again
             set_outcomes({primary_model: [(cut_off_answer, "length")]})
             document = create_document()
-            with pytest.warns(UserWarning, match="cut off at the max output tokens"):
+            with patch.object(logger, "error", wraps=logger.error) as log_error:
                 create_llm().extract_concepts_from_document(
                     document, raise_exception_on_extraction_error=False
                 )
+            assert any(
+                "cut off at the max output tokens" in str(call.args[0])
+                for call in log_error.call_args_list
+            )
             assert requests == [primary_model]
             assert not document.concepts[0].extracted_items
 
@@ -1288,8 +1438,7 @@ class TestLLMs(BaseTest):
             ]
             requests.clear()
             error = None
-            with warnings.catch_warnings(record=True) as caught_warnings:
-                warnings.simplefilter("always")
+            with patch.object(logger, "warning", wraps=logger.warning) as log_warning:
                 try:
                     llm.extract_concepts_from_document(
                         document, raise_exception_on_extraction_error=raise_exception
@@ -1300,9 +1449,9 @@ class TestLLMs(BaseTest):
                 error,
                 [item.value for item in document.concepts[0].extracted_items],
                 [
-                    str(warning.message)
-                    for warning in caught_warnings
-                    if warning_start in str(warning.message)
+                    str(call.args[0])
+                    for call in log_warning.call_args_list
+                    if warning_start in str(call.args[0])
                 ],
             )
 
@@ -1328,7 +1477,7 @@ class TestLLMs(BaseTest):
             assert not values
             assert not warnings_issued
 
-            # ... or one warning is issued instead of the exception
+            # ... or one warning is logged instead of the exception
             error, values, warnings_issued = extract(
                 with_fallback=False, raise_exception=False
             )

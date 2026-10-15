@@ -37,7 +37,8 @@ class DocumentModelGroup(_DocumentModelGroup):
     :ivar output_language: Language for produced output text (justifications, explanations).
         Values: "en" (always English) or "adapt" (matches document/image language).
         All LLMs in the group must share the same output_language setting.
-        Defaults to "en". Applies only when DocumentLLMs' default system messages are used.
+        Defaults to "en". Applies to the extraction prompts of the LLMs, and to their
+        default system messages.
         Does not apply to the decision models in the group, which produce no text.
     :vartype output_language: LanguageRequirement
 

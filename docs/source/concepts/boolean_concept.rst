@@ -54,11 +54,11 @@ When creating a :class:`~contextgem.public.concepts.BooleanConcept`, you can spe
    * - ``modality``
      - ``str``
      - ``"text"``
-     - The document content the concept is extracted from. Available values: ``"text"``, ``"image"``, ``"multimodal"`` (text and/or images, whichever the document has). ``"image"`` and ``"multimodal"`` are supported for document-level concepts only, and require an LLM that supports vision when the document has images. For more details, see :ref:`concept-modality-label`.
+     - The document content the concept is extracted from. Available values: ``"text"``, ``"image"``, ``"multimodal"`` (text and/or images, whichever the document has). ``"image"`` and ``"multimodal"`` are supported for document-level concepts only, and require an LLM that supports vision when the document has images. A concept with ``"image"`` cannot have ``add_references=True``. A decision model extracts from text only, and rejects ``"image"`` and ``"multimodal"`` with ``ValueError`` before any request is sent (see :ref:`decision-models-supported-label`). For more details, see :ref:`concept-modality-label`.
    * - ``add_justifications``
      - ``bool``
      - ``False``
-     - Whether to include justifications for extracted items. Justifications provide explanations of why the LLM extracted specific values and the reasoning behind the extraction, which is especially useful for complex extractions or when debugging results.
+     - Whether to include justifications for extracted items. Justifications provide explanations of why the LLM extracted specific values and the reasoning behind the extraction, which is especially useful for complex extractions or when debugging results. A decision model provides no justifications, and rejects ``True`` with ``ValueError`` before any request is sent (see :ref:`decision-models-supported-label`).
    * - ``justification_depth``
      - ``str``
      - ``"brief"``
@@ -70,7 +70,7 @@ When creating a :class:`~contextgem.public.concepts.BooleanConcept`, you can spe
    * - ``add_references``
      - ``bool``
      - ``False``
-     - Whether to include source references for extracted items. References indicate the specific locations in the document where evidence supporting the boolean determination was found, helping to trace back the true/false value to relevant content that influenced the decision.
+     - Whether to include source references for extracted items. References indicate the specific locations in the document where evidence supporting the boolean determination was found, helping to trace back the true/false value to relevant content that influenced the decision. A decision model provides no references for concepts, and rejects ``True`` with ``ValueError`` before any request is sent (see :ref:`decision-models-supported-label`).
    * - ``reference_depth``
      - ``str``
      - ``"paragraphs"``

@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import asyncio
 import os
+import re
 import types
 import warnings
 from collections.abc import Callable
@@ -1932,13 +1933,18 @@ class TestChat(BaseTest):
         )
         with (
             patch.object(litellm, "acompletion", new=acompletion_stub),
-            pytest.warns(
-                UserWarning,
-                match=r"cut off at the max output tokens set by `max_tokens` \(5\)"
-                r".*returned incomplete",
-            ),
+            patch.object(logger, "warning", wraps=logger.warning) as log_warning,
         ):
             assert llm.chat(prompt, chat_session=chat_session) == "ContextGem is a"
+        # A warning is logged
+        assert any(
+            re.search(
+                r"cut off at the max output tokens set by `max_tokens` \(5\)"
+                r".*returned incomplete",
+                str(call.args[0]),
+            )
+            for call in log_warning.call_args_list
+        )
         assert [request["model"] for request in requests] == [_MAIN_MODEL]
         assert [(m.role, m.content) for m in chat_session.messages] == [
             ("user", prompt),

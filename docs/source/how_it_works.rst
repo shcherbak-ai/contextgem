@@ -112,7 +112,7 @@ See :class:`~contextgem.public.llms.DocumentLLM` and :ref:`concept-modality-labe
 
 **A single configurable decision model to extract the information that can be expressed as a closed question.**
 
-A decision model generates no text: it answers typed questions about a text (yes/no, pick one option, rate on a scale) with probabilities. It extracts Boolean, label and rating concepts, as well as aspects, and each item it extracts has the probabilities of all the possible answers. It cannot extract the concepts with open values (e.g. strings, numbers, dates), does not extract from images, and provides no justifications.
+A decision model generates no text: it answers typed questions about a text (yes/no, pick one option, rate on a scale) with probabilities. It extracts Boolean, label and rating concepts, as well as aspects, and each item it extracts has the probabilities of all the possible answers. It cannot extract the concepts with open values (e.g. strings, numbers, dates), does not extract from images, and provides no justifications, and no references for concepts.
 
 A decision model can be used on its own, in a model group together with LLMs, and in a fallback chain with LLMs.
 
@@ -163,17 +163,17 @@ See :class:`~contextgem.public.models.DocumentModelGroup` and :ref:`model-roles-
    The models of the example above at work. The two LLMs extract an aspect and a concept of that aspect. The decision model is the alternative flow: in place of an LLM, it takes a closed question about the document, which it answers with probabilities.
 
 
-ℹ️ What ContextGem Doesn't Offer (Yet)
----------------------------------------
+ℹ️ What ContextGem Doesn't Offer
+---------------------------------
 
-While ContextGem excels at structured data extraction from individual documents, it's important to understand its intentional design boundaries:
+ContextGem is built for structured data extraction from individual documents, and has intentional design boundaries:
 
 **Not a RAG framework**
 ~~~~~~~~~~~~~~~~~~~~~~~
 
-ContextGem focuses on in-depth single-document analysis, in which the model reads every paragraph of the text instead of the chunks that a search picks. It does not offer RAG capabilities for cross-document querying or corpus-wide information retrieval. For these use cases, modern RAG frameworks such as LlamaIndex remain more appropriate.
+ContextGem focuses on in-depth single-document analysis, in which the model reads every paragraph of the text instead of the chunks that a search picks. It does not offer RAG capabilities for cross-document querying or corpus-wide information retrieval. For these use cases, RAG frameworks such as LlamaIndex and Haystack remain more appropriate.
 
 **Not an agent framework**
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-ContextGem is not designed as an agent framework. It supports tool calling in chat (function calling) with optional parallel tool calls and JSON schema validation of tool arguments, which enables building lightweight, task-oriented agents using your own control loop together with :class:`~contextgem.public.llms.ChatSession`. For full agent orchestration (planning/critique, goal decomposition, long-term memory, schedulers, multi-agent coordination), we recommend frameworks specifically designed for this purpose. ContextGem integrates cleanly as a high-accuracy document extraction tool in larger agent systems thanks to its simple API and structured outputs.
+ContextGem is not designed as an agent framework. It supports tool calling in chat (function calling) with optional parallel tool calls and JSON schema validation of tool arguments, which enables building lightweight, task-oriented agents using your own control loop together with :class:`~contextgem.public.llms.ChatSession`. For full agent orchestration (planning/critique, goal decomposition, long-term memory, schedulers, multi-agent coordination), we recommend frameworks specifically designed for this purpose. ContextGem integrates cleanly as a document extraction tool in larger agent systems thanks to its simple API and structured outputs.
