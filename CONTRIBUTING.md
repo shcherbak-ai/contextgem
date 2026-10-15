@@ -684,14 +684,17 @@ Give images descriptive alt text, and check them at their README display size on
 
 - `docs/source/_static/contextgem_wordmark.svg` is pixel art, 144 by 18 pixels, in one palette for both GitHub themes. Show it at a whole multiple of that size (`width="576"`), so that its pixels stay square. Its gem catches the light once, when the image is loaded.
 - `assets/licenseal-wordmark.svg` and `assets/tethered-wordmark.svg` are the sibling projects' pixel names, drawn at twice their size in transparent images of one size (336 by 80), so that the two share a baseline. Show them at that width.
+- `assets/contextgem-separator.svg` is the pixel rule between the README's main parts: the wordmark's gem, at rest, between dashes in its blue, shaded as the wordmark is. It is pixel art of 228 by 13 pixels, one path of rectangles per colour. Show it at twice that size (`width="456"`) with an empty `alt`, and keep section headings as text, so that their anchors, GitHub's outline and page search keep working.
 - The figures (`contextgem_readme_extraction.svg`, `contextgem_readme_structure.svg`) are drawn on their own dark ground, so one file serves both GitHub themes. Draw a new one in their style: hairlines, monospace labels, grey, and the blue of the gem only for what is extracted.
 - Do not delete an image that a released version of the README loads from `https://contextgem.dev/_static/`.
+- `social/github-social-preview.svg` is the picture a link to the repository, or to a page of the documentation, is shown with on other sites: the share card of the game on shcherbak.ai, five pixels to a pixel of the art. In the meadow, the duck reads a document and holds up a gem it found, by crates of documents, and a mine cart of gems stands on the path; on the card are the wordmark at rest, the README's heading, the tagline's claims and the company's name. When one of these changes, change the SVG with it and render `social/github-social-preview.png` with `uv run fab social-preview` (the task needs Chrome, Edge or Chromium). GitHub reads no file for it: a maintainer uploads the picture in the settings of the repository. In the SVG a rule in `<style>` outranks an attribute: set type sizes by class, and write no rule for `path`, which would override the art's fills.
+- `docs/source/_static/favicon.ico` (16 to 256 pixels) and `docs/source/_static/contextgem_gem.svg`, the logo of the documentation's sidebar, are the wordmark's gem at rest. Change them with it.
 
 Look at a change as GitHub will show it before pushing it. `uv run fab readme-preview` serves `README.md` at <http://127.0.0.1:9120/> (`--port N` for another port). It shows the file as it is, so regenerate it from the template first (`uv run fab readme`):
 
-- The HTML is what GitHub's Markdown API returns for the file, so what GitHub removes from a README is removed here too.
+- The HTML is what GitHub's Markdown API returns for the file, so what GitHub removes from a README is removed here too. The API returns an alert (`> [!NOTE]`) as a quote in the mode that gives the headings their anchors, so the preview takes the alerts from a second request in its other mode, and shows them as the repository's page does.
 - The look comes from github-markdown-css, in GitHub's colours, light or dark as the browser is set. The column is as wide as GitHub's at 1280 pixels and wider, and below 768.
-- A reload sends the README to GitHub again when it has changed. GitHub allows 60 of those an hour without a token.
+- A reload sends the README to GitHub again when it has changed, twice where it has alerts. GitHub allows 60 requests an hour without a token.
 
 **Package description.** PyPI shows [PYPI.md](PYPI.md) (`project.readme` in `pyproject.toml`), not the README. Keep it short, without images, with absolute HTTPS links, and update it when the summary, the install command or the feature list changes.
 

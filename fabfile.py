@@ -14,6 +14,7 @@ import io
 import json
 import os
 import posixpath
+import re
 import shutil
 import socket
 import tempfile
@@ -127,17 +128,58 @@ class _RenderError(Exception):
     """GitHub did not render the README; the message says why."""
 
 
+# An alert (``> [!NOTE]``) as the API's "markdown" mode returns it, a quote, and
+# as its "gfm" mode does, which is how the repository's page shows it.
+_ALERT_QUOTE = re.compile(
+    r"<blockquote>\s*<p>\[!(?:NOTE|TIP|IMPORTANT|WARNING|CAUTION)\]"
+)
+_ALERT_DIV = re.compile(r'<div class="markdown-alert ')
+
+
 @functools.lru_cache(maxsize=1)
 def _render_readme(text: str) -> str:
     """
     Return the HTML GitHub makes of ``text`` as a repository's README.
 
-    The last result is kept, so a page reload asks GitHub again only when the
-    README has changed.
+    The "markdown" mode gives the headings their anchors, and the "gfm" mode
+    gives the alerts, which the other returns as quotes: where there are alerts,
+    they are taken from a second request. The last result is kept, so a page
+    reload asks GitHub again only when the README has changed.
     """
+    html = _render_markdown(text, "markdown")
+    quotes = _element_spans(html, _ALERT_QUOTE, "blockquote")
+    if quotes:
+        gfm = _render_markdown(text, "gfm")
+        alerts = [
+            gfm[start:end] for start, end in _element_spans(gfm, _ALERT_DIV, "div")
+        ]
+        if len(alerts) == len(quotes):
+            for (start, end), alert in reversed(list(zip(quotes, alerts, strict=True))):
+                html = html[:start] + alert + html[end:]
+    return html
+
+
+def _element_spans(
+    html: str, opening: re.Pattern[str], tag: str
+) -> list[tuple[int, int]]:
+    """Return where each element that ``opening`` starts begins and ends, nested ones included."""
+    spans = []
+    tags = re.compile(rf"<(/?){tag}\b[^>]*>")
+    for match in opening.finditer(html):
+        depth = 0
+        for found in tags.finditer(html, match.start()):
+            depth += -1 if found.group(1) else 1
+            if depth == 0:
+                spans.append((match.start(), found.end()))
+                break
+    return spans
+
+
+def _render_markdown(text: str, mode: str) -> str:
+    """Return the HTML that GitHub's Markdown API makes of ``text`` in ``mode``."""
     request = urllib.request.Request(
         _MARKDOWN_API,
-        data=json.dumps({"text": text, "mode": "markdown"}).encode(),
+        data=json.dumps({"text": text, "mode": mode}).encode(),
         headers={
             "Accept": "application/vnd.github+json",
             "Content-Type": "application/json",
@@ -329,7 +371,8 @@ def readme_preview(c: Context, port: int = 9120) -> None:
     GitHub's Markdown API makes the HTML, so what GitHub removes is removed,
     and github-markdown-css gives it GitHub's look (``npm ci`` installs it).
     A reload renders the README again when it has changed, one request to
-    GitHub each: 60 an hour are allowed without a token. The preview shows
+    GitHub each, two where it has alerts: 60 an hour are allowed without a
+    token. The preview shows
     README.md as it is: regenerate it from the template first (``fab readme``).
 
     Args:

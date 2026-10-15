@@ -10,11 +10,11 @@
 </p>
 
 <p align="center">
-  <a href="https://pypi.org/project/contextgem/"><img src="https://img.shields.io/pypi/v/contextgem?style=flat-square&labelColor=18181b&color=38bdf8" alt="PyPI version"></a>
-  <a href="https://pypi.org/project/contextgem/"><img src="https://img.shields.io/pypi/pyversions/contextgem?style=flat-square&labelColor=18181b&color=38bdf8" alt="Python versions"></a>
-  <a href="https://pypi.org/project/contextgem/"><img src="https://img.shields.io/pypi/dm/contextgem?style=flat-square&labelColor=18181b&color=38bdf8&label=downloads" alt="Downloads per month"></a>
+  <a href="https://pypi.org/project/contextgem/"><img src="https://img.shields.io/pypi/v/contextgem?style=flat-square&labelColor=18181b&color=0e74bc" alt="PyPI version"></a>
+  <a href="https://pypi.org/project/contextgem/"><img src="https://img.shields.io/pypi/pyversions/contextgem?style=flat-square&labelColor=18181b&color=0e74bc" alt="Python versions"></a>
+  <a href="https://pypi.org/project/contextgem/"><img src="https://img.shields.io/pypi/dm/contextgem?style=flat-square&labelColor=18181b&color=0e74bc&label=downloads" alt="Downloads per month"></a>
   <a href="https://github.com/shcherbak-ai/contextgem/actions/workflows/ci-tests.yml"><img src="https://img.shields.io/github/actions/workflow/status/shcherbak-ai/contextgem/ci-tests.yml?branch=main&style=flat-square&labelColor=18181b&label=CI" alt="CI"></a>
-  <a href="https://github.com/shcherbak-ai/contextgem/actions/workflows/ci-tests.yml"><img src="https://img.shields.io/endpoint?url=https://gist.githubusercontent.com/SergiiShcherbak/daaee00e1dfff7a29ca10a922ec3becd/raw/coverage.json&style=flat-square&labelColor=18181b&color=38bdf8" alt="Coverage"></a>
+  <a href="https://github.com/shcherbak-ai/contextgem/actions/workflows/ci-tests.yml"><img src="https://img.shields.io/endpoint?url=https://gist.githubusercontent.com/SergiiShcherbak/daaee00e1dfff7a29ca10a922ec3becd/raw/coverage.json&style=flat-square&labelColor=18181b&color=0e74bc" alt="Coverage"></a>
 </p>
 
 <p align="center">
@@ -30,7 +30,16 @@
 </p>
 <!-- markdownlint-enable MD033 -->
 
+> [!NOTE]
+> **New in 1.0: decision models.** Next to LLMs, ContextGem now works with decision models, which answer closed questions (yes/no, one of your labels, a level of a scale) with the probability of each possible answer, fast and at a low cost. A model group sends each aspect and concept to the model that suits it, and any model can fall back on others: see [LLMs and decision models](#llms-and-decision-models).
+>
+> **Upgrading from 0.x?** Some classes and parameters are renamed or removed, some defaults have changed, and Python 3.10 is no longer supported. Follow the [migration guide](https://contextgem.shcherbak.ai/migration_v1/), or point a coding agent at [llms.txt](https://contextgem.shcherbak.ai/llms.txt), the index of the documentation.
+
 ContextGem is a free, open-source LLM framework that makes it radically easier to extract structured data and insights from documents — with minimal code. You describe *what* to extract, and ContextGem handles *how*: the prompts, the data models, the source references and the justifications.
+
+<!-- markdownlint-disable MD033 -->
+<p align="center"><img src="assets/contextgem-separator.svg" alt="" width="456" height="26"></p>
+<!-- markdownlint-enable MD033 -->
 
 ## Why ContextGem
 
@@ -53,23 +62,41 @@ Reliable extraction from documents usually means writing prompts, designing vali
 
 Read more on the [motivation](https://contextgem.shcherbak.ai/motivation/) behind ContextGem.
 
+## LLMs and decision models
+
+ContextGem works with two kinds of models. You describe what to extract in the same way for both, and each aspect and concept goes to the model that suits it.
+
+| | LLM | Decision model |
+|---|---|---|
+| **How it answers** | Writes the answer, which ContextGem validates into typed items | Gives the probability of each possible answer, and writes no text |
+| **What it extracts** | Aspects and every type of concept, from text and images | Aspects, and Boolean, label and rating concepts, from text |
+| **With each item** | References to paragraphs or sentences, and a justification on request | The probabilities of all the possible answers, and a decision threshold that you set for the model, or for each aspect and concept |
+| **Use it for** | Open values, and answers that take reasoning | Closed questions in volume, where a fast, low-cost answer is enough |
+| **Models** | Any cloud or local LLM through [LiteLLM](https://github.com/BerriAI/litellm): OpenAI, Anthropic, Google, Azure OpenAI, xAI, Ollama, LM Studio and more | TypeSafe Jev, OpenAI Decisions API, Microsoft Foundry and more, cloud or local |
+| **Read more** | [Supported LLMs](https://contextgem.shcherbak.ai/llms/supported_llms/), [configuration](https://contextgem.shcherbak.ai/llms/llm_config/), [extraction methods](https://contextgem.shcherbak.ai/llms/llm_extraction_methods/) | [Decision models](https://contextgem.shcherbak.ai/decision_models/decision_models/) |
+
+> **Choosing a model.** For reliable extraction with an LLM, use one at least as capable as `gpt-6-luna`: smaller ones (such as 8B parameter models) may struggle with the detailed extraction instructions, see the [troubleshooting guide](https://contextgem.shcherbak.ai/optimizations/optimization_small_llm_troubleshooting/). Before you give questions to a decision model, compare it with an LLM on a sample of your documents: see [when to use a decision model](https://contextgem.shcherbak.ai/decision_models/decision_models/#when-to-use-a-decision-model).
+
+<!-- markdownlint-disable MD033 -->
+<p align="center"><img src="assets/contextgem-separator.svg" alt="" width="456" height="26"></p>
+<!-- markdownlint-enable MD033 -->
+
 ## Quick start
 
 ```bash
 uv add contextgem  # or: pip install -U contextgem
 ```
 
-The example below extracts **anomalies** from a contract: a concept that takes the context of the whole document, which retrieval-based approaches can miss. Each anomaly comes back with a justification and with the sentences it was found in.
+### Extract with an LLM
+
+An LLM extracts aspects and values of any type. Below, it extracts two things from a contract: an aspect, the **payment terms**, which comes back as the paragraphs on payments, and a concept, the **anomalies**, which span the whole document and which retrieval-based approaches can miss. Each anomaly comes with a justification and the sentence it was found in.
 
 ```python
-# Quick Start Example - Extracting anomalies from a document, with source references and justifications
-
 import os
 
-from contextgem import Document, DocumentLLM, StringConcept
+from contextgem import Aspect, Document, DocumentLLM, StringConcept
 
 
-# Sample document text (shortened for brevity)
 doc = Document(
     raw_text=(
         "Consultancy Agreement\n"
@@ -83,53 +110,122 @@ doc = Document(
     ),
 )
 
-# Attach a document-level concept
-doc.concepts = [
-    StringConcept(
-        name="Anomalies",  # in longer contexts, this concept is hard to capture with RAG
-        description="Anomalies in the document",
-        add_references=True,
-        reference_depth="sentences",
-        add_justifications=True,
-        justification_depth="brief",
-        # see the docs for more configuration options
-    )
-    # add more concepts to the document, if needed
-    # see the docs for available concepts: StringConcept, JsonObjectConcept, etc.
-]
-# Or use `doc.add_concepts([...])`
-
-# Define an LLM for extracting information from the document
-llm = DocumentLLM(
-    model="openai/gpt-6-luna",  # or another provider/LLM
-    api_key=os.environ.get(
-        "CONTEXTGEM_OPENAI_API_KEY"
-    ),  # your API key for the LLM provider
-    # see the docs for more configuration options
+doc.add_aspects(
+    [
+        Aspect(
+            name="Payment terms",
+            description="Clauses on payments, fees and invoices",
+        )
+    ]
+)
+doc.add_concepts(
+    [
+        StringConcept(
+            name="Anomalies",
+            description="Anomalies in the document",
+            add_references=True,
+            reference_depth="sentences",
+            add_justifications=True,
+            justification_depth="brief",
+        )
+    ]
 )
 
-# Extract information from the document
-doc = llm.extract_all(doc)  # or use async version `await llm.extract_all_async(doc)`
+llm = DocumentLLM(
+    model="openai/gpt-6-luna",  # or another LLM, cloud or local
+    api_key=os.environ.get("CONTEXTGEM_OPENAI_API_KEY"),
+)
+doc = llm.extract_all(doc)
 
-# Access extracted information in the document object
-anomalies_concept = doc.concepts[0]
-# or `doc.get_concept_by_name("Anomalies")`
-for item in anomalies_concept.extracted_items:
-    print("Anomaly:")
-    print(f"  {item.value}")
-    print("Justification:")
-    print(f"  {item.justification}")
-    print("Reference paragraphs:")
-    for p in item.reference_paragraphs:
-        print(f"  - {p.raw_text}")
-    print("Reference sentences:")
-    for s in item.reference_sentences:
-        print(f"  - {s.raw_text}")
-    print()
+payment_terms = doc.get_aspect_by_name("Payment terms").extracted_items
+# 1 item, the paragraph: "The Customer shall pay the Supplier within 30 calendar
+#     days of receiving an invoice..."
+
+anomalies = doc.get_concept_by_name("Anomalies").extracted_items
+# 2 items. The first one:
+# .value: "The statement that a purple elephant danced on the moon while eating
+#     ice cream is anomalous and unrelated to the consultancy agreement."
+# .justification: "It is an implausible, fantastical statement in an otherwise
+#     contractual document."
+# .reference_sentences: the sentence of the purple elephant
 
 ```
 
-More examples: [aspects](https://contextgem.shcherbak.ai/quickstart/#aspect-extraction-from-document), [sub-aspects](https://contextgem.shcherbak.ai/quickstart/#extracting-aspect-with-sub-aspects), [concepts of an aspect](https://contextgem.shcherbak.ai/quickstart/#concept-extraction-from-aspect), [concepts from images](https://contextgem.shcherbak.ai/quickstart/#concept-extraction-from-document-vision), [aspects containing concepts](https://contextgem.shcherbak.ai/advanced_usage/#extracting-aspects-containing-concepts), [multi-model pipelines](https://contextgem.shcherbak.ai/advanced_usage/#using-a-multi-llm-pipeline-to-extract-data-from-several-documents) and a [chat interface with tool calling](https://contextgem.shcherbak.ai/quickstart/#lightweight-llm-chat-interface).
+### Decide with a decision model
+
+A decision model answers closed questions (yes/no, one of your labels, a level of a scale) with the probability of each possible answer. Below, it extracts an aspect from a contract, the **termination** clauses, by deciding for each paragraph whether it is one, and answers two questions about the contract, concepts, in one request.
+
+```python
+import os
+
+from contextgem import (
+    Aspect,
+    BooleanConcept,
+    Document,
+    DocumentDecisionModel,
+    LabelConcept,
+)
+
+
+doc = Document(
+    raw_text=(
+        "Service Agreement\n"
+        "Either party may terminate this Agreement for any reason by giving 30 days' "
+        "written notice to the other party.\n"
+        "This Agreement is governed by the laws of the State of New York.\n"
+    ),
+)
+
+doc.add_aspects(
+    [
+        Aspect(
+            name="Termination",
+            description="Clauses on termination of the agreement",
+        )
+    ]
+)
+doc.add_concepts(
+    [
+        BooleanConcept(
+            name="Termination for convenience",
+            description="Either party may terminate the agreement without cause",
+        ),
+        LabelConcept(
+            name="Notice form",
+            description="Required form of the termination notice",
+            labels=["Written", "Email", "Any form", "Not specified"],
+            classification_type="multi_class",
+        ),
+    ]
+)
+
+decision_model = DocumentDecisionModel(
+    model="typesafe/jev-latest",  # or another decision model, cloud or local
+    api_key=os.environ.get("CONTEXTGEM_TYPESAFE_API_KEY"),
+)
+# The aspect: a yes/no question for each paragraph. The concepts: both in one request.
+doc = decision_model.extract_all(doc)
+
+termination_clauses = doc.get_aspect_by_name("Termination").extracted_items
+# 1 item, the paragraph: "Either party may terminate this Agreement for any reason..."
+# .probabilities: {True: 0.99, False: 0.01} (rounded); the other two paragraphs
+#     had 0.26 and 0.03, below the decision threshold of 0.5
+
+convenience = doc.get_concept_by_name("Termination for convenience").extracted_items[0]
+# .value: True
+# .probabilities: {True: 0.98, False: 0.02} (rounded)
+
+notice_form = doc.get_concept_by_name("Notice form").extracted_items[0]
+# .value: ["Written"]
+# .probabilities: {"Written": 1.0, "Email": 0.0, "Any form": 0.0, "Not specified": 0.0}
+
+```
+
+More examples: [aspects](https://contextgem.shcherbak.ai/quickstart/#aspect-extraction-from-document), [sub-aspects](https://contextgem.shcherbak.ai/quickstart/#extracting-aspect-with-sub-aspects), [concepts of an aspect](https://contextgem.shcherbak.ai/quickstart/#concept-extraction-from-aspect), [concepts from images](https://contextgem.shcherbak.ai/quickstart/#concept-extraction-from-document-vision), [aspects containing concepts](https://contextgem.shcherbak.ai/advanced_usage/#extracting-aspects-containing-concepts), [aspects with a decision model](https://contextgem.shcherbak.ai/decision_models/decision_models/#extracting-aspects), [a decision model and an LLM in one model group](https://contextgem.shcherbak.ai/decision_models/decision_models/#using-a-decision-model-in-a-model-group), [multi-model pipelines](https://contextgem.shcherbak.ai/advanced_usage/#using-a-multi-llm-pipeline-to-extract-data-from-several-documents) and a [chat interface with tool calling](https://contextgem.shcherbak.ai/quickstart/#lightweight-llm-chat-interface).
+
+<!-- markdownlint-disable MD033 -->
+<p align="center"><img src="assets/contextgem-separator.svg" alt="" width="456" height="26"></p>
+<!-- markdownlint-enable MD033 -->
 
 ## How it works
 
@@ -142,25 +238,15 @@ More examples: [aspects](https://contextgem.shcherbak.ai/quickstart/#aspect-extr
 
 1. **Wrap your content in a [Document](https://contextgem.shcherbak.ai/documents/document_config/)**: text, images, or both.
 2. **Say what to extract.** [Aspects](https://contextgem.shcherbak.ai/aspects/aspects/) pull out the parts of the document on a topic, as paragraphs or sentences. [Concepts](https://contextgem.shcherbak.ai/concepts/supported_concepts/) extract typed values from the whole document or from an aspect, with optional references and justifications. Keep a set of both as a reusable [extraction pipeline](https://contextgem.shcherbak.ai/pipelines/extraction_pipelines/).
-3. **Run a model.** One call to an [LLM](https://contextgem.shcherbak.ai/llms/llm_extraction_methods/) extracts everything. A [model group](https://contextgem.shcherbak.ai/llms/llm_config/#model-groups) routes aspects and concepts to different models by role, e.g. the closed questions to a [decision model](https://contextgem.shcherbak.ai/decision_models/decision_models/), and each model can have fallbacks.
+3. **Run a model.** One call to an [LLM](https://contextgem.shcherbak.ai/llms/llm_extraction_methods/), a [decision model](https://contextgem.shcherbak.ai/decision_models/decision_models/) or a [model group](https://contextgem.shcherbak.ai/llms/llm_config/#model-groups) of both extracts everything. A group sends each aspect and concept to the model of its role, e.g. the closed questions to a decision model and the rest to an LLM, and each model can have fallbacks.
 
 Read more on [how ContextGem works](https://contextgem.shcherbak.ai/how_it_works/) in the documentation.
 
-## Models
+## Every paragraph is read
 
-ContextGem works with two kinds of models, and routes each aspect and concept to the one that suits it: an LLM where it takes reasoning, a decision model where a fast, low-cost answer with a probability is enough.
+ContextGem is built for in-depth analysis of individual documents. There is no search step that picks the chunks that look relevant, as in RAG: the model reads every paragraph of the text it extracts from, all at once or in [batches of paragraphs](https://contextgem.shcherbak.ai/optimizations/optimization_long_docs/) of a size you set, so no fact is missed because a search ranked its passage low. This avoids the retrieval inconsistencies that make RAG [struggle with complex concepts and nuanced insights](https://www.linkedin.com/pulse/raging-contracts-pitfalls-rag-contract-review-shcherbak-ai-ptg3f).
 
-**LLMs.** Any cloud or local LLM through [LiteLLM](https://github.com/BerriAI/litellm): OpenAI, Anthropic, Google, Azure OpenAI, xAI, Ollama, LM Studio and more, with or without reasoning capabilities, behind one interface. See the [supported LLMs](https://contextgem.shcherbak.ai/llms/supported_llms/), the [LLM configuration](https://contextgem.shcherbak.ai/llms/llm_config/) and the [extraction methods](https://contextgem.shcherbak.ai/llms/llm_extraction_methods/).
-
-**Decision models.** A decision model (e.g. TypeSafe Jev, OpenAI Decisions API, Microsoft Foundry) answers typed questions about a text (yes/no, pick one option, rate on a scale) with probabilities, and generates no text. It extracts aspects, and Boolean, label and rating concepts, on its own, in a model group next to an LLM, or in a fallback chain. Each extracted item has the probabilities of all the possible answers, and a decision threshold sets what counts as a "yes". Concepts with open values, justifications, references for concepts and extraction from images require an LLM. See [decision models](https://contextgem.shcherbak.ai/decision_models/decision_models/).
-
-> **Choosing a model.** For reliable extraction, use a model at least as capable as `gpt-6-luna`. Smaller models (such as 8B parameter models) may struggle with the detailed extraction instructions: see the [troubleshooting guide](https://contextgem.shcherbak.ai/optimizations/optimization_small_llm_troubleshooting/).
-
-## Whole documents, not fragments
-
-ContextGem is built for in-depth analysis of individual documents. It gives the model the whole document, using the long context windows of LLMs, instead of retrieving fragments of it. This avoids the retrieval inconsistencies that make RAG [struggle with complex concepts and nuanced insights](https://www.linkedin.com/pulse/raging-contracts-pitfalls-rag-contract-review-shcherbak-ai-ptg3f), and it benefits from growing context windows, more capable LLMs and falling costs.
-
-The trade-off: ContextGem does not support cross-document querying or corpus-wide retrieval. For these, RAG frameworks (e.g. LlamaIndex, Haystack) remain more appropriate.
+The trade-off: ContextGem does not query across documents or search a corpus. For these, RAG frameworks (e.g. LlamaIndex, Haystack) remain more appropriate.
 
 ## Documentation
 
@@ -190,6 +276,10 @@ ContextGem relies on these excellent open-source packages: [aiolimiter](https://
 Apache 2.0 License - see the [LICENSE](LICENSE) and [NOTICE](NOTICE) files for details.
 
 © 2025 [Shcherbak AI AS](https://shcherbak.ai) — Enterprise AI Engineering. We build AI agents that transform how enterprises operate.
+
+<!-- markdownlint-disable MD033 -->
+<p align="center"><img src="assets/contextgem-separator.svg" alt="" width="456" height="26"></p>
+<!-- markdownlint-enable MD033 -->
 
 ## More from shcherbak_ai
 

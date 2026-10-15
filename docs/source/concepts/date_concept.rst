@@ -1,5 +1,3 @@
-:og:image: https://contextgem.shcherbak.ai/_static/docs_preview_image_date_concept.png
-
 .. meta::
    :description: How to extract dates written in any format as datetime.date objects with DateConcept.
 

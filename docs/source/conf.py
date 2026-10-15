@@ -121,9 +121,13 @@ html_title = f"{project} {release} Documentation"
 html_baseurl = site_url  # also the canonical URL of each page, against mirrors
 html_theme = "sphinx_book_theme"
 html_static_path = ["_static"]
-html_extra_path = ["robots.txt"]
+# The repository's social preview, at the root of the site: the picture a link to
+# a page of the documentation is shown with on other sites
+html_extra_path = ["robots.txt", "../../social/github-social-preview.png"]
+# The wordmark's gem: a favicon of 16 to 256 pixels, and a drawing that stays
+# sharp at the width of the sidebar
 html_favicon = "_static/favicon.ico"
-html_logo = "_static/favicon.ico"
+html_logo = "_static/contextgem_gem.svg"
 html_css_files = ["custom.css"]
 # Sidebar settings
 html_theme_options = {
@@ -144,7 +148,17 @@ sitemap_url_scheme = "{link}"
 
 # Open Graph metadata
 ogp_site_url = site_url
-ogp_image = f"{site_url}_static/contextgem_website_preview.png"
+ogp_image = f"{site_url}github-social-preview.png"
+ogp_image_alt = (
+    "The ContextGem wordmark and the line Effortless LLM extraction from documents, "
+    "beside a pixel-art duck in a hard hat that reads a document and holds up a gem, "
+    "by crates of documents and a mine cart heaped with gems."
+)
+ogp_custom_meta_tags = [
+    '<meta property="og:image:width" content="1280">',
+    '<meta property="og:image:height" content="640">',
+    '<meta name="twitter:card" content="summary_large_image">',
+]
 ogp_description = "ContextGem: Effortless LLM extraction from documents"
 ogp_description_length = 200
 ogp_type = "website"

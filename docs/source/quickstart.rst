@@ -1,7 +1,7 @@
 :og:description: ContextGem: Quickstart
 
 .. meta::
-   :description: Complete, self-contained examples of extracting aspects and concepts from a document with ContextGem, step by step.
+   :description: Complete, self-contained examples of extracting aspects and concepts from a document with ContextGem, with an LLM or a decision model, step by step.
 
 Quickstart examples
 ====================
@@ -96,6 +96,25 @@ ContextGem follows a simple extraction process:
 
 .. literalinclude:: ../../dev/usage_examples/docs/quickstart/quickstart_concept_document_vision.py
    :language: python
+
+
+⚖️ Aspect and Concept Extraction with a Decision Model
+-------------------------------------------------------
+
+.. tip::
+   A decision model answers closed questions about a text (yes/no, one of your labels, a level of a scale) with the probability of each possible answer, and generates no text. Common use cases include:
+
+   * Finding the paragraphs on a topic, e.g. the termination clauses of a contract
+   * Checking whether a contract has a clause, e.g. termination for convenience
+   * Classifying documents or clauses by type
+   * Rating a document on a scale, e.g. how detailed its payment terms are
+   * Sending the less certain answers to a human review, by their probabilities
+
+.. literalinclude:: ../../dev/usage_examples/readme/quickstart_decision_model.py
+   :language: python
+
+.. seealso::
+   A decision model also extracts the concepts of an aspect, from the paragraphs extracted for it, and works together with LLMs in a model group: see :doc:`decision_models/decision_models`.
 
 
 💬 Lightweight LLM Chat Interface

@@ -3,11 +3,11 @@
 .. meta::
    :description: ContextGem is a free, open-source LLM framework for extracting structured data and insights from documents with minimal code: start here for the guides, examples and API reference.
 
-.. image:: _static/contextgem_readme_header.png
-   :width: 100%
-   :alt: ContextGem logo
-   :target: #
+.. image:: _static/contextgem_wordmark.svg
+   :width: 576px
+   :alt: ContextGem
    :align: center
+   :class: dark-light
 
 |
 
@@ -15,6 +15,11 @@ Welcome to ContextGem Documentation!
 =====================================
 
 ContextGem is a free, open-source LLM framework that makes it radically easier to extract structured data and insights from documents — with minimal code.
+
+.. note::
+   **New in 1.0: decision models.** Next to LLMs, ContextGem now works with :doc:`decision models <decision_models/decision_models>`, which answer closed questions (yes/no, one of your labels, a level of a scale) with the probability of each possible answer, fast and at a low cost.
+
+   **Upgrading from 0.x?** Some classes and parameters are renamed or removed, some defaults have changed, and Python 3.10 is no longer supported. Follow the :doc:`migration guide <migration_v1>`.
 
 |
 

@@ -1,5 +1,3 @@
-:og:image: https://contextgem.shcherbak.ai/_static/docs_preview_image_numerical_concept.png
-
 .. meta::
    :description: How to extract or calculate numbers (integers, floats or both) from a document or an aspect with NumericalConcept.
 

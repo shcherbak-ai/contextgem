@@ -7,10 +7,10 @@ How it works
 =============
 
 
-📏 Leveraging LLM Context Windows
-----------------------------------
+📏 Every Paragraph Is Read
+---------------------------
 
-ContextGem leverages LLMs' long context windows to deliver superior extraction accuracy. Unlike RAG approaches that often `struggle with complex concepts and nuanced insights <https://www.linkedin.com/pulse/raging-contracts-pitfalls-rag-contract-review-shcherbak-ai-ptg3f/>`_, ContextGem is betting on the continuously expanding context capacity, evolving capabilities of modern LLMs, and constantly decreasing LLM costs. This approach enables direct information extraction from full documents, eliminating retrieval inconsistencies and capturing the complete context necessary for accurate understanding.
+ContextGem is built for in-depth analysis of individual documents. There is no search step that picks the chunks that look relevant, as in RAG: the model reads every paragraph of the text it extracts from, all at once or in batches of paragraphs of a size you set (see :doc:`optimizations/optimization_long_docs`), so no fact is missed because a search ranked its passage low. This avoids the retrieval inconsistencies that make RAG approaches `struggle with complex concepts and nuanced insights <https://www.linkedin.com/pulse/raging-contracts-pitfalls-rag-contract-review-shcherbak-ai-ptg3f/>`_.
 
 
 🧩 Core Components
@@ -171,7 +171,7 @@ While ContextGem excels at structured data extraction from individual documents,
 **Not a RAG framework**
 ~~~~~~~~~~~~~~~~~~~~~~~
 
-ContextGem focuses on in-depth single-document analysis, leveraging long context windows of LLMs for maximum accuracy and precision. It does not offer RAG capabilities for cross-document querying or corpus-wide information retrieval. For these use cases, modern RAG frameworks such as LlamaIndex remain more appropriate.
+ContextGem focuses on in-depth single-document analysis, in which the model reads every paragraph of the text instead of the chunks that a search picks. It does not offer RAG capabilities for cross-document querying or corpus-wide information retrieval. For these use cases, modern RAG frameworks such as LlamaIndex remain more appropriate.
 
 **Not an agent framework**
 ~~~~~~~~~~~~~~~~~~~~~~~~~~

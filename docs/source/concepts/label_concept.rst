@@ -1,5 +1,3 @@
-:og:image: https://contextgem.shcherbak.ai/_static/docs_preview_image_label_concept.png
-
 .. meta::
    :description: How to classify a document or an aspect with predefined labels using LabelConcept, choosing exactly one label (multi-class) or any number of them (multi-label).
 

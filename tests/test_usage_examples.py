@@ -68,7 +68,8 @@ _EXAMPLES_WITH_REQUESTS = [
     "docs.quickstart.quickstart_sub_aspect",
     "docs.serialization.serialization",
     "readme.llm_chat",
-    "readme.quickstart_concept",
+    "readme.quickstart_decision_model",
+    "readme.quickstart_llm",
 ]
 
 # The usage examples that send no requests, e.g. the ones that only create objects.

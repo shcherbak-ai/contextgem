@@ -20,7 +20,8 @@ README_FOOTER = ""
 
 # Map example files to markers in the template
 USAGE_EXAMPLES_MAPPING = {
-    "dev/usage_examples/readme/quickstart_concept.py": "{{QUICKSTART_CONCEPT}}",
+    "dev/usage_examples/readme/quickstart_llm.py": "{{QUICKSTART_LLM}}",
+    "dev/usage_examples/readme/quickstart_decision_model.py": "{{QUICKSTART_DECISION_MODEL}}",
 }
 
 
@@ -42,7 +43,9 @@ def generate_readme() -> None:
         code_snippet = extract_code_from_file(example_file)
         template = template.replace(marker, code_snippet)
 
-    with open(README_OUTPUT_PATH, "w", encoding="utf-8") as readme_file:
+    # LF on every platform, as the repository has it: on Windows, text mode
+    # would write CRLF
+    with open(README_OUTPUT_PATH, "w", encoding="utf-8", newline="\n") as readme_file:
         readme_file.write(template)
         readme_file.write(README_FOOTER)
     print("Project README.md file populated successfully.")
