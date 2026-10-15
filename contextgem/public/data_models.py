@@ -11,7 +11,7 @@ from contextgem.internal.base.data_models import _ModelPricing
 from contextgem.internal.decorators import _expose_in_registry
 
 
-@_expose_in_registry(additional_key=_ModelPricing)  # ty: ignore[too-many-positional-arguments]
+@_expose_in_registry(additional_key=_ModelPricing)
 class ModelPricing(_ModelPricing):
     """
     Represents the pricing details for a model.
@@ -39,5 +39,3 @@ class ModelPricing(_ModelPricing):
             :language: python
             :caption: Model pricing definition
     """
-
-    pass

@@ -27,7 +27,8 @@ These mappings enable two core operations:
 
 from __future__ import annotations
 
-from typing import Any, TypeVar
+from collections.abc import Callable
+from typing import Any, TypeVar, overload
 
 from pydantic import BaseModel
 
@@ -85,11 +86,23 @@ def _publicize(source_type: type[_TModel], /, **data: Any) -> _TModel:
     return target_cls(**data)
 
 
+@overload
+def _expose_in_registry(cls: type[_TModel], /) -> type[_TModel]: ...
+
+
+@overload
+def _expose_in_registry(
+    cls: None = None,
+    *,
+    additional_key: type[BaseModel] | None = None,
+) -> Callable[[type[_TModel]], type[_TModel]]: ...
+
+
 def _expose_in_registry(
     cls: type[_TModel] | None = None,
     *,
-    additional_key: type[_TModel] | None = None,
-) -> type[_TModel] | Any:
+    additional_key: type[BaseModel] | None = None,
+) -> type[_TModel] | Callable[[type[_TModel]], type[_TModel]]:
     """
     Class decorator to mark classes as exposed on the public API surface by registering
     a self-mapping in the type registry.
@@ -103,7 +116,7 @@ def _expose_in_registry(
     :param cls: The class being decorated (automatically supplied when used as a decorator).
     :type cls: type[_TModel] | None
     :param additional_key: An additional class to map to the decorated class in the registry.
-    :type additional_key: type[_TModel] | None
+    :type additional_key: type[BaseModel] | None
     :return: The original class when used as a decorator, or a decorator function when used with arguments.
     :rtype: type[_TModel] | Callable[[type[_TModel]], type[_TModel]]
     """

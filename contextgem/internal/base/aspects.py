@@ -105,7 +105,7 @@ class _Aspect(
         ),
     )
 
-    _extracted_items: list[_StringItem] = PrivateAttr(default_factory=list)
+    _extracted_items: list[_StringItem] = PrivateAttr(default_factory=list)  # ty: ignore[invalid-attribute-override]  # narrowed to the item class
     _reference_paragraphs: list[_Paragraph] = PrivateAttr(default_factory=list)
     _reference_sentences: list[_Sentence] = PrivateAttr(default_factory=list)
     _nesting_level: StrictInt = PrivateAttr(default=0)

@@ -45,7 +45,7 @@ def _extract_mapper(
     if isinstance(user_mapper, dict):
         return user_mapper
     else:
-        raise ValueError("`user_mapper` must be a dict.")
+        raise ValueError("`user_mapper` must be a dict.")  # noqa: TRY004 - pydantic and the callers handle ValueError
 
 
 def _is_optional(type_hint: Any) -> bool:
@@ -188,7 +188,7 @@ def _dynamic_pydantic_model(
     # pydantic gives a meaning to, e.g. "model_config", or that shadows
     # an attribute of BaseModel, e.g. "json", which pydantic warns of each time
     # the model is created.
-    fields = {}
+    fields: dict[str, Any] = {}
     for position, (field_name, field_type) in enumerate(
         _extract_mapper(user_mapper).items()
     ):

@@ -75,7 +75,7 @@ def _get_concept_extraction_output_struct(
                 extracted_item_model_kwargs["reference_paragraphs"] = cast(
                     Any,
                     (
-                        list[reference_paragraph_model],
+                        list[reference_paragraph_model],  # ty: ignore[invalid-type-form]  # model built at runtime
                         ...,
                     ),
                 )
@@ -96,7 +96,7 @@ def _get_concept_extraction_output_struct(
         )
         concept_model_kwargs = {
             "concept_id": (NonEmptyStr, ...),
-            "extracted_items": (list[extracted_item_model], ...),
+            "extracted_items": (list[extracted_item_model], ...),  # ty: ignore[invalid-type-form]  # model built at runtime
         }
 
     else:
@@ -112,7 +112,7 @@ def _get_concept_extraction_output_struct(
         **cast(Any, concept_model_kwargs),
     )
 
-    dynamic_root_model = _create_root_model("DynamicRootModel", list[concept_model])
+    dynamic_root_model = _create_root_model("DynamicRootModel", list[concept_model])  # ty: ignore[invalid-type-form]  # model built at runtime
     return dynamic_root_model
 
 

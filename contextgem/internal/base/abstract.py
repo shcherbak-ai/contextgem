@@ -78,7 +78,6 @@ class _AbstractGenericModelProcessor(
 
         Whether the model is a single instance or a group.
         """
-        pass
 
     @property
     @abstractmethod
@@ -89,7 +88,6 @@ class _AbstractGenericModelProcessor(
         Returns the list of all model roles in the model group or single model.
         None on the list stands for a model without a role.
         """
-        pass
 
     @abstractmethod
     def _set_private_attrs(self) -> None:
@@ -98,7 +96,6 @@ class _AbstractGenericModelProcessor(
 
         Sets private attributes for the model group or single model, e.g. prompts, capabilities, etc.
         """
-        pass
 
     @abstractmethod
     def get_usage(self, *args, **kwargs) -> list[_ModelUsageOutputContainer]:
@@ -107,7 +104,6 @@ class _AbstractGenericModelProcessor(
 
         Returns the usage data for the model group or single model.
         """
-        pass
 
     @abstractmethod
     def get_cost(self, *args, **kwargs) -> list[_ModelCostOutputContainer]:
@@ -118,7 +114,6 @@ class _AbstractGenericModelProcessor(
         `_ModelCostOutputContainer` entries. Implementations may accept optional
         filter parameters (e.g., role) where applicable.
         """
-        pass
 
     @abstractmethod
     def reset_usage_and_cost(self) -> None:
@@ -128,7 +123,6 @@ class _AbstractGenericModelProcessor(
         Resets the usage and cost data for the model group or single model. Implementations
         may support optional filters (e.g., by role) where applicable.
         """
-        pass
 
     @abstractmethod
     def _warn_tools_ignored_if_enabled(self) -> None:
@@ -138,4 +132,3 @@ class _AbstractGenericModelProcessor(
         Should warn that tools are ignored during extraction
         workflows if tools are configured. Tools are supported only in ``llm.chat(...)``.
         """
-        pass

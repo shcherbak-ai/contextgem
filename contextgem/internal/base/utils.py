@@ -36,7 +36,7 @@ class _JsonObjectClassStruct:
     # 2. Enables lookup of already defined classes by name when traversing class hierarchies
     # 3. Provides a shared namespace for the entire type structure
     # 4. Critical for resolving classes used in generic containers like list[Class]
-    _registry = {}
+    _registry = {}  # noqa: RUF012 - annotated, it would be a field of the user's classes
 
     def __init_subclass__(cls, **kwargs):
         """
@@ -59,7 +59,7 @@ class _JsonObjectClassStruct:
         # This correctly handles Pydantic and other typed classes
         try:
             annotations = get_type_hints(cls)
-        except Exception:
+        except Exception:  # noqa: BLE001 - falls back to the raw annotations
             # Fallback to raw annotations if get_type_hints fails
             annotations = cls.__annotations__ if hasattr(cls, "__annotations__") else {}
 

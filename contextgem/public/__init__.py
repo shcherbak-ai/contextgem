@@ -35,7 +35,7 @@ from contextgem.public.utils import (
 )
 
 
-__all__ = (
+__all__ = (  # noqa: RUF022 - grouped by kind
     # Aspects
     "Aspect",
     # Concepts

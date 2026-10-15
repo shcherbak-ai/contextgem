@@ -17,7 +17,7 @@ from contextgem.internal.exceptions import (
 )
 
 
-__all__ = (
+__all__ = (  # noqa: RUF022 - the order of the API reference
     "ModelAPIError",
     "ModelExtractionError",
     "LLMToolLoopLimitError",

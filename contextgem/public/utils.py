@@ -243,5 +243,3 @@ class JsonObjectClassStruct(_JsonObjectClassStruct):
             :language: python
             :caption: Using JsonObjectClassStruct for class hierarchies
     """
-
-    pass

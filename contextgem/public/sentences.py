@@ -18,7 +18,7 @@ from contextgem.internal.base.paras_and_sents import _Sentence
 from contextgem.internal.decorators import _expose_in_registry
 
 
-@_expose_in_registry(additional_key=_Sentence)  # ty: ignore[too-many-positional-arguments]
+@_expose_in_registry(additional_key=_Sentence)
 class Sentence(_Sentence):
     """
     Represents a sentence within a document paragraph.
@@ -48,5 +48,3 @@ class Sentence(_Sentence):
             :language: python
             :caption: Sentence definition
     """
-
-    pass

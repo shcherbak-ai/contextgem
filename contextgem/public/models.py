@@ -16,7 +16,7 @@ from contextgem.internal.base.models import _DocumentModelGroup
 from contextgem.internal.decorators import _expose_in_registry
 
 
-@_expose_in_registry(additional_key=_DocumentModelGroup)  # ty: ignore[too-many-positional-arguments]
+@_expose_in_registry(additional_key=_DocumentModelGroup)
 class DocumentModelGroup(_DocumentModelGroup):
     """
     Represents a group of models with unique roles for processing document content.
@@ -50,5 +50,3 @@ class DocumentModelGroup(_DocumentModelGroup):
             :language: python
             :caption: Model group definition
     """
-
-    pass

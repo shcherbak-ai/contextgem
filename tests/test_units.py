@@ -915,7 +915,7 @@ def test_deserialize_type_hint_handles_three_arg_union() -> None:
 def test_deserialize_type_hint_literal_with_booleans_and_null() -> None:
     """Literal parsing handles ``true``, ``false``, ``null``, ints and floats."""
     restored = _deserialize_type_hint("literal[true, false, null, 42]")
-    assert restored == Literal[True, False, None, 42]
+    assert restored == Literal[True, False, None, 42]  # noqa: PYI061 - the form is tested
     # Float literal values are accepted at runtime (parser converts via float()),
     # but typing.Literal does not statically accept floats. Compare via get_args.
     restored_with_float = _deserialize_type_hint("literal[1.5]")
@@ -931,9 +931,9 @@ def test_deserialize_type_hint_literal_with_booleans_and_null() -> None:
     "hint",
     [
         Literal[True, False],
-        Literal["a", None],
-        Literal[1, None],
-        Literal["yes", "no", None],
+        Literal["a", None],  # noqa: PYI061 - the form is tested
+        Literal[1, None],  # noqa: PYI061 - the form is tested
+        Literal["yes", "no", None],  # noqa: PYI061 - the form is tested
         Literal[1, 2, 3],
         Literal["x", "y"],
         Literal[1, "a"],  # mixed types round-trip too (type-preserving)
@@ -965,9 +965,9 @@ def test_literal_bool_serializes_to_lowercase_json_tokens() -> None:
 def test_literal_none_serializes_to_null_token() -> None:
     """``None`` in a Literal serializes to ``null`` (and round-trips to ``None``),
     not the bare string ``None``."""
-    serialized = _serialize_type_hint(Literal["a", None])
+    serialized = _serialize_type_hint(Literal["a", None])  # noqa: PYI061 - the form is tested
     assert serialized == 'literal["a", null]'
-    assert _deserialize_type_hint(serialized) == Literal["a", None]
+    assert _deserialize_type_hint(serialized) == Literal["a", None]  # noqa: PYI061 - the form is tested
 
 
 # ---------------------------------------------------------------------------
@@ -984,7 +984,7 @@ def test_json_schema_mixed_literal_omits_type() -> None:
 
 def test_json_schema_literal_with_none_omits_type() -> None:
     """A ``Literal`` mixing a string and ``None`` produces a bare ``enum``."""
-    assert _python_type_to_json_schema(Literal["a", None]) == {"enum": ["a", None]}
+    assert _python_type_to_json_schema(Literal["a", None]) == {"enum": ["a", None]}  # noqa: PYI061 - the form is tested
 
 
 def test_json_schema_homogeneous_literal_keeps_type() -> None:
@@ -1122,7 +1122,7 @@ def test_from_dict_rejects_duplicate_extracted_item_ids() -> None:
     rejected, because the values are restored through the validating property
     setter rather than written to the backing attribute directly."""
     concept = StringConcept(name="c", description="d")
-    concept.extracted_items = [concept._item_class(value="hello")]  # ty: ignore[invalid-assignment]
+    concept.extracted_items = [concept._item_class(value="hello")]
     payload = concept.to_dict()
 
     # A valid payload still round-trips.
@@ -1239,10 +1239,14 @@ _FOUNDRY_DECISIONS_PATH = "providers/microsoft/v1/systemone"
         ),
         # ... together with the name of a project of the resource
         (
-            "https://my-resource.services.ai.azure.com/api/projects/my-project/"
-            f"extra/{_FOUNDRY_DECISIONS_PATH}",
-            f"{VCR_DUMMY_ENDPOINT_PREFIX}api/projects/{VCR_REDACTION_MARKER}/"
-            f"extra/{_FOUNDRY_DECISIONS_PATH}",
+            (
+                "https://my-resource.services.ai.azure.com/api/projects/my-project/"
+                f"extra/{_FOUNDRY_DECISIONS_PATH}"
+            ),
+            (
+                f"{VCR_DUMMY_ENDPOINT_PREFIX}api/projects/{VCR_REDACTION_MARKER}/"
+                f"extra/{_FOUNDRY_DECISIONS_PATH}"
+            ),
         ),
         # The dummy host, i.e. the one of a replayed request, is left as it is
         (

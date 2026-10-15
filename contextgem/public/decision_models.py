@@ -22,7 +22,7 @@ from contextgem.internal.base.decision_models import _DocumentDecisionModel
 from contextgem.internal.decorators import _expose_in_registry
 
 
-@_expose_in_registry(additional_key=_DocumentDecisionModel)  # ty: ignore[too-many-positional-arguments]
+@_expose_in_registry(additional_key=_DocumentDecisionModel)
 class DocumentDecisionModel(_DocumentDecisionModel):
     """
     Handles processing documents with a specific decision model.
@@ -142,5 +142,3 @@ class DocumentDecisionModel(_DocumentDecisionModel):
             :language: python
             :caption: Decision model definition
     """
-
-    pass

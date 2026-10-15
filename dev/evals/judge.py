@@ -835,7 +835,7 @@ def main() -> None:
             print(f"USD {result['usage']['cost_total']}", flush=True)
         else:
             asyncio.run(judge_label(judge, args.label))
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001 - any error is reported, scrubbed
         raise SystemExit(judge.scrub(f"{type(e).__name__}: {e}")) from None
 
 

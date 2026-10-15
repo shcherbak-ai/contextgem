@@ -69,7 +69,7 @@ def _has_custom_validation_or_field_options(cls: Any) -> bool:
 
     # Check for field-level options
     if hasattr(cls, "model_fields"):
-        for _, field in cls.model_fields.items():
+        for field in cls.model_fields.values():
             # Check if default is explicitly set
             if str(field.default) != "PydanticUndefined" and field.default is not None:
                 return True

@@ -21,7 +21,7 @@ DIST = Path("dist")
 
 def _run(cmd: list[str]) -> int:
     """Run ``cmd`` inheriting stdio; return its exit code."""
-    return subprocess.run(cmd).returncode  # nosec B603 - cmd is a hardcoded list, no shell
+    return subprocess.run(cmd, check=False).returncode  # nosec B603 - cmd is a hardcoded list, no shell
 
 
 def main() -> int:

@@ -55,7 +55,7 @@ class TestImages(BaseTest):
         """
 
         with pytest.raises(ValueError):
-            Image()
+            Image()  # ty: ignore[missing-argument]
         with pytest.raises(ValueError):
             Image(
                 mime_type="image/weoighwe",  # invalid MIME type  # type: ignore

@@ -68,7 +68,7 @@ class TestAspectsAndConcepts(BaseTest):
         """
 
         with pytest.raises(ValueError):
-            Aspect()
+            Aspect()  # ty: ignore[missing-argument]
         with pytest.raises(ValueError):
             Aspect(
                 name="Categories of confidential information",
@@ -165,7 +165,7 @@ class TestAspectsAndConcepts(BaseTest):
                 ),
             )  # tuple instead of list
         with pytest.raises(ValueError, match="list"):
-            aspect.concepts = set([1, 2, 3])  # set instead of list  # type: ignore
+            aspect.concepts = {1, 2, 3}  # set instead of list  # type: ignore
         with pytest.raises(ValueError, match="list"):
             aspect.concepts = range(10)  # range instead of list  # type: ignore
 
@@ -282,11 +282,11 @@ class TestAspectsAndConcepts(BaseTest):
             )
 
         # Test attaching extracted items
-        string_concept.extracted_items = [_StringItem(value="Confidential data")]  # ty: ignore[invalid-assignment]
+        string_concept.extracted_items = [_StringItem(value="Confidential data")]
 
         # Test with invalid items
         with pytest.raises(ValueError):
-            string_concept.extracted_items = [  # ty: ignore[invalid-assignment]
+            string_concept.extracted_items = [
                 _BooleanItem(value=True)
             ]  # must be _StringItem
 
@@ -313,15 +313,15 @@ class TestAspectsAndConcepts(BaseTest):
             )
 
         # Test attaching extracted items
-        boolean_concept.extracted_items = [_BooleanItem(value=True)]  # ty: ignore[invalid-assignment]
+        boolean_concept.extracted_items = [_BooleanItem(value=True)]
 
         # Test with invalid items
         with pytest.raises(ValueError):
-            boolean_concept.extracted_items = [  # ty: ignore[invalid-assignment]
+            boolean_concept.extracted_items = [
                 _StringItem(value="True")
             ]  # must be _BooleanItem
         with pytest.raises(ValueError):
-            boolean_concept.extracted_items = [  # type: ignore
+            boolean_concept.extracted_items = [
                 _BooleanItem(value=None)  # type: ignore
             ]  # must be _BooleanItem
 
@@ -525,29 +525,29 @@ class TestAspectsAndConcepts(BaseTest):
         # Test attaching extracted items
         # Integer concept should accept only integer items
         int_item = _IntegerItem(value=42)
-        int_concept.extracted_items = [int_item]  # ty: ignore[invalid-assignment]
+        int_concept.extracted_items = [int_item]
 
         # Should reject float items for int concept
         with pytest.raises(ValueError):
-            int_concept.extracted_items = [_FloatItem(value=42.5)]  # ty: ignore[invalid-assignment]
+            int_concept.extracted_items = [_FloatItem(value=42.5)]
 
         # Float concept should accept only float items
         float_item = _FloatItem(value=3.14)
-        float_concept.extracted_items = [float_item]  # ty: ignore[invalid-assignment]
+        float_concept.extracted_items = [float_item]
 
         # Should reject integer items for float concept
         with pytest.raises(ValueError):
-            float_concept.extracted_items = [_IntegerItem(value=3)]  # ty: ignore[invalid-assignment]
+            float_concept.extracted_items = [_IntegerItem(value=3)]
 
         # Any numeric concept should accept both integer and float items
-        any_concept.extracted_items = [_IntegerOrFloatItem(value=20)]  # ty: ignore[invalid-assignment]
-        any_concept.extracted_items = [_IntegerOrFloatItem(value=20.5)]  # ty: ignore[invalid-assignment]
+        any_concept.extracted_items = [_IntegerOrFloatItem(value=20)]
+        any_concept.extracted_items = [_IntegerOrFloatItem(value=20.5)]
         # Should reject integer items for any numeric concept
         with pytest.raises(ValueError):
-            any_concept.extracted_items = [_IntegerItem(value=10)]  # ty: ignore[invalid-assignment]
+            any_concept.extracted_items = [_IntegerItem(value=10)]
         # Should reject float items for any numeric concept
         with pytest.raises(ValueError):
-            any_concept.extracted_items = [_FloatItem(value=10.5)]  # ty: ignore[invalid-assignment]
+            any_concept.extracted_items = [_FloatItem(value=10.5)]
 
         # Test with justifications and references
         concept_with_refs = NumericalConcept(
@@ -586,7 +586,7 @@ class TestAspectsAndConcepts(BaseTest):
             RatingConcept(
                 name="Invalid Concept",
                 description="Test invalid concept",
-                rating_scale=(),  # empty tuple  # type: ignore
+                rating_scale=(),  # empty tuple
             )
 
         with pytest.raises(ValueError):
@@ -621,9 +621,7 @@ class TestAspectsAndConcepts(BaseTest):
             RatingConcept(
                 name="Invalid Concept",
                 description="Test invalid concept",
-                rating_scale=(
-                    1,
-                ),  # tuple with invalid length (1 element)  # type: ignore
+                rating_scale=(1,),  # tuple with invalid length (1 element)
             )
 
         with pytest.raises(ValueError):
@@ -634,21 +632,21 @@ class TestAspectsAndConcepts(BaseTest):
                     1,
                     1,
                     2,
-                ),  # tuple with invalid length (3 elements)  # type: ignore
+                ),  # tuple with invalid length (3 elements)
             )
 
         with pytest.raises(ValueError):
             RatingConcept(
                 name="Invalid Concept",
                 description="Test invalid concept",
-                rating_scale=(1.5, 3),  # float element  # type: ignore
+                rating_scale=(1.5, 3),  # float element
             )
 
         with pytest.raises(ValueError):
             RatingConcept(
                 name="Invalid Concept",
                 description="Test invalid concept",
-                rating_scale={"start": 1, "end": 5},  # not a tuple  # type: ignore
+                rating_scale={"start": 1, "end": 5},  # not a tuple
             )
 
         # Test attaching extracted items
@@ -700,9 +698,9 @@ class TestAspectsAndConcepts(BaseTest):
         """
         # Base class direct initialization
         with pytest.raises(TypeError):
-            _Concept(name="Test", description="Test")
+            _Concept(name="Test", description="Test")  # ty: ignore[call-non-callable]
         with pytest.raises(ValueError):
-            JsonObjectConcept()
+            JsonObjectConcept()  # ty: ignore[missing-argument]
         with pytest.raises(ValueError):
             JsonObjectConcept(
                 name="Business Information",
@@ -798,8 +796,8 @@ class TestAspectsAndConcepts(BaseTest):
             phone: str = field(metadata={"format": "international"})
             address: Address = field(repr=False)
             contact_type: Optional[  # noqa: UP045
-                Literal["primary", "secondary", "emergency", None]
-                | Literal["union", "literal", None]
+                Literal["primary", "secondary", "emergency", None]  # noqa: PYI030, PYI061 - the form is tested
+                | Literal["union", "literal", None]  # noqa: PYI061 - the form is tested
             ] = field(default=None)  # intentionally messed up type hint for testing
 
         @dataclass
@@ -1373,14 +1371,14 @@ class TestAspectsAndConcepts(BaseTest):
             JsonObjectConcept(
                 name="Invalid Structure",
                 description="Testing invalid structure",
-                structure={str: str},  # invalid mapping  # type: ignore
+                structure={str: str},  # invalid mapping
             )
 
         with pytest.raises(ValueError):
             JsonObjectConcept(
                 name="Invalid Structure",
                 description="Testing invalid structure",
-                structure={int: "integer"},  # invalid mapping  # type: ignore
+                structure={int: "integer"},  # invalid mapping
             )
 
         with pytest.raises(ValueError):
@@ -1514,7 +1512,7 @@ class TestAspectsAndConcepts(BaseTest):
             phone: str
             address: Address
             contact_type: (
-                Literal["primary", "secondary", "emergency"]
+                Literal["primary", "secondary", "emergency"]  # noqa: PYI030 - the form is tested
                 | Literal["union", "literal"]
                 | None
             )  # intentionally messed up type hint for testing
@@ -1727,7 +1725,7 @@ class TestAspectsAndConcepts(BaseTest):
         # Create a date string that matches the default format
         date_str = "02-03-2025"
         date_obj = default_date_concept._string_to_date(date_str)
-        default_date_concept.extracted_items = [_DateItem(value=date_obj)]  # ty: ignore[invalid-assignment]
+        default_date_concept.extracted_items = [_DateItem(value=date_obj)]
 
         # Test with invalid date string
         with pytest.raises(ValueError):
@@ -1736,12 +1734,12 @@ class TestAspectsAndConcepts(BaseTest):
 
         # Test with invalid items
         with pytest.raises(ValueError):
-            default_date_concept.extracted_items = [  # ty: ignore[invalid-assignment]
+            default_date_concept.extracted_items = [
                 _StringItem(value="15/01/2023")
             ]  # must be _DateItem
 
         with pytest.raises(ValueError):
-            _DateItem(value="01-01-2025")  # must be a date object  # type: ignore
+            _DateItem(value="01-01-2025")  # must be a date object
 
         # Test with justifications and references
         date_concept_with_refs = DateConcept(
@@ -1939,9 +1937,9 @@ class TestAspectsAndConcepts(BaseTest):
         # LLM extraction
         self.compare_with_concurrent_execution(
             llm=llm,
-            expected_n_calls_no_concurrency=(2 if llm.is_group else 2),
-            expected_n_calls_with_concurrency=(2 if llm.is_group else 2),
-            expected_n_calls_1_item_per_call=(2 if llm.is_group else 2),
+            expected_n_calls_no_concurrency=2,
+            expected_n_calls_with_concurrency=2,
+            expected_n_calls_1_item_per_call=2,
             func=llm.extract_concepts_from_document,
             func_kwargs={
                 "document": document,
@@ -2122,19 +2120,19 @@ class TestAspectsAndConcepts(BaseTest):
         with pytest.raises(TypeError):
             _ExtractedItem(value=1)
         with pytest.raises(ValueError):
-            _StringItem()
+            _StringItem()  # ty: ignore[missing-argument]
         with pytest.raises(ValueError):
             _BooleanItem(value=1)  # type: ignore
         with pytest.raises(ValueError):
-            _BooleanItem()
+            _BooleanItem()  # ty: ignore[missing-argument]
         with pytest.raises(ValueError):
             _BooleanItem(value="True")  # type: ignore
         with pytest.raises(ValueError):
-            _IntegerOrFloatItem()
+            _IntegerOrFloatItem()  # ty: ignore[missing-argument]
         with pytest.raises(ValueError):
             _IntegerOrFloatItem(value=int)  # type: ignore
         with pytest.raises(ValueError):
-            _JsonObjectItem()
+            _JsonObjectItem()  # ty: ignore[missing-argument]
         with pytest.raises(ValueError):
             _JsonObjectItem(value={})
         # A nested object may be empty, e.g. a mapping with no entries, which
@@ -2148,7 +2146,7 @@ class TestAspectsAndConcepts(BaseTest):
         with pytest.raises(ValueError):
             _LabelItem(value=[])
         with pytest.raises(ValueError):
-            _LabelItem(value="NDA")  # type: ignore
+            _LabelItem(value="NDA")
 
         # List field items' unique IDs
         para = Paragraph(raw_text="Test")

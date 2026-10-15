@@ -28,7 +28,7 @@ from contextgem.internal.base.pipelines import _ExtractionPipeline
 from contextgem.internal.base.utils import _JsonObjectClassStruct
 
 
-__all__ = (
+__all__ = (  # noqa: RUF022 - grouped by kind
     # Aspects
     "_Aspect",
     # Concepts

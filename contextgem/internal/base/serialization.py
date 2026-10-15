@@ -361,7 +361,7 @@ class _InstanceSerializer(BaseModel):
         probabilities: dict[bool | int | str, float] = {}
         for option, probability in pairs:
             if not isinstance(option, bool | int | str):
-                raise ValueError(
+                raise ValueError(  # noqa: TRY004 - pydantic and the callers handle ValueError
                     "An option in serialized probabilities must be a boolean, "
                     f"an integer or a string. Got: {option!r}"
                 )

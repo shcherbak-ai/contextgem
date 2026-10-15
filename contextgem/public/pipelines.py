@@ -20,7 +20,7 @@ from contextgem.internal.base.pipelines import _ExtractionPipeline
 from contextgem.internal.decorators import _expose_in_registry
 
 
-@_expose_in_registry(additional_key=_ExtractionPipeline)  # ty: ignore[too-many-positional-arguments]
+@_expose_in_registry(additional_key=_ExtractionPipeline)
 class ExtractionPipeline(_ExtractionPipeline):
     """
     Represents a reusable collection of predefined aspects and concepts for document analysis.
@@ -45,5 +45,3 @@ class ExtractionPipeline(_ExtractionPipeline):
             :language: python
             :caption: Extraction pipeline definition
     """
-
-    pass

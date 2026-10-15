@@ -1410,7 +1410,7 @@ class _GenericModelProcessor(_AbstractGenericModelProcessor):
     def _check_instances_and_llm_params(
         self,
         target: _Document | _Aspect,
-        llm_or_group: _DocumentModel | _DocumentModelGroup,
+        llm_or_group: _GenericModelProcessor,
         instances_to_process: Sequence[_Aspect]
         | Sequence[_Concept]
         | None,  # using Sequence type with list validator for type checking
@@ -1435,7 +1435,7 @@ class _GenericModelProcessor(_AbstractGenericModelProcessor):
         :type target: _Document | _Aspect
         :param llm_or_group: The model or a model group to be validated. This may either
             be a standalone model, e.g. a DocumentLLM, or a DocumentModelGroup.
-        :type llm_or_group: _DocumentModel | _DocumentModelGroup
+        :type llm_or_group: _GenericModelProcessor
         :param instances_to_process: A list of instances to process, which must match
             the specified instance-type (`aspect` or `concept`). If not provided,
             defaults to instances present in the target attribute.
@@ -1762,7 +1762,7 @@ class _GenericModelProcessor(_AbstractGenericModelProcessor):
         modality: Modality = "text",
         max_paragraphs_to_analyze_per_call: int = 0,
         max_images_to_analyze_per_call: int = 0,
-    ) -> list[dict[str, dict | list[_Paragraph] | list[_Image]]]:
+    ) -> list[dict[str, Any]]:
         """
         Prepares the list of the message kwargs required for querying an LLM to extract aspects or concepts
         from a document or its associated entities like aspects.
@@ -1813,7 +1813,7 @@ class _GenericModelProcessor(_AbstractGenericModelProcessor):
             LLM call (prompt). Defaults to 0, in which case all the images are analyzed.
         :type max_images_to_analyze_per_call: int
         :return: A list of dictionaries containing prompt kwargs and context chunks for LLM queries.
-        :rtype: list[dict[str, dict | list[_Paragraph] | list[_Image]]]
+        :rtype: list[dict[str, Any]]
         """
 
         # Validate source data for extraction and set the extraction level
@@ -1962,7 +1962,7 @@ class _GenericModelProcessor(_AbstractGenericModelProcessor):
                     }
                     if add_references:
                         # List of document/aspect paragraphs used for concept extraction with references
-                        prompt_kwargs["paragraphs"] = paragraphs_chunk  # ty: ignore[invalid-assignment]
+                        prompt_kwargs["paragraphs"] = paragraphs_chunk
                         if _GenericModelProcessor._shows_additional_context(
                             paragraphs_chunk, reference_depth
                         ):
@@ -2806,7 +2806,9 @@ class _GenericModelProcessor(_AbstractGenericModelProcessor):
                                     f"Error processing extracted item value: {e}"
                                 )
                                 return None, all_usage_data
-                            concept_extracted_item_kwargs = {"value": i["value"]}
+                            concept_extracted_item_kwargs: dict[str, Any] = {
+                                "value": i["value"]
+                            }
                             if add_justifications:
                                 concept_extracted_item_kwargs["justification"] = i[
                                     "justification"
@@ -3040,7 +3042,7 @@ class _GenericModelProcessor(_AbstractGenericModelProcessor):
         async with (
             llm._async_lock
         ):  # ensure atomicity of the instances' state check and modification
-            for _source_id, source_data in sources_mapper.items():
+            for source_data in sources_mapper.values():
                 # Safe cast: "source" key always contains _Aspect or _Concept
                 source_instance = cast(_Aspect | _Concept, source_data["source"])
                 self._check_instances_already_processed(
@@ -3178,7 +3180,7 @@ class _GenericModelProcessor(_AbstractGenericModelProcessor):
             """
 
             if not instances_to_process:
-                return None
+                return
 
             if llm is None:
                 raise ValueError(
@@ -3754,7 +3756,7 @@ class _GenericModelProcessor(_AbstractGenericModelProcessor):
 
         # Run extraction for each group separately, as prompts will be rendered differently and
         # the expected JSON structures will be different based on the group's extraction params.
-        cals_and_kwargs = []
+        cals_and_kwargs: AsyncCalsAndKwargs = []
         for group in instance_groups:
             if not group:
                 continue
@@ -4032,12 +4034,12 @@ class _DocumentModel(_GenericModelProcessor):
             self.async_limiter = AsyncLimiter(10, 10)
 
     @_post_init_method
-    def _post_init(self, __context: Any):
+    def _post_init(self, context: Any, /):
         """
         Post-initialization method that logs model information and API configuration.
 
-        :param __context: Pydantic context (unused).
-        :type __context: Any
+        :param context: Pydantic context (unused).
+        :type context: Any
         """
         logger.info(f"Using model {self.model}")
         if self.api_key is None:
@@ -4057,7 +4059,7 @@ class _DocumentModel(_GenericModelProcessor):
         :return: None
         :rtype: None
         """
-        return None
+        return
 
     def _set_private_attrs(self) -> None:
         """
@@ -4085,7 +4087,7 @@ class _DocumentModel(_GenericModelProcessor):
         :return: None
         :rtype: None
         """
-        return None
+        return
 
     @property
     def async_limiter(self) -> AsyncLimiter:
@@ -4236,7 +4238,7 @@ class _DocumentModel(_GenericModelProcessor):
         :raises ValueError: If the model cannot extract some of the aspects
             or concepts.
         """
-        return None
+        return
 
     def _group_instances_for_calls(
         self,
@@ -4302,7 +4304,7 @@ class _DocumentModel(_GenericModelProcessor):
         :rtype: None
         :raises ValueError: If the model identifier does not meet the requirements.
         """
-        return None
+        return
 
     @field_validator("fallback_models")
     @classmethod
@@ -4485,7 +4487,7 @@ class _DocumentModel(_GenericModelProcessor):
         :raises ValueError: If the fallback model does not share such a param
             with the current model.
         """
-        return None
+        return
 
     def _finish_kind_specific_validation(self) -> None:
         """
@@ -4497,7 +4499,7 @@ class _DocumentModel(_GenericModelProcessor):
         :return: None
         :rtype: None
         """
-        return None
+        return
 
     def _eq_deserialized_model_config(self, other: _DocumentModel) -> bool:
         """
@@ -4763,7 +4765,7 @@ class _DocumentModel(_GenericModelProcessor):
                 try:
                     update_prices.wait()
                     logger.info(f"Finished updating {kind} API prices")
-                except Exception as e:
+                except Exception as e:  # noqa: BLE001 - a failed price update is logged
                     logger.error(f"Error updating {kind} API prices: {e}.")
                 price_data = _calc_auto_price(
                     usage,
@@ -4797,9 +4799,9 @@ class _DocumentModel(_GenericModelProcessor):
         """
 
         if self.pricing_details or self.auto_pricing:
-            mil_dec = Decimal("1000000")
-            cost_input: Decimal = Decimal("0")
-            cost_output: Decimal = Decimal("0")
+            mil_dec = Decimal(1000000)
+            cost_input: Decimal = Decimal(0)
+            cost_output: Decimal = Decimal(0)
 
             if self.pricing_details:
                 pricing = self.pricing_details
@@ -4854,12 +4856,12 @@ class _DocumentModel(_GenericModelProcessor):
                     ):
                         raise RuntimeError("Auto-pricing returned non-Decimal values")
                     cost_input = sum(
-                        (call_cost[0] for call_cost in call_costs), Decimal("0")
+                        (call_cost[0] for call_cost in call_costs), Decimal(0)
                     )
                     cost_output = sum(
-                        (call_cost[1] for call_cost in call_costs), Decimal("0")
+                        (call_cost[1] for call_cost in call_costs), Decimal(0)
                     )
-                except Exception as e:
+                except Exception as e:  # noqa: BLE001 - auto-pricing is skipped on any error
                     warning_msg = (
                         f"Unable to fetch pricing data for model `{self.model}`: {e}. "
                         "Auto-pricing is skipped. "
@@ -5018,7 +5020,7 @@ class _DocumentModel(_GenericModelProcessor):
         # Probe calculation with dummy tokens.
         try:
             self._calculate_auto_pricing_costs(1000, 25000)
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001 - auto-pricing is skipped on any error
             warning_msg = (
                 f"Unable to fetch pricing data for model `{self.model}`: {e}. "
                 "Auto-pricing will be skipped. "
@@ -5071,7 +5073,7 @@ class _DocumentModelGroup(_GenericModelProcessor):
         :return: None
         :rtype: None
         """
-        return None
+        return
 
     @property
     def is_group(self) -> bool:

@@ -13,7 +13,7 @@ import types
 from copy import deepcopy
 from datetime import date
 from pathlib import Path
-from typing import Any, Literal
+from typing import Any, ClassVar, Literal
 from unittest.mock import patch
 
 import pytest
@@ -430,8 +430,10 @@ class TestSerialization(BaseTest):
                 _LabelItem,
                 ["written"],
                 {"written": 0.71, "email": 0.20, "any": 0.06, "not specified": 0.03},
-                '[["written", 0.71], ["email", 0.2], ["any", 0.06], '
-                '["not specified", 0.03]]',
+                (
+                    '[["written", 0.71], ["email", 0.2], ["any", 0.06], '
+                    '["not specified", 0.03]]'
+                ),
             ),
             # Several labels, with the probabilities that do not sum to 1
             (
@@ -473,8 +475,10 @@ class TestSerialization(BaseTest):
                 _StringItem,
                 "Random string",
                 {True: 0.5, "True": 0.3, 2: 0.2, "2": 0.0, 0: 0.0, "false": 0.0},
-                '[[true, 0.5], ["True", 0.3], [2, 0.2], ["2", 0.0], [0, 0.0], '
-                '["false", 0.0]]',
+                (
+                    '[[true, 0.5], ["True", 0.3], [2, 0.2], ["2", 0.0], [0, 0.0], '
+                    '["false", 0.0]]'
+                ),
             ),
             # Probabilities given as integers
             (
@@ -488,8 +492,10 @@ class TestSerialization(BaseTest):
                 _LabelItem,
                 ["a"],
                 {"a": 1 / 3, "b": 0.1 + 0.2, "c": 1e-17, "d": 5e-324},
-                '[["a", 0.3333333333333333], ["b", 0.30000000000000004], '
-                '["c", 1e-17], ["d", 5e-324]]',
+                (
+                    '[["a", 0.3333333333333333], ["b", 0.30000000000000004], '
+                    '["c", 1e-17], ["d", 5e-324]]'
+                ),
             ),
             # Other item classes, including the one with own serialization
             (
@@ -832,8 +838,10 @@ class TestSerialization(BaseTest):
         document_json = document.to_json()
         for probabilities_json in (
             "[[true, 0.91], [false, 0.09]]",
-            '[["written", 0.71], ["email", 0.2], ["any", 0.06], '
-            '["not specified", 0.03]]',
+            (
+                '[["written", 0.71], ["email", 0.2], ["any", 0.06], '
+                '["not specified", 0.03]]'
+            ),
             "[[true, 0.83], [false, 0.17]]",
             '[["NDA", 0.97], ["Confidential", 0.62], ["Employment", 0.08]]',
             "[[1, 0.0], [2, 0.0], [3, 0.15], [4, 0.55], [5, 0.3]]",
@@ -886,7 +894,9 @@ class TestSerialization(BaseTest):
 
     # Probabilities of the extracted items of the document created by the method
     # below, by the name of the aspect or concept that an item belongs to
-    _document_item_probabilities: dict[str, dict[bool | int | str, float] | None] = {
+    _document_item_probabilities: ClassVar[
+        dict[str, dict[bool | int | str, float] | None]
+    ] = {
         # Aspect: whether the paragraph belongs to the aspect
         "Notices": {True: 0.91, False: 0.09},
         # Concept of the aspect: one label out of several
@@ -959,26 +969,26 @@ class TestSerialization(BaseTest):
             value=paragraph.raw_text, probabilities=probabilities["Notices"]
         )
         aspect_item.reference_paragraphs = [paragraph]
-        aspect.extracted_items = [aspect_item]  # ty: ignore[invalid-assignment]
+        aspect.extracted_items = [aspect_item]
         aspect.reference_paragraphs = [paragraph]
 
         # Items of the concepts
-        aspect.get_concept_by_name("Notice form").extracted_items = [  # ty: ignore[invalid-assignment]
+        aspect.get_concept_by_name("Notice form").extracted_items = [
             _LabelItem(value=["written"], probabilities=probabilities["Notice form"])
         ]
-        document.get_concept_by_name("NDA check").extracted_items = [  # ty: ignore[invalid-assignment]
+        document.get_concept_by_name("NDA check").extracted_items = [
             _BooleanItem(value=True, probabilities=probabilities["NDA check"])
         ]
-        document.get_concept_by_name("Document types").extracted_items = [  # ty: ignore[invalid-assignment]
+        document.get_concept_by_name("Document types").extracted_items = [
             _LabelItem(
                 value=["NDA", "Confidential"],
                 probabilities=probabilities["Document types"],
             )
         ]
-        document.get_concept_by_name("Clarity").extracted_items = [  # ty: ignore[invalid-assignment]
+        document.get_concept_by_name("Clarity").extracted_items = [
             _IntegerItem(value=4, probabilities=probabilities["Clarity"])
         ]
-        document.get_concept_by_name("Title").extracted_items = [  # ty: ignore[invalid-assignment]
+        document.get_concept_by_name("Title").extracted_items = [
             _StringItem(value="Non-disclosure agreement", probabilities=None)
         ]
 
@@ -1327,7 +1337,7 @@ class TestSerialization(BaseTest):
             item = _StringItem(value=paragraph.raw_text)
             item.reference_paragraphs = [paragraph]
             items.append(item)
-        aspect.extracted_items = items
+        aspect.extracted_items = items  # ty: ignore[invalid-assignment]
         aspect.reference_paragraphs = list(document.paragraphs)
         aspect._is_processed = True
         serialized = document.to_dict()

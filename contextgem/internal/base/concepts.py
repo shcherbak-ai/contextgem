@@ -122,7 +122,6 @@ class _Concept(_ExtractedItemsAttributeProcessor):
 
         The type of item as it should appear in prompts.
         """
-        pass
 
     @property
     @abstractmethod
@@ -132,7 +131,6 @@ class _Concept(_ExtractedItemsAttributeProcessor):
 
         The class used for extracted items of this concept.
         """
-        pass
 
     @abstractmethod
     def _process_item_value(self, value: Any) -> Any:
@@ -141,7 +139,6 @@ class _Concept(_ExtractedItemsAttributeProcessor):
 
         Process the item value with a custom function on the concept.
         """
-        pass
 
     @classmethod
     def _validate_concept_extraction_params(cls, data: dict[str, Any]):
@@ -185,7 +182,7 @@ class _StringConcept(_Concept):
         description="Example strings illustrating how this concept should be extracted.",
     )
 
-    _extracted_items: list[_StringItem] = PrivateAttr(default_factory=list)
+    _extracted_items: list[_StringItem] = PrivateAttr(default_factory=list)  # ty: ignore[invalid-attribute-override]  # narrowed to the item class
 
     @property
     def _item_type_in_prompt(self) -> str:
@@ -237,7 +234,7 @@ class _BooleanConcept(_Concept):
         ),
     )
 
-    _extracted_items: list[_BooleanItem] = PrivateAttr(default_factory=list)
+    _extracted_items: list[_BooleanItem] = PrivateAttr(default_factory=list)  # ty: ignore[invalid-attribute-override]  # narrowed to the item class
 
     @property
     def _item_type_in_prompt(self) -> str:
@@ -284,7 +281,7 @@ class _NumericalConcept(_Concept):
         ),
     )
 
-    _extracted_items: list[_IntegerItem | _FloatItem | _IntegerOrFloatItem] = (
+    _extracted_items: list[_IntegerItem | _FloatItem | _IntegerOrFloatItem] = (  # ty: ignore[invalid-attribute-override]  # narrowed to the item class
         PrivateAttr(default_factory=list)
     )
 
@@ -304,12 +301,12 @@ class _NumericalConcept(_Concept):
             return _format_type(int | float)
 
     @property
-    def _item_class(self) -> type:
+    def _item_class(self) -> type[_IntegerItem | _FloatItem | _IntegerOrFloatItem]:
         """
         Returns the item class type for numerical concepts based on numeric type.
 
         :return: The appropriate numerical item class.
-        :rtype: type
+        :rtype: type[_IntegerItem | _FloatItem | _IntegerOrFloatItem]
         """
         if self.numeric_type == "int":
             return _IntegerItem
@@ -318,7 +315,7 @@ class _NumericalConcept(_Concept):
         else:  # "any"
             return _IntegerOrFloatItem
 
-    def _process_item_value(self, value: int | float) -> int | float:
+    def _process_item_value(self, value: float) -> int | float:
         """
         Processes and validates a numerical value for numerical concepts.
 
@@ -341,7 +338,7 @@ class _RatingConcept(_Concept):
         description="Rating scale boundaries as a tuple of (start, end) integers.",
     )
 
-    _extracted_items: list[_IntegerItem] = PrivateAttr(default_factory=list)
+    _extracted_items: list[_IntegerItem] = PrivateAttr(default_factory=list)  # ty: ignore[invalid-attribute-override]  # narrowed to the item class
 
     @field_validator("rating_scale")
     @classmethod
@@ -414,7 +411,7 @@ class _RatingConcept(_Concept):
         return self._extracted_items
 
     @extracted_items.setter
-    def extracted_items(self, value: list[_IntegerItem]) -> None:
+    def extracted_items(self, value: list[_IntegerItem]) -> None:  # ty: ignore[invalid-property-type-override]  # narrowed to the item class
         """
         Validates that all values are within the rating scale range,
         in addition to the validation performed by the parent class.
@@ -467,7 +464,7 @@ class _RatingConcept(_Concept):
         # The value is returned by an LLM, i.e. it may be of any JSON type, which
         # cannot be compared with the scale. A Boolean is not a rating.
         if not isinstance(value, int) or isinstance(value, bool):
-            raise ValueError(
+            raise ValueError(  # noqa: TRY004 - pydantic and the callers handle ValueError
                 f"Invalid value for scaled rating concept: an integer is expected, "
                 f"got {type(value).__name__}"
             )
@@ -498,7 +495,7 @@ class _JsonObjectConcept(_Concept):
         description="Example JSON objects illustrating how this concept should be extracted.",
     )
 
-    _extracted_items: list[_JsonObjectItem] = PrivateAttr(default_factory=list)
+    _extracted_items: list[_JsonObjectItem] = PrivateAttr(default_factory=list)  # ty: ignore[invalid-attribute-override]  # narrowed to the item class
 
     @property
     def _item_type_in_prompt(self) -> str:
@@ -597,7 +594,7 @@ class _JsonObjectConcept(_Concept):
 
         # Ensure we have a dictionary at this point
         if not isinstance(structure, dict):
-            raise ValueError(
+            raise ValueError(  # noqa: TRY004 - pydantic and the callers handle ValueError
                 f"Invalid structure for concept `{cls.__name__}`: "
                 f"Processed structure must be a dict."
             )
@@ -705,7 +702,7 @@ class _JsonObjectConcept(_Concept):
             for k, v in value.items():
                 # Validate that the key is a string
                 if not isinstance(k, str):
-                    raise ValueError(
+                    raise ValueError(  # noqa: TRY004 - pydantic and the callers handle ValueError
                         f"Invalid dictionary key at `{path}`: {k}. "
                         f"Dictionary keys must be strings, got {type(k).__name__}"
                     )
@@ -759,7 +756,7 @@ class _JsonObjectConcept(_Concept):
                             # Ensure all literal values are JSON serializable
                             for literal_arg in get_args(arg):
                                 if not isinstance(literal_arg, JSON_PRIMITIVE_TYPES):
-                                    raise ValueError(
+                                    raise ValueError(  # noqa: TRY004 - pydantic and the callers handle ValueError
                                         f"Invalid Literal value in Optional[Literal] at `{path}` "
                                         f"in concept `{cls.__name__}`: "
                                         f"Literal value '{literal_arg}' is not a JSON primitive type."
@@ -861,7 +858,7 @@ class _DateConcept(_Concept):
     Internal implementation of the DateConcept class.
     """
 
-    _extracted_items: list[_DateItem] = PrivateAttr(default_factory=list)
+    _extracted_items: list[_DateItem] = PrivateAttr(default_factory=list)  # ty: ignore[invalid-attribute-override]  # narrowed to the item class
 
     @property
     def _date_format_in_prompt(self) -> str:
@@ -907,7 +904,7 @@ class _DateConcept(_Concept):
         """
         # The value is returned by an LLM, i.e. it may be of any JSON type
         if not isinstance(value, str):
-            raise ValueError(
+            raise ValueError(  # noqa: TRY004 - pydantic and the callers handle ValueError
                 f"Invalid value for date concept: a string in the "
                 f"'{self._date_format_in_prompt}' format is expected, "
                 f"got {type(value).__name__}"
@@ -973,7 +970,7 @@ class _LabelConcept(_Concept):
         ),
     )
 
-    _extracted_items: list[_LabelItem] = PrivateAttr(default_factory=list)
+    _extracted_items: list[_LabelItem] = PrivateAttr(default_factory=list)  # ty: ignore[invalid-attribute-override]  # narrowed to the item class
 
     @model_validator(mode="after")
     def _validate_decision_threshold_applicable(self) -> Self:
@@ -999,12 +996,12 @@ class _LabelConcept(_Concept):
         return self
 
     @_post_init_method
-    def _post_init(self, __context: Any):
+    def _post_init(self, context: Any, /):
         """
         Post-initialization method that provides guidance for multi-class classification.
 
-        :param __context: Pydantic context (unused).
-        :type __context: Any
+        :param context: Pydantic context (unused).
+        :type context: Any
         """
         if self.classification_type == "multi_class":
             logger.info(
@@ -1029,7 +1026,7 @@ class _LabelConcept(_Concept):
         :rtype: list[str]
         :raises ValueError: If labels are not unique (case-insensitive).
         """
-        if len(set(label.lower() for label in labels)) < len(labels):
+        if len({label.lower() for label in labels}) < len(labels):
             raise ValueError("All labels must be unique (case-insensitive).")
         return labels
 
@@ -1074,7 +1071,7 @@ class _LabelConcept(_Concept):
         return self._extracted_items
 
     @extracted_items.setter
-    def extracted_items(self, value: list[_LabelItem]) -> None:
+    def extracted_items(self, value: list[_LabelItem]) -> None:  # ty: ignore[invalid-property-type-override]  # narrowed to the item class
         """
         Validates that all label values are from the predefined set and conform
         to classification type constraints, in addition to the validation

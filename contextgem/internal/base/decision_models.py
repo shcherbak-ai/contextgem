@@ -148,7 +148,7 @@ def _get_supported_decision_providers() -> tuple[str, ...] | None:
         providers = tuple(
             getattr(decisions_module, _LITELLM_DECISION_PROVIDERS_FUNC_NAME)()
         )
-    except Exception:
+    except Exception:  # noqa: BLE001 - litellm's internals may change
         return None
     if not providers or not all(
         isinstance(provider, str) and provider for provider in providers
@@ -190,7 +190,7 @@ def _get_question_rejection_reasons(question: _DecisionQuestion) -> list[str]:
             message = error["msg"].removeprefix("Value error, ")
             reasons.append(f"`{location}`: {message}" if location else message)
         return reasons
-    except Exception:
+    except Exception:  # noqa: BLE001 - litellm's internals may change
         return []
     return []
 
@@ -495,7 +495,7 @@ class _DocumentDecisionModel(_DocumentModel):
                 provider_id=provider_id,
             )
             return price_data.output_price > 0
-        except Exception:
+        except Exception:  # noqa: BLE001 - genai-prices may raise anything
             # No prices are found for the model, which is warned about when
             # the automatic pricing is set up and when it is applied
             return False
@@ -584,7 +584,7 @@ class _DocumentDecisionModel(_DocumentModel):
         :return: None
         :rtype: None
         """
-        return None
+        return
 
     def _group_instances_for_calls(
         self,
@@ -2006,7 +2006,7 @@ class _DocumentDecisionModel(_DocumentModel):
                     num_retries_failed_request=num_retries_failed_request,
                 )
                 self._record_response(call_obj=call_obj, response=response)
-            except Exception as e:
+            except Exception as e:  # noqa: BLE001 - any request error is collected
                 # The call is unfinished
                 failed_calls[position] = call_obj
                 request_errors.append((position, e))

@@ -328,7 +328,7 @@ class TestLLMs(BaseTest):
 
         # Invalid params
         with pytest.raises(ValueError):
-            DocumentLLM()
+            DocumentLLM()  # ty: ignore[missing-argument]
         with pytest.raises(ValueError):
             DocumentLLM(
                 model="openai/gpt-6-luna",
@@ -422,8 +422,8 @@ class TestLLMs(BaseTest):
             DocumentLLM(
                 model="openai/gpt-6-luna",
                 api_key=os.getenv("CONTEXTGEM_OPENAI_API_KEY"),
-                pricing_details=ModelPricing(
-                    **{  # invalid pricing details keys
+                pricing_details=ModelPricing(  # ty: ignore[missing-argument]
+                    **{  # ty: ignore[unknown-argument]  # invalid pricing details keys
                         "in": 0.1,
                         "out": 0.2,
                     }
@@ -434,10 +434,9 @@ class TestLLMs(BaseTest):
                 model="openai/gpt-6-luna",
                 api_key=os.getenv("CONTEXTGEM_OPENAI_API_KEY"),
                 pricing_details=ModelPricing(
-                    **{  # invalid pricing details values
-                        "input_per_1m_tokens": -0.00015,
-                        "output_per_1m_tokens": 0.0006,
-                    }
+                    # invalid pricing details values
+                    input_per_1m_tokens=-0.00015,
+                    output_per_1m_tokens=0.0006,
                 ),
             )
         with pytest.raises(ValueError):
@@ -520,7 +519,7 @@ class TestLLMs(BaseTest):
         """
         # Test custom prompts assignment
         llm_with_updated_prompts = DocumentLLM(
-            **self._llm_extractor_kwargs_openai,  # ty: ignore[invalid-argument-type]
+            **self._llm_extractor_kwargs_openai,
         )
         project_root = get_project_root_path()
         prompt_aspects_without_tags_path = (
@@ -1790,7 +1789,7 @@ class TestLLMs(BaseTest):
         # ... also when the group is invalid otherwise. Without its LLMs, the input
         # is all the params that are passed, i.e. the key.
         with pytest.raises(ValidationError) as e:
-            DocumentModelGroup(api_key=api_key)
+            DocumentModelGroup(api_key=api_key)  # ty: ignore[missing-argument, unknown-argument]
         self.check_validation_error_hides_inputs(
             e.value, api_key, ["models", "Field required", *key_rejected_texts]
         )
@@ -1807,7 +1806,7 @@ class TestLLMs(BaseTest):
         # With a single LLM, the LLM is reported as it is
         single_llm = [llm]
         with pytest.raises(ValidationError) as e:
-            DocumentModelGroup(models=single_llm, api_key=api_key)
+            DocumentModelGroup(models=single_llm, api_key=api_key)  # ty: ignore[unknown-argument]
         self.check_validation_error_hides_inputs(
             e.value, api_key, ["models", "at least 2 items", *key_rejected_texts]
         )

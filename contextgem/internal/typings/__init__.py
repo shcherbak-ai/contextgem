@@ -49,7 +49,7 @@ from contextgem.internal.typings.validators import (
 )
 
 
-__all__ = (
+__all__ = (  # noqa: RUF022 - grouped by kind
     # Types
     "NonEmptyStr",
     "ModelRole",

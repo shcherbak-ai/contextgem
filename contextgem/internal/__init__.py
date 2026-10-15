@@ -120,7 +120,7 @@ from contextgem.internal.utils import (
 )
 
 
-__all__ = (
+__all__ = (  # noqa: RUF022 - grouped by kind
     # Base
     "_COST_QUANT",
     "_LOCAL_MODEL_PROVIDERS",

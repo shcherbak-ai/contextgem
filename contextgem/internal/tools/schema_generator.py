@@ -88,7 +88,7 @@ def _resolve_type_hints(
             "not inside a function. This applies to all type hints in a module with "
             "`from __future__ import annotations`."
         ) from e
-    except Exception:
+    except Exception:  # noqa: BLE001 - falls back to the raw annotations
         return raw_annotations
 
 

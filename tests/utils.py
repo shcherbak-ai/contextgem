@@ -414,7 +414,7 @@ class TestUtils:
 
         # Saving to disk / loading from disk
         disk_path = os.path.join(
-            get_project_root_path(), "tests", f"instance_{str(uuid4())}.json"
+            get_project_root_path(), "tests", f"instance_{uuid4()!s}.json"
         )
         instance.to_disk(disk_path)
         new_instance = instance.__class__.from_disk(disk_path)
@@ -480,7 +480,7 @@ class TestUtils:
 
         # From disk
         disk_path = os.path.join(
-            get_project_root_path(), "tests", f"instance_{str(uuid4())}.json"
+            get_project_root_path(), "tests", f"instance_{uuid4()!s}.json"
         )
         instance.to_disk(disk_path)
         if isinstance(instance, DocumentLLM):
@@ -560,9 +560,9 @@ class TestUtils:
             assert hasattr(cost_item, "is_fallback")
             assert hasattr(cost_item, "cost") and cost_item.cost
             assert isinstance(cost_item.cost, _ModelCost)
-            if cost_item.cost.input > Decimal("0"):
+            if cost_item.cost.input > Decimal(0):
                 cost_input_updated = True
-            if cost_item.cost.output > Decimal("0"):
+            if cost_item.cost.output > Decimal(0):
                 cost_output_updated = True
         assert cost_input_updated and cost_output_updated
 
@@ -762,7 +762,7 @@ class TestUtils:
 
     def check_model_validation_errors_hide_inputs(
         self,
-        model_class: type[DocumentLLM] | type[DocumentDecisionModel],
+        model_class: type[DocumentLLM | DocumentDecisionModel],
         model_params: dict[str, Any],
         api_key: str,
         created_model_is_input: bool,

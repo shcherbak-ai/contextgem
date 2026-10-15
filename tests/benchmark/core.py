@@ -213,7 +213,7 @@ def _judge_target(
         rating = int(data.get("rating", 0))
         justification = data.get("justification", "").strip()
         return rating, justification
-    except Exception:
+    except Exception:  # noqa: BLE001 - an unusable judge answer scores 0
         return 0, ""
 
 

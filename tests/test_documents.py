@@ -491,7 +491,7 @@ class TestDocuments(BaseTest):
         document = Document(paragraphs=[paragraph])
         assert document.raw_text  # to be populated from paragraphs
         with pytest.raises(ValueError):
-            Paragraph()
+            Paragraph()  # ty: ignore[missing-argument]
         with pytest.raises(ValueError):
             Paragraph(
                 raw_text="Test paragraph",
@@ -532,7 +532,7 @@ class TestDocuments(BaseTest):
         Paragraph(raw_text=sentence.raw_text, sentences=[sentence])
         # Warning is logged if linebreaks occur in additional context
         with pytest.raises(ValueError):
-            Sentence()
+            Sentence()  # ty: ignore[missing-argument]
         Sentence(
             raw_text="Test sentence",
             additional_context="""
@@ -985,7 +985,7 @@ class TestDocuments(BaseTest):
                 ),
             )  # tuple instead of list
         with pytest.raises(ValueError, match="list"):
-            context.concepts = set([1, 2, 3])  # set instead of list  # type: ignore
+            context.concepts = {1, 2, 3}  # set instead of list  # type: ignore
         with pytest.raises(ValueError, match="list"):
             context.concepts = range(10)  # range instead of list  # type: ignore
 

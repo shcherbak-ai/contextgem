@@ -75,7 +75,7 @@ class TestUsageAndCost(BaseTest):
         with pytest.raises(ValueError):
             ModelPricing(input_per_1m_tokens=-1, output_per_1m_tokens=0)
         with pytest.raises(ValueError):
-            ModelPricing(input_per_1m_tokens=0.1)
+            ModelPricing(input_per_1m_tokens=0.1)  # ty: ignore[missing-argument]
         # Cost data model
         _ModelCost(input=Decimal("0.01"), output=Decimal("0.02"), total=Decimal("0.03"))
         with pytest.raises(ValueError):
@@ -107,7 +107,7 @@ class TestUsageAndCost(BaseTest):
         group = DocumentModelGroup(models=[primary, llm_no_role])
         for llm in [primary, fallback, llm_no_role]:
             llm._usage = _ModelUsage(input=10, output=5)
-            llm._cost = _ModelCost(input=Decimal("1"), total=Decimal("1"))
+            llm._cost = _ModelCost(input=Decimal(1), total=Decimal(1))
 
         invalid_roles: list[Any] = ["", "  ", 1, "line\nbreak", "r" * 65]
         for getter in [group.get_usage, group.get_cost]:
@@ -955,7 +955,7 @@ class TestUsageAndCost(BaseTest):
         with pytest.warns(UserWarning, match="not be 100% accurate"):
             other_llm = create_llm("openai/gpt-5.6-luna", auto_pricing=True)
         cost_of_other_model = get_cost_of_call(other_llm)
-        assert Decimal("0") < cost_of_model != cost_of_other_model
+        assert Decimal(0) < cost_of_model != cost_of_other_model
 
         # === The model is changed ===
         # The costs are calculated with the prices of the new model, which are
@@ -978,7 +978,7 @@ class TestUsageAndCost(BaseTest):
         check_warning_attributed_to_this_file(
             caught_pricing_warnings, "Unable to fetch pricing data"
         )
-        assert get_cost_of_call(llm) == Decimal("0")
+        assert get_cost_of_call(llm) == Decimal(0)
         # The prices are not looked up again when another param is assigned
         with warnings.catch_warnings(record=True) as caught_warnings:
             warnings.simplefilter("always")
@@ -991,7 +991,7 @@ class TestUsageAndCost(BaseTest):
         # === The automatic pricing is enabled and disabled ===
         llm = create_llm("openai/gpt-6-luna")
         assert llm._auto_pricing_provider_id is None
-        assert get_cost_of_call(llm) == Decimal("0")
+        assert get_cost_of_call(llm) == Decimal(0)
         with pytest.warns(
             UserWarning, match="not be 100% accurate"
         ) as caught_pricing_warnings:
@@ -1003,7 +1003,7 @@ class TestUsageAndCost(BaseTest):
         llm.auto_pricing = False
         assert llm._auto_pricing_provider_id is None
         assert llm._auto_pricing_model_ref is None
-        assert get_cost_of_call(llm) == Decimal("0")
+        assert get_cost_of_call(llm) == Decimal(0)
         # ... also when the model is changed while it is disabled
         llm.model = "openai/gpt-5.6-luna"
         with pytest.warns(UserWarning, match="not be 100% accurate"):
@@ -1058,8 +1058,8 @@ class TestUsageAndCost(BaseTest):
         cost_info = llm.get_cost()
         assert len(cost_info) == 1
         cost = cost_info[0].cost
-        assert cost.input > Decimal("0")
-        assert cost.output > Decimal("0")
+        assert cost.input > Decimal(0)
+        assert cost.output > Decimal(0)
         assert cost.total == cost.input + cost.output
         logger.debug(
             f"Costs for model {llm.model} (auto-pricing): "

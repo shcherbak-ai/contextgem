@@ -8,6 +8,7 @@ Module defining the base class of the feature and integration tests.
 from __future__ import annotations
 
 import os
+from typing import Any, ClassVar
 
 import pytest
 from dotenv import load_dotenv
@@ -126,20 +127,17 @@ class BaseTest(TestUtils):
     # LLMs
 
     # Extractor (LLM without a role, i.e. the default one in the model group)
-    _llm_extractor_kwargs_openai = {
+    _llm_extractor_kwargs_openai: ClassVar[dict[str, Any]] = {
         "model": "openai/gpt-6-luna",
         "api_key": os.getenv("CONTEXTGEM_OPENAI_API_KEY"),
         "pricing_details": ModelPricing(  # Explicitly set pricing details
-            **{
-                "input_per_1m_tokens": 0.10,
-                "output_per_1m_tokens": 0.50,
-            }
+            input_per_1m_tokens=0.10, output_per_1m_tokens=0.50
         ),
     }
 
     # Reasoner (LLM with a role, i.e. the one that the aspects/concepts
     # with the same role are routed to in the model group)
-    _llm_reasoner_kwargs_openai = {
+    _llm_reasoner_kwargs_openai: ClassVar[dict[str, Any]] = {
         "model": "openai/gpt-5.6-luna",
         "api_key": os.getenv("CONTEXTGEM_OPENAI_API_KEY"),
         "role": "reasoner",
@@ -148,35 +146,35 @@ class BaseTest(TestUtils):
     }
 
     # Extractor
-    llm_extractor = DocumentLLM(**_llm_extractor_kwargs_openai)  # ty: ignore[invalid-argument-type]
+    llm_extractor = DocumentLLM(**_llm_extractor_kwargs_openai)
 
     # Reasoner
-    llm_reasoner = DocumentLLM(**_llm_reasoner_kwargs_openai)  # ty: ignore[invalid-argument-type]
+    llm_reasoner = DocumentLLM(**_llm_reasoner_kwargs_openai)
 
     # Model group
-    _model_group_llms = [
-        DocumentLLM(**_llm_extractor_kwargs_openai),  # ty: ignore[invalid-argument-type]
-        DocumentLLM(**_llm_reasoner_kwargs_openai),  # ty: ignore[invalid-argument-type]
+    _model_group_llms: ClassVar[list[DocumentLLM]] = [
+        DocumentLLM(**_llm_extractor_kwargs_openai),
+        DocumentLLM(**_llm_reasoner_kwargs_openai),
     ]  # newly initialized LLMs in group for separate usage and cost tracking)
-    model_group = DocumentModelGroup(models=_model_group_llms)  # ty: ignore[invalid-argument-type]
+    model_group = DocumentModelGroup(models=_model_group_llms)
 
     # LLM with fallback
-    _invalid_llm_kwargs = {
+    _invalid_llm_kwargs: ClassVar[dict[str, Any]] = {
         "model": "helloworld/helloworld-v1",
         "api_key": "invalid_api_key",
     }
-    llm_invalid = DocumentLLM(**_invalid_llm_kwargs)  # ty: ignore[invalid-argument-type]
-    invalid_llm_with_valid_fallback = DocumentLLM(**_invalid_llm_kwargs)  # ty: ignore[invalid-argument-type]
-    invalid_llm_with_valid_fallback.fallback_models = [
+    llm_invalid = DocumentLLM(**_invalid_llm_kwargs)
+    invalid_llm_with_valid_fallback = DocumentLLM(**_invalid_llm_kwargs)
+    invalid_llm_with_valid_fallback.fallback_models = [  # noqa: RUF012 - an attribute of the LLM
         DocumentLLM(
-            **_llm_extractor_kwargs_openai,  # ty: ignore[invalid-argument-type]
+            **_llm_extractor_kwargs_openai,
             is_fallback=True,
         )
     ]
 
     # LLM with a non-EN output language setting
     llm_extractor_non_eng = DocumentLLM(
-        **_llm_extractor_kwargs_openai,  # ty: ignore[invalid-argument-type]
+        **_llm_extractor_kwargs_openai,
         output_language="adapt",
     )
 

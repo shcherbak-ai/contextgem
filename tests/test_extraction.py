@@ -439,7 +439,7 @@ class TestExtraction(BaseTest):
         with pytest.raises(ValueError, match="list"):
             llm.extract_aspects_from_document(
                 document,
-                from_aspects=set([1, 2, 3]),  # type: ignore
+                from_aspects={1, 2, 3},  # type: ignore
             )
 
         # Duplicates check
@@ -793,7 +793,7 @@ class TestExtraction(BaseTest):
             llm.extract_concepts_from_aspect(
                 aspect=attached_aspect,
                 document=document,
-                from_concepts=set([1, 2, 3]),  # type: ignore
+                from_concepts={1, 2, 3},  # type: ignore
             )
 
         # Duplicates check
@@ -1007,7 +1007,7 @@ class TestExtraction(BaseTest):
         with pytest.raises(ValueError, match="list"):
             llm.extract_concepts_from_document(
                 document,
-                from_concepts=set([1, 2, 3]),  # type: ignore
+                from_concepts={1, 2, 3},  # type: ignore
             )
 
         # No partial update check
@@ -1358,7 +1358,7 @@ class TestExtraction(BaseTest):
 
         paragraphs = _split_text_into_paragraphs(get_test_document_text())
         paragraphs = [Paragraph(raw_text=i) for i in paragraphs]
-        document = Document(paragraphs=paragraphs)  # ty: ignore[invalid-argument-type]
+        document = Document(paragraphs=paragraphs)
         assert document.raw_text  # to be populated from paragraphs
         aspects_to_extract = [
             Aspect(
@@ -1427,9 +1427,9 @@ class TestExtraction(BaseTest):
         # extracted from images are routed to a separate LLM by the role.
         model_group = DocumentModelGroup(
             models=[
-                DocumentLLM(**self._llm_extractor_kwargs_openai),  # ty: ignore[invalid-argument-type]
+                DocumentLLM(**self._llm_extractor_kwargs_openai),
                 DocumentLLM(
-                    **self._llm_extractor_kwargs_openai,  # ty: ignore[invalid-argument-type]
+                    **self._llm_extractor_kwargs_openai,
                     role="vision",
                 ),
             ]
@@ -2642,7 +2642,7 @@ class TestExtraction(BaseTest):
                 await model.extract_concepts_from_document_async(
                     document, use_concurrency=True, **kwargs
                 )
-            except Exception as e:
+            except Exception as e:  # noqa: BLE001 - the error is returned to the test
                 error = e
             assert not [
                 task for task in asyncio.all_tasks() - tasks_before if not task.done()
@@ -3352,10 +3352,14 @@ class TestExtraction(BaseTest):
             check_log(
                 [primary_model, fallback_model],
                 [
-                    f"WARNING: The request to LLM `{primary_model}` has params that "
-                    f"are not supported for the model, and is sent without them: ",
-                    "ERROR: Exception occurred while calling LLM API with "
-                    "drop_params=True: ",
+                    (
+                        f"WARNING: The request to LLM `{primary_model}` has params that "
+                        f"are not supported for the model, and is sent without them: "
+                    ),
+                    (
+                        "ERROR: Exception occurred while calling LLM API with "
+                        "drop_params=True: "
+                    ),
                     fallback_pending,
                     trying_fallback_llm,
                 ],
@@ -5108,7 +5112,7 @@ class TestExtraction(BaseTest):
                 item.reference_paragraphs = [paragraph]
                 item.reference_sentences = paragraph.sentences[1:]
                 aspect_items.append(item)
-            aspect.extracted_items = aspect_items
+            aspect.extracted_items = aspect_items  # ty: ignore[invalid-assignment]
             aspect.reference_paragraphs = document.paragraphs[:2]
             aspect.reference_sentences = [
                 sentence
@@ -5118,7 +5122,7 @@ class TestExtraction(BaseTest):
             concept_item = concept._item_class(value="Norway")
             concept_item.reference_paragraphs = document.paragraphs[2:]
             concept_item.reference_sentences = list(document.paragraphs[2].sentences)
-            concept.extracted_items = [concept_item]  # ty: ignore[invalid-assignment]
+            concept.extracted_items = [concept_item]
             for instance in (aspect, concept):
                 instance._is_processed = True
             return document
@@ -5506,7 +5510,7 @@ class TestExtraction(BaseTest):
             item.reference_paragraphs = [paragraphs[paragraph_position]]
             item.reference_sentences = [sentence]
             items.append(item)
-        aspect.extracted_items = items
+        aspect.extracted_items = items  # ty: ignore[invalid-assignment]
         aspect._add_references_of_extracted_items()
         # The copies that the aspect had are kept, and what they are copies of
         # is not added: the other references follow in the order of the items

@@ -99,10 +99,10 @@ dependencies = [
     "colorlog (>=6.9.0,<7.0.0)",
     "docstring-parser (>=0.17.0,<1.0.0)",
     "fastjsonschema (>=2.21.2,<3.0.0)",
-    "genai-prices==0.1.12", # pin version due to frequent API changes
+    "genai-prices==0.1.13", # pin version due to frequent API changes
     "jinja2 (>=3.1.5,<4.0.0)",
     "litellm==1.105.1", # pin version due to occasional instability between patches and minor versions
-    "openai==2.54.0", # pinned version for stable compatibility with litellm (after issue with 1.100.0)
+    "openai==2.54.0", # pinned to the version tested with litellm (openai 1.100.0 once broke importing litellm 1.75.8)
     "pillow (>=11.3.0,<13.0.0)",
     "pydantic (>=2.10.6,<3.0.0)",
     "python-ulid (>=3.0.0,<5.0.0)",
@@ -127,14 +127,14 @@ dev = [
     "hypothesis (>=6.122.0,<7.0.0)",
     "interrogate (>=1.7.0,<2.0.0)",
     "pre-commit (>=4.1.0,<5.0.0)",
-    "ty (==0.0.35)", # pinned to the last fully-clean ty release; newer ones surface issues here; unpin when issues are fixed
-    "pytest (>=8.3.4,<9.0.0)",
-    "pytest-cov (>=6.0.0,<7.0.0)",
+    "ty (>=0.0.88,<1.0.0)",
+    "pytest (>=9.1.1,<10.0.0)",
+    "pytest-cov (>=7.1.0,<8.0.0)",
     "pytest-recording (>=0.13.4,<1.0.0)",
     "python-dotenv (>=1.0.1,<2.0.0)",
-    "ruff (>=0.12.3,<0.16.0)", # ruff 0.16 expands the default lint rule set, flagging many new issues; capped until a dedicated lint migration
-    "sphinx (>=7.0.0,<8.0.0)",
-    "sphinx-autodoc-typehints<3.0.0",
+    "ruff (>=0.17.1,<1.0.0)",
+    "sphinx (>=9.0.4,<10.0.0)",
+    "sphinx-autodoc-typehints (>=3.6.1,<4.0.0)",
     "sphinx-autobuild (>=2024.10.3,<2027.0.0)",
     "sphinx-book-theme (>=1.1.4,<2.0.0)",
     "sphinx-copybutton (>=0.5.2,<1.0.0)",
@@ -173,7 +173,7 @@ exclude = [
 ]
 
 [tool.ruff.lint]
-extend-select = ["I", "B", "UP", "N", "SIM"]
+extend-select = ["E4", "E7", "E9", "F", "I", "B", "UP", "N", "SIM"]
 
 [tool.ruff.lint.isort]
 force-single-line = false
@@ -240,6 +240,7 @@ DEP002 = [
     "tenacity",     # required by litellm for retry logic
 ]
 DEP003 = [
+    "docutils",     # installed with sphinx, whose nodes docs/source/conf.py adds handlers for
     "invoke",       # required for development tasks
     "pydantic_core",  # the core of pydantic, installed with it at the version it pins
 ]

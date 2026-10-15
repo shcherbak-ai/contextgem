@@ -342,9 +342,9 @@ class TestChat(BaseTest):
             {"role": "tool", "tool_call_id": "call_123", "name": "function_name"},
         ]:
             with pytest.raises(ValueError, match="`content` can be None only"):
-                _Message(content=None, **invalid_kwargs)
+                _Message(content=None, **invalid_kwargs)  # ty: ignore[invalid-argument-type]
         with pytest.raises(ValueError):
-            _Message(role="assistant", tool_calls=tool_calls)
+            _Message(role="assistant", tool_calls=tool_calls)  # ty: ignore[missing-argument]
         with pytest.raises(ValueError):
             _Message(role="assistant", content="", tool_calls=tool_calls)
 
@@ -794,12 +794,12 @@ class TestChat(BaseTest):
         # remain with _response_succeeded == False and no assistant message should
         # be appended.
         cs_err_fb = ChatSession()
-        bad_primary = DocumentLLM(**self._invalid_llm_kwargs)  # ty: ignore[invalid-argument-type]
+        bad_primary = DocumentLLM(**self._invalid_llm_kwargs)
         invalid_llm_kwargs_2 = deepcopy(self._invalid_llm_kwargs)
         invalid_llm_kwargs_2["model"] = "newmodel/123"
         bad_primary.fallback_models = [
             DocumentLLM(
-                **invalid_llm_kwargs_2,  # ty: ignore[invalid-argument-type]
+                **invalid_llm_kwargs_2,
                 is_fallback=True,
             )
         ]
@@ -872,7 +872,7 @@ class TestChat(BaseTest):
             calls["final"] += 1
             try:
                 res = (int(invoice_total) - int(discount)) + int(surcharge)
-            except Exception:
+            except Exception:  # noqa: BLE001 - the tool must answer whatever the model passes
                 # Be robust if model passes non-ints
                 res = (int(float(invoice_total)) - int(float(discount))) + int(
                     float(surcharge)

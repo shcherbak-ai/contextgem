@@ -6,11 +6,13 @@ from __future__ import annotations
 import os
 import sys
 
+from docutils import nodes
+
 
 # Add path to the package
 sys.path.insert(0, os.path.abspath("../.."))
 
-from contextgem import __version__  # noqa: E402
+from contextgem import __version__
 
 
 project = "ContextGem"
@@ -48,12 +50,29 @@ def skip_pydantic_internals(app, what, name, obj, skip, options):
     return skip
 
 
+def _write_children_only(translator, node):
+    """
+    Writes nothing for the node itself: its text is written by its children.
+    """
+
+
 def setup(app):
     """
     Setup function for Sphinx documentation.
     """
 
     app.connect("autodoc-skip-member", skip_pydantic_internals)
+    # Sphinx renders the `*` and `/` separators of a signature as abbreviations,
+    # which the Markdown builder of the llms.txt copies has no form for, and would
+    # leave out: write their text instead
+    app.add_node(
+        nodes.abbreviation,
+        override=True,
+        **{
+            builder: (_write_children_only, _write_children_only)
+            for builder in ("markdown", "llms-markdown")
+        },
+    )
 
 
 # Extensions

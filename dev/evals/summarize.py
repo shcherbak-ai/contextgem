@@ -144,13 +144,17 @@ def _get_judged_lines(
         "",
         f"## Judged by {', '.join(judges)}",
         "",
-        "String values, justifications and text fields of objects, over all the "
-        "runs judged; a value equal to the reference value or to an accepted one "
-        "is correct without the judge.",
+        (
+            "String values, justifications and text fields of objects, over all the "
+            "runs judged; a value equal to the reference value or to an accepted one "
+            "is correct without the judge."
+        ),
         "",
-        "| Case | Model | Mode | Runs judged | Strings correct | "
-        "Justifications correct | Object fields correct | Judge requests | "
-        "Judge cost (USD) |",
+        (
+            "| Case | Model | Mode | Runs judged | Strings correct | "
+            "Justifications correct | Object fields correct | Judge requests | "
+            "Judge cost (USD) |"
+        ),
         "|---|---|---|---|---|---|---|---|---|",
     ]
     for key in sorted(groups):
@@ -202,13 +206,17 @@ def summarize(label: str) -> tuple[str, list[dict[str, Any]]]:
     lines = [
         f"# Extraction evaluation: {label}",
         "",
-        "Decision models extract only the closed concepts (Boolean, label and rating "
-        "concepts), without justifications and references: compare them with LLMs "
-        "on the aspects and on the closed concepts.",
+        (
+            "Decision models extract only the closed concepts (Boolean, label and rating "
+            "concepts), without justifications and references: compare them with LLMs "
+            "on the aspects and on the closed concepts."
+        ),
         "",
-        "| Case | Model | Mode | Runs | Aspect F1 | Concepts correct | "
-        "Closed concepts correct | Reference F1 | Requests | Input tokens | Cached | "
-        "Output tokens | Seconds | Retries |",
+        (
+            "| Case | Model | Mode | Runs | Aspect F1 | Concepts correct | "
+            "Closed concepts correct | Reference F1 | Requests | Input tokens | Cached | "
+            "Output tokens | Seconds | Retries |"
+        ),
         "|---|---|---|---|---|---|---|---|---|---|---|---|---|---|",
     ]
     rows: list[dict[str, Any]] = []

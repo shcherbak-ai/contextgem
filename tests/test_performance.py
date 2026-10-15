@@ -36,7 +36,7 @@ class TestPerformance(BaseTest):
 
         # The benchmark unsets the system message of the judge LLM, so the judge
         # is a new LLM with the settings of the reasoner, not the shared reasoner
-        judge_llm = DocumentLLM(**self._llm_reasoner_kwargs_openai)  # ty: ignore[invalid-argument-type]
+        judge_llm = DocumentLLM(**self._llm_reasoner_kwargs_openai)
 
         run_benchmark_for_module(
             llm=self.llm_extractor,

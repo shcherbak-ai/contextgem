@@ -11,10 +11,13 @@ import inspect
 import timeit
 from collections.abc import Callable
 from functools import wraps
-from typing import Any
+from typing import Any, TypeVar
 
 from contextgem.internal.loggers import logger
-from contextgem.internal.registry import _expose_in_registry as _expose_in_registry
+from contextgem.internal.registry import _expose_in_registry as _expose_in_registry  # noqa: PLC0414 - explicit re-export
+
+
+_TClass = TypeVar("_TClass", bound=type)
 
 
 def _post_init_method(func: Callable[[Any, Any], None]) -> Callable[[Any, Any], None]:
@@ -105,7 +108,7 @@ def _timer_decorator(
     return outer_wrapper
 
 
-def _disable_direct_initialization(cls: type) -> type:
+def _disable_direct_initialization(cls: _TClass) -> _TClass:
     """
     Class decorator that disables direct instantiation of the decorated class.
 

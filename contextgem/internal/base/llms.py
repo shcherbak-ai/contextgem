@@ -1079,7 +1079,7 @@ class _DocumentLLM(_DocumentModel):
             # Count tokens in the messages
             try:
                 token_count = litellm.token_counter(model=self.model, messages=messages)  # type: ignore[attr-defined]
-            except Exception as e:
+            except Exception as e:  # noqa: BLE001 - token counting must not fail the call
                 logger.warning(
                     f"Could not count tokens for model `{self.model}`: {e}. Skipping input token validation."
                 )
@@ -1110,7 +1110,7 @@ class _DocumentLLM(_DocumentModel):
             logger.warning(
                 f"Could not validate max input tokens for model `{self.model}`: {e}"
             )
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001 - model info must not fail the call
             # If we can't get model info, log a warning but don't fail
             logger.warning(
                 f"Could not validate max input tokens for model `{self.model}`: {e}"
@@ -1175,7 +1175,7 @@ class _DocumentLLM(_DocumentModel):
             logger.warning(
                 f"Could not validate max output tokens for model `{self.model}`: {e}"
             )
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001 - model info must not fail the call
             # If we can't get model info, log a warning but don't fail
             logger.warning(
                 f"Could not validate max output tokens for model `{self.model}`: {e}"
@@ -1469,7 +1469,7 @@ class _DocumentLLM(_DocumentModel):
 
         try:
             args_dict = json.loads(args_raw)
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001 - returned to the model as a tool error
             content_text = json.dumps(
                 {
                     "error": "InvalidToolArguments",
@@ -1517,7 +1517,7 @@ class _DocumentLLM(_DocumentModel):
                 res = await handler(**args_dict)
             else:
                 res = handler(**args_dict)
-        except Exception as ex:
+        except Exception as ex:  # noqa: BLE001 - a tool's errors go back to the model
             content_text = json.dumps(
                 {"error": "ToolExecutionError", "message": str(ex)}
             )

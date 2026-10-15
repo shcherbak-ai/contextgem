@@ -185,15 +185,15 @@ class _PostInitCollectorMixin(BaseModel):
     # Holds all post-init methods for the class.
     __post_init_methods__: list[Callable[[Any, Any], Any]] = []
 
-    def model_post_init(self, __context: Any) -> None:
+    def model_post_init(self, context: Any, /) -> None:
         """
         Executes the post-init methods defined in each base class.
 
-        :param __context: The context to be passed to each post-init method.
+        :param context: The context to be passed to each post-init method.
         """
         # Pydantic-specific
         for func in self.__class__.__post_init_methods__:
-            func(self, __context)
+            func(self, context)
 
     def __init_subclass__(cls, **kwargs):
         """
@@ -209,7 +209,7 @@ class _PostInitCollectorMixin(BaseModel):
         methods: list[Callable[[Any, Any], Any]] = []
         seen_ids = set()
         for base in cls.__mro__:
-            for _attr, value in base.__dict__.items():
+            for value in base.__dict__.values():
                 if (
                     callable(value)
                     and getattr(value, "__post_init__", False)

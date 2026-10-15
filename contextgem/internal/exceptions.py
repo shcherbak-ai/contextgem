@@ -89,8 +89,6 @@ class ModelExtractionError(_BaseModelError):
     :vartype original_error: Exception or None
     """
 
-    pass
-
 
 class ModelAPIError(_BaseModelError):
     """
@@ -119,8 +117,6 @@ class ModelAPIError(_BaseModelError):
     :vartype original_error: Exception or None
     """
 
-    pass
-
 
 # Tool calling / tooling exceptions
 
@@ -136,8 +132,6 @@ class LLMToolLoopLimitError(_BaseModelError):
 
     Can be imported from ``contextgem``.
     """
-
-    pass
 
 
 class _ToolReturnValueError(Exception):

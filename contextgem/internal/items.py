@@ -156,8 +156,8 @@ class _JsonObjectItem(_ExtractedItem):
             for key, val in structure.items():
                 # Ensure the key is a string
                 if not isinstance(key, str):
-                    raise ValueError(
-                        f"All keys in the structure must be strings. Found key: {repr(key)}"
+                    raise ValueError(  # noqa: TRY004 - pydantic and the callers handle ValueError
+                        f"All keys in the structure must be strings. Found key: {key!r}"
                     )
 
                 # If the value is a dict, validate it recursively
@@ -199,7 +199,7 @@ class _DateItem(_ExtractedItem):
         :raises ValueError: If the provided value is not a valid date object.
         """
         if not isinstance(value, date):
-            raise ValueError(
+            raise ValueError(  # noqa: TRY004 - pydantic and the callers handle ValueError
                 f"Value must be a valid date object. Got {type(value).__name__}."
             )
         return value
@@ -276,7 +276,7 @@ class _LabelItem(_ExtractedItem):
         :rtype: list[str]
         :raises ValueError: If the list contains duplicate labels (case-insensitive).
         """
-        if len(set(v.lower() for v in value)) < len(value):
+        if len({v.lower() for v in value}) < len(value):
             raise ValueError(
                 "_LabelItem value cannot contain duplicate labels (case-insensitive)."
             )

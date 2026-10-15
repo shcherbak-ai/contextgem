@@ -54,7 +54,7 @@ def _get_aspect_extraction_output_struct(
             )
             paragraph_model_kwargs = {
                 "paragraph_id": (NonEmptyStr, ...),
-                "sentences": (list[sentence_model], ...),
+                "sentences": (list[sentence_model], ...),  # ty: ignore[invalid-type-form]  # model built at runtime
             }
         # Paragraph-level reference depth
         else:
@@ -70,7 +70,7 @@ def _get_aspect_extraction_output_struct(
         )
         aspect_model_kwargs = {
             "aspect_id": (NonEmptyStr, ...),
-            "paragraphs": (list[paragraph_model], ...),
+            "paragraphs": (list[paragraph_model], ...),  # ty: ignore[invalid-type-form]  # model built at runtime
         }
 
     else:
@@ -87,7 +87,7 @@ def _get_aspect_extraction_output_struct(
             )
             paragraph_model_kwargs = {
                 "paragraph_id": (NonEmptyStr, ...),
-                "sentences": (list[sentence_model], ...),
+                "sentences": (list[sentence_model], ...),  # ty: ignore[invalid-type-form]  # model built at runtime
             }
             # Safe cast: type checker can't infer types when unpacking kwargs to create_model
             paragraph_model = create_model(
@@ -97,7 +97,7 @@ def _get_aspect_extraction_output_struct(
             )
             aspect_model_kwargs = {
                 "aspect_id": (NonEmptyStr, ...),
-                "paragraphs": (list[paragraph_model], ...),
+                "paragraphs": (list[paragraph_model], ...),  # ty: ignore[invalid-type-form]  # model built at runtime
             }
         # Paragraph-level reference depth
         else:
@@ -112,5 +112,5 @@ def _get_aspect_extraction_output_struct(
         __config__=ConfigDict(extra="forbid"),
         **cast(Any, aspect_model_kwargs),
     )
-    dynamic_root_model = _create_root_model("DynamicRootModel", list[aspect_model])
+    dynamic_root_model = _create_root_model("DynamicRootModel", list[aspect_model])  # ty: ignore[invalid-type-form]  # model built at runtime
     return dynamic_root_model

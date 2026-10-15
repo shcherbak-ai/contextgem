@@ -17,7 +17,7 @@ import re
 import sys
 import types
 import warnings
-from collections.abc import Callable, Iterator, Sequence
+from collections.abc import Callable, Generator, Sequence
 from contextlib import contextmanager
 from decimal import ROUND_HALF_UP, Decimal
 from pathlib import Path
@@ -169,8 +169,10 @@ _ASPECTS_PARAGRAPH_TEXTS_CLEANED = [
 ]
 _ASPECTS_PARAGRAPH_TEXTS_SENT = [
     *_ASPECTS_PARAGRAPH_TEXTS_CLEANED[:2],
-    "Paragraph: Either party may terminate this agreement with a written notice "
-    "of 30 days.\n\nAdditional context of the paragraph: Section 3. Termination",
+    (
+        "Paragraph: Either party may terminate this agreement with a written notice "
+        "of 30 days.\n\nAdditional context of the paragraph: Section 3. Termination"
+    ),
     *_ASPECTS_PARAGRAPH_TEXTS_CLEANED[3:],
 ]
 
@@ -615,7 +617,7 @@ def _set_aspect_as_extracted(document: Document, aspect: _Aspect) -> None:
         item = _StringItem(value=paragraph.raw_text)
         item.reference_paragraphs = [paragraph]
         items.append(item)
-    aspect.extracted_items = items
+    aspect.extracted_items = items  # ty: ignore[invalid-assignment]
     aspect.reference_paragraphs = paragraphs
     aspect._is_processed = True
 
@@ -642,12 +644,16 @@ _SENTENCES_DOCUMENT_SENTENCE_TEXTS = [
 # additional context
 _SENTENCES_PARAGRAPH_TEXTS_SENT = [
     "Services agreement",
-    "Paragraph: Either party may terminate this agreement with a notice of 30 days. "
-    "The notice shall be given in writing. The fees paid are not refunded.\n\n"
-    "Additional context of the paragraph: Section 3. Termination",
+    (
+        "Paragraph: Either party may terminate this agreement with a notice of 30 days. "
+        "The notice shall be given in writing. The fees paid are not refunded.\n\n"
+        "Additional context of the paragraph: Section 3. Termination"
+    ),
     "The client shall pay the fees every month. Late payments bear interest.",
-    "The provider may suspend the services. Termination does not affect the accrued "
-    "rights.",
+    (
+        "The provider may suspend the services. Termination does not affect the accrued "
+        "rights."
+    ),
     "This agreement is governed by the laws of Norway.",
 ]
 # ... and for the sentences of the paragraphs, each in a request of its own, by
@@ -821,14 +827,14 @@ def _create_sentences_responder(
 
 
 @contextmanager
-def _capture_logs(level: int = stdlib_logging.INFO) -> Iterator[list[str]]:
+def _capture_logs(level: int = stdlib_logging.INFO) -> Generator[list[str]]:
     """
     Captures the messages logged by the framework at the given level and above.
 
     :param level: The lowest level of the messages to capture. Defaults to INFO.
     :type level: int
     :return: Context manager that gives the list the messages are added to.
-    :rtype: Iterator[list[str]]
+    :rtype: Generator[list[str]]
     """
     captured_logs: list[str] = []
 
@@ -2195,8 +2201,10 @@ class TestDecisionModels(BaseTest):
             (
                 {"C1": _predicate_answer("C1", probability=0.9)},
                 "C1",
-                "the answer is of the kind `predicate`, while the question is of "
-                "the kind `choice`",
+                (
+                    "the answer is of the kind `predicate`, while the question is of "
+                    "the kind `choice`"
+                ),
             ),
             # Without the probability, or with a probability that is not one
             ({"C0": _predicate_answer("C0")}, "C0", "the answer has no probability"),
@@ -2354,7 +2362,7 @@ class TestDecisionModels(BaseTest):
             with pytest.raises(ValueError, match=f"{param_name}\n"):
                 DocumentDecisionModel(
                     model=_DECISION_MODEL,
-                    **{param_name: value},
+                    **{param_name: value},  # ty: ignore[invalid-argument-type]
                 )
             assert not hasattr(decision_model, param_name)
         # ... and a decision model cannot chat
@@ -2417,9 +2425,11 @@ class TestDecisionModels(BaseTest):
             # the prices of the decision requests to the model for OpenAI only
             (
                 "openrouter/openai/gpt-6-luna",
-                "not supported for decision model `openrouter/openai/gpt-6-luna`.*"
-                "has a price of output tokens.*"
-                "prices of the chat requests.*provide explicit `pricing_details`",
+                (
+                    "not supported for decision model `openrouter/openai/gpt-6-luna`.*"
+                    "has a price of output tokens.*"
+                    "prices of the chat requests.*provide explicit `pricing_details`"
+                ),
             ),
             # A self-hosted decision model has no prices
             (
@@ -2471,7 +2481,7 @@ class TestDecisionModels(BaseTest):
         assert decision_model._auto_pricing_model_ref == "jev-latest"
         assert decision_model._calculate_auto_pricing_costs(1_000_000, 1_000_000) == (
             Decimal("0.042"),
-            Decimal("0"),
+            Decimal(0),
         )
         # ... whichever provider serves the model
         with pytest.warns(UserWarning, match="Auto-pricing"):
@@ -2482,7 +2492,7 @@ class TestDecisionModels(BaseTest):
             1_000_000, 1_000_000
         )
         assert input_cost > 0
-        assert output_cost == Decimal("0")
+        assert output_cost == Decimal(0)
         # For an OpenAI model, the prices of the decision requests are looked up
         # under the provider that genai-prices has for them, and not the prices of
         # the chat requests, which it has under the provider of the model
@@ -2496,7 +2506,7 @@ class TestDecisionModels(BaseTest):
         # tokens, and no price of output tokens
         assert openai_decision_model._calculate_auto_pricing_costs(
             1_000, 100, cache_read_tokens=200
-        ) == (Decimal("0.0001"), Decimal("0"))
+        ) == (Decimal("0.0001"), Decimal(0))
         # ... while an LLM of the same name gets the prices of the chat requests
         with pytest.warns(UserWarning, match="Auto-pricing"):
             llm = _create_llm("openai/gpt-6-luna", auto_pricing=True)
@@ -2867,7 +2877,7 @@ class TestDecisionModels(BaseTest):
         sub_aspect_paragraph = document.paragraphs[2]
         sub_aspect_item = _StringItem(value=sub_aspect_paragraph.raw_text)
         sub_aspect_item.reference_paragraphs = [sub_aspect_paragraph]
-        sub_aspect.extracted_items = [sub_aspect_item]  # ty: ignore[invalid-assignment]
+        sub_aspect.extracted_items = [sub_aspect_item]
         sub_aspect.reference_paragraphs = [sub_aspect_paragraph]
         sub_aspect._is_processed = True
         decisions_stub = _DecisionsAPIStub(
@@ -3055,11 +3065,15 @@ class TestDecisionModels(BaseTest):
         # the paragraph that is left
         part_texts = self._get_texts_of_parts(2)
         assert part_texts == [
-            "Non-disclosure agreement\n\n"
-            "The receiving party shall keep the information confidential.",
-            "Either party may terminate this agreement with a written notice "
-            "of 30 days.\n\n"
-            "The liability of each party is limited to the fees paid.",
+            (
+                "Non-disclosure agreement\n\n"
+                "The receiving party shall keep the information confidential."
+            ),
+            (
+                "Either party may terminate this agreement with a written notice "
+                "of 30 days.\n\n"
+                "The liability of each party is limited to the fees paid."
+            ),
             "A notice of termination does not release a party from confidentiality.",
         ]
         answers_of_parts: list[dict[str, Any]] = [
@@ -3273,7 +3287,7 @@ class TestDecisionModels(BaseTest):
         # Such a part is not asked about, and gives no items. A paragraph cannot
         # be created without text: the text of one is replaced here.
         document = create_document()
-        document.paragraphs[1].__dict__["raw_text"] = "​"
+        document.paragraphs[1].__dict__["raw_text"] = "\u200b"
         decisions_stub = _DecisionsAPIStub({_DECISION_MODEL: [_answer_all_questions]})
         with patch.object(litellm, "adecisions", new=decisions_stub):
             decision_model.extract_concepts_from_document(
@@ -3336,7 +3350,7 @@ class TestDecisionModels(BaseTest):
             sub_aspect_item = _StringItem(value=paragraph.raw_text)
             sub_aspect_item.reference_paragraphs = [paragraph]
             sub_aspect_items.append(sub_aspect_item)
-        sub_aspect.extracted_items = sub_aspect_items
+        sub_aspect.extracted_items = sub_aspect_items  # ty: ignore[invalid-assignment]
         sub_aspect.reference_paragraphs = sub_aspect_paragraphs
         sub_aspect._is_processed = True
         aspect_paragraph_texts = _ASPECTS_PARAGRAPH_TEXTS_CLEANED[1:]
@@ -3780,16 +3794,20 @@ class TestDecisionModels(BaseTest):
             for refused_answers, log_subject in [
                 (
                     {**valid_answers, "NDA check": "refusal"},
-                    "concept `NDA check` on part 2 of 3 of the text, decision "
-                    "question `C0`",
+                    (
+                        "concept `NDA check` on part 2 of 3 of the text, decision "
+                        "question `C0`"
+                    ),
                 ),
                 (
                     {
                         "NDA check": 0.1,
                         "Topics": {"confidentiality": 0.8, "termination": "refusal"},
                     },
-                    "concept `Topics` (label `termination`) on part 2 of 3 of "
-                    "the text, decision question `C1-L1`",
+                    (
+                        "concept `Topics` (label `termination`) on part 2 of 3 of "
+                        "the text, decision question `C1-L1`"
+                    ),
                 ),
             ]:
                 decision_model = _create_decision_model()
@@ -4255,7 +4273,7 @@ class TestDecisionModels(BaseTest):
             )
         cost = decision_model.get_cost()[0].cost
         assert cost.input == Decimal("0.042")
-        assert cost.output == Decimal("0")
+        assert cost.output == Decimal(0)
         assert cost.total == Decimal("0.042")
 
     def test_decision_questions_split_over_request_cap(self):
@@ -4717,16 +4735,20 @@ class TestDecisionModels(BaseTest):
                         ),
                     ),
                 },
-                "`C0`: the answer is of the kind `choice`, while the question is of "
-                "the kind `predicate`",
+                (
+                    "`C0`: the answer is of the kind `choice`, while the question is of "
+                    "the kind `predicate`"
+                ),
             ),
             (
                 {
                     **valid_answers,
                     "C2": OpenAIPredicateAnswer(name="C2", probability=0.5),
                 },
-                "`C2`: the answer is of the kind `predicate`, while the question "
-                "is of the kind `score`",
+                (
+                    "`C2`: the answer is of the kind `predicate`, while the question "
+                    "is of the kind `score`"
+                ),
             ),
             # A probability that is not within [0, 1]
             ({**valid_answers, "C0": 1.5}, r"`C0`: the probability 1.5 is not"),
@@ -5819,8 +5841,10 @@ class TestDecisionModels(BaseTest):
                     add_justifications=True,
                     add_references=True,
                 ),
-                "type `StringConcept` is not supported, justifications are not "
-                "supported, references are not supported",
+                (
+                    "type `StringConcept` is not supported, justifications are not "
+                    "supported, references are not supported"
+                ),
             ),
         ]
         supported_concept = BooleanConcept(
@@ -7599,18 +7623,20 @@ class TestDecisionModels(BaseTest):
         assert _get_paragraph_text_for_aspects(
             Paragraph(
                 raw_text="Either  party may terminate this agreement.",
-                additional_context=" List item  2 of 5​ ",
+                additional_context=" List item  2 of 5\u200b ",
             )
         ) == (
-            "Paragraph: Either party may terminate this agreement.\n\n"
-            "Additional context of the paragraph: List item 2 of 5",
+            (
+                "Paragraph: Either party may terminate this agreement.\n\n"
+                "Additional context of the paragraph: List item 2 of 5"
+            ),
             True,
         )
         # Additional context that has nothing to show to a model is not sent
         assert _get_paragraph_text_for_aspects(
             Paragraph(
                 raw_text="Either party may terminate this agreement.",
-                additional_context="​",
+                additional_context="\u200b",
             )
         ) == ("Either party may terminate this agreement.", False)
 
@@ -7619,7 +7645,7 @@ class TestDecisionModels(BaseTest):
             {"raw_text": "Services  agreement"},
             {
                 "raw_text": "Either party may terminate this agreement.",
-                "additional_context": "Section  3. Termination​",
+                "additional_context": "Section  3. Termination\u200b",
                 "custom_data": {"page": 2},
             },
             {"raw_text": "The fees are paid every month."},
@@ -7630,11 +7656,15 @@ class TestDecisionModels(BaseTest):
         ]
         texts_sent = [
             "Services agreement",
-            "Paragraph: Either party may terminate this agreement.\n\n"
-            "Additional context of the paragraph: Section 3. Termination",
+            (
+                "Paragraph: Either party may terminate this agreement.\n\n"
+                "Additional context of the paragraph: Section 3. Termination"
+            ),
             "The fees are paid every month.",
-            "Paragraph: The same applies to the provider.\n\n"
-            "Additional context of the paragraph: List item 2 of 2",
+            (
+                "Paragraph: The same applies to the provider.\n\n"
+                "Additional context of the paragraph: List item 2 of 2"
+            ),
         ]
         has_context = [False, True, False, True]
         yes_probabilities = {
@@ -8000,24 +8030,28 @@ class TestDecisionModels(BaseTest):
             sentences=[
                 Sentence(
                     raw_text="The notice shall be given in writing.",
-                    additional_context="Section 3. Termination​",
+                    additional_context="Section 3. Termination\u200b",
                 ),
                 Sentence(raw_text="It is sent by post."),
             ],
         )
         assert _get_sentence_text_for_aspects(paragraph.sentences[0], paragraph) == (
-            "Sentence: The notice shall be given in writing.\n\n"
-            "Paragraph that the sentence is from: The notice shall be given in "
-            "writing. It is sent by post.\n\n"
-            "Additional context of the paragraph: Section 3. Termination",
+            (
+                "Sentence: The notice shall be given in writing.\n\n"
+                "Paragraph that the sentence is from: The notice shall be given in "
+                "writing. It is sent by post.\n\n"
+                "Additional context of the paragraph: Section 3. Termination"
+            ),
             True,
         )
         # The additional context of the paragraph is given for each sentence
         assert _get_sentence_text_for_aspects(paragraph.sentences[1], paragraph) == (
-            "Sentence: It is sent by post.\n\n"
-            "Paragraph that the sentence is from: The notice shall be given in "
-            "writing. It is sent by post.\n\n"
-            "Additional context of the paragraph: Section 3. Termination",
+            (
+                "Sentence: It is sent by post.\n\n"
+                "Paragraph that the sentence is from: The notice shall be given in "
+                "writing. It is sent by post.\n\n"
+                "Additional context of the paragraph: Section 3. Termination"
+            ),
             True,
         )
 
@@ -9126,12 +9160,16 @@ class TestDecisionModels(BaseTest):
         assert [request["input"] for request in decisions_stub.requests] == [
             paragraph_texts[0],
             f"Paragraph: {paragraph_texts[1]}\n\n{context_sent}",
-            "Sentence: Either party may terminate this agreement.\n\n"
-            f"Paragraph that the sentence is from: {paragraph_texts[1]}\n\n"
-            f"{context_sent}",
-            "Sentence: The notice shall be written.\n\n"
-            f"Paragraph that the sentence is from: {paragraph_texts[1]}\n\n"
-            f"{context_sent}",
+            (
+                "Sentence: Either party may terminate this agreement.\n\n"
+                f"Paragraph that the sentence is from: {paragraph_texts[1]}\n\n"
+                f"{context_sent}"
+            ),
+            (
+                "Sentence: The notice shall be written.\n\n"
+                f"Paragraph that the sentence is from: {paragraph_texts[1]}\n\n"
+                f"{context_sent}"
+            ),
         ]
         (aspect,) = document.aspects
         (item,) = aspect.extracted_items
@@ -10314,8 +10352,8 @@ class TestDecisionModels(BaseTest):
                 concept_class(
                     name="Concept",
                     description="Concept description",
-                    decision_threshold=0.5,
-                    **kwargs,
+                    decision_threshold=0.5,  # ty: ignore[unknown-argument]
+                    **kwargs,  # ty: ignore[invalid-argument-type]
                 )
 
         # === Extraction ===
@@ -10513,7 +10551,7 @@ class TestDecisionModels(BaseTest):
             ),
         ]:
             decision_model = _create_decision_model(
-                **(
+                **(  # ty: ignore[invalid-argument-type]
                     {}
                     if decision_threshold is None
                     else {"decision_threshold": decision_threshold}
@@ -12138,8 +12176,10 @@ class TestDecisionModels(BaseTest):
                 # Its concept, on the text of the paragraphs of its aspect, which
                 # has no additional context of the paragraphs
                 (
-                    f"{_ASPECTS_PARAGRAPH_TEXTS_CLEANED[2]}\n\n"
-                    f"{_ASPECTS_PARAGRAPH_TEXTS_CLEANED[4]}",
+                    (
+                        f"{_ASPECTS_PARAGRAPH_TEXTS_CLEANED[2]}\n\n"
+                        f"{_ASPECTS_PARAGRAPH_TEXTS_CLEANED[4]}"
+                    ),
                     ["Termination for convenience"],
                 ),
             ]
@@ -13615,15 +13655,19 @@ class TestDecisionModels(BaseTest):
             for model, error_match in [
                 (
                     _create_decision_model(),
-                    f"^Decision model `{_DECISION_MODEL}` cannot extract: concept "
-                    rf"`Signed` \(modality `{modality}` is not supported\)\. ",
+                    (
+                        f"^Decision model `{_DECISION_MODEL}` cannot extract: concept "
+                        rf"`Signed` \(modality `{modality}` is not supported\)\. "
+                    ),
                 ),
                 (
                     llm,
-                    f"^Fallback decision model `{_DECISION_MODEL}` cannot extract "
-                    "what it is to extract if the model it is a fallback for "
-                    rf"fails: concept `Signed` \(modality `{modality}` is not "
-                    r"supported\)\. ",
+                    (
+                        f"^Fallback decision model `{_DECISION_MODEL}` cannot extract "
+                        "what it is to extract if the model it is a fallback for "
+                        rf"fails: concept `Signed` \(modality `{modality}` is not "
+                        r"supported\)\. "
+                    ),
                 ),
             ]:
                 for extraction_method in [
@@ -14129,7 +14173,7 @@ class TestDecisionModels(BaseTest):
         the requests sent to the APIs of both: each concept is extracted by
         the model that it is routed to by the role.
         """
-        llm = DocumentLLM(**self._llm_extractor_kwargs_openai)  # ty: ignore[invalid-argument-type]
+        llm = DocumentLLM(**self._llm_extractor_kwargs_openai)
         decision_model = DocumentDecisionModel(
             model="typesafe/jev-latest",
             api_key=os.getenv("CONTEXTGEM_TYPESAFE_API_KEY"),

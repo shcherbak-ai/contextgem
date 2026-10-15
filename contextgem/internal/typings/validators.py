@@ -38,7 +38,7 @@ def _validate_model_role(v: str) -> str:
         length, or contains non-printable characters.
     """
     if not isinstance(v, str):
-        raise ValueError("Model role must be a string")
+        raise ValueError("Model role must be a string")  # noqa: TRY004 - pydantic and the callers handle ValueError
     v = v.strip()
     if not v:
         raise ValueError("Model role must be a non-empty string")
@@ -70,7 +70,7 @@ def _validate_sequence_is_list(
     :raises ValueError: If the sequence is not a list.
     """
     if not isinstance(v, list):
-        raise ValueError("Sequence must be a list")
+        raise ValueError("Sequence must be a list")  # noqa: TRY004 - pydantic and the callers handle ValueError
     return v
 
 
@@ -104,7 +104,7 @@ def _validate_is_json_dict(v: Any) -> JSONDict:
     :raises ValueError: If the value is not a dict or does not conform to JSONValue.
     """
     if not isinstance(v, dict):
-        raise ValueError("Expected a JSON object (dict)")
+        raise ValueError("Expected a JSON object (dict)")  # noqa: TRY004 - pydantic and the callers handle ValueError
     if not _is_json_value(v):
         raise ValueError("Schema must be JSON-serializable with string keys")
     # v matches JSONDict by construction

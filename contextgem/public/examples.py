@@ -22,7 +22,7 @@ from contextgem.internal.base.examples import (
 from contextgem.internal.decorators import _expose_in_registry
 
 
-@_expose_in_registry(additional_key=_StringExample)  # ty: ignore[too-many-positional-arguments]
+@_expose_in_registry(additional_key=_StringExample)
 class StringExample(_StringExample):
     """
     Represents a string example that can be provided by users for certain extraction tasks.
@@ -41,10 +41,8 @@ class StringExample(_StringExample):
             :caption: String example definition
     """
 
-    pass
 
-
-@_expose_in_registry(additional_key=_JsonObjectExample)  # ty: ignore[too-many-positional-arguments]
+@_expose_in_registry(additional_key=_JsonObjectExample)
 class JsonObjectExample(_JsonObjectExample):
     """
     Represents a JSON object example that can be provided by users for certain extraction tasks.
@@ -63,5 +61,3 @@ class JsonObjectExample(_JsonObjectExample):
             :language: python
             :caption: JSON object example definition
     """
-
-    pass

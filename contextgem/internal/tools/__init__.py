@@ -14,6 +14,6 @@ from contextgem.internal.tools.schema_generator import (
 
 
 __all__ = (
-    "_parse_docstring",
     "_generate_tool_schema",
+    "_parse_docstring",
 )

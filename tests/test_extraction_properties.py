@@ -34,7 +34,7 @@ import types
 import unicodedata
 import warnings
 from collections import Counter
-from collections.abc import Callable, Iterator, Sequence
+from collections.abc import Callable, Generator, Sequence
 from contextlib import contextmanager
 from dataclasses import dataclass, field
 from datetime import date, datetime
@@ -136,8 +136,8 @@ _NUMERIC_TYPES: tuple[Literal["int", "float", "any"], ...] = ("int", "float", "a
 _LLM_INPUT_TOKENS = 1000
 _LLM_OUTPUT_TOKENS = 50
 _DECISION_INPUT_TOKENS = 100
-_INPUT_PRICE = Decimal("2")
-_OUTPUT_PRICE = Decimal("8")
+_INPUT_PRICE = Decimal(2)
+_OUTPUT_PRICE = Decimal(8)
 
 # Value that an LLM output entails for an item, or for the whole output, which
 # the extraction is to reject: the LLM is then asked again, or the extraction fails
@@ -363,13 +363,13 @@ class _ModelAPIsStub:
         return outcome
 
     @contextmanager
-    def installed(self) -> Iterator[_ModelAPIsStub]:
+    def installed(self) -> Generator[_ModelAPIsStub]:
         """
         Puts the stub in place of the APIs, and removes the delays between
         the retries of failed requests, while the context is entered.
 
         :return: Context in which the stub is installed.
-        :rtype: Iterator[_ModelAPIsStub]
+        :rtype: Generator[_ModelAPIsStub]
         """
         with (
             patch.object(litellm, "acompletion", new=self.acompletion),
@@ -463,12 +463,12 @@ def _api_error(transient: bool, model: str) -> Exception:
 
 
 @contextmanager
-def _recorded_warnings() -> Iterator[list[warnings.WarningMessage]]:
+def _recorded_warnings() -> Generator[list[warnings.WarningMessage]]:
     """
     Records all the warnings issued while the context is entered.
 
     :return: Context with the list of the warnings recorded.
-    :rtype: Iterator[list[warnings.WarningMessage]]
+    :rtype: Generator[list[warnings.WarningMessage]]
     """
     with warnings.catch_warnings(record=True) as caught:
         warnings.simplefilter("always")

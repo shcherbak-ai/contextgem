@@ -85,7 +85,7 @@ class _SuppressLiteLLMNoiseFilter(logging.Filter):
         """
         try:
             message = record.getMessage()
-        except Exception:
+        except Exception:  # noqa: BLE001 - a log filter must never raise
             message = str(record.msg)
 
         name_lower = record.name.lower()
@@ -111,7 +111,7 @@ class _SuppressLiteLLMNoiseFilter(logging.Filter):
                     if "litellm" in str(frame.filename).lower():
                         litellm_in_traceback = True
                         break
-            except Exception:
+            except Exception:  # noqa: BLE001 - a log filter must never raise
                 litellm_in_traceback = False
 
         # Only handle records from litellm, or asyncio records clearly tied to litellm
@@ -146,7 +146,7 @@ class _SuppressLiteLLMNoiseFilter(logging.Filter):
                 exc_is_cancelled = isinstance(exc_type, type) and issubclass(
                     exc_type, asyncio.CancelledError
                 )
-            except Exception:
+            except Exception:  # noqa: BLE001 - a log filter must never raise
                 exc_is_cancelled = False
 
         is_litellm_related = (

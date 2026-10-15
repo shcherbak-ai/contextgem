@@ -7,6 +7,7 @@ Module defining tests for the changelog and the citation file.
 
 from __future__ import annotations
 
+import itertools
 import re
 from pathlib import Path
 
@@ -48,7 +49,7 @@ class TestChangelog:
         # The links stand at the end of the file, newest first like the
         # sections: a new version's link goes on top.
         assert list(links) == versions
-        for version, previous in zip(versions, versions[1:], strict=False):
+        for version, previous in itertools.pairwise(versions):
             assert links[version] == f"{_COMPARE}v{previous}...{_ref(version)}"
         # The oldest section follows the 0.1.x releases, which the changelog
         # does not list.

@@ -34,6 +34,8 @@ from contextgem.internal.typings.types import (
 
 
 if TYPE_CHECKING:
+    from collections.abc import Sequence
+
     from contextgem.internal.base.aspects import _Aspect
     from contextgem.internal.base.concepts import _Concept
     from contextgem.internal.items import _ExtractedItem
@@ -55,7 +57,6 @@ class _AssignedInstancesAttributeProcessor(_InstanceBase):
 
         :return: set
         """
-        pass
 
     def _add_instances(
         self,
@@ -154,15 +155,15 @@ class _AssignedAspectsProcessor(_AssignedInstancesAttributeProcessor):
     """
 
     if TYPE_CHECKING:
-        aspects: list[_Aspect]
+        aspects: Sequence[_Aspect]
 
     @_post_init_method
-    def _post_init(self, __context: Any):
+    def _post_init(self, context: Any, /):
         """
         Post-initialization method that validates the presence of the aspects attribute.
 
-        :param __context: Pydantic context (unused).
-        :type __context: Any
+        :param context: Pydantic context (unused).
+        :type context: Any
         :raises AttributeError: If the instance does not have an 'aspects' attribute.
         """
         if not hasattr(self, "aspects"):
@@ -286,15 +287,15 @@ class _AssignedConceptsProcessor(_AssignedInstancesAttributeProcessor):
     """
 
     if TYPE_CHECKING:
-        concepts: list[_Concept]
+        concepts: Sequence[_Concept]
 
     @_post_init_method
-    def _post_init(self, __context: Any):
+    def _post_init(self, context: Any, /):
         """
         Post-initialization method that validates the presence of the concepts attribute.
 
-        :param __context: Pydantic context (unused).
-        :type __context: Any
+        :param context: Pydantic context (unused).
+        :type context: Any
         :raises AttributeError: If the instance does not have a 'concepts' attribute.
         """
         if not hasattr(self, "concepts"):
@@ -487,12 +488,12 @@ class _ExtractedItemsAttributeProcessor(_PropertyProcessor):
         _extracted_items: list[_ExtractedItem]
 
     @_post_init_method
-    def _post_init(self, __context: Any):
+    def _post_init(self, context: Any, /):
         """
         Post-initialization method that validates the presence of the _extracted_items attribute.
 
-        :param __context: Pydantic context (unused).
-        :type __context: Any
+        :param context: Pydantic context (unused).
+        :type context: Any
         :raises AttributeError: If the instance does not have an '_extracted_items' attribute.
         """
         if not hasattr(self, "_extracted_items"):
@@ -509,7 +510,6 @@ class _ExtractedItemsAttributeProcessor(_PropertyProcessor):
         :rtype: type[_ExtractedItem]
         :return: The extracted class type for the instance.
         """
-        pass
 
     @property
     def extracted_items(self) -> list[_ExtractedItem]:
@@ -552,12 +552,12 @@ class _RefParasAndSentsAttrituteProcessor(_PropertyProcessor):
         _reference_sentences: list[_Sentence]
 
     @_post_init_method
-    def _post_init(self, __context: Any):
+    def _post_init(self, context: Any, /):
         """
         Post-initialization method that validates the presence of reference attributes.
 
-        :param __context: Pydantic context (unused).
-        :type __context: Any
+        :param context: Pydantic context (unused).
+        :type context: Any
         :raises AttributeError: If the instance does not have
             '_reference_paragraphs' or '_reference_sentences' attributes.
         """

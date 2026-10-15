@@ -344,8 +344,10 @@ def _get_paragraph_text_for_aspects(paragraph: _Paragraph) -> tuple[str, bool]:
     if not text or not additional_context:
         return text, False
     return (
-        f"Paragraph: {text}\n\n"
-        f"Additional context of the paragraph: {additional_context}",
+        (
+            f"Paragraph: {text}\n\n"
+            f"Additional context of the paragraph: {additional_context}"
+        ),
         True,
     )
 
@@ -392,8 +394,10 @@ def _get_sentence_text_for_aspects(
         return "", False
     parts = [
         f"Sentence: {sentence_text}",
-        "Paragraph that the sentence is from: "
-        f"{_clean_text_for_question(paragraph.raw_text)}",
+        (
+            "Paragraph that the sentence is from: "
+            f"{_clean_text_for_question(paragraph.raw_text)}"
+        ),
     ]
     sentence_context = _clean_text_for_question(sentence.additional_context)
     paragraph_context = _clean_text_for_question(paragraph.additional_context)

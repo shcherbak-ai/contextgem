@@ -250,7 +250,7 @@ def _warm_token_encodings():
             label="tests._warm_token_encodings",
         ):
             litellm.token_counter(model="gpt-6-luna", text="warm-up")
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001 - the warm-up is best effort
         logger.warning(
             f"Could not prepare the token encodings before the tests: {e}. "
             "The tests that rely on token counting may fail. "

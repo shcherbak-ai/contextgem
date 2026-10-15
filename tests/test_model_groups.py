@@ -43,7 +43,7 @@ class TestModelGroups(BaseTest):
 
         # Invalid params
         with pytest.raises(ValueError):
-            DocumentModelGroup()
+            DocumentModelGroup()  # ty: ignore[missing-argument]
         with pytest.raises(ValueError):
             DocumentModelGroup(models=[])
         with pytest.raises(ValueError):

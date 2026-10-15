@@ -27,7 +27,7 @@ import argparse
 import logging
 import time
 import warnings
-from collections.abc import Iterator
+from collections.abc import Generator
 from contextlib import contextmanager
 from typing import Any, get_args
 
@@ -74,14 +74,14 @@ class _LogCapture(logging.Handler):
 
 
 @contextmanager
-def _capture_library_logs() -> Iterator[_LogCapture]:
+def _capture_library_logs() -> Generator[_LogCapture]:
     """
     Captures the messages that the library logs at the INFO level and above,
     which is the level that it logs the retries for invalid data at, whatever
     the level of its logger is. What the library prints is left as it is.
 
     :return: Context manager that gives the handler with the messages captured.
-    :rtype: Iterator[_LogCapture]
+    :rtype: Generator[_LogCapture]
     """
     library_logger = logging.getLogger(_LIBRARY_LOGGER_NAME)
     logger_level = library_logger.level
@@ -169,7 +169,7 @@ def run_once(
                 use_concurrency=use_concurrency,
                 raise_exception_on_extraction_error=False,
             )
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001 - any error is recorded for the run
             error = scrub(f"{type(e).__name__}: {str(e)[:500]}", private_texts)
     seconds = time.time() - started
 

@@ -153,7 +153,7 @@ class TestInternals(BaseTest):
             with pytest.raises(
                 TypeError, match="internal and cannot be instantiated directly"
             ):
-                base_class()
+                base_class()  # ty: ignore[missing-argument]
 
         # Shared attribute classes
         base_attr_classes = [
@@ -233,7 +233,7 @@ class TestInternals(BaseTest):
                 llm_role="reasoner",  # ty: ignore[unknown-argument]
             )
         with pytest.raises(ValueError, match="llms\n"):
-            DocumentModelGroup(
+            DocumentModelGroup(  # ty: ignore[missing-argument]
                 llms=[self.llm_extractor, self.llm_reasoner],  # ty: ignore[unknown-argument]
             )
         model_group = DocumentModelGroup(models=[self.llm_extractor, self.llm_reasoner])

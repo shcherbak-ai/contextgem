@@ -212,7 +212,7 @@ class _ReadmePreview(http.server.SimpleHTTPRequestHandler):
 
     # Windows can map these types to others in its registry, and a browser
     # refuses a stylesheet that is not served as text/css.
-    extensions_map = {
+    extensions_map = {  # noqa: RUF012 - overrides the attribute of the handler
         **http.server.SimpleHTTPRequestHandler.extensions_map,
         ".css": "text/css",
         ".png": "image/png",

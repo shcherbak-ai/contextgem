@@ -180,8 +180,10 @@ def sweep(label: str) -> tuple[str, dict[str, Any]]:
         "",
         "## Aspect F1 by threshold",
         "",
-        "Mean of the cases. The second line of a model has the precision and "
-        "the recall. Only the models recorded on each case are shown.",
+        (
+            "Mean of the cases. The second line of a model has the precision and "
+            "the recall. Only the models recorded on each case are shown."
+        ),
         "",
         "| Model | "
         + " | ".join(f"{threshold:.1f}" for threshold in _THRESHOLDS_SHOWN)
@@ -294,11 +296,13 @@ def sweep(label: str) -> tuple[str, dict[str, Any]]:
         "",
         "## How the probabilities relate to the reference answers",
         "",
-        "The share of the (paragraph, aspect) pairs in each range of probability "
-        "that are in the reference answers, with the number of the pairs in "
-        "brackets. All the cases recorded for a model together, without the pairs "
-        "that are not scored. For the refused answers, the number of the pairs "
-        "that are in the reference answers.",
+        (
+            "The share of the (paragraph, aspect) pairs in each range of probability "
+            "that are in the reference answers, with the number of the pairs in "
+            "brackets. All the cases recorded for a model together, without the pairs "
+            "that are not scored. For the refused answers, the number of the pairs "
+            "that are in the reference answers."
+        ),
         "",
         "| Model | "
         + " | ".join(

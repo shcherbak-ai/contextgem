@@ -133,8 +133,8 @@ class _InstanceBase(_AbstractInstanceBase):
         """
 
         if instances and (
-            len(set([i.name.lower() for i in instances])) < len(instances)
-            or len(set([i.description.lower() for i in instances])) < len(instances)
+            len({i.name.lower() for i in instances}) < len(instances)
+            or len({i.description.lower() for i in instances}) < len(instances)
         ):
             raise ValueError(
                 f"{instances[0].__class__.__name__}s of the document must have "

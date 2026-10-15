@@ -15,7 +15,7 @@ from contextgem.internal.base.aspects import _Aspect
 from contextgem.internal.decorators import _expose_in_registry
 
 
-@_expose_in_registry(additional_key=_Aspect)  # ty: ignore[too-many-positional-arguments]
+@_expose_in_registry(additional_key=_Aspect)
 class Aspect(_Aspect):
     """
     Represents an aspect with associated metadata, sub-aspects, concepts, and logic for validation.
@@ -61,5 +61,3 @@ class Aspect(_Aspect):
             :language: python
             :caption: Aspect definition
     """
-
-    pass
