@@ -86,7 +86,7 @@ When an agent needs facts from a document, it calls a tool that runs an extracti
 Serving the Tool over MCP
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-To give the tool to any agent that connects to Model Context Protocol (MCP) servers, e.g. a coding agent or a desktop assistant, serve the same function with an MCP server. With version 2 of the `MCP Python SDK <https://github.com/modelcontextprotocol/python-sdk>`_ (``uv add mcp``):
+To give the tool to any agent that connects to Model Context Protocol (MCP) servers, e.g. a coding agent or a desktop assistant, serve the same function with an MCP server. With the `MCP Python SDK <https://github.com/modelcontextprotocol/python-sdk>`_ (``uv add "mcp>=2"``):
 
 .. code-block:: python
 
@@ -98,8 +98,6 @@ To give the tool to any agent that connects to Model Context Protocol (MCP) serv
 
    if __name__ == "__main__":
        server.run()  # over stdio, or server.run("streamable-http") over HTTP
-
-In version 1 of the SDK, the server class is ``FastMCP``, imported from ``mcp.server.fastmcp``.
 
 
 .. _agentic-decision-label:
