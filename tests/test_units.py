@@ -35,6 +35,7 @@ from typing import (  # noqa: UP035
 )
 
 import pytest
+from dotenv import dotenv_values
 from pydantic import Field, StringConstraints
 from vcr.request import Request as VCRRequest
 
@@ -63,7 +64,12 @@ from tests.conftest import (
     VCR_REDACTION_MARKER,
     _get_tethered_recording_allow,
 )
-from tests.utils import redact_home_dir, vcr_before_record_request
+from tests.utils import (
+    DUMMY_API_ENV_VARS,
+    get_project_root_path,
+    redact_home_dir,
+    vcr_before_record_request,
+)
 
 
 # ---------------------------------------------------------------------------
@@ -1336,6 +1342,23 @@ def test_recording_allowlist_has_foundry_resource_of_environment(
     assert allow == [*listed, *([foundry_host] if foundry_host else [])]
     # The list of the approved destinations is not changed itself
     assert listed == _TETHERED_RECORDING_ALLOW
+
+
+# ---------------------------------------------------------------------------
+# Test utils: the template of the .env file
+# ---------------------------------------------------------------------------
+
+
+def test_env_example_lists_the_api_variables_commented_out() -> None:
+    """``.env.example`` lists the variables of the APIs that the tests set dummy
+    values for, each commented out: a copy of it as ``.env`` sets no variable,
+    so the tests still set the dummy values and replay from the cassettes."""
+    path = get_project_root_path() / ".env.example"
+    assert dotenv_values(path) == {}
+    names = re.findall(
+        r"^# ?([A-Z][A-Z0-9_]*)=", path.read_text(encoding="utf-8"), flags=re.MULTILINE
+    )
+    assert sorted(names) == sorted(DUMMY_API_ENV_VARS)
 
 
 # ---------------------------------------------------------------------------

@@ -37,7 +37,9 @@ from tests.utils import (
 # If .env exists locally, it'll be loaded. If it doesn't exist (e.g. in CI),
 # no error is raised. Then fallback to environment variables set by the workflow.
 
-if not load_dotenv():  # Returns False if no .env file is found
+# False if no .env file is found, or it sets no variable (e.g. a copy of
+# .env.example that is left as it is)
+if not load_dotenv():
     set_dummy_env_variables_for_testing_from_cassettes()
 
 

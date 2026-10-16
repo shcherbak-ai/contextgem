@@ -126,6 +126,24 @@ _FOUNDRY_PROJECT_PATH_PATTERN = re.compile(
     r"/api/projects/[^/?#]+", flags=re.IGNORECASE
 )
 
+# Dummy values of the variables of the APIs that the tests call, set when no
+# `.env` file sets a variable, so that the tests replay their requests from
+# the cassettes. `.env.example` lists the same variables, commented out.
+DUMMY_API_ENV_VARS = {
+    "CONTEXTGEM_OPENAI_API_KEY": "DUMMY",
+    "CONTEXTGEM_ANTHROPIC_API_KEY": "DUMMY",
+    # The key of the decision models of TypeSafe: a request for which no key
+    # is passed is rejected by litellm before it is sent, i.e. before it can
+    # be replayed
+    "CONTEXTGEM_TYPESAFE_API_KEY": "DUMMY",
+    # The key and the endpoint of the Microsoft Foundry resource of the decision
+    # model deployed in it: litellm rejects a request without either of them
+    # before it is sent. The endpoint is the one that the host of a resource
+    # is replaced with in the cassettes.
+    "CONTEXTGEM_AZURE_AI_API_KEY": "DUMMY",
+    "CONTEXTGEM_AZURE_AI_API_BASE": VCR_DUMMY_ENDPOINT_PREFIX.rstrip("/"),
+}
+
 
 def vcr_before_record_request(request):
     """
@@ -1507,7 +1525,8 @@ class TestUtils:
 def set_dummy_env_variables_for_testing_from_cassettes() -> None:
     """
     Sets dummy environment variables for testing from VCR cassettes.
-    This function is typically called when load_dotenv() doesn't find a .env file,
+    This function is typically called when load_dotenv() finds no .env file, or
+    one that sets no variable (e.g. a copy of .env.example left as it is),
     to ensure tests have the necessary environment variables set with dummy values.
     It's used in CI as well as locally by new contributors whose changes
     do not require re-recording VCR cassettes. See CONTRIBUTING.md for more details.
@@ -1523,25 +1542,11 @@ def set_dummy_env_variables_for_testing_from_cassettes() -> None:
         )
 
     logger.debug(
-        "No .env file found, setting dummy environment variables "
-        "for testing from VCR cassettes"
+        "No .env file that sets a variable found, setting dummy environment "
+        "variables for testing from VCR cassettes"
     )
 
-    default_env_vars = {
-        "CONTEXTGEM_OPENAI_API_KEY": "DUMMY",
-        "CONTEXTGEM_ANTHROPIC_API_KEY": "DUMMY",
-        # The key of the decision models of TypeSafe: a request for which no key
-        # is passed is rejected by litellm before it is sent, i.e. before it can
-        # be replayed
-        "CONTEXTGEM_TYPESAFE_API_KEY": "DUMMY",
-        # The key and the endpoint of the Microsoft Foundry resource of the decision
-        # model deployed in it: litellm rejects a request without either of them
-        # before it is sent. The endpoint is the one that the host of a resource
-        # is replaced with in the cassettes.
-        "CONTEXTGEM_AZURE_AI_API_KEY": "DUMMY",
-        "CONTEXTGEM_AZURE_AI_API_BASE": VCR_DUMMY_ENDPOINT_PREFIX.rstrip("/"),
-        "CONTEXTGEM_LOGGER_LEVEL": "DEBUG",
-    }
+    default_env_vars = {**DUMMY_API_ENV_VARS, "CONTEXTGEM_LOGGER_LEVEL": "DEBUG"}
 
     for key, value in default_env_vars.items():
         # Force dummy credentials to be used in tests if no .env file is found

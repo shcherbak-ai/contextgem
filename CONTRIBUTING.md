@@ -387,7 +387,7 @@ VCR cassettes provide the most reliable testing approach for ContextGem because:
 
 Local LLMs (Ollama, LM Studio, etc.) also use HTTP APIs (typically on localhost) and their interactions are recorded in cassettes too.
 
-The test suite automatically uses dummy environment variables with pre-recorded cassettes when no `.env` file is present, so most contributors won't need to set up real API keys or local LLM servers. The first test run downloads the SaT segmentation model of the tests and its tokenizer from HuggingFace (several hundred megabytes in all), so it needs network access.
+The test suite automatically uses dummy environment variables with pre-recorded cassettes when there is no `.env` file, or one that sets no variable, so most contributors won't need to set up real API keys or local LLM servers. The first test run downloads the SaT segmentation model of the tests and its tokenizer from HuggingFace (several hundred megabytes in all), so it needs network access.
 
 #### Determining Your Scenario
 
@@ -425,24 +425,13 @@ Based on the test results and your changes, you'll fall into one of these four s
 
 **What to do:**
 
-1. **Create a `.env` file** locally (ignored by git) with the API keys for the LLM services your new tests will use:
+1. **Create a `.env` file** locally (ignored by git) from the template `.env.example`, then uncomment and fill in the variables of the APIs that your new tests call. The template says which tests need each variable:
 
    ```bash
-   # Only include the variables for LLM APIs your tests actually call
-
-   # For OpenAI API tests
-   CONTEXTGEM_OPENAI_API_KEY=your_openai_api_key
-
-   # For Anthropic API tests
-   CONTEXTGEM_ANTHROPIC_API_KEY=your_anthropic_api_key
-
-   # For TypeSafe API tests (decision models)
-   CONTEXTGEM_TYPESAFE_API_KEY=your_typesafe_api_key
-
-   # For Microsoft Foundry API tests (decision models)
-   CONTEXTGEM_AZURE_AI_API_KEY=your_foundry_api_key
-   CONTEXTGEM_AZURE_AI_API_BASE=https://your-resource.services.ai.azure.com
+   cp .env.example .env
    ```
+
+   Every variable in `.env.example` is commented out, so a copy that is left as it is sets none, and the tests keep using the dummy variables. Once your `.env` file sets a variable, the tests set no dummy ones: `CONTEXTGEM_OPENAI_API_KEY` and `CONTEXTGEM_TYPESAFE_API_KEY` then need a value, any value if you only replay their tests, as `litellm` rejects a request without a key before it can be replayed from a cassette. The other variables fall back to their dummy values when they are not set.
 
 2. **For new LLM providers**, create environment variables prefixed with `CONTEXTGEM_`:
 
@@ -452,7 +441,7 @@ Based on the test results and your changes, you'll fall into one of these four s
 
    Also add the API host of the provider to `_TETHERED_RECORDING_ALLOW` in `tests/conftest.py`, otherwise its requests are blocked while recording (see [Network Egress Control](#network-egress-control)). If the provider does not send its key in the `Authorization` or `api-key` header (e.g. Google AI Studio sends it in `x-goog-api-key`), add that header to `VCR_FILTER_HEADERS` in `tests/utils.py`, otherwise the key is recorded in the cassette.
 
-3. **Update dummy variables** in `tests/utils.py` by adding your new environment variables to the `default_env_vars` dictionary in `set_dummy_env_variables_for_testing_from_cassettes()`, mapped to a dummy value (e.g. "DUMMY")
+3. **Update dummy variables** by adding your new environment variables to `DUMMY_API_ENV_VARS` in `tests/utils.py`, mapped to a dummy value (e.g. "DUMMY"), and to `.env.example`, commented out, with a line on the tests that need them. A test checks that the two list the same variables.
 
 4. **Add the VCR decorator** to your new test methods that call LLM APIs (cloud or local):
 
@@ -547,7 +536,7 @@ For local LLM testing, install the following tools and download the relevant mod
 
 #### Anthropic LLM Testing
 
-Most tests of LLMs send their requests to OpenAI. The tests `test_anthropic_llms_*` in `tests/test_llms.py` send theirs to Anthropic (`anthropic/claude-haiku-5-5` and `anthropic/claude-sonnet-5-5`): recording their cassettes needs `CONTEXTGEM_ANTHROPIC_API_KEY` in your `.env` file. A dummy `CONTEXTGEM_ANTHROPIC_API_KEY` is set when no `.env` file is present, and the tests use the same dummy key if your `.env` file has no key of Anthropic, so these tests replay without the variable. The host of the API of Anthropic (`api.anthropic.com`) is on the list of the hosts allowed while recording (see [Network Egress Control](#network-egress-control)).
+Most tests of LLMs send their requests to OpenAI. The tests `test_anthropic_llms_*` in `tests/test_llms.py` send theirs to Anthropic (`anthropic/claude-haiku-5-5` and `anthropic/claude-sonnet-5-5`): recording their cassettes needs `CONTEXTGEM_ANTHROPIC_API_KEY` in your `.env` file. A dummy `CONTEXTGEM_ANTHROPIC_API_KEY` is set when no `.env` file sets a variable, and the tests use the same dummy key if your `.env` file has no key of Anthropic, so these tests replay without the variable. The host of the API of Anthropic (`api.anthropic.com`) is on the list of the hosts allowed while recording (see [Network Egress Control](#network-egress-control)).
 
 #### Decision Model Testing
 
@@ -559,9 +548,9 @@ Most tests of decision models in `tests/test_decision_models.py` replace the API
 - **[Ollama](https://ollama.com/) 0.35 or later**, running on its default port, with the decision model identified under the `strands_decider/` prefix in `tests/test_decision_models.py` downloaded (`ollama pull nimble`), for the requests to a local decision model. No API key is needed.
 - **[LM Studio](https://lmstudio.ai/) 0.4.26 or later** (not LM Studio Bionic, whose server does not serve decision models), running its local server on the default port, with the decision model of the LM Studio test in `tests/test_decision_models.py` downloaded (`lms get https://huggingface.co/ggml-org/Kev-4B-GGUF`). No API key is needed.
 
-`litellm` rejects a request to a decision model that has no API key before the request is sent, i.e. before it can be replayed from a cassette. For this reason, a dummy `CONTEXTGEM_TYPESAFE_API_KEY` is set when no `.env` file is present. If your `.env` file has no `CONTEXTGEM_TYPESAFE_API_KEY`, add the variable with any value, otherwise these tests fail also in replay.
+`litellm` rejects a request to a decision model that has no API key before the request is sent, i.e. before it can be replayed from a cassette. For this reason, a dummy `CONTEXTGEM_TYPESAFE_API_KEY` is set when no `.env` file sets a variable. If your `.env` file has no `CONTEXTGEM_TYPESAFE_API_KEY`, add the variable with any value, otherwise these tests fail also in replay.
 
-A decision model deployed in Microsoft Foundry is requested with a key and with the endpoint of the resource. A dummy `CONTEXTGEM_AZURE_AI_API_KEY` and a dummy `CONTEXTGEM_AZURE_AI_API_BASE` (`https://dummy-endpoint.local`, the host that the host of a resource is replaced with in the cassettes) are set when no `.env` file is present. The tests use the same dummy values if your `.env` file has no key or endpoint of a Foundry resource, so these tests replay without the two variables.
+A decision model deployed in Microsoft Foundry is requested with a key and with the endpoint of the resource. A dummy `CONTEXTGEM_AZURE_AI_API_KEY` and a dummy `CONTEXTGEM_AZURE_AI_API_BASE` (`https://dummy-endpoint.local`, the host that the host of a resource is replaced with in the cassettes) are set when no `.env` file sets a variable. The tests use the same dummy values if your `.env` file has no key or endpoint of a Foundry resource, so these tests replay without the two variables.
 
 The host of TypeSafe (`api.typesafe.ai`) is on the list of the hosts allowed while recording. The host of your Microsoft Foundry resource is allowed while recording as well: it differs for each resource, so it is read from `CONTEXTGEM_AZURE_AI_API_BASE`, and is accepted only if the endpoint is an HTTPS one of a host under `services.ai.azure.com`. A test that sends requests to another provider of decision models needs the host of that provider added to that list (see [Network Egress Control](#network-egress-control)).
 
