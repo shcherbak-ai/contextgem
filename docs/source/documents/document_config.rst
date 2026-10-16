@@ -1,7 +1,7 @@
 :og:description: ContextGem: Creating Documents
 
 .. meta::
-   :description: How to create a Document from text, paragraphs or images, add aspects and concepts to it, give paragraphs additional context, and locate paragraphs and sentences in it.
+   :description: How to create a Document from text, paragraphs or images, add aspects and concepts to it, give paragraphs additional context, locate paragraphs and sentences in it, and use SaT models without network access.
 
 Creating Documents
 ===================
@@ -59,7 +59,7 @@ The :class:`~contextgem.public.documents.Document` class accepts the following p
    * - ``sat_model_id``
      - ``SaTModelId``
      - ``"sat-3l-sm"``
-     - SaT model ID for paragraph/sentence segmentation or a local path to a SaT model. See `wtpsplit models <https://github.com/segment-any-text/wtpsplit>`_ for available options. A model given by its ID is downloaded from Hugging Face (``huggingface.co``, ``hf.co`` and their subdomains) when it is first used, and cached; a local path needs no network access.
+     - SaT model ID for paragraph/sentence segmentation or a local path to a folder with a SaT model. See `wtpsplit models <https://github.com/segment-any-text/wtpsplit>`_ for available options. A model given by its ID is downloaded from Hugging Face (``huggingface.co``, ``hf.co`` and their subdomains) when it is first used, and cached. See :ref:`sat-models-offline` for using a model where Hugging Face cannot be reached.
    * - ``pre_segment_sentences``
      - ``bool``
      - ``False``
@@ -145,3 +145,36 @@ This makes the methods suitable for working with extraction references, e.g. cit
    # Surrounding context of a reference paragraph
    ref_index = document.get_paragraph_index(ref_para)
    context_window = document.paragraphs[max(0, ref_index - 2) : ref_index + 3]
+
+
+.. _sat-models-offline:
+
+🔌 Using SaT Models Without Network Access
+-------------------------------------------
+
+A SaT model splits the text of a document into sentences, and into paragraphs with ``paragraph_segmentation_mode="sat"``. Sentences are segmented when they are needed: when an aspect or a concept is extracted with references to sentences (``reference_depth="sentences"``), or when the document is created with ``pre_segment_sentences=True``. A document whose paragraphs are split on newlines (the default) and that needs no sentences uses no SaT model.
+
+A model given by its ID, e.g. the default ``"sat-3l-sm"``, is downloaded from Hugging Face the first time it is used, together with its tokenizer: several hundred megabytes in all. ``huggingface_hub`` keeps the files in its cache (``~/.cache/huggingface``, or the folder set in the ``HF_HOME`` environment variable), and reads them from there afterwards. Where Hugging Face cannot be reached when the application runs, e.g. in a container or on a server without internet access, prepare the model in one of these ways:
+
+- **Fill the cache in advance**, where Hugging Face can be reached, e.g. when the container image is built, and keep the cache folder with the application. If the application uses another model than the default one, add its ``sat_model_id`` to the ``Document`` in the command:
+
+  .. code-block:: bash
+
+     # Download the default model and its tokenizer into the cache folder
+     export HF_HOME=/opt/huggingface
+     uv run python -c "from contextgem import Document; Document(raw_text='Text.', pre_segment_sentences=True)"
+
+  When the application runs, set the same ``HF_HOME``, and ``HF_HUB_OFFLINE=1``, so that the files are read from the cache without asking Hugging Face whether they have changed. See the `environment variables of huggingface_hub <https://huggingface.co/docs/huggingface_hub/package_reference/environment_variables>`_.
+
+- **Keep the model in a folder** of its own, and pass the path of the folder as ``sat_model_id``. The folder holds the files of the model (``config.json`` and ``model_optimized.onnx``) and its tokenizer (``tokenizer.json``), which you can download with the ``hf`` command of ``huggingface_hub``, installed with ContextGem:
+
+  .. code-block:: bash
+
+     uv run hf download segment-any-text/sat-3l-sm config.json model_optimized.onnx --local-dir models/sat-3l-sm
+     uv run hf download facebookAI/xlm-roberta-base tokenizer.json --local-dir models/sat-3l-sm
+
+  .. code-block:: python
+
+     document = Document(raw_text=text, sat_model_id="models/sat-3l-sm")
+
+  A model in such a folder is loaded without network access, and without the cache. If the folder has no ``tokenizer.json``, the tokenizer is downloaded from Hugging Face, or read from the cache, as for a model given by its ID.

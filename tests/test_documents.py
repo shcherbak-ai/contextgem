@@ -7,9 +7,15 @@ Module defining tests for documents and text segmentation.
 
 from __future__ import annotations
 
+import ast
+import os
+import shutil
+import subprocess  # nosec B404 - runs the Python of the tests, no shell
+import sys
 import tempfile
 
 import pytest
+from huggingface_hub import try_to_load_from_cache
 
 from contextgem.internal.utils import _load_sat_model
 from contextgem.public import (
@@ -51,17 +57,17 @@ class TestDocuments(BaseTest):
         """
 
         # Test nonexistent path
+        non_existent_path = "/nonexistent/path/to/model"
         with pytest.raises(ValueError) as exc_info:
-            non_existent_path = "/nonexistent/path/to/model"
             _load_sat_model(non_existent_path)
-            assert "does not exist or is not a directory" in str(exc_info.value)
-            # Document creation should also fail
-            with pytest.raises(ValueError):
-                Document(
-                    raw_text="Sample text",
-                    paragraph_segmentation_mode="sat",
-                    sat_model_id=non_existent_path,
-                )
+        assert "does not exist or is not a directory" in str(exc_info.value)
+        # Document creation should also fail
+        with pytest.raises(ValueError):
+            Document(
+                raw_text="Sample text",
+                paragraph_segmentation_mode="sat",
+                sat_model_id=non_existent_path,
+            )
 
         # Test file path (not a directory)
         with tempfile.NamedTemporaryFile() as temp_file:
@@ -88,6 +94,68 @@ class TestDocuments(BaseTest):
                     paragraph_segmentation_mode="sat",
                     sat_model_id=temp_dir,
                 )
+
+    def test_local_sat_model_without_network_access(self, tmp_path):
+        """
+        Tests that a SaT model in a local directory that also has the tokenizer
+        of the model is loaded without network access, and without the cache of
+        Hugging Face.
+
+        The model is loaded in a new Python process, which has an empty cache,
+        and which the network guard of the test also applies to: in this process,
+        wtpsplit-lite keeps the tokenizer that it loaded before, so the tokenizer
+        would not be downloaded again here even if it were not in the directory.
+        """
+        model_dir = tmp_path / "sat-3l-sm"
+        model_dir.mkdir()
+        # The files are in the cache, where the loading of the model in the base
+        # test class put them
+        for repo_id, filename in (
+            ("segment-any-text/sat-3l-sm", "config.json"),
+            ("segment-any-text/sat-3l-sm", "model_optimized.onnx"),
+            ("facebookAI/xlm-roberta-base", "tokenizer.json"),
+        ):
+            cached_path = try_to_load_from_cache(repo_id, filename)
+            assert isinstance(cached_path, str), f"{repo_id}/{filename} not cached"
+            try:
+                # The model file is large, so it is linked rather than copied
+                os.link(cached_path, model_dir / filename)
+            except OSError:
+                shutil.copyfile(cached_path, model_dir / filename)
+
+        script = (
+            "import sys\n"
+            "from contextgem import Document\n"
+            "document = Document(\n"
+            "    raw_text='First sentence. Second sentence.\\n\\nNew paragraph.',\n"
+            "    sat_model_id=sys.argv[1],\n"
+            "    pre_segment_sentences=True,\n"
+            ")\n"
+            "print([len(p.sentences) for p in document.paragraphs])\n"
+        )
+        empty_cache_dir = tmp_path / "empty_hf_home"
+        env = {
+            **os.environ,
+            "HF_HOME": str(empty_cache_dir),
+            "HF_HUB_CACHE": str(empty_cache_dir / "hub"),
+            # litellm reads its bundled model data instead of fetching it on import
+            "LITELLM_LOCAL_MODEL_COST_MAP": "True",
+        }
+        result = subprocess.run(  # nosec B603 - the Python of the tests, no shell
+            [sys.executable, "-c", script, str(model_dir)],
+            env=env,
+            capture_output=True,
+            text=True,
+            timeout=300,
+            check=False,
+        )
+        assert result.returncode == 0, result.stderr
+        # Each of the two paragraphs has its sentences
+        sentence_counts = ast.literal_eval(result.stdout.strip().splitlines()[-1])
+        assert len(sentence_counts) == 2
+        assert all(count > 0 for count in sentence_counts)
+        # Nothing was taken into the cache
+        assert not any(path.is_file() for path in empty_cache_dir.rglob("*"))
 
     def test_requires_sentence_segmentation(self):
         """

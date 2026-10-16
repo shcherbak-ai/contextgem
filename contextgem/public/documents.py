@@ -44,7 +44,10 @@ class Document(_Document):
     :ivar sat_model_id: SaT model ID for paragraph/sentence segmentation or a local path to a SaT model.
         For model IDs, defaults to "sat-3l-sm". See https://github.com/segment-any-text/wtpsplit
         for the list of available models. For local paths, provide either a string path or a Path
-        object pointing to the directory containing the SaT model.
+        object pointing to the directory containing the SaT model. A model given by its ID is
+        downloaded from Hugging Face when it is first used, and cached. A directory that also
+        contains the tokenizer of the model (tokenizer.json) is loaded without network access;
+        otherwise, the tokenizer is downloaded from Hugging Face, or read from its cache.
     :vartype sat_model_id: SaTModelId
     :ivar pre_segment_sentences: Whether to pre-segment sentences during Document initialization.
         When False (default), sentence segmentation is deferred until sentences are actually needed,

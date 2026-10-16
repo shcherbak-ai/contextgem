@@ -1122,7 +1122,10 @@ def _load_sat_model(model_id: SaTModelId = "sat-3l-sm") -> SaT:
         The identifier of the SaT model. Defaults to "sat-3l-sm".
         Can be:
         - A standard SaT model ID (e.g., "sat-3l-sm")
-        - A local path to a SaT model directory (as a string or Path object)
+        - A local path to a SaT model directory (as a string or Path object).
+          If the directory also has the tokenizer of the model (tokenizer.json),
+          the model is loaded without network access. Otherwise, the tokenizer
+          is downloaded from Hugging Face, or read from its cache.
 
     :return:
         An instance of the SaT model associated with the given `model_id`.
@@ -1130,7 +1133,7 @@ def _load_sat_model(model_id: SaTModelId = "sat-3l-sm") -> SaT:
     :raises ValueError:
         If the provided path doesn't exist or is not a directory.
     :raises RuntimeError:
-        If the provided path exists but does not contain a valid SaT model.
+        If the provided path exists but the SaT model cannot be loaded from it.
     """
     # Convert Path object to string if needed
     if isinstance(model_id, Path):
@@ -1162,18 +1165,36 @@ def _load_sat_model(model_id: SaTModelId = "sat-3l-sm") -> SaT:
     else:
         logger.info(f"Loading SaT model {model_id}...")
 
+    # A local model is loaded with the tokenizer in its directory, if it has one.
+    # Otherwise, wtpsplit-lite takes the tokenizer from Hugging Face, also for
+    # a local model, i.e. a local model alone would not load without network access
+    local_tokenizer_path = None
+    if is_local_path:
+        tokenizer_path = Path(model_id) / "tokenizer.json"
+        if tokenizer_path.is_file():
+            local_tokenizer_path = tokenizer_path
+
     # Attempt to load the model
     try:
-        model = SaT(model_id)
+        if local_tokenizer_path is not None:
+            model = SaT(model_id, tokenizer_name_or_path=local_tokenizer_path)
+        else:
+            model = SaT(model_id)
         logger.info("SaT model loaded successfully.")
         return model
     except Exception as e:
         if is_local_path:
             # If it's a local path that exists but isn't a valid SaT model
             logger.error(f"Failed to load SaT model from path '{model_id}': {e}")
+            tokenizer_note = (
+                ""
+                if local_tokenizer_path is not None
+                else ", or the tokenizer of the model, which is taken from Hugging Face "
+                "as the directory has no tokenizer.json, could not be loaded"
+            )
             raise RuntimeError(
-                f"The directory at '{model_id}' exists but does not contain a valid SaT model. "
-                f"Error: {e}"
+                f"The directory at '{model_id}' exists but does not contain a valid SaT model"
+                f"{tokenizer_note}. Error: {e}"
             ) from e
         else:
             # For standard model IDs or other errors

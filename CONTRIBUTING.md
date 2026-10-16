@@ -387,7 +387,7 @@ VCR cassettes provide the most reliable testing approach for ContextGem because:
 
 Local LLMs (Ollama, LM Studio, etc.) also use HTTP APIs (typically on localhost) and their interactions are recorded in cassettes too.
 
-The test suite automatically uses dummy environment variables with pre-recorded cassettes when no `.env` file is present, so most contributors won't need to set up real API keys or local LLM servers. The first test run downloads a small SaT segmentation model from HuggingFace, so it needs network access.
+The test suite automatically uses dummy environment variables with pre-recorded cassettes when no `.env` file is present, so most contributors won't need to set up real API keys or local LLM servers. The first test run downloads the SaT segmentation model of the tests and its tokenizer from HuggingFace (several hundred megabytes in all), so it needs network access.
 
 #### Determining Your Scenario
 
