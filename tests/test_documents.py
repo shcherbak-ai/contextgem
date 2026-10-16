@@ -117,6 +117,10 @@ class TestDocuments(BaseTest):
         ):
             cached_path = try_to_load_from_cache(repo_id, filename)
             assert isinstance(cached_path, str), f"{repo_id}/{filename} not cached"
+            # Where the system has symbolic links, the file in the cache is a
+            # relative link to the file itself, and os.link on Linux links the
+            # link, not the file (before Python 3.14): the copy would point nowhere
+            cached_path = os.path.realpath(cached_path)
             try:
                 # The model file is large, so it is linked rather than copied
                 os.link(cached_path, model_dir / filename)
