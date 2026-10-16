@@ -9,8 +9,6 @@ from __future__ import annotations
 
 import base64
 import io
-from collections.abc import Generator
-from contextlib import contextmanager
 from pathlib import Path
 from typing import TYPE_CHECKING, BinaryIO
 
@@ -18,8 +16,7 @@ from PIL import Image as PILImage
 
 from contextgem.internal.base.utils import _JsonObjectClassStruct
 from contextgem.internal.loggers import _configure_logger_from_env
-from contextgem.internal.typings.types import SaTModelId
-from contextgem.internal.utils import _get_sat_model
+from contextgem.internal.utils import _release_sat_model
 
 
 if TYPE_CHECKING:
@@ -233,44 +230,33 @@ def reload_logger_settings():
     _configure_logger_from_env()
 
 
-@contextmanager
-def keep_sat_model_loaded(sat_model_id: SaTModelId = "sat-3l-sm") -> Generator[None]:
+def release_sat_model() -> None:
     """
-    Keeps a SaT model loaded while the block of a ``with`` statement runs, so that
-    the documents segmented in the block use the same model.
+    Releases the SaT model that is kept loaded, to free its memory.
 
     A SaT model splits the text of a document into sentences, e.g. when an aspect
     or a concept is extracted with references to sentences, and into paragraphs
-    with ``paragraph_segmentation_mode="sat"``. The model is loaded when
-    a document needs it, is shared by the documents that are segmented at
-    the same time, e.g. in threads, and is released when no document uses it,
-    as a loaded model holds a large amount of memory: about a gigabyte for
-    the default model. Documents processed one after another thus load the model
-    again each, which takes about a second for the default model. In the block,
-    they use the model loaded when the block is entered, which is released when
-    the block is left, unless something else still uses it.
+    with ``paragraph_segmentation_mode="sat"``. It is loaded when a document first
+    needs it, which takes about a second for the default model, and is kept
+    loaded for the documents that follow, for as long as the process runs.
+    The model used last is kept, which holds a large amount of memory: about
+    a gigabyte for the default model, and more once it has segmented a long
+    document, or several documents at the same time, as it keeps the memory
+    that it used for them. Call this function to free that memory,
+    e.g. in a long-running process that segments no more documents. A document
+    that needs the model then loads it again. A model that a document is being
+    segmented with at the time, e.g. in another thread, is released when
+    the segmentation ends.
 
-    :param sat_model_id: The ``sat_model_id`` of the documents: the ID of a SaT
-        model, or the path of a folder with a SaT model, which can be given in
-        another form than in the documents, e.g. absolute rather than relative.
-        Defaults to "sat-3l-sm", the default of documents.
-    :type sat_model_id: SaTModelId
-    :return: Context manager that loads the model when the block is entered.
-    :rtype: Generator[None]
-    :raises ValueError: If the path of a folder that does not exist is given.
-    :raises RuntimeError: If the folder does not contain a valid SaT model.
+    :return: None
+    :rtype: None
 
     Example:
-        .. literalinclude:: ../../../dev/usage_examples/docstrings/utils/keep_sat_model_loaded.py
+        .. literalinclude:: ../../../dev/usage_examples/docstrings/utils/release_sat_model.py
             :language: python
-            :caption: Keep a SaT model loaded
+            :caption: Release the SaT model
     """
-    model = _get_sat_model(sat_model_id)
-    try:
-        yield
-    finally:
-        # The model is released here if nothing else uses it
-        del model
+    _release_sat_model()
 
 
 class JsonObjectClassStruct(_JsonObjectClassStruct):

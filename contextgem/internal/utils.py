@@ -71,13 +71,17 @@ _FRAMEWORK_AND_PYDANTIC_DIRS: tuple[str, ...] = tuple(
     )
 )
 
-# SaT models in use, by their keys (see `_get_sat_model()`): a model is kept
-# here only while something else holds it, as a loaded model holds about
-# a gigabyte of memory
+# SaT models in use, by their keys (see `_get_sat_model()`): a model is here only
+# while something else holds it, e.g. a segmentation in a thread, or the entry
+# below
 _SAT_MODELS_IN_USE: weakref.WeakValueDictionary[str, SaT] = (
     weakref.WeakValueDictionary()
 )
-# Lets one thread at a time look up the SaT models in use
+# The SaT model used last, by its key: kept loaded for the documents that follow,
+# until another model is used or `_release_sat_model()` is called. One model at
+# most, as a loaded model holds about a gigabyte of memory
+_KEPT_SAT_MODEL: dict[str, SaT] = {}
+# Lets one thread at a time look up, keep or release the SaT models
 _SAT_MODELS_LOCK = threading.Lock()
 # Lets one thread at a time load a SaT model, by the keys of the models
 _SAT_MODEL_LOADING_LOCKS: dict[str, threading.Lock] = {}
@@ -1229,15 +1233,17 @@ def _load_sat_model(model_id: SaTModelId = "sat-3l-sm") -> SaT:
 
 def _get_sat_model(model_id: SaTModelId = "sat-3l-sm") -> SaT:
     """
-    Returns the SaT model with the given ID or path that is in use, i.e. that
-    something holds, such as a segmentation in another thread or
-    ``keep_sat_model_loaded()``, or loads it if none is.
+    Returns the SaT model with the given ID or path: the one that is loaded, i.e.
+    kept for the documents that follow the one it was used for last, or in use,
+    e.g. by a segmentation in another thread, or a new one, which it loads.
 
-    The documents segmented at the same time thus share one model, rather than
-    each holding a model of its own, and a model is released when nothing uses
-    it, rather than holding its memory for the rest of the process. Threads that
-    need the same model at the same time load it once: they wait for the one that
-    loads it, while the threads that need other models do not.
+    The model is then kept as the one used last, in place of the one kept before,
+    which is released unless it is in use: documents processed one after another
+    load their model once, while the memory of at most one model is kept between
+    them. The documents segmented at the same time share one model, rather than
+    each loading a model of its own. Threads that need the same model at the same
+    time load it once: they wait for the one that loads it, while the threads
+    that need other models do not.
 
     :param model_id: The ID of the SaT model or the path of a folder with one,
         as for ``_load_sat_model()``. Defaults to "sat-3l-sm".
@@ -1249,6 +1255,7 @@ def _get_sat_model(model_id: SaTModelId = "sat-3l-sm") -> SaT:
     with _SAT_MODELS_LOCK:
         model = _SAT_MODELS_IN_USE.get(key)
         if model is not None:
+            _keep_sat_model(key, model)
             return model
         loading_lock = _SAT_MODEL_LOADING_LOCKS.setdefault(key, threading.Lock())
     # The model is loaded under a lock of its own, so that the threads that need
@@ -1260,9 +1267,42 @@ def _get_sat_model(model_id: SaTModelId = "sat-3l-sm") -> SaT:
             model = _SAT_MODELS_IN_USE.get(key)
         if model is None:
             model = _load_sat_model(model_id)
-            with _SAT_MODELS_LOCK:
-                _SAT_MODELS_IN_USE[key] = model
+        with _SAT_MODELS_LOCK:
+            _SAT_MODELS_IN_USE[key] = model
+            _keep_sat_model(key, model)
     return model
+
+
+def _keep_sat_model(key: str, model: SaT) -> None:
+    """
+    Keeps the SaT model loaded as the one used last, in place of the one kept
+    before, if another, which is released unless it is in use. To be called with
+    ``_SAT_MODELS_LOCK`` held.
+
+    :param key: The key of the model (see ``_get_sat_model_key()``).
+    :type key: str
+    :param model: The model.
+    :type model: SaT
+    :return: None
+    :rtype: None
+    """
+    if _KEPT_SAT_MODEL.get(key) is not model:
+        _KEPT_SAT_MODEL.clear()
+        _KEPT_SAT_MODEL[key] = model
+
+
+def _release_sat_model() -> None:
+    """
+    Releases the SaT model that is kept loaded for the documents that follow
+    the one it was used for last (see ``_get_sat_model()``). A model that is in
+    use, e.g. by a segmentation in another thread, is released when it is no
+    longer used. A document that needs a model then loads it again.
+
+    :return: None
+    :rtype: None
+    """
+    with _SAT_MODELS_LOCK:
+        _KEPT_SAT_MODEL.clear()
 
 
 def _get_sat_model_key(model_id: SaTModelId) -> str:

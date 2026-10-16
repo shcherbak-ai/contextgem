@@ -17,6 +17,7 @@ import tempfile
 import threading
 import time
 import weakref
+from collections.abc import Generator
 from pathlib import Path
 from typing import Any
 from unittest.mock import patch
@@ -40,7 +41,7 @@ from contextgem.public import (
     Paragraph,
     Sentence,
     StringConcept,
-    keep_sat_model_loaded,
+    release_sat_model,
 )
 from tests.base import BaseTest
 from tests.utils import get_test_document_text
@@ -78,6 +79,18 @@ class _StubSaTModel:
         return [re.split(r"(?<=\.) ", text) for text in text_or_texts]
 
 
+@pytest.fixture
+def release_kept_sat_model() -> Generator[None]:
+    """
+    Releases the SaT model that is kept loaded before and after the test, so that
+    the test starts with no model kept, and that the tests that follow do not get
+    a model that it kept, e.g. a stub.
+    """
+    release_sat_model()
+    yield
+    release_sat_model()
+
+
 class TestDocuments(BaseTest):
     """
     Tests for documents, paragraphs, sentences and extraction pipelines,
@@ -90,21 +103,26 @@ class TestDocuments(BaseTest):
     document = BaseTest.document
     extraction_pipeline = BaseTest.extraction_pipeline
 
-    def test_sat_model_shared_while_in_use(self):
+    @pytest.mark.usefixtures("release_kept_sat_model")
+    def test_sat_model_kept_until_released(self):
         """
-        Tests that a SaT model is shared while something holds it, and is released
-        as soon as nothing does, rather than kept for the rest of the process.
+        Tests that the SaT model used last is kept loaded, and is released by
+        `release_sat_model()` as soon as nothing else holds it.
         """
         model = _get_sat_model("sat-3l-sm")
-        assert _get_sat_model("sat-3l-sm") is model
-        assert _get_sat_model(Path("sat-3l-sm")) is model
         model_ref = weakref.ref(model)
         del model
+        # Kept, whatever form its ID is given in
+        assert model_ref() is not None
+        assert _get_sat_model("sat-3l-sm") is model_ref()
+        assert _get_sat_model(Path("sat-3l-sm")) is model_ref()
+        release_sat_model()
         # Released without a garbage collection, i.e. as the last reference to it
         # is dropped: the model is in no reference cycle
         assert model_ref() is None
         assert "sat-3l-sm" not in _SAT_MODELS_IN_USE
 
+    @pytest.mark.usefixtures("release_kept_sat_model")
     def test_sat_model_loaded_once_for_threads(self):
         """
         Tests that threads that need a SaT model at the same time load it once,
@@ -143,11 +161,8 @@ class TestDocuments(BaseTest):
                 thread.join()
             assert len(loaded) == 1
             assert all(model is loaded[0] for model in models)
-            # Released when nothing holds it: loaded again when it is needed again
-            models.clear()
-            loaded.clear()
-            assert _get_sat_model("stub-model") is loaded[0]
 
+    @pytest.mark.usefixtures("release_kept_sat_model")
     def test_sat_model_loading_does_not_block_other_models(self):
         """
         Tests that the threads that need other SaT models than the one that is
@@ -194,11 +209,13 @@ class TestDocuments(BaseTest):
             assert len(other_models) == 2
             assert len(slow_models) == 1
 
+    @pytest.mark.usefixtures("release_kept_sat_model")
     def test_sat_model_shared_by_paths_of_same_folder(self, tmp_path, monkeypatch):
         """
-        Tests that the paths of a folder with a SaT model share one model in
-        whatever form they are given, and that the same relative path is that of
-        another model once the current directory has changed.
+        Tests that the paths of a folder with a SaT model are those of one model,
+        which is loaded once, in whatever form they are given, and that the same
+        relative path is that of another model once the current directory has
+        changed.
         """
         # The models loaded, recorded without holding them
         loaded: list[weakref.ref[_StubSaTModel]] = []
@@ -226,11 +243,8 @@ class TestDocuments(BaseTest):
             # Windows paths do not tell the case of the letters apart
             paths.append(absolute_path.upper())
         text = "First sentence. Second sentence."
-        with (
-            patch.object(utils_module, "_load_sat_model", new=load),
-            keep_sat_model_loaded(Path("models") / "sat"),
-        ):
-            for sat_model_id in paths:
+        with patch.object(utils_module, "_load_sat_model", new=load):
+            for sat_model_id in [*paths, Path("models") / "sat"]:
                 Document(
                     raw_text=text,
                     sat_model_id=sat_model_id,
@@ -246,11 +260,13 @@ class TestDocuments(BaseTest):
             )
             assert len(loaded) == 2
 
-    def test_keep_sat_model_loaded(self):
+    @pytest.mark.usefixtures("release_kept_sat_model")
+    def test_sat_model_kept_for_documents_one_after_another(self):
         """
-        Tests that the documents segmented in the block of `keep_sat_model_loaded()`
-        use the model loaded when the block is entered, and that the model is
-        released when the block is left.
+        Tests that documents processed one after another use the SaT model loaded
+        for the first of them, that a model used later is kept in place of
+        the one kept before, which is released, and that a document loads
+        the model again after `release_sat_model()`.
         """
         # The models loaded, recorded without holding them
         loaded: list[weakref.ref[_StubSaTModel]] = []
@@ -265,40 +281,29 @@ class TestDocuments(BaseTest):
 
         text = "First sentence. Second sentence.\n\nThird sentence."
         with patch.object(utils_module, "_load_sat_model", new=load):
-            with keep_sat_model_loaded():
-                assert len(loaded) == 1  # loaded when the block is entered
-                for _ in range(3):
-                    document = Document(raw_text=text, pre_segment_sentences=True)
-                    assert [len(p.sentences) for p in document.paragraphs] == [2, 1]
-                # A paragraph segmentation uses the same model
-                Document(raw_text=text, paragraph_segmentation_mode="sat")
-                # A block for the same model in the block shares the model
-                with keep_sat_model_loaded("sat-3l-sm"):
-                    pass
-                assert len(loaded) == 1
-                # Another model is loaded for the documents that need it, and
-                # released when they no longer do
-                Document(
-                    raw_text=text,
-                    sat_model_id="sat-12l-sm",
-                    pre_segment_sentences=True,
-                )
-                assert len(loaded) == 2
-                assert loaded[1]() is None
-                assert loaded[0]() is not None
+            for _ in range(3):
+                document = Document(raw_text=text, pre_segment_sentences=True)
+                assert [len(p.sentences) for p in document.paragraphs] == [2, 1]
+            # A paragraph segmentation uses the same model
+            Document(raw_text=text, paragraph_segmentation_mode="sat")
+            assert len(loaded) == 1
+            # Another model is kept in place of the first one, which is released
+            Document(
+                raw_text=text,
+                sat_model_id="sat-12l-sm",
+                pre_segment_sentences=True,
+            )
             assert len(loaded) == 2
-            # Released when the block is left: each document loads it again
             assert loaded[0]() is None
+            assert loaded[1]() is not None
             Document(raw_text=text, pre_segment_sentences=True)
+            assert len(loaded) == 3
+            assert loaded[1]() is None
+            # Released: the next document loads the model again
+            release_sat_model()
+            assert loaded[2]() is None
             Document(raw_text=text, pre_segment_sentences=True)
             assert len(loaded) == 4
-        # The model is loaded when the block is entered: an invalid model is
-        # reported there
-        with (
-            pytest.raises(ValueError, match="does not exist or is not a directory"),
-            keep_sat_model_loaded("/nonexistent/path/to/model"),
-        ):
-            pass
 
     def test_split_into_sentences_in_batches_by_length(self):
         """
@@ -353,9 +358,8 @@ class TestDocuments(BaseTest):
         ]
         # Longer than the 512 tokens of a block of the model
         texts.insert(len(texts) // 2, " ".join(texts))
-        with keep_sat_model_loaded():
-            model = _get_sat_model("sat-3l-sm")
-            assert _split_into_sentences(model, texts) == list(model.split(texts))
+        model = _get_sat_model("sat-3l-sm")
+        assert _split_into_sentences(model, texts) == list(model.split(texts))
 
     def test_local_sat_model(self):
         """

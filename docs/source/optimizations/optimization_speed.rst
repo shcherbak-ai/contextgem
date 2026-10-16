@@ -14,7 +14,7 @@ For large-scale processing or time-sensitive applications, optimize your pipelin
 - **🔄 Use a Fallback Model**: Configure a fallback model to retry extractions that failed due to rate limits.
 - **⚙️ Use Default Parameters**: Without concurrency, all the extractions are processed in as few model calls as possible. With concurrency enabled, each aspect/concept is processed in a call of its own by default.
 - **📉 Enable Justifications Only When Necessary**: Do not use justifications for simple aspects or concepts. This will reduce the number of tokens generated.
-- **⚠️ Use Sentence-Level Reference Depth Sparingly**: Only use sentence-level reference depth for aspects or concepts when absolutely necessary, as it requires loading a SaT model and running sentence segmentation on text, which can be slow for long documents. For documents processed one after another, keep the SaT model loaded, so that it is loaded once. (See :ref:`sat-models-memory`.)
+- **⚠️ Use Sentence-Level Reference Depth Sparingly**: Only use sentence-level reference depth for aspects or concepts when absolutely necessary, as it requires loading a SaT model and running sentence segmentation on text, which can be slow for long documents. The model is loaded once, for the first document that needs it, and kept loaded for the documents that follow. (See :ref:`sat-models-memory`.)
 
 
 .. literalinclude:: ../../../dev/usage_examples/docs/optimizations/optimization_speed.py

@@ -1,7 +1,7 @@
 :og:description: ContextGem: Creating Documents
 
 .. meta::
-   :description: How to create a Document from text, paragraphs or images, add aspects and concepts to it, give paragraphs additional context, locate paragraphs and sentences in it, use SaT models without network access, and keep a SaT model loaded for documents processed one after another.
+   :description: How to create a Document from text, paragraphs or images, add aspects and concepts to it, give paragraphs additional context, locate paragraphs and sentences in it, use SaT models without network access, and release the memory of a SaT model.
 
 Creating Documents
 ===================
@@ -182,13 +182,13 @@ A model given by its ID, e.g. the default ``"sat-3l-sm"``, is downloaded from Hu
 
 .. _sat-models-memory:
 
-♻️ Keeping a SaT Model Loaded
------------------------------
+♻️ Releasing a SaT Model
+------------------------
 
-A SaT model is loaded when a document needs it, and is released when no document uses it, as a loaded model holds a large amount of memory: about a gigabyte for the default model. Documents segmented at the same time, e.g. in threads, share one model. Documents processed one after another load the model again each, which takes about a second for the default model.
+A SaT model is loaded when a document first needs it, which takes about a second for the default model, and is kept loaded for the documents that follow, for as long as the process runs. Documents processed one after another, e.g. a batch of documents whose aspects or concepts are extracted with references to sentences, thus load the model once. Documents segmented at the same time, e.g. in threads, share one model.
 
-To process documents one after another with one load of the model, e.g. a batch of documents whose aspects or concepts are extracted with references to sentences, process them in the block of :func:`~contextgem.public.utils.keep_sat_model_loaded`. The model is loaded when the block is entered, and is released when the block is left. Pass the ``sat_model_id`` of the documents if it is not the default one. The path of a folder with a model refers to the same model in any form, e.g. relative or absolute. The time saved is that of loading the model: for a long document, segmenting the text takes longer.
+The model used last is kept: a document with another ``sat_model_id`` loads its model, which is then kept in place of the one before. The path of a folder with a model refers to the same model in any form, e.g. relative or absolute. A loaded model holds a large amount of memory: about a gigabyte for the default model, and more once it has segmented a long document, or several documents at the same time, as it keeps the memory that it used for them. To free it, e.g. in a long-running process that segments no more documents, call :func:`~contextgem.public.utils.release_sat_model`. A document that needs the model then loads it again.
 
-.. literalinclude:: ../../../dev/usage_examples/docstrings/utils/keep_sat_model_loaded.py
+.. literalinclude:: ../../../dev/usage_examples/docstrings/utils/release_sat_model.py
    :language: python
-   :caption: Keep a SaT model loaded
+   :caption: Release the SaT model
