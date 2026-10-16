@@ -8,6 +8,7 @@ Module defining tests for documents and text segmentation.
 from __future__ import annotations
 
 import ast
+import asyncio
 import os
 import re
 import shutil
@@ -26,6 +27,7 @@ import pytest
 from huggingface_hub import try_to_load_from_cache
 
 from contextgem.internal import utils as utils_module
+from contextgem.internal.base import documents as documents_module
 from contextgem.internal.utils import (
     _SAT_BATCH_SIZE,
     _SAT_MODELS_IN_USE,
@@ -304,6 +306,82 @@ class TestDocuments(BaseTest):
             assert loaded[2]() is None
             Document(raw_text=text, pre_segment_sentences=True)
             assert len(loaded) == 4
+
+    def test_sentences_segmented_by_tasks_at_the_same_time(self):
+        """
+        Tests that when two tasks segment the sentences of the same document at
+        the same time, each paragraph keeps the sentences of the task that finishes
+        first, rather than the sentences of the other task, or a mix of both.
+        """
+        calls: list[int] = []
+        calls_lock = threading.Lock()
+        sentences_assigned = threading.Event()
+
+        class SplitterOfTwoTasks:
+            """
+            Replaces the SaT model: splits a text after each full stop for
+            the first task, and into one sentence for the second task, which
+            finishes first: the first one waits for its sentences to be assigned.
+            """
+
+            def split(self, texts: list[str], **kwargs: Any) -> list[list[str]]:
+                """
+                Splits each of the texts into sentences.
+
+                :param texts: The texts of the paragraphs.
+                :type texts: list[str]
+                :param kwargs: The options of the segmentation, which the stub
+                    does not use.
+                :type kwargs: Any
+                :return: The sentences of each paragraph.
+                :rtype: list[list[str]]
+                """
+                with calls_lock:
+                    call = len(calls)
+                    calls.append(call)
+                if call == 0:
+                    assert sentences_assigned.wait(timeout=10)
+                    return [re.split(r"(?<=\.) ", text) for text in texts]
+                return [[text] for text in texts]
+
+        assign_segmented_sents = Document._assign_segmented_sents
+
+        def assign_and_signal(
+            document: Document, split_sents_for_paras: list[list[str]]
+        ) -> None:
+            """
+            Assigns the sentences, and signals that they are assigned.
+            """
+            assign_segmented_sents(document, split_sents_for_paras)
+            sentences_assigned.set()
+
+        document = Document(
+            raw_text="First sentence. Second sentence.\n\nThird sentence. Fourth."
+        )
+
+        async def segment_twice() -> None:
+            """
+            Segments the sentences of the document in two tasks at the same time.
+            """
+            await asyncio.gather(
+                document._segment_sents_async(), document._segment_sents_async()
+            )
+
+        with (
+            patch.object(
+                documents_module,
+                "_get_sat_model",
+                new=lambda model_id: SplitterOfTwoTasks(),
+            ),
+            patch.object(Document, "_assign_segmented_sents", assign_and_signal),
+        ):
+            asyncio.run(segment_twice())
+        assert calls == [0, 1]
+        # The sentences of the second task, which finished first
+        assert [[s.raw_text for s in p.sentences] for p in document.paragraphs] == [
+            ["First sentence. Second sentence."],
+            ["Third sentence. Fourth."],
+        ]
 
     def test_split_into_sentences_in_batches_by_length(self):
         """

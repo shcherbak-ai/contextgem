@@ -185,7 +185,7 @@ A model given by its ID, e.g. the default ``"sat-3l-sm"``, is downloaded from Hu
 ♻️ Releasing a SaT Model
 ------------------------
 
-A SaT model is loaded when a document first needs it, which takes about a second for the default model, and is kept loaded for the documents that follow, for as long as the process runs. Documents processed one after another, e.g. a batch of documents whose aspects or concepts are extracted with references to sentences, thus load the model once. Documents segmented at the same time, e.g. in threads, share one model.
+A SaT model is loaded when a document first needs it, which takes about a second for the default model, and is kept loaded for the documents that follow, for as long as the process runs. Documents processed one after another, e.g. a batch of documents whose aspects or concepts are extracted with references to sentences, thus load the model once. Documents segmented at the same time, e.g. in threads, share one model. The async extraction methods, e.g. ``extract_all_async()``, run the model in a worker thread, so that the event loop goes on while it segments a document.
 
 The model used last is kept: a document with another ``sat_model_id`` loads its model, which is then kept in place of the one before. The path of a folder with a model refers to the same model in any form, e.g. relative or absolute. A loaded model holds a large amount of memory: about a gigabyte for the default model, and more once it has segmented a long document, or several documents at the same time, as it keeps the memory that it used for them. To free it, e.g. in a long-running process that segments no more documents, call :func:`~contextgem.public.utils.release_sat_model`. A document that needs the model then loads it again.
 

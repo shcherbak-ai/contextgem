@@ -482,7 +482,7 @@ class _GenericModelProcessor(_AbstractGenericModelProcessor):
 
         # Check if sentence segmentation is required for some aspects or concepts
         if document._requires_sentence_segmentation():
-            document._segment_sents()
+            await document._segment_sents_async()
 
         # Tools are not used in extraction workflows
         self._warn_tools_ignored_if_enabled()
@@ -668,7 +668,7 @@ class _GenericModelProcessor(_AbstractGenericModelProcessor):
 
         # Check if sentence segmentation is required for some aspects or concepts
         if document._requires_sentence_segmentation():
-            document._segment_sents()
+            await document._segment_sents_async()
 
         # Tools are not used in extraction workflows
         self._warn_tools_ignored_if_enabled()
@@ -918,7 +918,7 @@ class _GenericModelProcessor(_AbstractGenericModelProcessor):
 
         # Check if sentence segmentation is required for some aspects or concepts
         if document._requires_sentence_segmentation():
-            document._segment_sents()
+            await document._segment_sents_async()
 
         # Tools are not used in extraction workflows
         self._warn_tools_ignored_if_enabled()
@@ -1173,7 +1173,7 @@ class _GenericModelProcessor(_AbstractGenericModelProcessor):
 
         # Check if sentence segmentation is required for some aspects or concepts
         if document._requires_sentence_segmentation():
-            document._segment_sents()
+            await document._segment_sents_async()
 
         # Tools are not used in extraction workflows
         self._warn_tools_ignored_if_enabled()

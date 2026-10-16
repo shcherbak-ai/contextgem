@@ -7,6 +7,7 @@ Module defining the base classes for Document class.
 
 from __future__ import annotations
 
+import asyncio
 import itertools
 from collections.abc import Sequence
 from copy import deepcopy
@@ -481,20 +482,63 @@ class _Document(_AssignedInstancesProcessor):
             be matched in the parent paragraph's text
         :raises Exception: If the SaT model fails to process the paragraphs
         """
+        if self._has_paragraphs_to_segment():
+            self._assign_segmented_sents(self._split_paragraphs_into_sents())
+
+    async def _segment_sents_async(self) -> None:
+        """
+        Segments sentences for paragraphs that don't have sentences already assigned,
+        as ``_segment_sents()`` does, with the SaT model run in a worker thread.
+
+        The event loop is thus not blocked while the model runs, which takes seconds
+        for a long document: the other tasks of the loop go on meanwhile, e.g.
+        the requests of other extractions, and documents segmented by other tasks
+        at the same time are segmented in threads of their own, with a shared model.
+
+        The sentences are assigned on the event loop, to the paragraphs that have
+        none by then. When two tasks segment the same document at the same time,
+        each paragraph keeps the sentences of the task that finishes first, so that
+        the references extracted by both are the same sentences.
+
+        :return: None
+        :raises RuntimeError: If no paragraphs exist or if segmented sentences cannot
+            be matched in the parent paragraph's text
+        :raises Exception: If the SaT model fails to process the paragraphs
+        """
+        if self._has_paragraphs_to_segment():
+            self._assign_segmented_sents(
+                await asyncio.to_thread(self._split_paragraphs_into_sents)
+            )
+
+    def _has_paragraphs_to_segment(self) -> bool:
+        """
+        Returns whether some paragraphs have no sentences, i.e. are to be segmented
+        into sentences.
+
+        :return: Whether some paragraphs have no sentences.
+        :rtype: bool
+        :raises RuntimeError: If no paragraphs exist
+        """
         if not self.paragraphs:
             raise RuntimeError("No paragraphs available for sentence segmentation")
+        return not all(i.sentences for i in self.paragraphs)
 
-        # Only process paragraphs that don't have sentences
-        if all(i.sentences for i in self.paragraphs):
-            return
+    def _split_paragraphs_into_sents(self) -> list[list[str]]:
+        """
+        Splits the texts of the paragraphs into sentences with the SaT model,
+        without assigning them (see ``_assign_segmented_sents()``).
 
+        :return: The texts of the sentences of each paragraph.
+        :rtype: list[list[str]]
+        :raises Exception: If the SaT model fails to process the paragraphs
+        """
         logger.info("Paragraphs are being split into sentences...")
         if any(i.sentences for i in self.paragraphs):
             logger.info(
                 "Some paragraphs already have sentences. These will be used `as is`."
             )
         try:
-            split_sents_for_paras = _split_into_sentences(
+            return _split_into_sentences(
                 _get_sat_model(self.sat_model_id),
                 [p.raw_text for p in self.paragraphs],
             )
@@ -503,6 +547,18 @@ class _Document(_AssignedInstancesProcessor):
                 f"Error splitting paragraphs into sentences using SaT model: {e}"
             )
             raise
+
+    def _assign_segmented_sents(self, split_sents_for_paras: list[list[str]]) -> None:
+        """
+        Assigns the segmented sentences to the paragraphs that have no sentences.
+
+        :param split_sents_for_paras: The texts of the sentences of each paragraph,
+            as ``_split_paragraphs_into_sents()`` returns them.
+        :type split_sents_for_paras: list[list[str]]
+        :return: None
+        :raises ValueError: If segmented sentences cannot be matched in the parent
+            paragraph's text
+        """
         for paragraph, sent_group in zip(
             self.paragraphs, split_sents_for_paras, strict=True
         ):

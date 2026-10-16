@@ -11,6 +11,7 @@ import asyncio
 import json
 import os
 import re
+import threading
 import types
 import warnings
 from contextlib import contextmanager
@@ -6126,3 +6127,137 @@ class TestExtraction(BaseTest):
                 assert [item.value for item in concept.extracted_items] == [
                     f"{primary_model}: {clause}" for clause in range(1, n_parts + 1)
                 ]
+
+    @pytest.mark.parametrize(
+        "method_name",
+        [
+            "extract_all_async",
+            "extract_aspects_from_document_async",
+            "extract_concepts_from_aspect_async",
+            "extract_concepts_from_document_async",
+        ],
+    )
+    def test_sentences_segmented_without_blocking_event_loop(self, method_name: str):
+        """
+        Tests that the async extraction methods segment the sentences of a document
+        in a worker thread: the other tasks of the event loop run while the SaT
+        model segments them.
+
+        No LLM API calls are made, i.e. no cassette is required.
+        """
+        litellm = llms_module.litellm
+        segmentation_started = threading.Event()
+        loop_ran_during_segmentation = threading.Event()
+
+        class WaitingSentenceSplitter:
+            """
+            Replaces the SaT model: splits a text after each full stop once another
+            task of the event loop has run, which it cannot while the segmentation
+            blocks the event loop.
+            """
+
+            def split(self, texts: list[str], **kwargs: Any) -> list[list[str]]:
+                """
+                Splits each of the texts into sentences.
+
+                :param texts: The texts of the paragraphs.
+                :type texts: list[str]
+                :param kwargs: The options of the segmentation, e.g. the batch
+                    size, which the stub does not use.
+                :type kwargs: Any
+                :return: The sentences of each paragraph.
+                :rtype: list[list[str]]
+                """
+                segmentation_started.set()
+                assert loop_ran_during_segmentation.wait(timeout=10), (
+                    "The event loop was blocked while the sentences were segmented"
+                )
+                return [re.split(r"(?<=\.) ", text) for text in texts]
+
+        async def acompletion_stub(**kwargs: Any) -> Any:
+            """
+            Simulates the LLM API: the first paragraph is extracted for an aspect
+            with paragraphs as its references, and nothing else is extracted.
+            """
+            prompt = kwargs["messages"][-1]["content"]
+            concept_ids = re.findall(r"<concept_id>(C\d+)</concept_id>", prompt)
+            aspect_ids = re.findall(r"<aspect_id>(A\d+)</aspect_id>", prompt)
+            if concept_ids:
+                content = [
+                    {"concept_id": i, "extracted_items": []} for i in concept_ids
+                ]
+            elif "<sentence_id>" in prompt:
+                content = [{"aspect_id": i, "paragraphs": []} for i in aspect_ids]
+            else:
+                content = [
+                    {"aspect_id": i, "paragraph_ids": ["P0"]} for i in aspect_ids
+                ]
+            return types.SimpleNamespace(
+                choices=[
+                    types.SimpleNamespace(
+                        message=types.SimpleNamespace(content=json.dumps(content))
+                    )
+                ],
+                usage=types.SimpleNamespace(prompt_tokens=1, completion_tokens=1),
+            )
+
+        async def run_during_segmentation() -> None:
+            """
+            Runs on the event loop once the segmentation has started.
+            """
+            while not segmentation_started.is_set():
+                await asyncio.sleep(0.01)
+            loop_ran_during_segmentation.set()
+
+        def create_concept() -> StringConcept:
+            """
+            Creates a concept with references to sentences.
+            """
+            return StringConcept(
+                name="Duty",
+                description="A duty of a party",
+                add_references=True,
+                reference_depth="sentences",
+            )
+
+        async def run() -> Document:
+            """
+            Runs the extraction method, and the task that is to run meanwhile.
+            """
+            document = Document(raw_text="First duty. Second duty.\n\nThird duty.")
+            llm = DocumentLLM(model="openai/gpt-6-luna", api_key="test_api_key")
+            if method_name == "extract_concepts_from_aspect_async":
+                # The aspect is extracted first, when nothing requires sentences:
+                # they are segmented for the concept of the aspect, attached after
+                document.aspects = [
+                    Aspect(name="Duties", description="Duties of the parties")
+                ]
+                await llm.extract_aspects_from_document_async(document)
+                assert not document.sentences
+                (aspect,) = document.aspects
+                aspect.concepts = [create_concept()]
+                extraction = llm.extract_concepts_from_aspect_async(aspect, document)
+            else:
+                document.aspects = [
+                    Aspect(
+                        name="Duties",
+                        description="Duties of the parties",
+                        reference_depth="sentences",
+                        concepts=[create_concept()],
+                    )
+                ]
+                document.concepts = [create_concept()]
+                extraction = getattr(llm, method_name)(document)
+            await asyncio.gather(extraction, run_during_segmentation())
+            return document
+
+        with (
+            patch.object(litellm, "acompletion", new=acompletion_stub),
+            patch.object(
+                documents_module,
+                "_get_sat_model",
+                new=lambda model_id: WaitingSentenceSplitter(),
+            ),
+        ):
+            document = asyncio.run(run())
+        assert [len(p.sentences) for p in document.paragraphs] == [2, 1]
