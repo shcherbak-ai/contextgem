@@ -1,0 +1,99 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 832 262" width="832" height="262" role="img" aria-labelledby="title desc" font-family="ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Consolas, 'Liberation Mono', 'DejaVu Sans Mono', monospace" font-size="13">
+  <title id="title">ContextGem choosing the tools of an agent - a probability for each group of tools</title>
+  <desc id="desc">A request, "Remind billing@acme.example of invoice 1043, with the amount due.", and a multi-label concept, "Tools needed", whose labels are the groups of the agent's tools, go to a decision model, which gives each label a probability of its own: Search contracts 0.14, Look up invoices 0.94, Send emails 0.96, Schedule meetings 0.02. The groups at or above the threshold of 0.3 give the agent its tools for the turn: look_up_invoice and send_email.</desc>
+
+  <!-- The run, played once: the request goes to the decision model, each group of tools gets its probability, and the groups above the threshold give the agent its tools. The drawing as it stands is where the run ends: each part fades or grows in from a hidden first frame, the traces along the routes show only while they play, and without motion it is all there -->
+  <style>
+    .in { animation: show 0.35s ease-out backwards; }
+    @keyframes show { from { opacity: 0; } }
+    .grow { transform-box: fill-box; transform-origin: left center; animation: grow 0.7s cubic-bezier(0.2, 0.7, 0.2, 1) backwards; }
+    @keyframes grow { from { transform: scaleX(0); } }
+    .light { animation: light 0.4s ease-out backwards; }
+    @keyframes light { from { fill: #6b7280; } }
+    .trace { opacity: 0; stroke-dasharray: 1; animation: trace 0.7s ease-in-out; }
+    @keyframes trace {
+      0% { opacity: 1; stroke-dashoffset: 1; }
+      60% { opacity: 1; stroke-dashoffset: 0; }
+      100% { opacity: 0; stroke-dashoffset: 0; }
+    }
+    .lit { opacity: 0; animation: lit 0.8s ease-out; }
+    @keyframes lit { 0%, 100% { opacity: 0; } 30% { opacity: 1; } }
+    @media (prefers-reduced-motion: reduce) { * { animation: none !important; } }
+  </style>
+
+
+  <!-- A ground of its own, so that the picture reads the same in the light
+       and the dark theme: a window, with what it shows on its tab -->
+  <path d="M0.5 28.5H831.5V261.5H0.5Z" fill="#111113" stroke="#2c2c30"/>
+  <path d="M0.5 29V0.5H156.5V29" fill="#111113" stroke="#2c2c30"/>
+  <path d="M1 28.5H156" stroke="#111113"/>
+  <text x="16" y="18.5" font-size="11" fill="#9ca3af">choosing the tools</text>
+
+
+  <!-- The columns -->
+  <g font-size="10.5" letter-spacing="1.4" fill="#6b7280">
+    <text x="28" y="62">REQUEST</text>
+    <text x="320" y="62">MODEL</text>
+    <text x="540" y="62">GROUPS OF TOOLS</text>
+  </g>
+
+  <!-- The request, and the concept that asks about it -->
+  <g font-size="12" fill="#e5e7eb">
+    <text x="28" y="100">Remind billing@acme.example of</text>
+    <text x="28" y="118">invoice 1043, with the amount due.</text>
+  </g>
+  <text x="28" y="162" fill="#f3f4f6">Tools needed</text>
+  <text x="28" y="180" font-size="11" fill="#6b7280">LabelConcept · multi_label</text>
+
+  <!-- The model: one yes/no question for each label -->
+  <path d="M320.5 116.5H499.5V163.5H320.5Z" fill="none" stroke="#ffffff" stroke-opacity="0.2"/>
+  <g transform="translate(332 124) scale(2)" shape-rendering="crispEdges"><path fill="#6b7280" d="M0 5h1v1h-1zM5 5h11v1h-11zM6 10h4v1h-4zM6 11h4v1h-4zM6 12h4v1h-4zM11 12h4v1h-4zM6 13h4v1h-4zM11 13h4v1h-4zM6 14h4v1h-4zM11 14h4v1h-4zM0 15h16v1h-16z"/><path fill="#9ca3af" d="M2 1h3v1h-3zM1 2h4v1h-4zM1 3h4v1h-4zM1 4h4v1h-4zM1 5h4v1h-4zM1 6h4v1h-4zM1 7h4v1h-4zM1 8h4v1h-4zM1 9h4v1h-4zM1 10h4v1h-4zM1 11h4v1h-4zM1 12h4v1h-4zM1 13h4v1h-4zM1 14h4v1h-4z"/><path fill="#9ca3af" d="M1 1h1v1h-1z"/></g>
+  <text x="376" y="137" fill="#f3f4f6">Decision model</text>
+  <text x="376" y="154" font-size="11" fill="#6b7280">scores each label</text>
+
+  <!-- The routes: each shows when its trace has run along it -->
+  <g fill="none" stroke="#ffffff" stroke-opacity="0.2">
+    <path class="in" style="animation-delay: 0.60s" d="M288 140.5H319"/>
+    <path class="in" style="animation-delay: 1.30s" d="M500 140.5H520.5V95.5H532"/>
+    <path class="in" style="animation-delay: 1.40s" d="M500 140.5H520.5V123.5H532"/>
+    <path class="in" style="animation-delay: 1.50s" d="M500 140.5H520.5V151.5H532"/>
+    <path class="in" style="animation-delay: 1.60s" d="M500 140.5H520.5V179.5H532"/>
+  </g>
+
+  <!-- A probability for each group, on a track marked at the threshold.
+       The groups at or above it light up, and give the agent its tools -->
+  <text x="540" y="100" fill="#6b7280">Search contracts</text>
+  <rect class="in" style="animation-delay: 1.30s" x="688" y="94" width="76" height="3" fill="#ffffff" fill-opacity="0.12"/>
+  <rect class="grow" style="animation-delay: 1.40s" x="688" y="94" width="10.6" height="3" fill="#6b7280"/>
+  <text class="in" style="animation-delay: 1.9s" x="804" y="100" fill="#6b7280" text-anchor="end">0.14</text>
+  <text class="light" style="animation-delay: 2.1s" x="540" y="128" fill="#f3f4f6">Look up invoices</text>
+  <rect class="in" style="animation-delay: 1.40s" x="688" y="122" width="76" height="3" fill="#ffffff" fill-opacity="0.12"/>
+  <rect class="grow" style="animation-delay: 1.50s" x="688" y="122" width="71.4" height="3" fill="#38bdf8"/>
+  <text class="in" style="animation-delay: 1.9s" x="804" y="128" fill="#9ca3af" text-anchor="end">0.94</text>
+  <text class="light" style="animation-delay: 2.1s" x="540" y="156" fill="#f3f4f6">Send emails</text>
+  <rect class="in" style="animation-delay: 1.50s" x="688" y="150" width="76" height="3" fill="#ffffff" fill-opacity="0.12"/>
+  <rect class="grow" style="animation-delay: 1.60s" x="688" y="150" width="73.0" height="3" fill="#38bdf8"/>
+  <text class="in" style="animation-delay: 1.9s" x="804" y="156" fill="#9ca3af" text-anchor="end">0.96</text>
+  <text x="540" y="184" fill="#6b7280">Schedule meetings</text>
+  <rect class="in" style="animation-delay: 1.60s" x="688" y="178" width="76" height="3" fill="#ffffff" fill-opacity="0.12"/>
+  <rect class="grow" style="animation-delay: 1.70s" x="688" y="178" width="1.5" height="3" fill="#6b7280"/>
+  <text class="in" style="animation-delay: 1.9s" x="804" y="184" fill="#6b7280" text-anchor="end">0.02</text>
+  <g class="in" style="animation-delay: 1.3s">
+    <path d="M711.3 86V186" stroke="#ffffff" stroke-opacity="0.35"/>
+    <text x="711.3" y="200" font-size="10" fill="#6b7280" text-anchor="middle">threshold 0.3</text>
+  </g>
+  <g class="in" style="animation-delay: 2.45s">
+    <text x="540" y="226" font-size="11" fill="#6b7280">agent.tools</text>
+    <text x="540" y="244" fill="#f3f4f6">[look_up_invoice, send_email]</text>
+  </g>
+
+  <!-- The traces of the run -->
+  <g fill="none" stroke="#38bdf8" stroke-width="1.5">
+    <path class="trace" pathLength="1" style="animation-delay: 0.30s" d="M288 140.5H319"/>
+    <path class="trace" pathLength="1" style="animation-delay: 1.00s" d="M500 140.5H520.5V95.5H532"/>
+    <path class="trace" pathLength="1" style="animation-delay: 1.10s" d="M500 140.5H520.5V123.5H532"/>
+    <path class="trace" pathLength="1" style="animation-delay: 1.20s" d="M500 140.5H520.5V151.5H532"/>
+    <path class="trace" pathLength="1" style="animation-delay: 1.30s" d="M500 140.5H520.5V179.5H532"/>
+    <path class="lit" style="animation-delay: 0.75s" stroke-width="1" d="M320.5 116.5H499.5V163.5H320.5Z"/>
+  </g>
+</svg>

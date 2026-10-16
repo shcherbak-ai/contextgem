@@ -6,6 +6,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 - **Refactor**: Code reorganization that doesn't change functionality but improves structure or maintainability
 
+## [Unreleased]
+
+### Added
+
+- Added a documentation page on [agentic workflows](https://contextgem.shcherbak.ai/agentic_workflows/), with an example for each of the three points where ContextGem runs in them: extracting the metadata of documents at ingestion, extracting on demand in a tool that an agent calls (also served over MCP), and deciding the next step of a workflow with a decision model, which can also choose the tools that an agent gets for its turn. The README links to it.
+
 ## [1.0.0] - 2026-10-16
 
 ContextGem 1.0 adds **decision models** next to LLMs. A decision model answers typed questions about a text (yes/no, pick one option, rate on a scale) with the probability of each possible answer, and generates no text. It extracts aspects, and Boolean, label and rating concepts, on its own, in a model group together with LLMs, or in a fallback chain, so that each aspect and concept can go to the model that suits it. The names in the API that are not specific to LLMs now refer to models in general, which is one of the breaking changes of this release: see the [migration guide](https://contextgem.shcherbak.ai/migration_v1/) before you upgrade.
@@ -590,6 +596,7 @@ See the [migration guide](https://contextgem.shcherbak.ai/migration_v1/) for upd
 
 - Added DocxConverter for converting DOCX files into ContextGem Document objects
 
+[Unreleased]: https://github.com/shcherbak-ai/contextgem/compare/v1.0.0...HEAD
 [1.0.0]: https://github.com/shcherbak-ai/contextgem/compare/v0.27.0...v1.0.0
 [0.27.0]: https://github.com/shcherbak-ai/contextgem/compare/v0.26.0...v0.27.0
 [0.26.0]: https://github.com/shcherbak-ai/contextgem/compare/v0.25.1...v0.26.0

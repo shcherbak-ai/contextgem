@@ -17,8 +17,9 @@ Or, with pip: `pip install -U contextgem`.
 - Runs as one declarative pipeline, reusable and serializable, with model routing, fallbacks and cost tracking.
 - Uses the right model for each question: cloud and local LLMs through LiteLLM where it takes reasoning, and decision models where a fast, low-cost answer is enough.
 - Gives the probability of each possible answer of a decision model, so that you set the threshold.
+- Fits into agentic workflows: extracts the metadata of documents at ingestion, runs as a tool that an agent calls, and decides the next step of a workflow, or the tools that an agent gets, with probabilities.
 - Is built for in-depth analysis of individual documents, not for cross-document querying or corpus-wide retrieval.
 
-See the [documentation](https://contextgem.shcherbak.ai) for the [quickstart](https://contextgem.shcherbak.ai/quickstart/), [how it works](https://contextgem.shcherbak.ai/how_it_works/) and [decision models](https://contextgem.shcherbak.ai/decision_models/decision_models/), the [repository](https://github.com/shcherbak-ai/contextgem#readme) for the overview and the source, and the [changelog](https://github.com/shcherbak-ai/contextgem/blob/main/CHANGELOG.md) for the version history.
+See the [documentation](https://contextgem.shcherbak.ai) for the [quickstart](https://contextgem.shcherbak.ai/quickstart/), [how it works](https://contextgem.shcherbak.ai/how_it_works/), [decision models](https://contextgem.shcherbak.ai/decision_models/decision_models/) and [agentic workflows](https://contextgem.shcherbak.ai/agentic_workflows/), the [repository](https://github.com/shcherbak-ai/contextgem#readme) for the overview and the source, and the [changelog](https://github.com/shcherbak-ai/contextgem/blob/main/CHANGELOG.md) for the version history.
 
 Licensed under [Apache-2.0](https://github.com/shcherbak-ai/contextgem/blob/main/LICENSE).

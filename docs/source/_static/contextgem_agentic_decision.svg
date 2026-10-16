@@ -1,0 +1,88 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 832 244" width="832" height="244" role="img" aria-labelledby="title desc" font-family="ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Consolas, 'Liberation Mono', 'DejaVu Sans Mono', monospace" font-size="13">
+  <title id="title">ContextGem at a decision point - the probability of an answer decides the next step</title>
+  <desc id="desc">A closed question about a service agreement, "Termination for convenience", a Boolean concept, goes to a decision model, which scores each answer: True with a probability of 0.98. The workflow acts on a clear answer and leaves an unclear one to a person: at 0.9 or more, the next step is draft_termination_notice, which is taken here; at 0.1 or less, reply_not_terminable; in between, human_review.</desc>
+
+  <!-- The run, played once: the question goes to the decision model, its answer comes back with its probability, and the branch that the probability falls in is taken. The drawing as it stands is where the run ends: each part fades or grows in from a hidden first frame, the traces along the routes show only while they play, and without motion it is all there -->
+  <style>
+    .in { animation: show 0.35s ease-out backwards; }
+    @keyframes show { from { opacity: 0; } }
+    .grow { transform-box: fill-box; transform-origin: left center; animation: grow 0.7s cubic-bezier(0.2, 0.7, 0.2, 1) backwards; }
+    @keyframes grow { from { transform: scaleX(0); } }
+    .light { animation: light 0.4s ease-out backwards; }
+    @keyframes light { from { fill: #6b7280; } }
+    .trace { opacity: 0; stroke-dasharray: 1; animation: trace 0.7s ease-in-out; }
+    @keyframes trace {
+      0% { opacity: 1; stroke-dashoffset: 1; }
+      60% { opacity: 1; stroke-dashoffset: 0; }
+      100% { opacity: 0; stroke-dashoffset: 0; }
+    }
+    .lit { opacity: 0; animation: lit 0.8s ease-out; }
+    @keyframes lit { 0%, 100% { opacity: 0; } 30% { opacity: 1; } }
+    @media (prefers-reduced-motion: reduce) { * { animation: none !important; } }
+  </style>
+
+
+  <!-- A ground of its own, so that the picture reads the same in the light
+       and the dark theme: a window, with what it shows on its tab -->
+  <path d="M0.5 28.5H831.5V243.5H0.5Z" fill="#111113" stroke="#2c2c30"/>
+  <path d="M0.5 29V0.5H164.5V29" fill="#111113" stroke="#2c2c30"/>
+  <path d="M1 28.5H164" stroke="#111113"/>
+  <text x="16" y="18.5" font-size="11" fill="#9ca3af">at a decision point</text>
+
+
+  <!-- The columns -->
+  <g font-size="10.5" letter-spacing="1.4" fill="#6b7280">
+    <text x="28" y="62">QUESTION</text>
+    <text x="300" y="62">MODEL</text>
+    <text x="540" y="62">ANSWER</text>
+  </g>
+
+  <!-- The question: a Boolean concept -->
+  <text x="28" y="98" fill="#f3f4f6">Termination for convenience</text>
+  <text x="28" y="116" font-size="11" fill="#6b7280">BooleanConcept</text>
+  <g font-size="11" fill="#6b7280">
+    <text x="28" y="146">Either party may terminate</text>
+    <text x="28" y="162">the agreement without cause</text>
+  </g>
+
+  <!-- The model: it scores each possible answer -->
+  <path d="M300.5 80.5H479.5V127.5H300.5Z" fill="none" stroke="#ffffff" stroke-opacity="0.2"/>
+  <g transform="translate(312 88) scale(2)" shape-rendering="crispEdges"><path fill="#6b7280" d="M0 5h1v1h-1zM5 5h11v1h-11zM6 10h4v1h-4zM6 11h4v1h-4zM6 12h4v1h-4zM11 12h4v1h-4zM6 13h4v1h-4zM11 13h4v1h-4zM6 14h4v1h-4zM11 14h4v1h-4zM0 15h16v1h-16z"/><path fill="#9ca3af" d="M2 1h3v1h-3zM1 2h4v1h-4zM1 3h4v1h-4zM1 4h4v1h-4zM1 5h4v1h-4zM1 6h4v1h-4zM1 7h4v1h-4zM1 8h4v1h-4zM1 9h4v1h-4zM1 10h4v1h-4zM1 11h4v1h-4zM1 12h4v1h-4zM1 13h4v1h-4zM1 14h4v1h-4z"/><path fill="#9ca3af" d="M1 1h1v1h-1z"/></g>
+  <text x="356" y="101" fill="#f3f4f6">Decision model</text>
+  <text x="356" y="118" font-size="11" fill="#6b7280">scores each answer</text>
+
+  <!-- The routes: each shows when its trace has run along it -->
+  <g fill="none" stroke="#ffffff" stroke-opacity="0.2">
+    <path class="in" style="animation-delay: 0.60s" d="M262 104.5H299"/>
+    <path class="in" style="animation-delay: 1.35s" d="M480 104.5H528"/>
+    <path class="in" style="animation-delay: 2.30s" d="M528.5 104.5V165.5H536"/>
+  </g>
+
+  <!-- The answer, with its probability, on a track marked where a clear
+       answer begins: the bar comes with its answer and grows past the mark -->
+  <g class="in" style="animation-delay: 1.4s">
+    <text x="540" y="109" fill="#f3f4f6">True</text>
+    <rect x="600" y="104" width="120" height="3" fill="#ffffff" fill-opacity="0.12"/>
+    <path d="M612.5 93V106" stroke="#ffffff" stroke-opacity="0.5"/>
+    <text x="612.5" y="120" font-size="10" fill="#6b7280" text-anchor="middle">0.1</text>
+    <path d="M708.5 93V106" stroke="#ffffff" stroke-opacity="0.5"/>
+    <text x="708.5" y="120" font-size="10" fill="#6b7280" text-anchor="middle">0.9</text>
+  </g>
+  <rect class="grow" style="animation-delay: 1.5s" x="600" y="104" width="117.6" height="3" fill="#38bdf8"/>
+  <text class="in" style="animation-delay: 2.0s" x="804" y="109" fill="#9ca3af" text-anchor="end">0.98</text>
+
+  <!-- The branches of the workflow, as in the code: the probability falls
+       in the first, which is taken -->
+  <text x="540" y="146" font-size="11" fill="#6b7280">next step</text>
+  <g class="in" style="animation-delay: 2.35s"><text x="540" y="170" fill="#9ca3af">≥ 0.9</text><text x="604" y="170" fill="#f3f4f6">draft_termination_notice</text></g>
+  <text x="540" y="194" fill="#6b7280">≤ 0.1</text><text x="604" y="194" fill="#6b7280">reply_not_terminable</text>
+  <text x="540" y="218" fill="#6b7280">else</text><text x="604" y="218" fill="#6b7280">human_review</text>
+
+  <!-- The traces of the run -->
+  <g fill="none" stroke="#38bdf8" stroke-width="1.5">
+    <path class="trace" pathLength="1" style="animation-delay: 0.30s" d="M262 104.5H299"/>
+    <path class="trace" pathLength="1" style="animation-delay: 1.05s" d="M480 104.5H528"/>
+    <path class="trace" pathLength="1" style="animation-delay: 2.00s" d="M528.5 104.5V165.5H536"/>
+    <path class="lit" style="animation-delay: 0.75s" stroke-width="1" d="M300.5 80.5H479.5V127.5H300.5Z"/>
+  </g>
+</svg>

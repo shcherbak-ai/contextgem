@@ -9,6 +9,7 @@ Chat with Tools
 
 This guide explains how to use LLM tool calling (function calling) with ContextGem's chat interface.
 Tools allow the LLM to invoke Python functions during a conversation to perform actions or retrieve information.
+For a tool that runs an extraction for an agent, see :ref:`agentic-tool-label`.
 
 .. note::
    Tool support is only available in ``chat(...)`` and ``chat_async(...)`` methods. It is not used by extraction methods: the tools of an LLM are not sent with the requests of an extraction.

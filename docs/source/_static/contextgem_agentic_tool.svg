@@ -1,0 +1,92 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 832 324" width="832" height="324" role="img" aria-labelledby="title desc" font-family="ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Consolas, 'Liberation Mono', 'DejaVu Sans Mono', monospace" font-size="13">
+  <title id="title">ContextGem in a tool - the agent gets the value and its source, not the document</title>
+  <desc id="desc">What the agent's context holds, and what ContextGem reads. The user asks: "How much notice do we need to end the agreement with Acme?". The agent calls the tool extract_from_document with the ID of the document and the name "Termination notice period". ContextGem reads the whole document and finds the sentence on termination. The tool returns the value with its source, the sentence: "Either party may terminate this agreement for any reason by giving 30 days' written notice to the other party." The agent answers: "You need to give Acme 30 days' written notice to end the agreement", and quotes the sentence.</desc>
+
+  <!-- The run, played once: the agent calls the tool, ContextGem reads the document and marks the sentence, the result comes back, and the agent answers. The drawing as it stands is where the run ends: each part fades in from a hidden first frame, the traces along the routes show only while they play, and without motion it is all there -->
+  <style>
+    .in { animation: show 0.35s ease-out backwards; }
+    @keyframes show { from { opacity: 0; } }
+    .grow { transform-box: fill-box; transform-origin: left center; animation: grow 0.7s cubic-bezier(0.2, 0.7, 0.2, 1) backwards; }
+    @keyframes grow { from { transform: scaleX(0); } }
+    .light { animation: light 0.4s ease-out backwards; }
+    @keyframes light { from { fill: #6b7280; } }
+    .trace { opacity: 0; stroke-dasharray: 1; animation: trace 0.7s ease-in-out; }
+    @keyframes trace {
+      0% { opacity: 1; stroke-dashoffset: 1; }
+      60% { opacity: 1; stroke-dashoffset: 0; }
+      100% { opacity: 0; stroke-dashoffset: 0; }
+    }
+    .lit { opacity: 0; animation: lit 0.8s ease-out; }
+    @keyframes lit { 0%, 100% { opacity: 0; } 30% { opacity: 1; } }
+    @media (prefers-reduced-motion: reduce) { * { animation: none !important; } }
+  </style>
+
+
+  <!-- A ground of its own, so that the picture reads the same in the light
+       and the dark theme: a window, with what it shows on its tab -->
+  <path d="M0.5 28.5H831.5V323.5H0.5Z" fill="#111113" stroke="#2c2c30"/>
+  <path d="M0.5 29V0.5H92.5V29" fill="#111113" stroke="#2c2c30"/>
+  <path d="M1 28.5H92" stroke="#111113"/>
+  <text x="16" y="18.5" font-size="11" fill="#9ca3af">in a tool</text>
+
+
+  <!-- The columns: the agent's side, and ContextGem's -->
+  <g font-size="10.5" letter-spacing="1.4" fill="#6b7280">
+    <text x="28" y="62">IN THE AGENT'S CONTEXT</text>
+    <text x="598" y="62">READ BY CONTEXTGEM</text>
+  </g>
+  <g transform="translate(576 51) scale(1)" shape-rendering="crispEdges"><path fill="#0e74bc" d="M10 1h3v1h-3zM10 2h4v1h-4zM10 3h5v1h-5zM5 4h5v1h-5zM6 5h3v1h-3zM6 6h3v1h-3zM6 7h3v1h-3zM6 8h3v1h-3zM7 9h1v1h-1zM7 10h1v1h-1zM7 11h1v1h-1z"/><path fill="#a5ebff" d="M3 0h9v1h-9zM2 1h1v1h-1zM4 1h1v1h-1zM7 1h1v1h-1zM1 2h1v1h-1zM3 2h2v1h-2zM6 2h3v1h-3zM0 3h10v1h-10z"/><path fill="#38bdf8" d="M5 1h2v1h-2zM8 1h2v1h-2zM5 2h1v1h-1zM9 2h1v1h-1zM0 4h5v1h-5zM1 5h5v1h-5zM2 6h4v1h-4zM3 7h3v1h-3zM4 8h2v1h-2zM5 9h2v1h-2zM6 10h1v1h-1z"/><path fill="#0c4a8c" d="M10 4h5v1h-5zM9 5h5v1h-5zM9 6h4v1h-4zM9 7h3v1h-3zM9 8h2v1h-2zM8 9h2v1h-2zM8 10h1v1h-1z"/><path fill="#0b3a6c" d="M15 4h1v1h-1zM14 5h2v1h-2zM13 6h2v1h-2zM12 7h2v1h-2zM11 8h2v1h-2zM10 9h2v1h-2zM9 10h2v1h-2zM8 11h2v1h-2zM8 12h1v1h-1z"/><path fill="#ffffff" d="M3 1h1v1h-1zM2 2h1v1h-1z"/></g>
+
+  <!-- The turn: the question, the tool call, its result, the answer -->
+  <g font-size="12">
+    <text x="28" y="86" font-size="11" fill="#6b7280">user</text>
+    <text x="28" y="104" fill="#f3f4f6">How much notice do we need to end the agreement with Acme?</text>
+  </g>
+  <g class="in" style="animation-delay: 0.30s" font-size="12">
+    <text x="28" y="134" font-size="11" fill="#6b7280">tool call</text>
+    <text x="28" y="152" fill="#9ca3af">extract_from_document(document_id="acme-service-agreement",</text>
+    <text x="56" y="170" fill="#9ca3af">name="Termination notice period", description="…")</text>
+  </g>
+  <g class="in" style="animation-delay: 1.85s" font-size="12">
+    <text x="28" y="200" font-size="11" fill="#6b7280">result</text>
+    <text x="28" y="218" fill="#9ca3af">[{"value": "Either party must give 30 days' written notice…",</text>
+    <text x="42" y="236" fill="#9ca3af">"sources": ["Either party may terminate this agreement…"]}]</text>
+  </g>
+  <g class="in" style="animation-delay: 2.35s" font-size="12">
+    <text x="28" y="266" font-size="11" fill="#6b7280">answer</text>
+    <text x="28" y="284" fill="#f3f4f6">You need to give Acme 30 days' written notice to end the agreement.</text>
+    <text x="28" y="302" fill="#9ca3af">&gt; "Either party may terminate this agreement for any reason…"</text>
+  </g>
+
+  <!-- The document: the extractor reads all of it, and the value comes
+       with the sentence it was found in, marked -->
+  <path d="M576.5 78.5H789.5L803.5 92.5V233.5H576.5Z" fill="none" stroke="#ffffff" stroke-opacity="0.2"/>
+  <path d="M789.5 78.5V92.5H803.5" fill="none" stroke="#ffffff" stroke-opacity="0.2"/>
+  <g font-size="11" fill="#6b7280">
+    <text x="594" y="102">Service Agreement</text>
+    <text x="594" y="124">This agreement is made on…</text>
+    <text x="594" y="146">The Supplier shall provide…</text>
+    <text x="594" y="168">This agreement renews…</text>
+    <text x="594" y="212">This agreement is governed…</text>
+  </g>
+  <text class="light" style="animation-delay: 1.15s" x="594" y="190" font-size="11" fill="#e5e7eb">Either party may terminate…</text>
+  <rect class="in" style="animation-delay: 1.15s" x="584" y="180" width="2" height="13" fill="#38bdf8"/>
+  <g font-size="11" fill="#6b7280">
+    <text x="576" y="258">read in full by the extractor,</text>
+    <text x="576" y="274">outside the agent's context</text>
+  </g>
+
+  <!-- The routes: each shows when its trace has run along it -->
+  <g fill="none" stroke="#ffffff" stroke-opacity="0.2">
+    <path class="in" style="animation-delay: 0.90s" d="M524 161.5H550.5V181.5H575"/>
+    <path class="in" style="animation-delay: 1.85s" d="M576 193.5H550.5V227.5H525"/>
+  </g>
+  <g class="in" style="animation-delay: 0.90s"><path d="M575 181.5L570 178.0V185.0Z" fill="#ffffff" fill-opacity="0.35"/></g>
+  <g class="in" style="animation-delay: 1.85s"><path d="M525 227.5L530 224.0V231.0Z" fill="#ffffff" fill-opacity="0.35"/></g>
+
+  <!-- The traces of the run -->
+  <g fill="none" stroke="#38bdf8" stroke-width="1.5">
+    <path class="trace" pathLength="1" style="animation-delay: 0.60s" d="M524 161.5H550.5V181.5H575"/>
+    <path class="trace" pathLength="1" style="animation-delay: 1.55s" d="M576 193.5H550.5V227.5H525"/>
+  </g>
+</svg>

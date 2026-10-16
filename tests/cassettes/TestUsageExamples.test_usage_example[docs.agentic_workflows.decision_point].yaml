@@ -1,0 +1,64 @@
+interactions:
+- request:
+    body: '{"model":"jev-latest","state":"Service Agreement\nThis agreement is made
+      on 1 March 2026 between Acme Ltd (Customer) and Northwind AS (Supplier).\nThe
+      Supplier shall provide cloud hosting services as described in Schedule 1.\nThis
+      agreement renews automatically for successive one-year terms.\nEither party
+      may terminate this agreement for any reason by giving 30 days'' written notice
+      to the other party.\nThis agreement is governed by the laws of Norway.","questions":{"C0":{"type":"noul","instructions":"Decide
+      whether the statement in the concept description below is true according to
+      the text.\nConcept name: Termination for convenience\nConcept description: Either
+      party may terminate the agreement without cause\nAnswer \"yes\" if the text
+      supports the statement. Answer \"no\" if the text contradicts the statement
+      or does not support it."}}}'
+    headers:
+      accept:
+      - '*/*'
+      accept-encoding:
+      - gzip, deflate
+      authorization:
+      - DUMMY
+      connection:
+      - keep-alive
+      content-length:
+      - '850'
+      content-type:
+      - application/json
+      host:
+      - DUMMY
+      user-agent:
+      - litellm/1.105.1
+    method: POST
+    uri: https://api.typesafe.ai/v1/systemone
+  response:
+    body:
+      string: !!binary |
+        H4sIAAAAAAAA/02LTQqAIBhE7zJrE7UW5baDRNBH9KeRWoR496xVmxmY9yZiswOt0JjpLCSXJRdg
+        6I276HDQEa140987ZcnYsGb8lRa8qVNiCK4f6ZUmswffebuQyddKKQYb/H9TMqUHO0roy3MAAAA=
+    headers:
+      alt-svc:
+      - h3=":443"; ma=86400
+      cf-cache-status:
+      - DYNAMIC
+      cf-ray:
+      - DUMMY
+      connection:
+      - keep-alive
+      content-encoding:
+      - gzip
+      content-type:
+      - application/json
+      date:
+      - DUMMY
+      server:
+      - cloudflare
+      set-cookie:
+      - DUMMY
+      transfer-encoding:
+      - chunked
+      x-typesafe-request-id:
+      - DUMMY
+    status:
+      code: 200
+      message: OK
+version: 1

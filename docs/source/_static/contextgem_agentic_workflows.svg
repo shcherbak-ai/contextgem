@@ -1,0 +1,109 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 832 316" width="832" height="316" role="img" aria-labelledby="title desc" font-family="ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Consolas, 'Liberation Mono', 'DejaVu Sans Mono', monospace" font-size="13">
+  <title id="title">ContextGem in an agentic workflow - at ingestion, in a tool and at a decision point</title>
+  <desc id="desc">A map of an agentic workflow with the three places where ContextGem runs. At ingestion, a new document goes to ContextGem, which extracts its metadata into the search index or database; the agent finds documents there by their metadata. In a tool, the agent, which gets a task or a question, calls ContextGem, which returns values with their sources. At a decision point, the agent's workflow asks ContextGem a closed question: a clear answer is acted on, an unclear one goes to a person.</desc>
+
+  <!-- The run, played once: a new document goes through ingestion into the store, the agent gets a task, calls the tool and gets the result, and the workflow decides its next step. The drawing as it stands is where the run ends: each route fades in once its trace has run along it, the traces show only while they play, and without motion it is all there -->
+  <style>
+    .in { animation: show 0.35s ease-out backwards; }
+    @keyframes show { from { opacity: 0; } }
+    .grow { transform-box: fill-box; transform-origin: left center; animation: grow 0.7s cubic-bezier(0.2, 0.7, 0.2, 1) backwards; }
+    @keyframes grow { from { transform: scaleX(0); } }
+    .light { animation: light 0.4s ease-out backwards; }
+    @keyframes light { from { fill: #6b7280; } }
+    .trace { opacity: 0; stroke-dasharray: 1; animation: trace 0.7s ease-in-out; }
+    @keyframes trace {
+      0% { opacity: 1; stroke-dashoffset: 1; }
+      60% { opacity: 1; stroke-dashoffset: 0; }
+      100% { opacity: 0; stroke-dashoffset: 0; }
+    }
+    .lit { opacity: 0; animation: lit 0.8s ease-out; }
+    @keyframes lit { 0%, 100% { opacity: 0; } 30% { opacity: 1; } }
+    @media (prefers-reduced-motion: reduce) { * { animation: none !important; } }
+  </style>
+
+
+  <!-- A ground of its own, so that the picture reads the same in the light
+       and the dark theme: a window, with what it shows on its tab -->
+  <path d="M0.5 28.5H831.5V315.5H0.5Z" fill="#111113" stroke="#2c2c30"/>
+  <path d="M0.5 29V0.5H148.5V29" fill="#111113" stroke="#2c2c30"/>
+  <path d="M1 28.5H148" stroke="#111113"/>
+  <text x="16" y="18.5" font-size="11" fill="#9ca3af">agentic workflow</text>
+
+
+  <!-- The parts of the workflow. The gem marks where ContextGem runs -->
+  <path d="M28.5 72.5H251.5V123.5H28.5Z" fill="none" stroke="#ffffff" stroke-opacity="0.2"/>
+  <text x="44" y="95" fill="#f3f4f6">New document</text>
+  <text x="44" y="112" font-size="11" fill="#6b7280">a contract, a report, …</text>
+  <path d="M304.5 72.5H527.5V123.5H304.5Z" fill="none" stroke="#ffffff" stroke-opacity="0.2"/>
+  <g transform="translate(318 85) scale(2)" shape-rendering="crispEdges"><path fill="#0e74bc" d="M10 1h3v1h-3zM10 2h4v1h-4zM10 3h5v1h-5zM5 4h5v1h-5zM6 5h3v1h-3zM6 6h3v1h-3zM6 7h3v1h-3zM6 8h3v1h-3zM7 9h1v1h-1zM7 10h1v1h-1zM7 11h1v1h-1z"/><path fill="#a5ebff" d="M3 0h9v1h-9zM2 1h1v1h-1zM4 1h1v1h-1zM7 1h1v1h-1zM1 2h1v1h-1zM3 2h2v1h-2zM6 2h3v1h-3zM0 3h10v1h-10z"/><path fill="#38bdf8" d="M5 1h2v1h-2zM8 1h2v1h-2zM5 2h1v1h-1zM9 2h1v1h-1zM0 4h5v1h-5zM1 5h5v1h-5zM2 6h4v1h-4zM3 7h3v1h-3zM4 8h2v1h-2zM5 9h2v1h-2zM6 10h1v1h-1z"/><path fill="#0c4a8c" d="M10 4h5v1h-5zM9 5h5v1h-5zM9 6h4v1h-4zM9 7h3v1h-3zM9 8h2v1h-2zM8 9h2v1h-2zM8 10h1v1h-1z"/><path fill="#0b3a6c" d="M15 4h1v1h-1zM14 5h2v1h-2zM13 6h2v1h-2zM12 7h2v1h-2zM11 8h2v1h-2zM10 9h2v1h-2zM9 10h2v1h-2zM8 11h2v1h-2zM8 12h1v1h-1z"/><path fill="#ffffff" d="M3 1h1v1h-1zM2 2h1v1h-1z"/></g>
+  <text x="364" y="95" fill="#f3f4f6">At ingestion</text>
+  <text x="364" y="112" font-size="11" fill="#6b7280">extracts the metadata</text>
+  <path d="M580.5 72.5H803.5V123.5H580.5Z" fill="none" stroke="#ffffff" stroke-opacity="0.2"/>
+  <text x="596" y="95" fill="#f3f4f6">Search index, database</text>
+  <text x="596" y="112" font-size="11" fill="#6b7280">records to filter on</text>
+  <path d="M28.5 184.5H251.5V235.5H28.5Z" fill="none" stroke="#ffffff" stroke-opacity="0.2"/>
+  <g transform="translate(42 197) scale(2)" shape-rendering="crispEdges"><path fill="#0e74bc" d="M10 1h3v1h-3zM10 2h4v1h-4zM10 3h5v1h-5zM5 4h5v1h-5zM6 5h3v1h-3zM6 6h3v1h-3zM6 7h3v1h-3zM6 8h3v1h-3zM7 9h1v1h-1zM7 10h1v1h-1zM7 11h1v1h-1z"/><path fill="#a5ebff" d="M3 0h9v1h-9zM2 1h1v1h-1zM4 1h1v1h-1zM7 1h1v1h-1zM1 2h1v1h-1zM3 2h2v1h-2zM6 2h3v1h-3zM0 3h10v1h-10z"/><path fill="#38bdf8" d="M5 1h2v1h-2zM8 1h2v1h-2zM5 2h1v1h-1zM9 2h1v1h-1zM0 4h5v1h-5zM1 5h5v1h-5zM2 6h4v1h-4zM3 7h3v1h-3zM4 8h2v1h-2zM5 9h2v1h-2zM6 10h1v1h-1z"/><path fill="#0c4a8c" d="M10 4h5v1h-5zM9 5h5v1h-5zM9 6h4v1h-4zM9 7h3v1h-3zM9 8h2v1h-2zM8 9h2v1h-2zM8 10h1v1h-1z"/><path fill="#0b3a6c" d="M15 4h1v1h-1zM14 5h2v1h-2zM13 6h2v1h-2zM12 7h2v1h-2zM11 8h2v1h-2zM10 9h2v1h-2zM9 10h2v1h-2zM8 11h2v1h-2zM8 12h1v1h-1z"/><path fill="#ffffff" d="M3 1h1v1h-1zM2 2h1v1h-1z"/></g>
+  <text x="88" y="207" fill="#f3f4f6">In a tool</text>
+  <text x="88" y="224" font-size="11" fill="#6b7280">values with sources</text>
+  <path d="M304.5 184.5H527.5V235.5H304.5Z" fill="none" stroke="#ffffff" stroke-opacity="0.2"/>
+  <text x="320" y="207" fill="#f3f4f6">Agent</text>
+  <text x="320" y="224" font-size="11" fill="#6b7280">any framework</text>
+  <path d="M580.5 184.5H803.5V235.5H580.5Z" fill="none" stroke="#ffffff" stroke-opacity="0.2"/>
+  <g transform="translate(594 197) scale(2)" shape-rendering="crispEdges"><path fill="#0e74bc" d="M10 1h3v1h-3zM10 2h4v1h-4zM10 3h5v1h-5zM5 4h5v1h-5zM6 5h3v1h-3zM6 6h3v1h-3zM6 7h3v1h-3zM6 8h3v1h-3zM7 9h1v1h-1zM7 10h1v1h-1zM7 11h1v1h-1z"/><path fill="#a5ebff" d="M3 0h9v1h-9zM2 1h1v1h-1zM4 1h1v1h-1zM7 1h1v1h-1zM1 2h1v1h-1zM3 2h2v1h-2zM6 2h3v1h-3zM0 3h10v1h-10z"/><path fill="#38bdf8" d="M5 1h2v1h-2zM8 1h2v1h-2zM5 2h1v1h-1zM9 2h1v1h-1zM0 4h5v1h-5zM1 5h5v1h-5zM2 6h4v1h-4zM3 7h3v1h-3zM4 8h2v1h-2zM5 9h2v1h-2zM6 10h1v1h-1z"/><path fill="#0c4a8c" d="M10 4h5v1h-5zM9 5h5v1h-5zM9 6h4v1h-4zM9 7h3v1h-3zM9 8h2v1h-2zM8 9h2v1h-2zM8 10h1v1h-1z"/><path fill="#0b3a6c" d="M15 4h1v1h-1zM14 5h2v1h-2zM13 6h2v1h-2zM12 7h2v1h-2zM11 8h2v1h-2zM10 9h2v1h-2zM9 10h2v1h-2zM8 11h2v1h-2zM8 12h1v1h-1z"/><path fill="#ffffff" d="M3 1h1v1h-1zM2 2h1v1h-1z"/></g>
+  <text x="640" y="207" fill="#f3f4f6">At a decision point</text>
+  <text x="640" y="224" font-size="11" fill="#6b7280">decides the next step</text>
+
+  <!-- The routes: each shows when its trace has run along it -->
+  <g fill="none" stroke="#ffffff" stroke-opacity="0.2">
+    <path class="in" style="animation-delay: 0.60s" d="M252 98.5H303"/>
+    <path class="in" style="animation-delay: 1.15s" d="M528 98.5H579"/>
+    <path class="in" style="animation-delay: 1.70s" d="M692.5 124V154.5H416.5V183"/>
+    <path class="in" style="animation-delay: 2.30s" d="M416.5 276V237"/>
+    <path class="in" style="animation-delay: 2.80s" d="M304 203.5H253"/>
+    <path class="in" style="animation-delay: 3.30s" d="M252 217.5H303"/>
+    <path class="in" style="animation-delay: 3.80s" d="M528 210.5H579"/>
+    <path class="in" style="animation-delay: 4.30s" d="M612.5 236V268.5H632"/>
+    <path class="in" style="animation-delay: 4.45s" d="M612.5 268V292.5H632"/>
+  </g>
+    <g class="in" style="animation-delay: 0.60s"><path d="M303 98.5L298 95.0V102.0Z" fill="#ffffff" fill-opacity="0.35"/></g>
+    <g class="in" style="animation-delay: 1.15s"><path d="M579 98.5L574 95.0V102.0Z" fill="#ffffff" fill-opacity="0.35"/></g>
+    <g class="in" style="animation-delay: 1.70s"><path d="M416.5 183L413.0 178H420.0Z" fill="#ffffff" fill-opacity="0.35"/></g>
+    <g class="in" style="animation-delay: 2.30s"><path d="M416.5 237L413.0 242H420.0Z" fill="#ffffff" fill-opacity="0.35"/></g>
+    <g class="in" style="animation-delay: 2.80s"><path d="M253 203.5L258 200.0V207.0Z" fill="#ffffff" fill-opacity="0.35"/></g>
+    <g class="in" style="animation-delay: 3.30s"><path d="M303 217.5L298 214.0V221.0Z" fill="#ffffff" fill-opacity="0.35"/></g>
+    <g class="in" style="animation-delay: 3.80s"><path d="M579 210.5L574 207.0V214.0Z" fill="#ffffff" fill-opacity="0.35"/></g>
+    <g class="in" style="animation-delay: 4.30s"><path d="M632 268.5L627 265.0V272.0Z" fill="#ffffff" fill-opacity="0.35"/></g>
+    <g class="in" style="animation-delay: 4.45s"><path d="M632 292.5L627 289.0V296.0Z" fill="#ffffff" fill-opacity="0.35"/></g>
+
+  <!-- What travels along the routes, and where the run ends -->
+  <g font-size="11" fill="#6b7280">
+    <text class="in" style="animation-delay: 1.7s" x="684.5" y="148" text-anchor="end">found by their metadata</text>
+    <text class="in" style="animation-delay: 2.8s" x="278" y="198.0" text-anchor="middle">call</text>
+    <text class="in" style="animation-delay: 3.3s" x="278" y="233.0" text-anchor="middle">result</text>
+    <text x="416.5" y="290" text-anchor="middle">a task or a question</text>
+  </g>
+  <g font-size="11">
+    <text class="in" style="animation-delay: 4.3s" x="640" y="272.5" fill="#9ca3af">clear: act on it</text>
+    <text class="in" style="animation-delay: 4.45s" x="640" y="296.5" fill="#9ca3af">unclear: ask a person</text>
+  </g>
+
+  <!-- What the gem stands for -->
+  <g transform="translate(28 282) scale(1)" shape-rendering="crispEdges"><path fill="#0e74bc" d="M10 1h3v1h-3zM10 2h4v1h-4zM10 3h5v1h-5zM5 4h5v1h-5zM6 5h3v1h-3zM6 6h3v1h-3zM6 7h3v1h-3zM6 8h3v1h-3zM7 9h1v1h-1zM7 10h1v1h-1zM7 11h1v1h-1z"/><path fill="#a5ebff" d="M3 0h9v1h-9zM2 1h1v1h-1zM4 1h1v1h-1zM7 1h1v1h-1zM1 2h1v1h-1zM3 2h2v1h-2zM6 2h3v1h-3zM0 3h10v1h-10z"/><path fill="#38bdf8" d="M5 1h2v1h-2zM8 1h2v1h-2zM5 2h1v1h-1zM9 2h1v1h-1zM0 4h5v1h-5zM1 5h5v1h-5zM2 6h4v1h-4zM3 7h3v1h-3zM4 8h2v1h-2zM5 9h2v1h-2zM6 10h1v1h-1z"/><path fill="#0c4a8c" d="M10 4h5v1h-5zM9 5h5v1h-5zM9 6h4v1h-4zM9 7h3v1h-3zM9 8h2v1h-2zM8 9h2v1h-2zM8 10h1v1h-1z"/><path fill="#0b3a6c" d="M15 4h1v1h-1zM14 5h2v1h-2zM13 6h2v1h-2zM12 7h2v1h-2zM11 8h2v1h-2zM10 9h2v1h-2zM9 10h2v1h-2zM8 11h2v1h-2zM8 12h1v1h-1z"/><path fill="#ffffff" d="M3 1h1v1h-1zM2 2h1v1h-1z"/></g>
+  <text x="52" y="293" font-size="11" fill="#6b7280">ContextGem runs here</text>
+
+  <!-- The traces of the run -->
+  <g fill="none" stroke="#38bdf8" stroke-width="1.5">
+    <path class="trace" pathLength="1" style="animation-delay: 0.30s" d="M252 98.5H303"/>
+    <path class="trace" pathLength="1" style="animation-delay: 0.85s" d="M528 98.5H579"/>
+    <path class="trace" pathLength="1" style="animation-delay: 1.40s" d="M692.5 124V154.5H416.5V183"/>
+    <path class="trace" pathLength="1" style="animation-delay: 2.00s" d="M416.5 276V237"/>
+    <path class="trace" pathLength="1" style="animation-delay: 2.50s" d="M304 203.5H253"/>
+    <path class="trace" pathLength="1" style="animation-delay: 3.00s" d="M252 217.5H303"/>
+    <path class="trace" pathLength="1" style="animation-delay: 3.50s" d="M528 210.5H579"/>
+    <path class="trace" pathLength="1" style="animation-delay: 4.00s" d="M612.5 236V268.5H632"/>
+    <path class="trace" pathLength="1" style="animation-delay: 4.15s" d="M612.5 268V292.5H632"/>
+    <path class="lit" style="animation-delay: 0.65s" stroke-width="1" d="M304.5 72.5H527.5V123.5H304.5Z"/>
+    <path class="lit" style="animation-delay: 2.85s" stroke-width="1" d="M28.5 184.5H251.5V235.5H28.5Z"/>
+    <path class="lit" style="animation-delay: 3.85s" stroke-width="1" d="M580.5 184.5H803.5V235.5H580.5Z"/>
+  </g>
+</svg>

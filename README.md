@@ -20,6 +20,7 @@
 <p align="center">
   <a href="https://contextgem.shcherbak.ai/quickstart/"><strong>Quickstart</strong></a> ·
   <a href="https://contextgem.shcherbak.ai/how_it_works/"><strong>How it works</strong></a> ·
+  <a href="https://contextgem.shcherbak.ai/agentic_workflows/"><strong>Agentic&nbsp;workflows</strong></a> ·
   <a href="CHANGELOG.md"><strong>Changelog</strong></a> ·
   <a href="https://contextgem.shcherbak.ai/"><strong>Documentation</strong></a>
 </p>
@@ -258,6 +259,23 @@ More examples: [aspects](https://contextgem.shcherbak.ai/quickstart/#aspect-extr
 
 Read more on [how ContextGem works](https://contextgem.shcherbak.ai/how_it_works/) in the documentation.
 
+## In agentic workflows
+
+An agent plans and works across documents and steps. ContextGem reads one document in depth and returns typed values with their sources, or the probabilities of the answers to closed questions. The two meet at three points:
+
+<!-- markdownlint-disable MD033 -->
+<p align="center">
+  <img src="docs/source/_static/contextgem_agentic_workflows.svg" alt="A map of an agentic workflow with the three places where ContextGem runs. At ingestion, a new document goes to ContextGem, which extracts its metadata into a search index or database, where the agent finds documents by their metadata. In a tool, the agent, which gets a task or a question, calls ContextGem, which returns values with their sources. At a decision point, the workflow asks ContextGem a closed question: a clear answer is acted on, an unclear one goes to a person." width="832"><br>
+  <sup>Where ContextGem runs in an agentic workflow.</sup>
+</p>
+<!-- markdownlint-enable MD033 -->
+
+- **At ingestion**: extract the metadata of each new document once, so that agents find documents by their type, parties or dates.
+- **In a tool**: an agent calls an extraction and gets the values with the sentences they came from, without the document in its context. The tool is a Python function, for ContextGem's own chat, an agent framework or an MCP server.
+- **At a decision point**: a decision model answers a closed question with probabilities, so that the workflow acts on a clear answer and leaves an unclear one to a person. Before the turn of an agent with many tools, it can also pick the groups of tools that the request needs.
+
+See [Agentic workflows](https://contextgem.shcherbak.ai/agentic_workflows/) in the documentation for an example of each.
+
 ## Every paragraph is read
 
 ContextGem is built for in-depth analysis of individual documents. There is no search step that picks the chunks that look relevant, as in RAG: the model reads every paragraph of the text it extracts from, all at once or in [batches of paragraphs](https://contextgem.shcherbak.ai/optimizations/optimization_long_docs/) of a size you set, so no fact is missed because a search ranked its passage low. This avoids the retrieval inconsistencies that make RAG [struggle with complex concepts and nuanced insights](https://www.linkedin.com/pulse/raging-contracts-pitfalls-rag-contract-review-shcherbak-ai-ptg3f).
@@ -275,7 +293,7 @@ Full documentation: **[contextgem.shcherbak.ai](https://contextgem.shcherbak.ai)
 <!-- markdownlint-disable MD033 -->
 | <img src="assets/icons/get-started.svg" alt="" width="32" height="32"><br>Get started | <img src="assets/icons/nested-context.svg" alt="" width="32" height="32"><br>Define what to extract | <img src="assets/icons/models.svg" alt="" width="32" height="32"><br>Run models | <img src="assets/icons/optimize.svg" alt="" width="32" height="32"><br>Optimize |
 |:------------|:-----------------------|:-----------|:---------|
-| [Installation](https://contextgem.shcherbak.ai/installation/)<br>[Quickstart](https://contextgem.shcherbak.ai/quickstart/)<br>[Advanced usage](https://contextgem.shcherbak.ai/advanced_usage/)<br>[How it works](https://contextgem.shcherbak.ai/how_it_works/)<br>[Migrating to v1.0](https://contextgem.shcherbak.ai/migration_v1/) | [Documents](https://contextgem.shcherbak.ai/documents/document_config/)<br>[Aspects](https://contextgem.shcherbak.ai/aspects/aspects/)<br>[Concepts](https://contextgem.shcherbak.ai/concepts/supported_concepts/)<br>[Extraction pipelines](https://contextgem.shcherbak.ai/pipelines/extraction_pipelines/)<br>[Serialization](https://contextgem.shcherbak.ai/serialization/) | [Supported LLMs](https://contextgem.shcherbak.ai/llms/supported_llms/)<br>[LLM configuration](https://contextgem.shcherbak.ai/llms/llm_config/)<br>[Extraction methods](https://contextgem.shcherbak.ai/llms/llm_extraction_methods/)<br>[Decision models](https://contextgem.shcherbak.ai/decision_models/decision_models/)<br>[Chat with tools](https://contextgem.shcherbak.ai/llms/chat_with_tools/) | [Accuracy](https://contextgem.shcherbak.ai/optimizations/optimization_accuracy/)<br>[Speed](https://contextgem.shcherbak.ai/optimizations/optimization_speed/)<br>[Cost](https://contextgem.shcherbak.ai/optimizations/optimization_cost/)<br>[Long documents](https://contextgem.shcherbak.ai/optimizations/optimization_long_docs/)<br>[Choosing the right LLM(s)](https://contextgem.shcherbak.ai/optimizations/optimization_choosing_llm/) |
+| [Installation](https://contextgem.shcherbak.ai/installation/)<br>[Quickstart](https://contextgem.shcherbak.ai/quickstart/)<br>[Advanced usage](https://contextgem.shcherbak.ai/advanced_usage/)<br>[How it works](https://contextgem.shcherbak.ai/how_it_works/)<br>[Migrating to v1.0](https://contextgem.shcherbak.ai/migration_v1/) | [Documents](https://contextgem.shcherbak.ai/documents/document_config/)<br>[Aspects](https://contextgem.shcherbak.ai/aspects/aspects/)<br>[Concepts](https://contextgem.shcherbak.ai/concepts/supported_concepts/)<br>[Extraction pipelines](https://contextgem.shcherbak.ai/pipelines/extraction_pipelines/)<br>[Serialization](https://contextgem.shcherbak.ai/serialization/) | [Supported LLMs](https://contextgem.shcherbak.ai/llms/supported_llms/)<br>[LLM configuration](https://contextgem.shcherbak.ai/llms/llm_config/)<br>[Extraction methods](https://contextgem.shcherbak.ai/llms/llm_extraction_methods/)<br>[Decision models](https://contextgem.shcherbak.ai/decision_models/decision_models/)<br>[Chat with tools](https://contextgem.shcherbak.ai/llms/chat_with_tools/)<br>[Agentic workflows](https://contextgem.shcherbak.ai/agentic_workflows/) | [Accuracy](https://contextgem.shcherbak.ai/optimizations/optimization_accuracy/)<br>[Speed](https://contextgem.shcherbak.ai/optimizations/optimization_speed/)<br>[Cost](https://contextgem.shcherbak.ai/optimizations/optimization_cost/)<br>[Long documents](https://contextgem.shcherbak.ai/optimizations/optimization_long_docs/)<br>[Choosing the right LLM(s)](https://contextgem.shcherbak.ai/optimizations/optimization_choosing_llm/) |
 <!-- markdownlint-enable MD033 -->
 
 For LLMs and coding agents, [llms.txt](https://contextgem.shcherbak.ai/llms.txt) indexes the documentation, with a Markdown copy of each page.

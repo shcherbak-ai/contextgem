@@ -163,6 +163,23 @@ ContextGem is a free, open-source framework that makes it radically easier to ex
 
             Explore Decision Models
 
+    .. grid-item-card:: 🔗 Agentic Workflows
+        :link: agentic_workflows
+        :link-type: doc
+        :class-card: sd-border-0 sd-shadow-sm sd-card-hover
+
+        Learn how to use ContextGem in agentic workflows: at the ingestion of documents, in a tool that an agent calls, and at the decision points of a workflow.
+
+        +++
+        .. button-ref:: agentic_workflows
+            :ref-type: doc
+            :click-parent:
+            :color: primary
+            :outline:
+            :expand:
+
+            Use with Agents
+
     .. grid-item-card:: ⚡ Advanced Usage
         :link: advanced_usage
         :link-type: doc
@@ -309,6 +326,13 @@ Indices and tables
    :hidden:
 
    decision_models/decision_models
+
+.. toctree::
+   :maxdepth: 2
+   :caption: Agentic Workflows
+   :hidden:
+
+   agentic_workflows
 
 .. toctree::
    :maxdepth: 2

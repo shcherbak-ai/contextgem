@@ -1,0 +1,438 @@
+interactions:
+- request:
+    body: '{"model":"jev-latest","state":"Remind billing@acme.example of invoice 1043,
+      with the amount due.","questions":{"C0-L0":{"type":"noul","instructions":"Decide
+      whether the label below applies to the text, based on the concept below.\nConcept
+      name: Tools needed\nConcept description: Kinds of actions needed to carry out
+      the request\nLabel: Search contracts\nAnswer \"yes\" if the label applies to
+      the text. Answer \"no\" if it does not. The other labels of the concept are
+      decided separately: several labels, or none, may apply."},"C0-L1":{"type":"noul","instructions":"Decide
+      whether the label below applies to the text, based on the concept below.\nConcept
+      name: Tools needed\nConcept description: Kinds of actions needed to carry out
+      the request\nLabel: Look up invoices\nAnswer \"yes\" if the label applies to
+      the text. Answer \"no\" if it does not. The other labels of the concept are
+      decided separately: several labels, or none, may apply."},"C0-L2":{"type":"noul","instructions":"Decide
+      whether the label below applies to the text, based on the concept below.\nConcept
+      name: Tools needed\nConcept description: Kinds of actions needed to carry out
+      the request\nLabel: Send emails\nAnswer \"yes\" if the label applies to the
+      text. Answer \"no\" if it does not. The other labels of the concept are decided
+      separately: several labels, or none, may apply."},"C0-L3":{"type":"noul","instructions":"Decide
+      whether the label below applies to the text, based on the concept below.\nConcept
+      name: Tools needed\nConcept description: Kinds of actions needed to carry out
+      the request\nLabel: Schedule meetings\nAnswer \"yes\" if the label applies to
+      the text. Answer \"no\" if it does not. The other labels of the concept are
+      decided separately: several labels, or none, may apply."}}}'
+    headers:
+      accept:
+      - '*/*'
+      accept-encoding:
+      - gzip, deflate
+      authorization:
+      - DUMMY
+      connection:
+      - keep-alive
+      content-length:
+      - '1776'
+      content-type:
+      - application/json
+      host:
+      - DUMMY
+      user-agent:
+      - litellm/1.105.1
+    method: POST
+    uri: https://api.typesafe.ai/v1/systemone
+  response:
+    body:
+      string: !!binary |
+        H4sIAAAAAAAA/6tWys1PSc1RslLKSi3TNdQzNNYzUNJRSswrLk8tKlayqlZyNtD1MQAxSioLUoHq
+        8vJLc4AqwJSVgZ6hSa0OWI0hbjWWMDVGeNSYQdUY41ZjYFQLVFRanJieClKUmVdQWhJfkp+dmgd0
+        qZmxmY5SfmkJspiFQW0tAAGiU7ziAAAA
+    headers:
+      alt-svc:
+      - h3=":443"; ma=86400
+      cf-cache-status:
+      - DYNAMIC
+      cf-ray:
+      - DUMMY
+      connection:
+      - keep-alive
+      content-encoding:
+      - gzip
+      content-type:
+      - application/json
+      date:
+      - DUMMY
+      server:
+      - cloudflare
+      set-cookie:
+      - DUMMY
+      transfer-encoding:
+      - chunked
+      x-typesafe-request-id:
+      - DUMMY
+    status:
+      code: 200
+      message: OK
+- request:
+    body: '{"model":"gpt-6-luna","input":[{"type":"message","role":"user","content":[{"type":"input_text","text":"Remind
+      billing@acme.example of invoice 1043, with the amount due."}]}],"instructions":"You
+      are an assistant of a finance team.","stream":false,"tools":[{"name":"look_up_invoice","parameters":{"type":"object","properties":{"invoice_number":{"type":"string"}},"required":["invoice_number"]},"strict":null,"type":"function","description":"Looks
+      up an invoice by its number."},{"name":"send_email","parameters":{"type":"object","properties":{"to":{"type":"string"},"subject":{"type":"string"},"body":{"type":"string"}},"required":["to","subject","body"]},"strict":null,"type":"function","description":"Sends
+      an email."}]}'
+    headers:
+      accept:
+      - '*/*'
+      accept-encoding:
+      - gzip, deflate
+      authorization:
+      - DUMMY
+      connection:
+      - keep-alive
+      content-length:
+      - '720'
+      content-type:
+      - application/json
+      host:
+      - DUMMY
+      user-agent:
+      - litellm/1.105.1
+    method: POST
+    uri: https://api.openai.com/v1/responses
+  response:
+    body:
+      string: !!binary |
+        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
+    headers:
+      access-control-expose-headers:
+      - X-Request-ID
+      - CF-Ray
+      - CF-Ray
+      alt-svc:
+      - h3=":443"; ma=86400
+      cf-cache-status:
+      - DYNAMIC
+      cf-ray:
+      - DUMMY
+      connection:
+      - keep-alive
+      content-encoding:
+      - gzip
+      content-type:
+      - application/json
+      date:
+      - DUMMY
+      openai-organization:
+      - DUMMY
+      openai-processing-ms:
+      - '1016'
+      openai-project:
+      - DUMMY
+      openai-version:
+      - '2020-10-01'
+      server:
+      - cloudflare
+      set-cookie:
+      - DUMMY
+      strict-transport-security:
+      - max-age=31536000; includeSubDomains; preload
+      transfer-encoding:
+      - chunked
+      x-content-type-options:
+      - nosniff
+      x-ratelimit-limit-requests:
+      - DUMMY
+      x-ratelimit-limit-tokens:
+      - DUMMY
+      x-ratelimit-remaining-requests:
+      - DUMMY
+      x-ratelimit-remaining-tokens:
+      - DUMMY
+      x-ratelimit-reset-requests:
+      - 12ms
+      x-ratelimit-reset-tokens:
+      - 0s
+      x-request-id:
+      - DUMMY
+    status:
+      code: 200
+      message: OK
+- request:
+    body: '{"model":"gpt-6-luna","input":[{"type":"message","role":"user","content":[{"type":"input_text","text":"Remind
+      billing@acme.example of invoice 1043, with the amount due."}]},{"type":"function_call","call_id":"call_qg4Jj2ua6jRRP4MoD0TjsO9p","name":"look_up_invoice","arguments":"{\"invoice_number\":\"1043\"}"},{"type":"function_call_output","call_id":"call_qg4Jj2ua6jRRP4MoD0TjsO9p","output":[{"type":"input_text","text":"{\"amount\":
+      \"EUR 4,200\", \"status\": \"overdue\"}"}]}],"instructions":"You are an assistant
+      of a finance team.","stream":false,"tools":[{"name":"look_up_invoice","parameters":{"type":"object","properties":{"invoice_number":{"type":"string"}},"required":["invoice_number"]},"strict":null,"type":"function","description":"Looks
+      up an invoice by its number."},{"name":"send_email","parameters":{"type":"object","properties":{"to":{"type":"string"},"subject":{"type":"string"},"body":{"type":"string"}},"required":["to","subject","body"]},"strict":null,"type":"function","description":"Sends
+      an email."}]}'
+    headers:
+      accept:
+      - '*/*'
+      accept-encoding:
+      - gzip, deflate
+      authorization:
+      - DUMMY
+      connection:
+      - keep-alive
+      content-length:
+      - '1025'
+      content-type:
+      - application/json
+      host:
+      - DUMMY
+      user-agent:
+      - litellm/1.105.1
+    method: POST
+    uri: https://api.openai.com/v1/responses
+  response:
+    body:
+      string: !!binary |
+        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
+        uRaq4/37j99+/BtssikOjRQAAA==
+    headers:
+      access-control-expose-headers:
+      - X-Request-ID
+      - CF-Ray
+      - CF-Ray
+      alt-svc:
+      - h3=":443"; ma=86400
+      cf-cache-status:
+      - DYNAMIC
+      cf-ray:
+      - DUMMY
+      connection:
+      - keep-alive
+      content-encoding:
+      - gzip
+      content-type:
+      - application/json
+      date:
+      - DUMMY
+      openai-organization:
+      - DUMMY
+      openai-processing-ms:
+      - '2311'
+      openai-project:
+      - DUMMY
+      openai-version:
+      - '2020-10-01'
+      server:
+      - cloudflare
+      set-cookie:
+      - DUMMY
+      strict-transport-security:
+      - max-age=31536000; includeSubDomains; preload
+      transfer-encoding:
+      - chunked
+      x-content-type-options:
+      - nosniff
+      x-ratelimit-limit-requests:
+      - DUMMY
+      x-ratelimit-limit-tokens:
+      - DUMMY
+      x-ratelimit-remaining-requests:
+      - DUMMY
+      x-ratelimit-remaining-tokens:
+      - DUMMY
+      x-ratelimit-reset-requests:
+      - 24ms
+      x-ratelimit-reset-tokens:
+      - 0s
+      x-request-id:
+      - DUMMY
+    status:
+      code: 200
+      message: OK
+- request:
+    body: "{\"model\":\"gpt-6-luna\",\"input\":[{\"type\":\"message\",\"role\":\"user\",\"content\":[{\"type\":\"input_text\",\"text\":\"Remind
+      billing@acme.example of invoice 1043, with the amount due.\"}]},{\"type\":\"function_call\",\"call_id\":\"call_qg4Jj2ua6jRRP4MoD0TjsO9p\",\"name\":\"look_up_invoice\",\"arguments\":\"{\\\"invoice_number\\\":\\\"1043\\\"}\"},{\"type\":\"function_call_output\",\"call_id\":\"call_qg4Jj2ua6jRRP4MoD0TjsO9p\",\"output\":[{\"type\":\"input_text\",\"text\":\"{\\\"amount\\\":
+      \\\"EUR 4,200\\\", \\\"status\\\": \\\"overdue\\\"}\"}]},{\"type\":\"function_call\",\"call_id\":\"call_qThbnNO4HkiDNyzOAMlPw7TN\",\"name\":\"send_email\",\"arguments\":\"{\\\"to\\\":\\\"billing@acme.example\\\",\\\"subject\\\":\\\"Reminder:
+      Overdue invoice 1043 \u2014 EUR 4,200 due\\\",\\\"body\\\":\\\"Hello,\\\\n\\\\nThis
+      is a reminder that invoice 1043 is overdue. The amount due is EUR 4,200.\\\\n\\\\nPlease
+      arrange payment at your earliest convenience. If you have already paid, please
+      disregard this reminder.\\\\n\\\\nBest,\\\\nFinance Team\\\"}\"},{\"type\":\"function_call_output\",\"call_id\":\"call_qThbnNO4HkiDNyzOAMlPw7TN\",\"output\":[{\"type\":\"input_text\",\"text\":\"Sent.\"}]}],\"instructions\":\"You
+      are an assistant of a finance team.\",\"stream\":false,\"tools\":[{\"name\":\"look_up_invoice\",\"parameters\":{\"type\":\"object\",\"properties\":{\"invoice_number\":{\"type\":\"string\"}},\"required\":[\"invoice_number\"]},\"strict\":null,\"type\":\"function\",\"description\":\"Looks
+      up an invoice by its number.\"},{\"name\":\"send_email\",\"parameters\":{\"type\":\"object\",\"properties\":{\"to\":{\"type\":\"string\"},\"subject\":{\"type\":\"string\"},\"body\":{\"type\":\"string\"}},\"required\":[\"to\",\"subject\",\"body\"]},\"strict\":null,\"type\":\"function\",\"description\":\"Sends
+      an email.\"}]}"
+    headers:
+      accept:
+      - '*/*'
+      accept-encoding:
+      - gzip, deflate
+      authorization:
+      - DUMMY
+      connection:
+      - keep-alive
+      content-length:
+      - '1592'
+      content-type:
+      - application/json
+      host:
+      - DUMMY
+      user-agent:
+      - litellm/1.105.1
+    method: POST
+    uri: https://api.openai.com/v1/responses
+  response:
+    body:
+      string: !!binary |
+        H4sIAAAAAAAA/8VWy47rNgzdz1cYXs8NHCfxJF11011XfSyKiwuBtulEHVly9chMMMi/l5Jsx84D
+        uFO06C7hkUiKPDz0x1OSpLxOf0hSjaZj2SbH7Q6wwHWxXANkWQF1XtTNBrbr7falzqFc1nmVN6tl
+        lWc7yNJn70KVf2JlBzdKGoz2SiNYrBl4bPmyy5cvmyLbBMxYsM74O5VqO4F0Ll6CqkJjWKfVXkPr
+        T0gnRIBKqF73WjnpU25AGIxmLgSXe7J90F8ydHBC7V3XeEShOvpDwDnmNES7yqoIKGqt9DRko/Ev
+        h7I6sQ4lCHsiMFtkAeNycMZqtMDFLFkujdWuspzq4XP5Q7kENCYgEzCG0/ulTVSTQNJwCbLCxCK0
+        i1iEFt6ZcrZzlln1inLm2YNWKcEqEPOYrapR+GD7zn4pvggnIR0BDT6X6fEYgSxfQ91i9UZKtGb/
+        mBHFalsFRuyyTVms8/qF+gbNqgjxghd76jD4oXbCHi/Ao9YHsFLSorwkNU1s5nYoD77b8XY4AFIq
+        C0Pdv36bgULtiVnlHSQ4Ir+/UnRqisaWSypaYlXSE+xHqFpc4Dv4pJNG6UQdUdcOEy6PilMHl9l6
+        tUh+O1CXW6KpTQJokp9+/yVZP+dZtkjHkOf+15hF2h3AhKd5QggG0rwRc0dYKxHQkT3Rl/cTfBDt
+        NRECxZwcRMI4Jh0NJzEZ7zCZoCNXzrBhflmgwEgUKlnbWXJZHZC94ukhptE3L9IszdeHyD6SAaPk
+        bERDm2PBKU9mnaZuxaem2FBtbaROzV072D2JvdU/vgY9kCY1rm1BD0mNk26gQXuil/iMGo6zuTao
+        j9QxZvmgFA04EZlEAZTGaekstp2fHxfMy75q/QP6F1HOLVz+T5gazsVe9RkTbUpleOjB8Mgx79i9
+        gydUKI+zKr0ALszSGJW39JftUU4DczkTjuz5HjDRrMt89f5ur/bPnSA9cB6dX+tVdh/51+NamnZx
+        fWCo9BuWzCDo6jAtkHQtC8Ju7OTKrAPmVhaHfjZOBlm/jGaNptK8G4j/s1KvJnGd1/pBGspTwq0h
+        ArYl6sXlqoQ2OBV0h7mO9efT6+IZGq8WJhTuNx3tSJo5fVXOUSTjZp5Uk8aVqEy0n98I5AiRWUzx
+        Cp34pLXmR3kCni+iNonkC8w11jMpv40zQt9uOusjhe+KsOunff18T0jWa+MbQlXk4k4DSBtrFsD/
+        ofY04p+p92xxGTd8fv1DB6WqT/9du3v1ukn3NoVPMmHce1Z1bLLXs9HYhRW320aDJooMn0BpzQ2U
+        YvjmvBbVuX7mxer56Xv0M41L8E1ze0/LIlw/kqpr/Vxl94B7Ycf9+sj1lUTmu9Wodc7MFyMxGmqw
+        nu0f56fz39a21C4jDAAA
+    headers:
+      access-control-expose-headers:
+      - X-Request-ID
+      - CF-Ray
+      - CF-Ray
+      alt-svc:
+      - h3=":443"; ma=86400
+      cf-cache-status:
+      - DYNAMIC
+      cf-ray:
+      - DUMMY
+      connection:
+      - keep-alive
+      content-encoding:
+      - gzip
+      content-type:
+      - application/json
+      date:
+      - DUMMY
+      openai-organization:
+      - DUMMY
+      openai-processing-ms:
+      - '1273'
+      openai-project:
+      - DUMMY
+      openai-version:
+      - '2020-10-01'
+      server:
+      - cloudflare
+      set-cookie:
+      - DUMMY
+      strict-transport-security:
+      - max-age=31536000; includeSubDomains; preload
+      transfer-encoding:
+      - chunked
+      x-content-type-options:
+      - nosniff
+      x-ratelimit-limit-requests:
+      - DUMMY
+      x-ratelimit-limit-tokens:
+      - DUMMY
+      x-ratelimit-remaining-requests:
+      - DUMMY
+      x-ratelimit-remaining-tokens:
+      - DUMMY
+      x-ratelimit-reset-requests:
+      - 12ms
+      x-ratelimit-reset-tokens:
+      - 0s
+      x-request-id:
+      - DUMMY
+    status:
+      code: 200
+      message: OK
+version: 1

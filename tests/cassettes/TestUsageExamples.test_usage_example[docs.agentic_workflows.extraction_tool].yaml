@@ -1,0 +1,601 @@
+interactions:
+- request:
+    body: '{"model":"gpt-6-luna","input":[{"type":"message","role":"user","content":[{"type":"input_text","text":"How
+      much notice do we need to end the agreement with Acme?"}]}],"instructions":"You
+      answer questions about the user''s documents, which you read with the tool.
+      Quote the sentences that your answer relies on. Documents: acme-service-agreement
+      (service agreement with Acme Ltd).","stream":false,"tools":[{"name":"extract_from_document","parameters":{"type":"object","properties":{"document_id":{"type":"string","description":"The
+      ID of the document"},"name":{"type":"string","description":"A short name of
+      the information, e.g. \"Payment term\""},"description":{"type":"string","description":"What
+      to extract, e.g. \"Days to pay an invoice\""}},"required":["document_id","name","description"]},"strict":null,"type":"function","description":"Extracts
+      information from a document, with the sentences it was found in."}]}'
+    headers:
+      accept:
+      - '*/*'
+      accept-encoding:
+      - gzip, deflate
+      authorization:
+      - DUMMY
+      connection:
+      - keep-alive
+      content-length:
+      - '918'
+      content-type:
+      - application/json
+      host:
+      - DUMMY
+      user-agent:
+      - litellm/1.105.1
+    method: POST
+    uri: https://api.openai.com/v1/responses
+  response:
+    body:
+      string: !!binary |
+        H4sIAAAAAAAA/61WWY/jNgx+n18h+KUtkAlyzOTYtwW2wC56oEUX2BbNwlAk2lHHllwdyQaD+e8l
+        5SO2JwEW2L4EMUmR1Efyo57vGEuUTN6wxIKr0tlmu37M9msu5nKz2M5nsxWXi9U6E+v1w2azlovt
+        ciMXj5vZPBOPS7FaJhNyYfb/gPCtG6Md1HJhgXuQKSfdfL1dzNcPs/Uq6pznPjg6I0xZFYB29SEu
+        BDiXVtbklpdkoUNRRNWei6fcmqAp5YwXDmqxKgqlc5Q94ycKKn4GS64lHKEwFX6g4qXOqY02ymod
+        tWCtsf2QmYV/A2hxTivQvPBnVM6ms6hTunWWSvBcFYNklXbeBuEV4kG5/GUC49qdwDL06KKc8b0J
+        nvkDsODAfueYNCKUoL2bsNNBiQM74zGEUbKT8odo6Y0ppuz3YDzEb4fmmCE4/OKeDtg2kIVCodzo
+        KXvXOn7DuCjhHsMdlYB7nlsAUrDvGxG7iGLMt2jOfvbyh2ldoJJ/STHrKvjUmyfQg1uTkhJMBS+G
+        eJRGQkFA5JW/X90XQfOkU1hOePTN6wgo+TvWtK5s166ZuN2scjlbxGbdbPlCPqwyuX18hO3yIYaL
+        Tvy5gugm6FigmO1Ffas3o5LbvAaS9M+7pK1YquQuebNLrqO7Sya7RPMSos1HsKXS8c5MG0+gY5Mq
+        I6OZBCesqkgbrd+bEysD9gKXR46Fbo+UwXkGWCKsdMWtP7NcHak/GGjJjGW+CVP3SZfLhGHnFkHi
+        zGCjnJlUWQaW6j3IxbGs54NSpW9h9BG0ooajEIJj4053ycsFIMIyrcsU/+Yq5Ie1f4JV9cfxlH36
+        9acPf/6i34vLCcKFzOGLt1z4NLOmTFtck2j1gr+fY2PgTdErFMM2w1GryaBCCqLkrswrqo7KBJe2
+        LFVn2bUcUk5ZeXQpDpA+wfmmzmJH6KZhk8XDoe5jnFJn9ICIECyPlyIzQsIHi9NSXzuBDOGMqhKk
+        CmUrp3EgKTahlty2nZe4UJbctkl1fOZ4Bv6MN6GMMgUD9mraMPWq5cOMh8InDQMbC33oPJQVTWKI
+        4nmDWnOB5kaYc8kv371ZinZ1rZqMj2D3xqlYg/aSXd519Q4G04vwBG+SiyI4nsMlqirxM81B9wMr
+        PaCg2eSaosfM7cHO3+ujzXV7mkbx0jkfM9/suuZ/j+uN58XYoEX6BPvUAbfi0AdIhzKN68v53pFB
+        Bdxrgh1z42VMe7xEBj/W0+qQTequiBSBc8J4t8Yml7V1WVMKFwsndsFFjoenX0sEY6QdzmLJe/3e
+        LH98NuCA2hH27b2ax0oPepxt7HuckeEJuvGF20eqnkNc8zT0k6F2BNZHRODDO2ayiMWQ20al7iPx
+        LSHfMndAhmHkqg3cK9WEwTSfsl3yGz/HZU9Mv0tupzR0/y2ZfaJ3Cq2pusxdJu/42ZEc32+4mDDZ
+        I9HDKKe7K9kl1ObKguza+UoBX+N783qd/POrOaQLxrdufH+OdpM3VVqYHBtq3813FFZxDW03tcDi
+        aLUPnkQqx/dF+/odE9+Q4+aPy8nd13BcUi+qk1X+Gt/UanmLTsYct5pdU1wL2+3AW65HNLaYLzs+
+        ohfw4MGI7iX3NODPL3cv/wGH3hpcrQwAAA==
+    headers:
+      access-control-expose-headers:
+      - X-Request-ID
+      - CF-Ray
+      - CF-Ray
+      alt-svc:
+      - h3=":443"; ma=86400
+      cf-cache-status:
+      - DYNAMIC
+      cf-ray:
+      - DUMMY
+      connection:
+      - keep-alive
+      content-encoding:
+      - gzip
+      content-type:
+      - application/json
+      date:
+      - DUMMY
+      openai-organization:
+      - DUMMY
+      openai-processing-ms:
+      - '1582'
+      openai-project:
+      - DUMMY
+      openai-version:
+      - '2020-10-01'
+      server:
+      - cloudflare
+      set-cookie:
+      - DUMMY
+      strict-transport-security:
+      - max-age=31536000; includeSubDomains; preload
+      transfer-encoding:
+      - chunked
+      x-content-type-options:
+      - nosniff
+      x-ratelimit-limit-requests:
+      - DUMMY
+      x-ratelimit-limit-tokens:
+      - DUMMY
+      x-ratelimit-remaining-requests:
+      - DUMMY
+      x-ratelimit-remaining-tokens:
+      - DUMMY
+      x-ratelimit-reset-requests:
+      - 12ms
+      x-ratelimit-reset-tokens:
+      - 0s
+      x-request-id:
+      - DUMMY
+    status:
+      code: 200
+      message: OK
+- request:
+    body: '{"messages":[{"role":"system","content":"<introduction>\nYou will be assigned
+      tasks involving the extraction, analysis, and interpretation of data within
+      various types of documents. Your role is to carefully process the information
+      and provide accurate, relevant outputs based on the specific instructions provided.\n</introduction>\n\n<guidance_on_instruction_structure>\nAll
+      instructions you receive will be organized using semantic XML tags for clarity
+      and structure. Each section will be properly tagged to indicate its purpose
+      and content type, making it easier to understand the task requirements and expected
+      outputs.\n</guidance_on_instruction_structure>\n\n<key_terminology>\nKEY TERMINOLOGY
+      TO UNDERSTAND:\n\n  <document_definition>\n  1. Document: A structured or unstructured
+      file containing written or visual content. Documents can vary in type and purpose,
+      including but not limited to:\n    <document_types>\n    - Contracts: Legal
+      agreements defining terms and obligations.\n    - Invoices: Financial documents
+      detailing transactions and payments.\n    - Curricula Vitae (CVs): Resumes outlining
+      an individual''s professional experience and qualifications.\n    - Visual Documents:
+      Images, scanned documents, blueprints, photographs, charts, diagrams, or screenshots
+      that contain relevant information.\n    - General Documents: Any other types
+      of files that may contain text, tables, images, or mixed formats.\n    </document_types>\n  \n  Note
+      that occasionally you may be working with document fragments rather than complete
+      documents. These fragments represent portions of a larger document and should
+      be analyzed within their limited context. When working with fragments, focus
+      on extracting information from the available content without making assumptions
+      about missing parts.\n\n    <content_types>\n    Documents may contain textual
+      or visual content:\n    - Text-based content: Written information that can be
+      directly read and processed.\n    - Visual content: Images, charts, diagrams,
+      blueprints, tables, handwritten text, or other visual elements that require
+      visual interpretation.\n    </content_types>\n  </document_definition>\n\n  <aspect_definition>\n  2.
+      Aspect: A defined area or topic within a document that requires focused attention.
+      Each aspect corresponds to a specific subject or theme described in the task.
+      For example:\n    <aspect_examples>\n    - Contract Aspects: Payment terms,
+      parties involved, or termination clauses.\n    - Invoice Aspects: Due dates,
+      line-item breakdowns, or tax details.\n    - CV Aspects: Work experience, education,
+      or skills.\n    </aspect_examples>\n  You will analyze aspects as instructed,
+      considering their relevance and context within the document.\n  </aspect_definition>\n\n  <concept_definition>\n  3.
+      Concept: A unit of information or an entity relevant to the task. Concepts may
+      be derived from an aspect or the broader document context. They represent a
+      wide range of data points and insights, from simple entities (names, dates,
+      monetary values) to complex evaluations, conclusions, and answers to specific
+      questions. Concepts can be:\n    <concept_types>\n    - Factual extractions:
+      Such as a penalty clause in a contract, a total amount due in an invoice, or
+      a certification in a CV.\n    - Analytical insights: Such as risk assessments,
+      compliance evaluations, or pattern identifications.\n    - Reasoned conclusions:
+      Such as determining whether a document meets specific criteria or answers particular
+      questions.\n    - Interpretative judgments: Such as ratings, classifications,
+      or qualitative assessments based on document content.\n    - Label classifications:
+      Content categorization using predefined labels.\n    </concept_types>\n  </concept_definition>\n\n</key_terminology>\n\n<critical_guidelines>\nCRITICAL
+      GUIDELINES FOR YOUR WORK:\n\n  <precision_and_accuracy>\n  - Precision and accuracy:
+      Extract only information that is explicitly stated or can be directly inferred
+      from the document content. Avoid speculation or assumptions beyond what the
+      document content clearly supports.\n  </precision_and_accuracy>\n\n  <visual_content_analysis>\n  -
+      Visual content analysis: When processing visual content (images):\n    -- Examine
+      all visual elements carefully, including text within images, charts, diagrams,
+      logos, layout structures, etc.\n    -- Identify and analyze visual patterns,
+      relationships, and structural information that may not be explicitly stated
+      in text.\n    -- Consider the visual context and layout as it may provide important
+      semantic information.\n    -- Analyze information in tables, forms, charts,
+      and diagrams with attention to their visual structure and relationships.\n  </visual_content_analysis>\n\n  <contextual_understanding>\n  -
+      Contextual understanding: Consider the full context when performing extractions.
+      A single paragraph or sentence may have different meanings depending on surrounding
+      content, document type, and domain-specific terminology.\n  </contextual_understanding>\n\n  <systematic_analysis>\n  -
+      Systematic analysis: Before extracting, thoroughly understand:\n    -- The nature
+      and type of the document\n    -- The specific aspects or concepts you need to
+      focus on\n    -- The expected output format and structure requirements\n    --
+      Any constraints or special handling instructions\n  </systematic_analysis>\n\n  <quality_control>\n  -
+      Quality control: After extraction, verify that:\n    -- All extracted information
+      directly relates to the specified aspects/concepts\n    -- The output format
+      matches the required schema exactly\n    -- No extraneous information has been
+      included\n    -- All mandatory fields are present and correctly populated\n  </quality_control>\n\n  <conservative_approach>\n  -
+      Conservative approach: When in doubt about whether information qualifies for
+      extraction:\n    -- If the relevance is unclear, err on the side of exclusion\n    --
+      If multiple interpretations are possible, choose the most conservative one\n    --
+      If information is ambiguous, do not force an extraction\n  </conservative_approach>\n\n  <structured_output_compliance>\n  -
+      Structured output compliance: Adhere strictly to the specified JSON format requirements.
+      Do not:\n    -- Add extra fields beyond what is requested\n    -- Modify the
+      structure or field names\n    -- Include explanatory text outside the JSON structure\n    --
+      Use code blocks or formatting markers unless explicitly required\n  </structured_output_compliance>\n\n</critical_guidelines>\n\n<expected_deliverables>\nEXPECTED
+      DELIVERABLES:\n  <deliverable_types>\n  - Structured outputs: Clearly formatted
+      and well-organized results based on the task requirements.\n  - Explanations
+      (when required): When required by the instructions, include justifications or
+      reasoning for your interpretations.\n  - Insights (when required): When required
+      by the instructions, highlight trends, patterns, or noteworthy findings that
+      could add value to the task.\n  - References (when required): When required
+      by the instructions, output references based on which you extracted data, provided
+      insights, or made conclusions during the task.\n  </deliverable_types>\n</expected_deliverables>\n\n\n<conclusion>\nBy
+      adhering to this framework, you will ensure consistent and high-quality performance
+      across diverse document analysis tasks.\n</conclusion>"},{"role":"user","content":"<introduction>\nBelow
+      you will find a list of document paragraphs (including sentences) and a list
+      of concepts.\n</introduction>\n\n<guidance_on_task_structure>\nAll structured
+      information in these instructions is provided using semantic XML tags. Field
+      names correspond directly to tag names (e.g., concept_name, paragraph_text,
+      sentence_text, additional_context, etc.).\n</guidance_on_task_structure>\n\n<private_reasoning>\nUse
+      private deliberation to plan, evaluate evidence, and verify decisions. Do not
+      reveal any intermediate analysis, notes, or steps. Only output the JSON according
+      to the format specified within <answer_format></answer_format> tags.\n\nFollow
+      this internal three-stage process:\n\n1. Plan\n    - Internally restate each
+      concept in one sentence.\n    - List 3-5 concrete lexical/semantic cues for
+      relevance aligned with the concept description (include indicators of definition,
+      obligation, permission, exception, conditionals, and negations).\n    - If a
+      concept specifies a structure, rating scale, or available labels, align inclusion/exclusion
+      criteria with those constraints.\n    - For each concept, plan how to synthesize
+      the output value from the available evidence even when no literal span is present.\n\n2.
+      Evidence triage\n    - Evaluate the provided content at paragraph and sentence
+      levels; derive candidate extractions/values for the concepts (explicit or inferred
+      from context).\n    - Collect minimal sufficient evidence privately and note
+      negated, hypothetical, or conditional forms.\n    - Prefer precision over recall;
+      include only high-confidence items and omit weak or ambiguous ones.\n\n3. Consistency
+      pass\n    - Ensure all extracted items strictly match required types and any
+      specified structure, rating scales, or label constraints.\n    - Deduplicate
+      referenced paragraph and sentence IDs and preserve their original order.\n\nNever
+      disclose any plan, evidence, or internal notes - only the JSON array defined
+      within <answer_format></answer_format> tags.\n</private_reasoning>\n\n<task_description>\nYour
+      task is to:\n1. Read through the provided document paragraphs and their sentences.\n    -
+      Each paragraph is identified by a paragraph ID (for example, \"P0\", \"P1\",
+      etc.) specified within <paragraph_id></paragraph_id> tags.\n    - Each paragraph
+      includes sentences, each identified by a sentence ID (for example, \"P0-S0\",
+      \"P0-S1\", etc.) specified within <sentence_id></sentence_id> tags, followed
+      by the full text of the sentence specified within <sentence_text></sentence_text>
+      tags.\n    - Note that paragraphs are listed in the same order they appear in
+      the original document.\n    - You may be working with document fragments rather
+      than complete documents. Focus on extracting information from the available
+      content without making assumptions about missing parts.\n2. Identify whether
+      each concept in the concepts list is addressed within the document paragraphs.\n    -
+      Each concept is identified by a concept ID (for example, \"C0\", \"C1\", etc.)
+      specified within <concept_id></concept_id> tags.\n    - Each concept is described
+      by a concept name specified within <concept_name></concept_name> tags and a
+      concept description specified within <concept_description></concept_description>
+      tags.\n3. For each concept that appears, extract zero or more items relevant
+      to that concept. The item format and structure are specified for each concept.\n    -
+      Apply cross-paragraph reasoning when helpful (e.g., headings, lists, references
+      like \"above\", \"this section\"): use surrounding context to disambiguate;
+      if unresolved, omit.\n    - Treat negations, exceptions, and conditionals carefully:
+      relevance may involve permissions, prohibitions, requirements, exceptions, thresholds,
+      or ranges; reflect the stance .\n    - Prefer minimal sufficient evidence and
+      value derivation:\n        -- include only the sentences necessary to support
+      the item or derived value; avoid unrelated sentences.\n    - Favor precision
+      over recall; when uncertain, avoid speculative extractions or derivations.\n4.
+      Produce a JSON array containing your extracted data, in the provided format.\n    -
+      Internally verify before finalizing:\n        -- Each provided concept appears
+      once, in order, with the correct \"concept_id\".\n        -- The top-level structure
+      matches the format specified within <answer_format></answer_format> tags.\n        --
+      When present, each object in \"reference_paragraphs\" contains only valid \"reference_paragraph_id\"
+      and valid \"reference_sentence_ids\".\n        -- Item values strictly satisfy
+      type and any specified structure/scale/labels constraints.\n        -- The structure
+      exactly matches the format specified within <answer_format></answer_format>
+      tags (no extra keys or commentary).\n</task_description>\n\n<concept_extraction_rules>\nIf
+      a concept is not addressed in the document paragraphs, you must still include
+      an entry in the final JSON output but with an empty \"extracted_items\" list.
+      However, for boolean concepts (with extracted item type \"bool\"), distinguish
+      carefully:\n    - Extract True if the concept is confirmed or strongly supported
+      by the document content (either explicitly stated or reasonably inferred)\n    -
+      Extract False if the concept is contradicted, denied, or if the document content
+      allows you to determine that the concept is not true (e.g., absence of expected
+      content that should be present if the concept were true)\n    - Only leave \"extracted_items\"
+      empty if the concept is impossible to determine because either: (1) the document
+      is completely irrelevant to the concept, or (2) the document does not contain
+      enough information to make a conclusion about the concept\n\nFollow these additional
+      rules:\n\n- Output format:\n    -- Provide your answer in the JSON format specified
+      within <answer_format></answer_format> tags (do not include backticks, code
+      fences, or any introductory/explanatory text). Follow this format exactly.\n\n-
+      Consistency:\n    -- Each JSON object in the list must have two keys: \"concept_id\"
+      and \"extracted_items\".\n    -- The value of \"concept_id\" must match exactly
+      the ID of the concept (for example, \"C0\", \"C1\", etc.).\n    -- The value
+      of \"extracted_items\" must be an array of objects with mandatory fields \"value\"
+      and \"reference_paragraphs\". If the concept is not addressed or there are no
+      items to extract, leave the array empty ([]). For boolean concepts, only leave
+      empty if the concept is impossible to determine.\n        --- Extracted items
+      may be found directly (explicitly mentioned) or inferred from the content (implied
+      or derivable from the information present).\n        --- Guidance regarding
+      the possible amount of extracted items for the concept is specified within <amount_of_extracted_items></amount_of_extracted_items>
+      tags. Each extracted item''s object, even if there is only one, must be part
+      of the \"extracted_items\" array.\n        --- The value of \"reference_paragraphs\"
+      must be an array of objects with mandatory fields \"reference_paragraph_id\",
+      which holds the provided ID of the reference paragraph, and \"reference_sentence_ids\",
+      which holds the provided IDs of the reference sentences within the paragraph.
+      Note that not every sentence in the paragraph necessarily serves as a relevant
+      reference.\n</concept_extraction_rules>\n\n<extracted_item_object_structure>\n-
+      Item object structure:\n    -- value: Mandatory field holding the extracted
+      item. Must match the exact type specified for the concept.\n        --- If a
+      specific structure is provided for a concept within <expected_structure></expected_structure>
+      tags, the extracted item value must follow that structure for all extracted
+      items corresponding to that concept.\n        --- If a rating scale is provided
+      for a concept within <rating_scale></rating_scale> tags, the extracted item
+      value must be within that scale.\n        --- If available labels are provided
+      for a concept within <available_labels></available_labels> tags, the extracted
+      item value must be a list containing only labels from the predefined set. The
+      classification type is explicitly stated within <classification_type></classification_type>
+      tags for each concept: for multi-class concepts, you must always select exactly
+      one label (the most appropriate one even if not perfect); for multi-label concepts,
+      leave the \"extracted_items\" array empty if none of the labels apply to the
+      content.\n        --- If there are example items within <extracted_item_examples></extracted_item_examples>
+      tags, the extracted item value should follow the same style and formatting.\n            ----
+      Each example is provided within separate <extracted_item_example></extracted_item_example>
+      tags.\n        --- When extracting string values, translate them in English
+      if the original language of the document is not English.\n    -- reference_paragraphs:
+      An array of objects for each paragraph based on which the item was extracted
+      for the concept. Each object should include:\n        --- reference_paragraph_id:
+      Mandatory field holding the provided ID of the reference paragraph. Each paragraph
+      ID must match exactly the provided ID for the paragraph (for example, \"P0\",
+      \"P1\", etc.).\n        --- reference_sentence_ids: Mandatory field holding
+      an array of the provided IDs of the sentences within the paragraph, based on
+      which the item was extracted for the concept. Each sentence ID must match exactly
+      the provided ID for the sentence (for example, \"P0-S0\", \"P0-S2\", etc.).\n</extracted_item_object_structure>\n\n<type_validation_rules>\n-
+      Types of extracted items:\n    -- Each concept specifies an \"extracted item
+      type\" within <extracted_item_type></extracted_item_type> tags. Ensure that
+      the value of each of the extracted items for the concept strictly matches that
+      type. Python types are provided (e.g., str for string, int for integer, float
+      for floating-point number, dict for object, etc.). Type compliance is mandatory
+      - any deviation will result in invalid output.\n    -- Do not introduce any
+      extra fields or modify the specified structure.\n</type_validation_rules>\n\n<extracted_item_handling_rules>\n-
+      Handling missing or multiple items:\n    -- If a concept is not mentioned at
+      all, your output should still contain an entry for that concept with an empty
+      \"extracted_items\" array.\n    -- For boolean concepts (with extracted item
+      type \"bool\"): Distinguish carefully between these cases:\n        --- Extract
+      True if the concept is confirmed or strongly supported by the provided content
+      (either explicitly stated or reasonably inferred)\n        --- Extract False
+      if the concept is contradicted, denied, or if the provided content allows you
+      to determine that the concept is not true (e.g., absence of expected content
+      that should be present if the concept were true)\n        --- Only leave \"extracted_items\"
+      empty if the concept is impossible to determine because either: (1) the provided
+      content is completely irrelevant to the concept, or (2) the provided content
+      does not contain enough information to make a conclusion about the concept\n    --
+      For concepts that have <available_labels></available_labels> tags: behavior
+      depends on the classification type explicitly stated within <classification_type></classification_type>
+      tags. For multi-class concepts, you must always select exactly one label (the
+      most appropriate one even if not perfect). For multi-label concepts, leave the
+      \"extracted_items\" array empty if none of the labels apply to the content.\n    --
+      For concepts that have <available_labels></available_labels> tags: if multiple
+      labels apply to the same instance or context, include them all in a single extracted
+      item with multiple labels in the \"labels\" array (e.g., {\"labels\": [\"label1\",
+      \"label2\"]}). Only create multiple extracted items if there are genuinely distinct
+      instances or contexts that warrant separate classification.\n    -- For concepts
+      that do not have <available_labels></available_labels> tags: if multiple items
+      are found for a concept, include each as a separate entry within the \"extracted_items\"
+      array.\n</extracted_item_handling_rules>\n\n<output_constraints>\n- No additional
+      text:\n    -- Do not include any headers, explanations, or text outside of the
+      JSON array.\n    -- Do not wrap your JSON response in backticks or any other
+      formatting characters.\n- Private deliberation only:\n    -- Do not output any
+      analysis, plan, scratchpad, thoughts, or chain-of-thought.\n    -- Only output
+      the JSON array according to the format specified within <answer_format></answer_format>
+      tags.\n</output_constraints>\n\n<answer_format>\nANSWER FORMAT (MANDATORY):\n[\n    {\n        \"concept_id\":
+      str,\n        \"extracted_items\": [\n            {\n                \"value\":
+      ...,\n                \"reference_paragraphs\": [\n                    {\n                        \"reference_paragraph_id\":
+      str,\n                        \"reference_sentence_ids\": [\n                            str,\n                            ...\n                        ]\n                    },\n                    ...\n                ]\n            },\n            ...\n        ],\n    },\n    ...\n]\n</answer_format>\n\n<concepts>\nCONCEPTS:\n<concept
+      id=\"C0\">\n    <concept_id>C0</concept_id>\n    \n    <concept_name>Termination
+      notice period</concept_name>\n\n    <concept_description>\n    How much advance
+      notice must either party give to end or terminate the agreement, including any
+      different notice periods for termination for convenience or cause.\n    </concept_description>\n\n    <amount_of_extracted_items>This
+      concept may have zero, one, or multiple extracted items.</amount_of_extracted_items>\n\n    <extracted_item_type>str
+      (must be exactly as specified)</extracted_item_type>\n</concept>\n\n</concepts>\n\n<document_paragraphs>\nDOCUMENT
+      PARAGRAPHS INCLUDING SENTENCES:\n    <paragraph id=\"P0\">\n        <paragraph_id>P0</paragraph_id>\n        \n        <paragraph_sentences>\n            <sentence
+      id=\"P0-S0\">\n                <sentence_id>P0-S0</sentence_id>\n                \n                <sentence_text>\n                Service
+      Agreement\n                </sentence_text>\n            </sentence>\n        </paragraph_sentences>\n    </paragraph>\n\n    <paragraph
+      id=\"P1\">\n        <paragraph_id>P1</paragraph_id>\n        \n        <paragraph_sentences>\n            <sentence
+      id=\"P1-S0\">\n                <sentence_id>P1-S0</sentence_id>\n                \n                <sentence_text>\n                This
+      agreement is made on 1 March 2026 between Acme Ltd (Customer) and Northwind
+      AS (Supplier).\n                </sentence_text>\n            </sentence>\n        </paragraph_sentences>\n    </paragraph>\n\n    <paragraph
+      id=\"P2\">\n        <paragraph_id>P2</paragraph_id>\n        \n        <paragraph_sentences>\n            <sentence
+      id=\"P2-S0\">\n                <sentence_id>P2-S0</sentence_id>\n                \n                <sentence_text>\n                The
+      Supplier shall provide cloud hosting services as described in Schedule 1.\n                </sentence_text>\n            </sentence>\n        </paragraph_sentences>\n    </paragraph>\n\n    <paragraph
+      id=\"P3\">\n        <paragraph_id>P3</paragraph_id>\n        \n        <paragraph_sentences>\n            <sentence
+      id=\"P3-S0\">\n                <sentence_id>P3-S0</sentence_id>\n                \n                <sentence_text>\n                This
+      agreement renews automatically for successive one-year terms.\n                </sentence_text>\n            </sentence>\n        </paragraph_sentences>\n    </paragraph>\n\n    <paragraph
+      id=\"P4\">\n        <paragraph_id>P4</paragraph_id>\n        \n        <paragraph_sentences>\n            <sentence
+      id=\"P4-S0\">\n                <sentence_id>P4-S0</sentence_id>\n                \n                <sentence_text>\n                Either
+      party may terminate this agreement for any reason by giving 30 days'' written
+      notice to the other party.\n                </sentence_text>\n            </sentence>\n        </paragraph_sentences>\n    </paragraph>\n\n    <paragraph
+      id=\"P5\">\n        <paragraph_id>P5</paragraph_id>\n        \n        <paragraph_sentences>\n            <sentence
+      id=\"P5-S0\">\n                <sentence_id>P5-S0</sentence_id>\n                \n                <sentence_text>\n                This
+      agreement is governed by the laws of Norway.\n                </sentence_text>\n            </sentence>\n        </paragraph_sentences>\n    </paragraph>\n\n</document_paragraphs>"}],"model":"gpt-6-luna"}'
+    headers:
+      accept:
+      - application/json
+      accept-encoding:
+      - gzip, deflate
+      authorization:
+      - DUMMY
+      connection:
+      - keep-alive
+      content-length:
+      - '23999'
+      content-type:
+      - application/json
+      host:
+      - DUMMY
+      user-agent:
+      - OpenAI/Python 2.54.0
+      x-stainless-arch:
+      - other:amd64
+      x-stainless-async:
+      - 'false'
+      x-stainless-lang:
+      - python
+      x-stainless-os:
+      - DUMMY
+      x-stainless-package-version:
+      - 2.54.0
+      x-stainless-raw-response:
+      - 'true'
+      x-stainless-read-timeout:
+      - '600.0'
+      x-stainless-retry-count:
+      - '0'
+      x-stainless-runtime:
+      - CPython
+      x-stainless-runtime-version:
+      - DUMMY
+    method: POST
+    uri: https://api.openai.com/v1/chat/completions
+  response:
+    body:
+      string: !!binary |
+        H4sIAAAAAAAA/3VUwW7bMAy95ysEXXZxCjsJkma3YsiuK9YdhiWBoUmMrdWWDIlOmxX591G2Yztd
+        cxEsPj7yiXry24QxrhX/zLjMBcqyKqabX5n68fXnw3r+9Ld+8eXDo1jPvn+7v3/eGMOjwLC//4DE
+        C+tOWuIBatvB0oFACFWT1XqWrBbxat0ApVVQBFpW4XQ5LWojOkZutQRP0Ja2jL01a9BmFLxSOI4u
+        kRK8FxlQ7JJEQWeLEOHCe+1RGOTRAEprEEwjd7szVDwsjO0CIKHCVKsdgTv+Jd7x6ALCKzoh6Rip
+        Rih9yNi2WF+hTTyKooa2wEZjDo5VwuGJlbVHlukjsHnMlDj5T+zFaSQpzFik4zK0DMGV2tC0GDGZ
+        yBxASVrZwTomzInRJL01d72utqWDAzgg8Sm1IpKo8muB70TeZPVHf1xctXhP8BBGSB9adY2IMX2i
+        ee3HpPOw6eNdrNnT9358M9Sg9iI4wtRFMQKEoRGJ4KjGE/sOOfcuOGijfZ624wk369FWvEHPtO4b
+        V9VXRuGVI59iivYZmrKLZZy0Bfng4AFOkvsORdJSjHirZB19UDJVgEIXfmRNLoXMyUJD0flyFV2B
+        aTAFDBnz2TzpM0SttB2weDKawv+iPxLQTkibbKgyu11/AGR4GaS8cqC0vJ7MkOYg/AhupfXX0Sjm
+        HtyRbJ+iBheuTMFB1EX7VLk/eXpmKd1rBq5yunmvwRWT8+Qf+OV5WqYEAAA=
+    headers:
+      access-control-expose-headers:
+      - X-Request-ID
+      - CF-Ray
+      - CF-Ray
+      alt-svc:
+      - h3=":443"; ma=86400
+      cf-cache-status:
+      - DYNAMIC
+      cf-ray:
+      - DUMMY
+      connection:
+      - keep-alive
+      content-encoding:
+      - gzip
+      content-type:
+      - application/json
+      date:
+      - DUMMY
+      openai-organization:
+      - DUMMY
+      openai-processing-ms:
+      - '1696'
+      openai-project:
+      - DUMMY
+      openai-version:
+      - '2020-10-01'
+      server:
+      - cloudflare
+      set-cookie:
+      - DUMMY
+      strict-transport-security:
+      - max-age=31536000; includeSubDomains; preload
+      transfer-encoding:
+      - chunked
+      x-content-type-options:
+      - nosniff
+      x-openai-proxy-wasm:
+      - v0.1
+      x-ratelimit-limit-requests:
+      - DUMMY
+      x-ratelimit-limit-tokens:
+      - DUMMY
+      x-ratelimit-remaining-requests:
+      - DUMMY
+      x-ratelimit-remaining-tokens:
+      - DUMMY
+      x-ratelimit-reset-requests:
+      - 12ms
+      x-ratelimit-reset-tokens:
+      - 175ms
+      x-request-id:
+      - DUMMY
+    status:
+      code: 200
+      message: OK
+- request:
+    body: '{"model":"gpt-6-luna","input":[{"type":"message","role":"user","content":[{"type":"input_text","text":"How
+      much notice do we need to end the agreement with Acme?"}]},{"type":"function_call","call_id":"call_giugh7tke6pSvwfWNKIXMnHc","name":"extract_from_document","arguments":"{\"document_id\":\"acme-service-agreement\",\"name\":\"Termination
+      notice period\",\"description\":\"How much advance notice must either party
+      give to end or terminate the agreement, including any different notice periods
+      for termination for convenience or cause.\"}"},{"type":"function_call_output","call_id":"call_giugh7tke6pSvwfWNKIXMnHc","output":[{"type":"input_text","text":"[{\"value\":
+      \"Either party must give 30 days'' written notice to terminate the agreement
+      for any reason.\", \"sources\": [\"Either party may terminate this agreement
+      for any reason by giving 30 days'' written notice to the other party.\"]}]"}]}],"instructions":"You
+      answer questions about the user''s documents, which you read with the tool.
+      Quote the sentences that your answer relies on. Documents: acme-service-agreement
+      (service agreement with Acme Ltd).","stream":false,"tools":[{"name":"extract_from_document","parameters":{"type":"object","properties":{"document_id":{"type":"string","description":"The
+      ID of the document"},"name":{"type":"string","description":"A short name of
+      the information, e.g. \"Payment term\""},"description":{"type":"string","description":"What
+      to extract, e.g. \"Days to pay an invoice\""}},"required":["document_id","name","description"]},"strict":null,"type":"function","description":"Extracts
+      information from a document, with the sentences it was found in."}]}'
+    headers:
+      accept:
+      - '*/*'
+      accept-encoding:
+      - gzip, deflate
+      authorization:
+      - DUMMY
+      connection:
+      - keep-alive
+      content-length:
+      - '1653'
+      content-type:
+      - application/json
+      host:
+      - DUMMY
+      user-agent:
+      - litellm/1.105.1
+    method: POST
+    uri: https://api.openai.com/v1/responses
+  response:
+    body:
+      string: !!binary |
+        H4sIAAAAAAAA/61WS4/jNgy+z68QfNl2kAnsvLOHBRaYPRTooQUKFMXOwlAsOlHHllw9MmMM8t+X
+        kvyeBCiwe7NJifxIfiT1dkdIxFn0kUQKdJXG+Rry/WG/W+3zfJms4nhD2WKzi5NDkqx2W7ag2WGd
+        53u22SXbeL3eRzNnQh7+hcy0ZqTQEOSZAmqApdTpku1+kWxX8S7xOm2osdrdyWRZFYDnwiWaZaB1
+        Wil5VLR0J4QtCq860Oz5qKQVDnJOCw1BzIuCiyPK3vAXBRWtQTnTDM5QyAp/UHEJmFpvE1RLrwWl
+        pBq6zBX8Z0FkdVqBoIWpURnPY6/jojWWMjCUFyOwXGijbGY45sNh+UdaQoV+AUXQovZyQg/SGmJO
+        QKwG9UETJjNbgjB6Rl5OPDuRGq9hGhl54ebkTxopizn500oD/l/jcUQIGv+ocRdU60hBwVEuxZw8
+        toY/EpqV8IDuzjyDB3pUAE5BfmlEpBd5n5/xOPndsF/noUAlfU0RdWVNauQziFHUTukAphktxvko
+        JYPCJeJYmYfNQ2EFjTqFoi4fw+PBA0q++pqGynZ0LfXxNluXyw2NPVvpertmq/Vql7B1wmLvz1sx
+        dQXeDlKNHqFX3KKlV2bSZboHNQQ2MtumB15Nd9sfoEJIQ1tOfP02UhbyiKw/XNF4Qw2HBABDDpAj
+        P0Oozf39MiaM1vrJLuJkT14UN4iToCss5/29Ow2CebJ0tZ0/iSfxifgr2ResM9KlosrUpKQ1MaBK
+        LqhnGNcDRuTSkat2lNRSkEPtcGDzkQbCh4l359v5lb2DuffJoi7AS/PVxRxVJ6p9InMEUaSBzX0d
+        lCy8lmrNsWBYkbvWjreBA0Ah/aAYUxHbMQyMCseU65grPY2qM5dWp+0kSz3hOlpigcrKoMnsBOkz
+        1Dd1ChxVAqmjxeoUuB7SNhpWnlShvIgzNVYhN0KoEeSYbxOIyrgtW7lrGSd1wTOqWopG2pYlVS2o
+        buZpmoOpMRKHKOcwmnBN16eGtzMzp7YIvEUHUsEwdQbKynWr9eKkyVoTQBMRYi5p/z/oC38u1KpB
+        fAZ1kJr7GrRBdrhD9U4S4fn0WCOjXmF953ZeeYm/6RHE0DEXozEVz64pBtO77+bG3vurTbgDTaO4
+        dMan0zG+rvnpfg3OlmJ6oM30CxxSDVRlp2GChC1Tv+K0GVwZVUC/H8JtPXMr/ILrW5OBzhSvWuJ/
+        eTWKZkYTLgIrUE5y7BNCu1U361dbv8o4Lh+qcdzgssfL896DoKX3DcF06qylra1ommmNvVjSAd+b
+        BwI+LbBB1ST33fwOD5pB6rG3kffYI+MbLuLGdRgUQ9XAID4FXNPPxtpJsv7CDPz2SGTuc9GFNLhz
+        GW2FJhM/4vIz0SecMMSZah0PSjUjMD/OyVP0B639+Hd74Sm6DWls/keQ/e3eMm5xhTJ3SB5xyTg5
+        vvFwESHYsxsPE0x3V9BFjuZcARut70kB3+f3Znid/Nu7PnQB+vewf6NOdpORVTrY9HEnrPwa2u+C
+        QGFrtY+iiHFND0X7Qp4OvvGMW2w3s7v/M+OisKjcvr42b4Ka3Ron0xm32lxTXHPb7cBbpidjbLlY
+        dPPIvZJHj0o0z6hxDf52ubt8BwcDd+rRDAAA
+    headers:
+      access-control-expose-headers:
+      - X-Request-ID
+      - CF-Ray
+      - CF-Ray
+      alt-svc:
+      - h3=":443"; ma=86400
+      cf-cache-status:
+      - DYNAMIC
+      cf-ray:
+      - DUMMY
+      connection:
+      - keep-alive
+      content-encoding:
+      - gzip
+      content-type:
+      - application/json
+      date:
+      - DUMMY
+      openai-organization:
+      - DUMMY
+      openai-processing-ms:
+      - '2187'
+      openai-project:
+      - DUMMY
+      openai-version:
+      - '2020-10-01'
+      server:
+      - cloudflare
+      set-cookie:
+      - DUMMY
+      strict-transport-security:
+      - max-age=31536000; includeSubDomains; preload
+      transfer-encoding:
+      - chunked
+      x-content-type-options:
+      - nosniff
+      x-ratelimit-limit-requests:
+      - DUMMY
+      x-ratelimit-limit-tokens:
+      - DUMMY
+      x-ratelimit-remaining-requests:
+      - DUMMY
+      x-ratelimit-remaining-tokens:
+      - DUMMY
+      x-ratelimit-reset-requests:
+      - 12ms
+      x-ratelimit-reset-tokens:
+      - 0s
+      x-request-id:
+      - DUMMY
+    status:
+      code: 200
+      message: OK
+version: 1

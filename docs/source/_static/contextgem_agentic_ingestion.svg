@@ -1,0 +1,109 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 832 276" width="832" height="276" role="img" aria-labelledby="title desc" font-family="ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Consolas, 'Liberation Mono', 'DejaVu Sans Mono', monospace" font-size="13">
+  <title id="title">ContextGem at ingestion - the metadata of a new document, as its record</title>
+  <desc id="desc">A new document, a service agreement between Acme Ltd and Northwind AS, goes to a model group. The decision model answers the closed questions: the document type is "Service agreement" with a probability of 1.00, and the agreement renews automatically, True with a probability of 0.99. The LLM extracts the open values: the parties, "Acme Ltd" and "Northwind AS", and the effective date, "2026-03-01". The values make up the record of the document, for a search index or a database.</desc>
+
+  <!-- The run, played once: the document goes to the two models of the group, and the fields of its record come back, with the probabilities of the decision model's answers. The drawing as it stands is where the run ends: each part fades in from a hidden first frame, the traces along the routes show only while they play, and without motion it is all there -->
+  <style>
+    .in { animation: show 0.35s ease-out backwards; }
+    @keyframes show { from { opacity: 0; } }
+    .grow { transform-box: fill-box; transform-origin: left center; animation: grow 0.7s cubic-bezier(0.2, 0.7, 0.2, 1) backwards; }
+    @keyframes grow { from { transform: scaleX(0); } }
+    .light { animation: light 0.4s ease-out backwards; }
+    @keyframes light { from { fill: #6b7280; } }
+    .trace { opacity: 0; stroke-dasharray: 1; animation: trace 0.7s ease-in-out; }
+    @keyframes trace {
+      0% { opacity: 1; stroke-dashoffset: 1; }
+      60% { opacity: 1; stroke-dashoffset: 0; }
+      100% { opacity: 0; stroke-dashoffset: 0; }
+    }
+    .lit { opacity: 0; animation: lit 0.8s ease-out; }
+    @keyframes lit { 0%, 100% { opacity: 0; } 30% { opacity: 1; } }
+    @media (prefers-reduced-motion: reduce) { * { animation: none !important; } }
+  </style>
+
+
+  <!-- A ground of its own, so that the picture reads the same in the light
+       and the dark theme: a window, with what it shows on its tab -->
+  <path d="M0.5 28.5H831.5V275.5H0.5Z" fill="#111113" stroke="#2c2c30"/>
+  <path d="M0.5 29V0.5H116.5V29" fill="#111113" stroke="#2c2c30"/>
+  <path d="M1 28.5H116" stroke="#111113"/>
+  <text x="16" y="18.5" font-size="11" fill="#9ca3af">at ingestion</text>
+
+
+  <!-- The columns -->
+  <g font-size="10.5" letter-spacing="1.4" fill="#6b7280">
+    <text x="28" y="62">NEW DOCUMENT</text>
+    <text x="348" y="62">MODEL GROUP</text>
+    <text x="572" y="62">ITS RECORD</text>
+  </g>
+
+  <!-- The document of the example: a sheet, a line to a sentence -->
+  <path d="M28.5 78.5H293.5L307.5 92.5V253.5H28.5Z" fill="none" stroke="#ffffff" stroke-opacity="0.2"/>
+  <path d="M293.5 78.5V92.5H307.5" fill="none" stroke="#ffffff" stroke-opacity="0.2"/>
+  <g font-size="12" fill="#6b7280">
+    <text x="48" y="102">Service Agreement</text>
+    <text x="48" y="124">This agreement is made on 1 March…</text>
+    <text x="48" y="146">…between Acme Ltd and Northwind AS.</text>
+    <text x="48" y="168">The Supplier shall provide cloud…</text>
+    <text x="48" y="190">This agreement renews automatically…</text>
+    <text x="48" y="212">Either party may terminate…</text>
+    <text x="48" y="234">This agreement is governed by…</text>
+  </g>
+
+  <!-- The models: the decision model takes the closed questions, the LLM
+       the open values -->
+  <g fill="none" stroke="#ffffff" stroke-opacity="0.2">
+    <path d="M348.5 96.5H527.5V143.5H348.5Z"/>
+    <path d="M348.5 184.5H527.5V231.5H348.5Z"/>
+  </g>
+  <g transform="translate(360 104) scale(2)" shape-rendering="crispEdges"><path fill="#6b7280" d="M0 5h1v1h-1zM5 5h11v1h-11zM6 10h4v1h-4zM6 11h4v1h-4zM6 12h4v1h-4zM11 12h4v1h-4zM6 13h4v1h-4zM11 13h4v1h-4zM6 14h4v1h-4zM11 14h4v1h-4zM0 15h16v1h-16z"/><path fill="#9ca3af" d="M2 1h3v1h-3zM1 2h4v1h-4zM1 3h4v1h-4zM1 4h4v1h-4zM1 5h4v1h-4zM1 6h4v1h-4zM1 7h4v1h-4zM1 8h4v1h-4zM1 9h4v1h-4zM1 10h4v1h-4zM1 11h4v1h-4zM1 12h4v1h-4zM1 13h4v1h-4zM1 14h4v1h-4z"/><path fill="#9ca3af" d="M1 1h1v1h-1z"/></g>
+  <g transform="translate(360 192) scale(2)" shape-rendering="crispEdges"><path fill="#6b7280" d="M1 1h14v1h-14zM0 2h1v1h-1zM15 2h1v1h-1zM0 3h1v1h-1zM2 3h11v1h-11zM15 3h1v1h-1zM0 4h1v1h-1zM15 4h1v1h-1zM0 5h1v1h-1zM2 5h9v1h-9zM15 5h1v1h-1zM0 6h1v1h-1zM15 6h1v1h-1zM0 7h1v1h-1zM15 7h1v1h-1zM0 8h1v1h-1zM15 8h1v1h-1zM0 9h1v1h-1zM15 9h1v1h-1zM1 10h3v1h-3zM6 10h9v1h-9zM3 11h1v1h-1zM5 11h1v1h-1zM3 12h2v1h-2zM3 13h1v1h-1z"/><path fill="#9ca3af" d="M10 6h1v1h-1zM2 7h7v1h-7zM10 7h1v1h-1zM10 8h1v1h-1z"/></g>
+  <text x="404" y="117" fill="#f3f4f6">Decision model</text>
+  <text x="404" y="134" font-size="11" fill="#6b7280">closed questions</text>
+  <text x="404" y="205" fill="#f3f4f6">LLM</text>
+  <text x="404" y="222" font-size="11" fill="#6b7280">open values</text>
+
+  <!-- The routes: each shows when its trace has run along it -->
+  <g fill="none" stroke="#ffffff" stroke-opacity="0.2">
+    <path class="in" style="animation-delay: 0.60s" d="M308 120.5H347"/>
+    <path class="in" style="animation-delay: 0.75s" d="M308 208.5H347"/>
+    <path class="in" style="animation-delay: 1.40s" d="M528 120.5H543.5V108.5H564"/>
+    <path class="in" style="animation-delay: 1.60s" d="M528 120.5H543.5V152.5H564"/>
+    <path class="in" style="animation-delay: 1.55s" d="M528 208.5H543.5V196.5H564"/>
+    <path class="in" style="animation-delay: 1.75s" d="M528 208.5H543.5V240.5H564"/>
+  </g>
+
+  <!-- The fields of the record, with the probabilities of the decision
+       model's answers -->
+  <g class="in" style="animation-delay: 1.45s">
+    <text x="572" y="96" font-size="11" fill="#6b7280">document_type</text>
+    <text x="572" y="113" fill="#f3f4f6">"Service agreement"</text>
+    <text x="804" y="113" fill="#9ca3af" text-anchor="end">1.00</text>
+    <text x="804" y="96" font-size="10" fill="#6b7280" text-anchor="end">probability</text>
+  </g>
+  <g class="in" style="animation-delay: 1.65s">
+    <text x="572" y="140" font-size="11" fill="#6b7280">automatic_renewal</text>
+    <text x="572" y="157" fill="#f3f4f6">True</text>
+    <text x="804" y="157" fill="#9ca3af" text-anchor="end">0.99</text>
+  </g>
+  <g class="in" style="animation-delay: 1.60s">
+    <text x="572" y="184" font-size="11" fill="#6b7280">parties</text>
+    <text x="572" y="201" fill="#f3f4f6">"Acme Ltd", "Northwind AS"</text>
+  </g>
+  <g class="in" style="animation-delay: 1.80s">
+    <text x="572" y="228" font-size="11" fill="#6b7280">effective_date</text>
+    <text x="572" y="245" fill="#f3f4f6">"2026-03-01"</text>
+  </g>
+
+  <!-- The traces of the run -->
+  <g fill="none" stroke="#38bdf8" stroke-width="1.5">
+    <path class="trace" pathLength="1" style="animation-delay: 0.30s" d="M308 120.5H347"/>
+    <path class="trace" pathLength="1" style="animation-delay: 0.45s" d="M308 208.5H347"/>
+    <path class="trace" pathLength="1" style="animation-delay: 1.10s" d="M528 120.5H543.5V108.5H564"/>
+    <path class="trace" pathLength="1" style="animation-delay: 1.30s" d="M528 120.5H543.5V152.5H564"/>
+    <path class="trace" pathLength="1" style="animation-delay: 1.25s" d="M528 208.5H543.5V196.5H564"/>
+    <path class="trace" pathLength="1" style="animation-delay: 1.45s" d="M528 208.5H543.5V240.5H564"/>
+    <path class="lit" style="animation-delay: 0.75s" stroke-width="1" d="M348.5 96.5H527.5V143.5H348.5Z"/>
+    <path class="lit" style="animation-delay: 0.9s" stroke-width="1" d="M348.5 184.5H527.5V231.5H348.5Z"/>
+  </g>
+</svg>
