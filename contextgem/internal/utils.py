@@ -25,7 +25,6 @@ from typing import TYPE_CHECKING, Any, Literal, TypeVar, get_args
 
 import pydantic
 from jinja2 import Environment, Template, nodes
-from wtpsplit_lite import SaT
 
 from contextgem.internal.data_models import _ModelUsage
 from contextgem.internal.exceptions import ContextGemWarning
@@ -47,6 +46,8 @@ from contextgem.internal.typings.types import (
 
 
 if TYPE_CHECKING:
+    from wtpsplit_lite import SaT
+
     from contextgem.internal.base.aspects import _Aspect
     from contextgem.internal.base.concepts import _Concept
     from contextgem.internal.base.paras_and_sents import _Paragraph
@@ -1174,6 +1175,12 @@ def _load_sat_model(model_id: SaTModelId = "sat-3l-sm") -> SaT:
         if tokenizer_path.is_file():
             local_tokenizer_path = tokenizer_path
 
+    # wtpsplit-lite is imported when a SaT model is first needed: with ONNX Runtime
+    # and NumPy, its import takes about as long as that of the rest of the framework
+    # without litellm, and a document that is segmented into paragraphs by newlines,
+    # with no sentence-level references, does not need it
+    from wtpsplit_lite import SaT
+
     # Attempt to load the model
     try:
         if local_tokenizer_path is not None:
@@ -1262,6 +1269,38 @@ def _is_json_serializable(data: Any) -> bool:
     except (TypeError, ValueError, OverflowError, RecursionError) as e:
         logger.error(f"Data is not JSON serializable. Error: {e}")
         return False
+    return True
+
+
+def _are_paragraphs_in_text_in_order(
+    paragraphs: list[_Paragraph], document_text: str
+) -> bool:
+    """
+    Returns whether the texts of the paragraphs are found in the document text one
+    after another, in the order of the paragraphs and without overlapping.
+
+    Paragraphs that are found so pass ``_check_paragraphs_match_in_text()`` and
+    ``_check_paragraphs_ordering_in_text()``, as well as the matching of
+    the segmented paragraphs in the text of a document. Each of those looks for
+    a paragraph from the start of the text, i.e. takes time proportional to
+    the number of the paragraphs times the length of the text, which adds up to
+    seconds for a long document. This check looks for a paragraph from the end of
+    the previous one, i.e. reads the text once, so the others are needed only to
+    report the paragraphs that fail it.
+
+    :param paragraphs: The paragraphs, in the order of the document.
+    :type paragraphs: list[_Paragraph]
+    :param document_text: The text of the document.
+    :type document_text: str
+    :return: Whether the paragraphs are found in the text in their order.
+    :rtype: bool
+    """
+    position = 0
+    for paragraph in paragraphs:
+        found_at = document_text.find(paragraph.raw_text, position)
+        if found_at == -1:
+            return False
+        position = found_at + len(paragraph.raw_text)
     return True
 
 

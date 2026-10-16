@@ -78,10 +78,9 @@ class _AssignedInstancesAttributeProcessor(_InstanceBase):
         current_instances = getattr(self, attr_name)
         new_instances = [deepcopy(i) for i in instances]
         combined_instances = current_instances + new_instances
-        # Use a temporary instance to test if the combined list would be valid
-        # without modifying the current instance
-        setattr(self.clone(), attr_name, combined_instances)
-        # If we get here, validation passed, so update the actual instance
+        # A rejected list leaves the instance unchanged (see
+        # `_AssignmentRollbackMixin`), so it is not tried on a copy of the instance
+        # first, which would copy e.g. all the paragraphs of a document
         setattr(self, attr_name, combined_instances)
         return self
 

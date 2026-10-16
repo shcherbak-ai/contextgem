@@ -9,7 +9,9 @@ from __future__ import annotations
 
 import asyncio
 import os
+from collections.abc import Callable
 from copy import deepcopy
+from functools import partial
 from pathlib import Path
 from typing import Any
 from unittest.mock import patch
@@ -28,6 +30,7 @@ from contextgem.internal.base.attrs import (
 )
 from contextgem.internal.base.concepts import (
     _BooleanConcept,
+    _Concept,
     _DateConcept,
     _JsonObjectConcept,
     _LabelConcept,
@@ -51,6 +54,7 @@ from contextgem.public import (
     Document,
     DocumentLLM,
     DocumentModelGroup,
+    ExtractionPipeline,
     JsonObjectConcept,
     JsonObjectExample,
     ModelPricing,
@@ -284,6 +288,23 @@ class TestInternals(BaseTest):
         No LLM API calls are made, i.e. no cassette is required.
         """
 
+        def check_rejected_change(
+            instance: Any, change: Callable[[], Any], error_match: str
+        ) -> None:
+            """
+            Checks that the change of the instance is rejected, and that the params
+            of the instance are the same as before.
+            """
+            params_before = {
+                name: getattr(instance, name) for name in type(instance).model_fields
+            }
+            params_set_before = set(instance.model_fields_set)
+            with pytest.raises(ValueError, match=error_match):
+                change()
+            for name, value_before in params_before.items():
+                assert getattr(instance, name) is value_before
+            assert instance.model_fields_set == params_set_before
+
         def check_rejected(
             instance: Any, param: str, value: Any, error_match: str
         ) -> None:
@@ -291,15 +312,9 @@ class TestInternals(BaseTest):
             Checks that the value is rejected for the param of the instance,
             and that the params of the instance are the same as before.
             """
-            params_before = {
-                name: getattr(instance, name) for name in type(instance).model_fields
-            }
-            params_set_before = set(instance.model_fields_set)
-            with pytest.raises(ValueError, match=error_match):
-                setattr(instance, param, value)
-            for name, value_before in params_before.items():
-                assert getattr(instance, name) is value_before
-            assert instance.model_fields_set == params_set_before
+            check_rejected_change(
+                instance, partial(setattr, instance, param, value), error_match
+            )
 
         def create_llm(model: str = "openai/gpt-6-luna", **kwargs: Any) -> DocumentLLM:
             """
@@ -446,6 +461,52 @@ class TestInternals(BaseTest):
             aspect,
             "aspects",
             [sub_aspect, Aspect(name="Liability", description="Liability clauses")],
+            "cannot have the same name as parent aspect",
+        )
+        assert [i.name for i in aspect.aspects] == ["Liability caps"]
+
+        # === Added aspects and concepts ===
+        # They are assigned in one list with the aspects or concepts that
+        # the instance has
+        aspect = Aspect(name="Liability", description="Liability clauses")
+        for instance in [
+            Document(raw_text="The liability of the parties is capped."),
+            ExtractionPipeline(),
+            aspect,
+        ]:
+            instance.add_aspects(
+                [Aspect(name="Liability caps", description="Liability caps")]
+            )
+            instance.add_concepts(
+                [StringConcept(name="Cap", description="Amount of the cap")]
+            )
+            repeated_aspects: list[_Aspect] = [
+                Aspect(name="Indemnity", description="Indemnity clauses"),
+                Aspect(name="liability caps", description="Other caps"),
+            ]
+            check_rejected_change(
+                instance,
+                partial(instance.add_aspects, repeated_aspects),
+                "unique names",
+            )
+            repeated_concepts: list[_Concept] = [
+                StringConcept(name="cap", description="Other amount")
+            ]
+            check_rejected_change(
+                instance,
+                partial(instance.add_concepts, repeated_concepts),
+                "unique names",
+            )
+            assert [i.name for i in instance.aspects] == ["Liability caps"]
+            assert [i.name for i in instance.concepts] == ["Cap"]
+        # Rejected after the list is assigned, by the validation that involves
+        # the other params of the aspect
+        sub_aspects_named_as_parent: list[_Aspect] = [
+            Aspect(name="Liability", description="Other liability clauses")
+        ]
+        check_rejected_change(
+            aspect,
+            partial(aspect.add_aspects, sub_aspects_named_as_parent),
             "cannot have the same name as parent aspect",
         )
         assert [i.name for i in aspect.aspects] == ["Liability caps"]

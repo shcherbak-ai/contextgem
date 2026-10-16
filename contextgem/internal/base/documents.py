@@ -37,6 +37,7 @@ from contextgem.internal.registry import _publicize
 from contextgem.internal.typings.types import NonEmptyStr, SaTModelId
 from contextgem.internal.typings.validators import _validate_sequence_is_list
 from contextgem.internal.utils import (
+    _are_paragraphs_in_text_in_order,
     _check_paragraphs_match_in_text,
     _check_paragraphs_ordering_in_text,
     _is_text_content_empty,
@@ -452,15 +453,18 @@ class _Document(_AssignedInstancesProcessor):
             # Assign paragraphs on the document
             paragraphs = [_publicize(_Paragraph, raw_text=i) for i in paragraphs]
             # Check that each paragraph is found in the document text
-            # For duplicate paragraphs, verify each occurrence is matched in the document
-            remaining_text = self.raw_text
-            for paragraph in paragraphs:
-                if paragraph.raw_text not in remaining_text:
-                    raise ValueError(
-                        "Not all segmented paragraphs were matched in document text."
-                    )
-                # Remove the first occurrence to handle duplicates correctly
-                remaining_text = remaining_text.replace(paragraph.raw_text, "", 1)
+            # For duplicate paragraphs, verify each occurrence is matched in the document.
+            # Paragraphs found in the text in their order are matched: the slower
+            # matching below is needed only for the others
+            if not _are_paragraphs_in_text_in_order(paragraphs, self.raw_text):
+                remaining_text = self.raw_text
+                for paragraph in paragraphs:
+                    if paragraph.raw_text not in remaining_text:
+                        raise ValueError(
+                            "Not all segmented paragraphs were matched in document text."
+                        )
+                    # Remove the first occurrence to handle duplicates correctly
+                    remaining_text = remaining_text.replace(paragraph.raw_text, "", 1)
             self.paragraphs = paragraphs
 
         # Only segment sentences during initialization if `pre_segment_sentences` is True
@@ -763,7 +767,16 @@ class _Document(_AssignedInstancesProcessor):
         # extraction engine's internal single-aspect documents).
         self._normalize_top_level_aspect_nesting()
 
-        if self.raw_text and self.paragraphs:
+        # The checks run on each assignment to the document, e.g. when aspects are
+        # added. Paragraphs found in the raw text in their order pass both checks
+        # below, which take longer on a long document (see
+        # `_are_paragraphs_in_text_in_order()`): they are needed only to report
+        # the paragraphs that are not found so.
+        if (
+            self.raw_text
+            and self.paragraphs
+            and not _are_paragraphs_in_text_in_order(self.paragraphs, self.raw_text)
+        ):
             # Check that all paragraphs exist in the document raw text
             unmatched_paragraphs = _check_paragraphs_match_in_text(
                 self.paragraphs, self.raw_text

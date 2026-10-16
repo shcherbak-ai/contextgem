@@ -28,8 +28,11 @@ from contextgem.internal.typings.strings_to_types import _deserialize_type_hint
 from contextgem.internal.typings.types_to_strings import _serialize_type_hint
 from contextgem.internal.utils import (
     _RE_CONTROL_CHARS_ALL,
+    _are_paragraphs_in_text_in_order,
     _are_prompt_template_brackets_balanced,
     _are_prompt_template_xml_tags_balanced,
+    _check_paragraphs_match_in_text,
+    _check_paragraphs_ordering_in_text,
     _chunk_list,
     _clean_control_characters,
     _clean_text_for_llm_prompt,
@@ -650,6 +653,75 @@ def test_split_text_into_paragraphs_roundtrip(
     stripped = [p.strip() for p in paragraphs]
     joined = separator.join(stripped)
     assert _split_text_into_paragraphs(joined) == stripped
+
+
+# ---------------------------------------------------------------------------
+# _are_paragraphs_in_text_in_order
+# ---------------------------------------------------------------------------
+
+# Texts of few characters, so that a paragraph is often found in a text several
+# times, overlapping other paragraphs, or out of order
+_FEW_CHARS_PARAGRAPHS = st.lists(
+    st.text(alphabet="ab", min_size=1, max_size=4), max_size=6
+)
+
+
+def _are_segmented_paragraphs_matched(paragraphs: list[str], text: str) -> bool:
+    """
+    Returns whether the segmented paragraphs are matched in the text of
+    a document as ``_Document._segment_document_text()`` matches them when they
+    are not found in the text in their order: each one in what is left of
+    the text when the paragraphs before it are removed from it.
+    """
+    remaining_text = text
+    for paragraph in paragraphs:
+        if paragraph not in remaining_text:
+            return False
+        remaining_text = remaining_text.replace(paragraph, "", 1)
+    return True
+
+
+@_PROPERTY_SETTINGS
+@given(
+    paragraphs=_FEW_CHARS_PARAGRAPHS,
+    text=st.one_of(
+        st.text(alphabet="ab ", max_size=30),
+        # Texts made of the paragraphs, in their order or not
+        _FEW_CHARS_PARAGRAPHS.map(" ".join),
+    ),
+)
+def test_are_paragraphs_in_text_in_order_passes_the_slower_checks(
+    paragraphs: list[str], text: str
+) -> None:
+    """
+    Paragraphs that are found in the text in their order pass the checks that
+    a document runs only for the paragraphs that are not.
+    """
+    paragraph_objs = [SimpleNamespace(raw_text=p) for p in paragraphs]
+    if _are_paragraphs_in_text_in_order(paragraph_objs, text):  # ty: ignore[invalid-argument-type]
+        assert _check_paragraphs_match_in_text(paragraph_objs, text) == []  # ty: ignore[invalid-argument-type]
+        _check_paragraphs_ordering_in_text(paragraph_objs, text)  # ty: ignore[invalid-argument-type]
+        assert _are_segmented_paragraphs_matched(paragraphs, text)
+
+
+@_PROPERTY_SETTINGS
+@given(
+    paragraphs=_FEW_CHARS_PARAGRAPHS,
+    separators=st.lists(st.text(alphabet="ab \n", max_size=3), min_size=7, max_size=7),
+)
+def test_are_paragraphs_in_text_in_order_finds_joined_paragraphs(
+    paragraphs: list[str], separators: list[str]
+) -> None:
+    """
+    Paragraphs that the text is made of, in their order, are found in it, also
+    when they are found in it elsewhere as well, i.e. the slower checks are not
+    run for them.
+    """
+    text = separators[-1] + "".join(
+        p + separator for p, separator in zip(paragraphs, separators, strict=False)
+    )
+    paragraph_objs = [SimpleNamespace(raw_text=p) for p in paragraphs]
+    assert _are_paragraphs_in_text_in_order(paragraph_objs, text)  # ty: ignore[invalid-argument-type]
 
 
 # ---------------------------------------------------------------------------
