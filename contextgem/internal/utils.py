@@ -15,7 +15,9 @@ import math
 import os
 import random
 import re
+import threading
 import warnings
+import weakref
 from collections import defaultdict
 from collections.abc import Callable, Coroutine, Sequence
 from functools import cache
@@ -68,6 +70,17 @@ _FRAMEWORK_AND_PYDANTIC_DIRS: tuple[str, ...] = tuple(
         os.path.dirname(pydantic.__file__),
     )
 )
+
+# SaT models in use, by their keys (see `_get_sat_model()`): a model is kept
+# here only while something else holds it, as a loaded model holds about
+# a gigabyte of memory
+_SAT_MODELS_IN_USE: weakref.WeakValueDictionary[str, SaT] = (
+    weakref.WeakValueDictionary()
+)
+# Lets one thread at a time look up the SaT models in use
+_SAT_MODELS_LOCK = threading.Lock()
+# Lets one thread at a time load a SaT model, by the keys of the models
+_SAT_MODEL_LOADING_LOCKS: dict[str, threading.Lock] = {}
 
 # HTTP status codes of model API errors that are worth retrying, in addition to
 # server errors (5xx): request timeout, conflict (lock timeout), rate limit.
@@ -1207,6 +1220,67 @@ def _load_sat_model(model_id: SaTModelId = "sat-3l-sm") -> SaT:
             # For standard model IDs or other errors
             logger.error(f"Failed to load SaT model '{model_id}': {e}")
             raise
+
+
+def _get_sat_model(model_id: SaTModelId = "sat-3l-sm") -> SaT:
+    """
+    Returns the SaT model with the given ID or path that is in use, i.e. that
+    something holds, such as a segmentation in another thread or
+    ``keep_sat_model_loaded()``, or loads it if none is.
+
+    The documents segmented at the same time thus share one model, rather than
+    each holding a model of its own, and a model is released when nothing uses
+    it, rather than holding its memory for the rest of the process. Threads that
+    need the same model at the same time load it once: they wait for the one that
+    loads it, while the threads that need other models do not.
+
+    :param model_id: The ID of the SaT model or the path of a folder with one,
+        as for ``_load_sat_model()``. Defaults to "sat-3l-sm".
+    :type model_id: SaTModelId
+    :return: The SaT model.
+    :rtype: SaT
+    """
+    key = _get_sat_model_key(model_id)
+    with _SAT_MODELS_LOCK:
+        model = _SAT_MODELS_IN_USE.get(key)
+        if model is not None:
+            return model
+        loading_lock = _SAT_MODEL_LOADING_LOCKS.setdefault(key, threading.Lock())
+    # The model is loaded under a lock of its own, so that the threads that need
+    # other models, e.g. one that is in use, do not wait for it, which can take
+    # minutes when the model is downloaded
+    with loading_lock:
+        with _SAT_MODELS_LOCK:
+            # Loaded by another thread while this one waited
+            model = _SAT_MODELS_IN_USE.get(key)
+        if model is None:
+            model = _load_sat_model(model_id)
+            with _SAT_MODELS_LOCK:
+                _SAT_MODELS_IN_USE[key] = model
+    return model
+
+
+def _get_sat_model_key(model_id: SaTModelId) -> str:
+    """
+    Returns what tells a SaT model from the others in ``_get_sat_model()``: the ID
+    of a standard model, or the absolute path of a folder with a model, with
+    symbolic links resolved and, on Windows, the case of the letters folded.
+
+    The same folder thus gets the same key in whatever form its path is given,
+    e.g. relative or absolute, with a trailing separator or a symbolic link,
+    while the same relative path gets another key when the current directory has
+    changed, as it is then the path of another folder.
+
+    :param model_id: The ID of the SaT model or the path of a folder with one.
+    :type model_id: SaTModelId
+    :return: The key of the model.
+    :rtype: str
+    """
+    model_id = str(model_id)
+    if model_id in get_args(StandardSaTModelId):
+        # As in `_load_sat_model()`, such an ID is that of a standard model
+        return model_id
+    return os.path.normcase(os.path.realpath(model_id))
 
 
 def _group_instances_by_fields(

@@ -9,15 +9,27 @@ from __future__ import annotations
 
 import ast
 import os
+import re
 import shutil
 import subprocess  # nosec B404 - runs the Python of the tests, no shell
 import sys
 import tempfile
+import threading
+import time
+import weakref
+from pathlib import Path
+from typing import Any
+from unittest.mock import patch
 
 import pytest
 from huggingface_hub import try_to_load_from_cache
 
-from contextgem.internal.utils import _load_sat_model
+from contextgem.internal import utils as utils_module
+from contextgem.internal.utils import (
+    _SAT_MODELS_IN_USE,
+    _get_sat_model,
+    _load_sat_model,
+)
 from contextgem.public import (
     Aspect,
     BooleanConcept,
@@ -26,9 +38,36 @@ from contextgem.public import (
     Paragraph,
     Sentence,
     StringConcept,
+    keep_sat_model_loaded,
 )
 from tests.base import BaseTest
 from tests.utils import get_test_document_text
+
+
+class _StubSaTModel:
+    """
+    Stands in for a SaT model: splits a text into paragraphs at blank lines,
+    and a paragraph into sentences after each full stop.
+    """
+
+    def split(
+        self, text_or_texts: str | list[str], do_paragraph_segmentation: bool = False
+    ) -> list[list[str]]:
+        """
+        Splits a text into paragraphs, each given as its sentences, or each of
+        the texts of paragraphs into sentences.
+
+        :param text_or_texts: The text, or the texts of the paragraphs.
+        :type text_or_texts: str | list[str]
+        :param do_paragraph_segmentation: Whether to split a text into paragraphs.
+        :type do_paragraph_segmentation: bool
+        :return: The sentences of each paragraph.
+        :rtype: list[list[str]]
+        """
+        if do_paragraph_segmentation:
+            # Each paragraph is given as one sentence
+            return [[paragraph] for paragraph in str(text_or_texts).split("\n\n")]
+        return [re.split(r"(?<=\.) ", text) for text in text_or_texts]
 
 
 class TestDocuments(BaseTest):
@@ -43,13 +82,215 @@ class TestDocuments(BaseTest):
     document = BaseTest.document
     extraction_pipeline = BaseTest.extraction_pipeline
 
-    def test_sat_model_no_cache(self):
+    def test_sat_model_shared_while_in_use(self):
         """
-        Tests that the SaT model is not cached.
+        Tests that a SaT model is shared while something holds it, and is released
+        as soon as nothing does, rather than kept for the rest of the process.
         """
-        sat_model_id = "sat-3l-sm"
-        assert _load_sat_model(sat_model_id) != _load_sat_model(sat_model_id)
-        assert id(_load_sat_model(sat_model_id)) != id(_load_sat_model(sat_model_id))
+        model = _get_sat_model("sat-3l-sm")
+        assert _get_sat_model("sat-3l-sm") is model
+        assert _get_sat_model(Path("sat-3l-sm")) is model
+        model_ref = weakref.ref(model)
+        del model
+        # Released without a garbage collection, i.e. as the last reference to it
+        # is dropped: the model is in no reference cycle
+        assert model_ref() is None
+        assert "sat-3l-sm" not in _SAT_MODELS_IN_USE
+
+    def test_sat_model_loaded_once_for_threads(self):
+        """
+        Tests that threads that need a SaT model at the same time load it once,
+        and share it.
+        """
+        n_threads = 8
+        loaded: list[_StubSaTModel] = []
+
+        def load_slowly(model_id: str) -> _StubSaTModel:
+            """
+            Loads a model slowly, so that the threads ask for it while it is loaded.
+            """
+            time.sleep(0.1)
+            loaded.append(_StubSaTModel())
+            return loaded[-1]
+
+        started = threading.Barrier(n_threads)
+        done = threading.Barrier(n_threads)
+        models: list[Any] = [None] * n_threads
+
+        def get_model(position: int) -> None:
+            """
+            Gets the model, and holds it until each thread has got it.
+            """
+            started.wait()
+            models[position] = _get_sat_model("stub-model")
+            done.wait()
+
+        with patch.object(utils_module, "_load_sat_model", new=load_slowly):
+            threads = [
+                threading.Thread(target=get_model, args=(i,)) for i in range(n_threads)
+            ]
+            for thread in threads:
+                thread.start()
+            for thread in threads:
+                thread.join()
+            assert len(loaded) == 1
+            assert all(model is loaded[0] for model in models)
+            # Released when nothing holds it: loaded again when it is needed again
+            models.clear()
+            loaded.clear()
+            assert _get_sat_model("stub-model") is loaded[0]
+
+    def test_sat_model_loading_does_not_block_other_models(self):
+        """
+        Tests that the threads that need other SaT models than the one that is
+        being loaded, e.g. downloaded, do not wait for it.
+        """
+        loading_started = threading.Event()
+        loading_released = threading.Event()
+
+        def load(model_id: str) -> _StubSaTModel:
+            """
+            Loads a model, the slow one only when the test releases it.
+            """
+            if model_id == "slow-model":
+                loading_started.set()
+                loading_released.wait(timeout=30)
+            return _StubSaTModel()
+
+        slow_models: list[Any] = []
+        other_models: list[Any] = []
+
+        def get_other_models() -> None:
+            """
+            Gets the model in use, and another model that is loaded.
+            """
+            other_models.append(_get_sat_model("model-in-use"))
+            other_models.append(_get_sat_model("other-model"))
+
+        with patch.object(utils_module, "_load_sat_model", new=load):
+            model_in_use = _get_sat_model("model-in-use")
+            slow_loading = threading.Thread(
+                target=lambda: slow_models.append(_get_sat_model("slow-model"))
+            )
+            slow_loading.start()
+            try:
+                assert loading_started.wait(timeout=30)
+                other_loading = threading.Thread(target=get_other_models)
+                other_loading.start()
+                other_loading.join(timeout=10)
+                assert not other_loading.is_alive(), "waited for the slow model"
+            finally:
+                loading_released.set()
+                slow_loading.join()
+            assert other_models[0] is model_in_use
+            assert len(other_models) == 2
+            assert len(slow_models) == 1
+
+    def test_sat_model_shared_by_paths_of_same_folder(self, tmp_path, monkeypatch):
+        """
+        Tests that the paths of a folder with a SaT model share one model in
+        whatever form they are given, and that the same relative path is that of
+        another model once the current directory has changed.
+        """
+        # The models loaded, recorded without holding them
+        loaded: list[weakref.ref[_StubSaTModel]] = []
+
+        def load(model_id: str) -> _StubSaTModel:
+            """
+            Loads a model.
+            """
+            model = _StubSaTModel()
+            loaded.append(weakref.ref(model))
+            return model
+
+        (tmp_path / "models" / "sat").mkdir(parents=True)
+        (tmp_path / "other" / "models" / "sat").mkdir(parents=True)
+        monkeypatch.chdir(tmp_path)
+        absolute_path = str(tmp_path / "models" / "sat")
+        paths = [
+            "models/sat",
+            "models/sat/",
+            os.path.join(".", "models", "..", "models", "sat"),
+            absolute_path,
+            absolute_path + os.sep,
+        ]
+        if sys.platform == "win32":
+            # Windows paths do not tell the case of the letters apart
+            paths.append(absolute_path.upper())
+        text = "First sentence. Second sentence."
+        with (
+            patch.object(utils_module, "_load_sat_model", new=load),
+            keep_sat_model_loaded(Path("models") / "sat"),
+        ):
+            for sat_model_id in paths:
+                Document(
+                    raw_text=text,
+                    sat_model_id=sat_model_id,
+                    pre_segment_sentences=True,
+                )
+            assert len(loaded) == 1
+            # The same relative path in another directory: another folder
+            monkeypatch.chdir(tmp_path / "other")
+            Document(
+                raw_text=text,
+                sat_model_id="models/sat",
+                pre_segment_sentences=True,
+            )
+            assert len(loaded) == 2
+
+    def test_keep_sat_model_loaded(self):
+        """
+        Tests that the documents segmented in the block of `keep_sat_model_loaded()`
+        use the model loaded when the block is entered, and that the model is
+        released when the block is left.
+        """
+        # The models loaded, recorded without holding them
+        loaded: list[weakref.ref[_StubSaTModel]] = []
+
+        def load(model_id: str) -> _StubSaTModel:
+            """
+            Loads a model.
+            """
+            model = _StubSaTModel()
+            loaded.append(weakref.ref(model))
+            return model
+
+        text = "First sentence. Second sentence.\n\nThird sentence."
+        with patch.object(utils_module, "_load_sat_model", new=load):
+            with keep_sat_model_loaded():
+                assert len(loaded) == 1  # loaded when the block is entered
+                for _ in range(3):
+                    document = Document(raw_text=text, pre_segment_sentences=True)
+                    assert [len(p.sentences) for p in document.paragraphs] == [2, 1]
+                # A paragraph segmentation uses the same model
+                Document(raw_text=text, paragraph_segmentation_mode="sat")
+                # A block for the same model in the block shares the model
+                with keep_sat_model_loaded("sat-3l-sm"):
+                    pass
+                assert len(loaded) == 1
+                # Another model is loaded for the documents that need it, and
+                # released when they no longer do
+                Document(
+                    raw_text=text,
+                    sat_model_id="sat-12l-sm",
+                    pre_segment_sentences=True,
+                )
+                assert len(loaded) == 2
+                assert loaded[1]() is None
+                assert loaded[0]() is not None
+            assert len(loaded) == 2
+            # Released when the block is left: each document loads it again
+            assert loaded[0]() is None
+            Document(raw_text=text, pre_segment_sentences=True)
+            Document(raw_text=text, pre_segment_sentences=True)
+            assert len(loaded) == 4
+        # The model is loaded when the block is entered: an invalid model is
+        # reported there
+        with (
+            pytest.raises(ValueError, match="does not exist or is not a directory"),
+            keep_sat_model_loaded("/nonexistent/path/to/model"),
+        ):
+            pass
 
     def test_local_sat_model(self):
         """

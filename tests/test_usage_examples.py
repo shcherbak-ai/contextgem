@@ -200,5 +200,6 @@ class TestUsageExamples(BaseTest):
         from dev.usage_examples.docstrings.sentences import def_sentence  # noqa: F401
         from dev.usage_examples.docstrings.utils import (
             json_object_cls_struct,  # noqa: F401
+            keep_sat_model_loaded,  # noqa: F401
             reload_logger_settings,  # noqa: F401
         )

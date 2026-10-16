@@ -37,6 +37,7 @@ from contextgem.public import (
     StringExample,
     create_image,
     image_to_base64,
+    keep_sat_model_loaded,
     register_tool,
     reload_logger_settings,
 )
@@ -79,6 +80,7 @@ __all__ = (  # noqa: RUF022 - grouped by kind
     "create_image",
     "image_to_base64",
     "reload_logger_settings",
+    "keep_sat_model_loaded",
     "JsonObjectClassStruct",
     # Decorators
     "register_tool",

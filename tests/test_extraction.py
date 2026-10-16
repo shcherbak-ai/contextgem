@@ -4019,7 +4019,7 @@ class TestExtraction(BaseTest):
             patch.object(litellm, "acompletion", new=acompletion_stub),
             patch.object(
                 documents_module,
-                "_load_sat_model",
+                "_get_sat_model",
                 new=lambda model_id: SentenceSplitter(),
             ),
         ):
@@ -4922,7 +4922,7 @@ class TestExtraction(BaseTest):
             patch.object(litellm, "adecisions", new=adecisions_stub),
             patch.object(
                 documents_module,
-                "_load_sat_model",
+                "_get_sat_model",
                 new=lambda model_id: SentenceSplitter(),
             ),
         ):
@@ -5383,7 +5383,7 @@ class TestExtraction(BaseTest):
             patch.object(litellm, "acompletion", new=acompletion_stub),
             patch.object(
                 documents_module,
-                "_load_sat_model",
+                "_get_sat_model",
                 new=lambda model_id: SentenceSplitter(),
             ),
         ):

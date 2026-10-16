@@ -9,6 +9,8 @@ from __future__ import annotations
 
 import base64
 import io
+from collections.abc import Generator
+from contextlib import contextmanager
 from pathlib import Path
 from typing import TYPE_CHECKING, BinaryIO
 
@@ -16,6 +18,8 @@ from PIL import Image as PILImage
 
 from contextgem.internal.base.utils import _JsonObjectClassStruct
 from contextgem.internal.loggers import _configure_logger_from_env
+from contextgem.internal.typings.types import SaTModelId
+from contextgem.internal.utils import _get_sat_model
 
 
 if TYPE_CHECKING:
@@ -227,6 +231,46 @@ def reload_logger_settings():
             :caption: Reload logger settings
     """
     _configure_logger_from_env()
+
+
+@contextmanager
+def keep_sat_model_loaded(sat_model_id: SaTModelId = "sat-3l-sm") -> Generator[None]:
+    """
+    Keeps a SaT model loaded while the block of a ``with`` statement runs, so that
+    the documents segmented in the block use the same model.
+
+    A SaT model splits the text of a document into sentences, e.g. when an aspect
+    or a concept is extracted with references to sentences, and into paragraphs
+    with ``paragraph_segmentation_mode="sat"``. The model is loaded when
+    a document needs it, is shared by the documents that are segmented at
+    the same time, e.g. in threads, and is released when no document uses it,
+    as a loaded model holds a large amount of memory: about a gigabyte for
+    the default model. Documents processed one after another thus load the model
+    again each, which takes about a second for the default model. In the block,
+    they use the model loaded when the block is entered, which is released when
+    the block is left, unless something else still uses it.
+
+    :param sat_model_id: The ``sat_model_id`` of the documents: the ID of a SaT
+        model, or the path of a folder with a SaT model, which can be given in
+        another form than in the documents, e.g. absolute rather than relative.
+        Defaults to "sat-3l-sm", the default of documents.
+    :type sat_model_id: SaTModelId
+    :return: Context manager that loads the model when the block is entered.
+    :rtype: Generator[None]
+    :raises ValueError: If the path of a folder that does not exist is given.
+    :raises RuntimeError: If the folder does not contain a valid SaT model.
+
+    Example:
+        .. literalinclude:: ../../../dev/usage_examples/docstrings/utils/keep_sat_model_loaded.py
+            :language: python
+            :caption: Keep a SaT model loaded
+    """
+    model = _get_sat_model(sat_model_id)
+    try:
+        yield
+    finally:
+        # The model is released here if nothing else uses it
+        del model
 
 
 class JsonObjectClassStruct(_JsonObjectClassStruct):

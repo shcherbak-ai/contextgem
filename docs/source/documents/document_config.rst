@@ -1,7 +1,7 @@
 :og:description: ContextGem: Creating Documents
 
 .. meta::
-   :description: How to create a Document from text, paragraphs or images, add aspects and concepts to it, give paragraphs additional context, locate paragraphs and sentences in it, and use SaT models without network access.
+   :description: How to create a Document from text, paragraphs or images, add aspects and concepts to it, give paragraphs additional context, locate paragraphs and sentences in it, use SaT models without network access, and keep a SaT model loaded for documents processed one after another.
 
 Creating Documents
 ===================
@@ -178,3 +178,17 @@ A model given by its ID, e.g. the default ``"sat-3l-sm"``, is downloaded from Hu
      document = Document(raw_text=text, sat_model_id="models/sat-3l-sm")
 
   A model in such a folder is loaded without network access, and without the cache. If the folder has no ``tokenizer.json``, the tokenizer is downloaded from Hugging Face, or read from the cache, as for a model given by its ID.
+
+
+.. _sat-models-memory:
+
+♻️ Keeping a SaT Model Loaded
+-----------------------------
+
+A SaT model is loaded when a document needs it, and is released when no document uses it, as a loaded model holds a large amount of memory: about a gigabyte for the default model. Documents segmented at the same time, e.g. in threads, share one model. Documents processed one after another load the model again each, which takes about a second for the default model.
+
+To process documents one after another with one load of the model, e.g. a batch of documents whose aspects or concepts are extracted with references to sentences, process them in the block of :func:`~contextgem.public.utils.keep_sat_model_loaded`. The model is loaded when the block is entered, and is released when the block is left. Pass the ``sat_model_id`` of the documents if it is not the default one. The path of a folder with a model refers to the same model in any form, e.g. relative or absolute. The time saved is that of loading the model: for a long document, segmenting the text takes much longer.
+
+.. literalinclude:: ../../../dev/usage_examples/docstrings/utils/keep_sat_model_loaded.py
+   :language: python
+   :caption: Keep a SaT model loaded

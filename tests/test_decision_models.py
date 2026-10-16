@@ -9132,7 +9132,7 @@ class TestDecisionModels(BaseTest):
             patch.object(litellm, "adecisions", new=decisions_stub),
             patch.object(
                 documents_module,
-                "_load_sat_model",
+                "_get_sat_model",
                 new=lambda model_id: SentenceSplitter(),
             ),
         ):

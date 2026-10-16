@@ -40,8 +40,8 @@ from contextgem.internal.utils import (
     _are_paragraphs_in_text_in_order,
     _check_paragraphs_match_in_text,
     _check_paragraphs_ordering_in_text,
+    _get_sat_model,
     _is_text_content_empty,
-    _load_sat_model,
     _split_text_into_paragraphs,
 )
 
@@ -434,7 +434,7 @@ class _Document(_AssignedInstancesProcessor):
                 paragraphs = _split_text_into_paragraphs(self.raw_text)
             elif self.paragraph_segmentation_mode == "sat":
                 try:
-                    paragraphs = _load_sat_model(self.sat_model_id).split(
+                    paragraphs = _get_sat_model(self.sat_model_id).split(
                         self.raw_text,
                         do_paragraph_segmentation=True,
                     )
@@ -493,7 +493,7 @@ class _Document(_AssignedInstancesProcessor):
                 "Some paragraphs already have sentences. These will be used `as is`."
             )
         try:
-            split_sents_for_paras = _load_sat_model(self.sat_model_id).split(
+            split_sents_for_paras = _get_sat_model(self.sat_model_id).split(
                 [p.raw_text for p in self.paragraphs],
             )
         except Exception as e:
