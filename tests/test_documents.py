@@ -336,6 +336,14 @@ class TestDocuments(BaseTest):
                     sat_model_id=temp_dir,
                 )
 
+    @pytest.mark.skipif(
+        sys.platform == "win32" and sys.version_info < (3, 12),
+        reason=(
+            "On Windows, Python 3.11 launches `cmd /c ver` for `platform.system()`, "
+            "which aiohttp calls on import, and the network guard that the new "
+            "Python process inherits refuses to launch it"
+        ),
+    )
     def test_local_sat_model_without_network_access(self, tmp_path):
         """
         Tests that a SaT model in a local directory that also has the tokenizer
