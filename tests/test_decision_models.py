@@ -9069,16 +9069,19 @@ class TestDecisionModels(BaseTest):
             the model that segments the sentences.
             """
 
-            def split(self, texts: list[str]) -> list[list[str]]:
+            def split(self, texts: list[str], **kwargs: Any) -> list[list[str]]:
                 """
                 Splits each of the texts into sentences.
 
                 :param texts: The texts of the paragraphs.
                 :type texts: list[str]
+                :param kwargs: The options of the segmentation, e.g. the batch
+                    size, which the stub does not use.
+                :type kwargs: Any
                 :return: The sentences of each paragraph.
                 :rtype: list[list[str]]
                 """
-                segmented_texts.append(texts)
+                segmented_texts.append(sorted(texts))
                 return [re.split(r"(?<=\.) ", text) for text in texts]
 
         paragraph_texts = [
@@ -9116,7 +9119,7 @@ class TestDecisionModels(BaseTest):
             :rtype: OpenAIDecisionResponse
             """
             # The sentences are segmented before the first request is sent
-            assert segmented_texts == [paragraph_texts]
+            assert segmented_texts == [sorted(paragraph_texts)]
             text = request["input"].split("\n\n")[0]
             belongs = text in [
                 f"Paragraph: {paragraph_texts[1]}",
@@ -9137,7 +9140,7 @@ class TestDecisionModels(BaseTest):
             ),
         ):
             decision_model.extract_aspects_from_document(document)
-        assert segmented_texts == [paragraph_texts]
+        assert segmented_texts == [sorted(paragraph_texts)]
         paragraph = document.paragraphs[1]
         assert [
             (sentence.raw_text, sentence.additional_context, sentence.custom_data)

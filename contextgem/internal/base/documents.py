@@ -42,6 +42,7 @@ from contextgem.internal.utils import (
     _check_paragraphs_ordering_in_text,
     _get_sat_model,
     _is_text_content_empty,
+    _split_into_sentences,
     _split_text_into_paragraphs,
 )
 
@@ -493,7 +494,8 @@ class _Document(_AssignedInstancesProcessor):
                 "Some paragraphs already have sentences. These will be used `as is`."
             )
         try:
-            split_sents_for_paras = _get_sat_model(self.sat_model_id).split(
+            split_sents_for_paras = _split_into_sentences(
+                _get_sat_model(self.sat_model_id),
                 [p.raw_text for p in self.paragraphs],
             )
         except Exception as e:

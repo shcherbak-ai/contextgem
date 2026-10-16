@@ -26,9 +26,11 @@ from huggingface_hub import try_to_load_from_cache
 
 from contextgem.internal import utils as utils_module
 from contextgem.internal.utils import (
+    _SAT_BATCH_SIZE,
     _SAT_MODELS_IN_USE,
     _get_sat_model,
     _load_sat_model,
+    _split_into_sentences,
 )
 from contextgem.public import (
     Aspect,
@@ -51,7 +53,10 @@ class _StubSaTModel:
     """
 
     def split(
-        self, text_or_texts: str | list[str], do_paragraph_segmentation: bool = False
+        self,
+        text_or_texts: str | list[str],
+        do_paragraph_segmentation: bool = False,
+        **kwargs: Any,
     ) -> list[list[str]]:
         """
         Splits a text into paragraphs, each given as its sentences, or each of
@@ -61,6 +66,9 @@ class _StubSaTModel:
         :type text_or_texts: str | list[str]
         :param do_paragraph_segmentation: Whether to split a text into paragraphs.
         :type do_paragraph_segmentation: bool
+        :param kwargs: The other options of the segmentation, e.g. the batch
+            size, which the stub does not use.
+        :type kwargs: Any
         :return: The sentences of each paragraph.
         :rtype: list[list[str]]
         """
@@ -291,6 +299,63 @@ class TestDocuments(BaseTest):
             keep_sat_model_loaded("/nonexistent/path/to/model"),
         ):
             pass
+
+    def test_split_into_sentences_in_batches_by_length(self):
+        """
+        Tests that the texts are split into sentences sorted by length, in batches
+        of their own, and that the sentences are returned in the order of the texts.
+        """
+        calls: list[tuple[list[str], dict[str, Any]]] = []
+
+        class RecordingModel:
+            """
+            Stands in for a SaT model: records each call, and splits a text into
+            its words, so that each text gets sentences of its own.
+            """
+
+            def split(self, texts: list[str], **kwargs: Any) -> list[list[str]]:
+                """
+                Splits each of the texts.
+
+                :param texts: The texts.
+                :type texts: list[str]
+                :param kwargs: The options of the segmentation.
+                :type kwargs: Any
+                :return: The words of each text.
+                :rtype: list[list[str]]
+                """
+                calls.append((texts, kwargs))
+                return [text.split() for text in texts]
+
+        texts = ["a b c d", "a", "a b c d e f", "a b", "a b c"]
+        model = RecordingModel()
+        assert _split_into_sentences(model, texts) == [t.split() for t in texts]  # ty: ignore[invalid-argument-type]
+        assert calls == [
+            (
+                sorted(texts, key=len),
+                {
+                    "batch_size": _SAT_BATCH_SIZE,
+                    "outer_batch_size": _SAT_BATCH_SIZE,
+                },
+            )
+        ]
+        assert _split_into_sentences(model, []) == []  # ty: ignore[invalid-argument-type]
+
+    def test_split_into_sentences_as_in_text_order(self):
+        """
+        Tests that a SaT model splits the texts into the same sentences when they
+        are passed to it sorted by length, in batches of their own, as when they
+        are passed to it in their order, for short texts and for a text longer than
+        the block size of the model, which is split into chunks.
+        """
+        texts = [
+            p.raw_text for p in Document(raw_text=get_test_document_text()).paragraphs
+        ]
+        # Longer than the 512 tokens of a block of the model
+        texts.insert(len(texts) // 2, " ".join(texts))
+        with keep_sat_model_loaded():
+            model = _get_sat_model("sat-3l-sm")
+            assert _split_into_sentences(model, texts) == list(model.split(texts))
 
     def test_local_sat_model(self):
         """

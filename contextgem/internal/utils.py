@@ -81,6 +81,11 @@ _SAT_MODELS_IN_USE: weakref.WeakValueDictionary[str, SaT] = (
 _SAT_MODELS_LOCK = threading.Lock()
 # Lets one thread at a time load a SaT model, by the keys of the models
 _SAT_MODEL_LOADING_LOCKS: dict[str, threading.Lock] = {}
+# Number of texts that a SaT model splits into sentences in one batch (see
+# `_split_into_sentences()`): in batches of 16 rather than of the 32 of
+# wtpsplit-lite, the paragraphs of the long documents measured took about a tenth
+# less time, with the same sentences
+_SAT_BATCH_SIZE = 16
 
 # HTTP status codes of model API errors that are worth retrying, in addition to
 # server errors (5xx): request timeout, conflict (lock timeout), rate limit.
@@ -1281,6 +1286,43 @@ def _get_sat_model_key(model_id: SaTModelId) -> str:
         # As in `_load_sat_model()`, such an ID is that of a standard model
         return model_id
     return os.path.normcase(os.path.realpath(model_id))
+
+
+def _split_into_sentences(model: SaT, texts: list[str]) -> list[list[str]]:
+    """
+    Splits each of the texts, e.g. those of the paragraphs of a document, into
+    sentences with a SaT model.
+
+    The model pads each text of a batch to the longest text of the batch, up to
+    its block size of 512 tokens, and runs on the padding as well. The texts are
+    therefore passed to it sorted by length, in batches of their own
+    (``_SAT_BATCH_SIZE``), so that the texts of a batch are of about the same
+    length. Passed in their order, the texts were padded to the longest text of
+    each 1,000, which for the paragraphs of a long document, most of them short,
+    took about ten times as long. The sentences are the same: each text is split
+    into the same chunks of the input of the model either way, and the padding
+    is masked.
+
+    :param model: The SaT model.
+    :type model: SaT
+    :param texts: The texts.
+    :type texts: list[str]
+    :return: The sentences of each text, in the order of the texts.
+    :rtype: list[list[str]]
+    """
+    order = sorted(range(len(texts)), key=lambda position: len(texts[position]))
+    sentences_of_texts: list[list[str]] = [[] for _ in texts]
+    for position, sentences in zip(
+        order,
+        model.split(
+            [texts[position] for position in order],
+            batch_size=_SAT_BATCH_SIZE,
+            outer_batch_size=_SAT_BATCH_SIZE,
+        ),
+        strict=True,
+    ):
+        sentences_of_texts[position] = sentences
+    return sentences_of_texts
 
 
 def _group_instances_by_fields(

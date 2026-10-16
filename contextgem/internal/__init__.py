@@ -116,6 +116,7 @@ from contextgem.internal.utils import (
     _run_async_calls,
     _run_sync,
     _setup_jinja2_template,
+    _split_into_sentences,
     _split_text_into_paragraphs,
     _validate_parsed_llm_output,
 )
@@ -204,6 +205,7 @@ __all__ = (  # noqa: RUF022 - grouped by kind
     "_get_template",
     "_contains_linebreaks",
     "_split_text_into_paragraphs",
+    "_split_into_sentences",
     "_chunk_list",
     "_async_multi_executor",
     "_run_async_calls",
