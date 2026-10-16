@@ -6,7 +6,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 - **Refactor**: Code reorganization that doesn't change functionality but improves structure or maintainability
 
-## [1.0.0] - 2026-10-06
+## [1.0.0] - 2026-10-16
 
 ContextGem 1.0 adds **decision models** next to LLMs. A decision model answers typed questions about a text (yes/no, pick one option, rate on a scale) with the probability of each possible answer, and generates no text. It extracts aspects, and Boolean, label and rating concepts, on its own, in a model group together with LLMs, or in a fallback chain, so that each aspect and concept can go to the model that suits it. The names in the API that are not specific to LLMs now refer to models in general, which is one of the breaking changes of this release: see the [migration guide](https://contextgem.shcherbak.ai/migration_v1/) before you upgrade.
 
