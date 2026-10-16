@@ -1,6 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 832 316" width="832" height="316" role="img" aria-labelledby="title desc" font-family="ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Consolas, 'Liberation Mono', 'DejaVu Sans Mono', monospace" font-size="13">
   <title id="title">ContextGem in an agentic workflow - at ingestion, in a tool and at a decision point</title>
-  <desc id="desc">A map of an agentic workflow with the three places where ContextGem runs. At ingestion, a new document goes to ContextGem, which extracts its metadata into the search index or database; the agent finds documents there by their metadata. In a tool, the agent, which gets a task or a question, calls ContextGem, which returns values with their sources. At a decision point, the agent's workflow asks ContextGem a closed question: a clear answer is acted on, an unclear one goes to a person.</desc>
+  <desc id="desc">A map of an agentic workflow with the three places where ContextGem runs. At ingestion, a new document goes to ContextGem, which extracts its metadata into the search index or database; the agent finds documents there by their metadata. In a tool, the agent, which gets a task or a question, calls ContextGem, which returns values with their sources. At a decision point, the agent's workflow asks ContextGem a closed question: a clear answer is acted on, an unclear one is escalated.</desc>
 
   <!-- The run, played once: a new document goes through ingestion into the store, the agent gets a task, calls the tool and gets the result, and the workflow decides its next step. The drawing as it stands is where the run ends: each route fades in once its trace has run along it, the traces show only while they play, and without motion it is all there -->
   <style>
@@ -84,7 +84,7 @@
   </g>
   <g font-size="11">
     <text class="in" style="animation-delay: 4.3s" x="640" y="272.5" fill="#9ca3af">clear: act on it</text>
-    <text class="in" style="animation-delay: 4.45s" x="640" y="296.5" fill="#9ca3af">unclear: ask a person</text>
+    <text class="in" style="animation-delay: 4.45s" x="640" y="296.5" fill="#9ca3af">unclear: escalate</text>
   </g>
 
   <!-- What the gem stands for -->

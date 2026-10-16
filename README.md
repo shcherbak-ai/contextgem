@@ -265,14 +265,14 @@ An agent plans and works across documents and steps. ContextGem reads one docume
 
 <!-- markdownlint-disable MD033 -->
 <p align="center">
-  <img src="docs/source/_static/contextgem_agentic_workflows.svg" alt="A map of an agentic workflow with the three places where ContextGem runs. At ingestion, a new document goes to ContextGem, which extracts its metadata into a search index or database, where the agent finds documents by their metadata. In a tool, the agent, which gets a task or a question, calls ContextGem, which returns values with their sources. At a decision point, the workflow asks ContextGem a closed question: a clear answer is acted on, an unclear one goes to a person." width="832"><br>
+  <img src="docs/source/_static/contextgem_agentic_workflows.svg" alt="A map of an agentic workflow with the three places where ContextGem runs. At ingestion, a new document goes to ContextGem, which extracts its metadata into a search index or database, where the agent finds documents by their metadata. In a tool, the agent, which gets a task or a question, calls ContextGem, which returns values with their sources. At a decision point, the workflow asks ContextGem a closed question: a clear answer is acted on, an unclear one is escalated." width="832"><br>
   <sup>Where ContextGem runs in an agentic workflow.</sup>
 </p>
 <!-- markdownlint-enable MD033 -->
 
 - **At ingestion**: extract the metadata of each new document once, so that agents find documents by their type, parties or dates.
 - **In a tool**: an agent calls an extraction and gets the values with the sentences they came from, without the document in its context. The tool is a Python function, for ContextGem's own chat, an agent framework or an MCP server.
-- **At a decision point**: a decision model answers a closed question with probabilities, so that the workflow acts on a clear answer and leaves an unclear one to a person. Before the turn of an agent with many tools, it can also pick the groups of tools that the request needs.
+- **At a decision point**: a decision model answers a closed question with the probability of each answer, so that the workflow branches on a value that you defined and knows how sure the model is of it. Before the turn of an agent with many tools, it can also pick the groups of tools that the request needs.
 
 See [Agentic workflows](https://contextgem.shcherbak.ai/agentic_workflows/) in the documentation for an example of each.
 

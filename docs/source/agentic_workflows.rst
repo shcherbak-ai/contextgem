@@ -10,7 +10,7 @@ An agent plans, calls tools and works across documents and steps. ContextGem rea
 
 .. figure:: _static/contextgem_agentic_workflows.svg
    :width: 100%
-   :alt: A map of an agentic workflow with the three places where ContextGem runs: at ingestion, where a new document goes to ContextGem, which extracts its metadata into a search index or database, where the agent finds documents by their metadata; in a tool, which the agent calls and which returns values with their sources; and at a decision point, where a clear answer is acted on and an unclear one goes to a person.
+   :alt: A map of an agentic workflow with the three places where ContextGem runs: at ingestion, where a new document goes to ContextGem, which extracts its metadata into a search index or database, where the agent finds documents by their metadata; in a tool, which the agent calls and which returns values with their sources; and at a decision point, where a clear answer is acted on and an unclear one is escalated.
    :align: center
    :class: dark-light
 
@@ -120,7 +120,7 @@ Where a workflow branches, e.g. before an agent takes a step that is hard to und
 
 **Key points:**
 
-* **Act on clear answers, and leave the rest to a person.** Two bounds of your choice set apart the answers that the workflow acts on, and a person decides in between. A probability is the estimate of the model: check the bounds on a sample of your documents before you rely on them (see :ref:`decision-models-trust-label`)
+* **Act on clear answers, and escalate the rest.** Two bounds of your choice set apart the answers that the workflow acts on, and an answer in between goes where you send it, e.g. to a person, as here, to an LLM that reasons the question through, or to the branch that is safe to take. A probability is the estimate of the model: check the bounds on a sample of your documents before you rely on them (see :ref:`decision-models-trust-label`)
 * **Route by a label.** A :class:`~contextgem.public.concepts.LabelConcept` with ``classification_type="multi_class"`` picks one of your labels, e.g. the workflow or the agent that takes a document, with the probability of each label
 * **Check the output of an agent.** The same questions check a document that an agent wrote, e.g. that a draft states the notice period, before it is sent. A failed check goes back to the agent as feedback
 * **Only a decision model gives probabilities.** An item extracted by an LLM, including an LLM that is a fallback of the decision model, has ``probabilities=None``: send it to a person, or decide on its value
