@@ -14,6 +14,12 @@ Before installing ContextGem, ensure you have:
 * Python 3.11-3.14
 * `uv <https://github.com/astral-sh/uv>`_ or pip
 
+.. note::
+   ContextGem depends on `ONNX Runtime <https://pypi.org/project/onnxruntime/>`_, which runs the SaT models that split text into sentences. Where ONNX Runtime publishes no packages on PyPI, ContextGem does not install:
+
+   * **Alpine Linux**, or another Linux system built on the musl C library, e.g. in the ``python:3.14-alpine`` container image. In a container, use an image based on Debian, e.g. ``python:3.14-slim``.
+   * **Python 3.14 on an Intel Mac**: ONNX Runtime publishes no packages for Intel Macs from version 1.24, the first with packages for Python 3.14. On an Intel Mac, use Python 3.11-3.13.
+
 📦 Installation Methods
 ------------------------
 
