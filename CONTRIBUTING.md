@@ -84,6 +84,7 @@ uv run fab readme          # Regenerate README.md from template
 uv run fab readme-preview  # Serve README.md as GitHub renders it
 uv run fab social-preview  # Render social/github-social-preview.png from its SVG
 uv run fab costs           # Report what the recorded requests of the tests and evals cost
+uv run fab install-check   # Check that the dependencies install on each platform and Python
 uv run fab install-hooks   # Install pre-commit hooks
 ```
 
@@ -369,6 +370,10 @@ When you change how the output of a model is read, how the calls are retried or 
 The tests check what the extraction does; **`dev/evals/`** measures how well it does it, and at what cost. It extracts evaluation cases, i.e. complex documents with reference answers (two contracts and the technical documentation of a microcontroller), with real models, and scores the aspects, the concepts and their references against the answers. A decision model used as a judge (`typesafe/jev-latest` by default) scores what cannot be compared exactly: narrative answers, justifications and text fields. The judge answers one yes/no question at a time with a probability, and is checked first on answers whose verdict is known. Recorded baselines give the scores and the costs of the models at one state of the library, and `uv run fab costs` adds up the costs that the results record. The harness is not a part of the package, and the tests do not run it.
 
 A change that can affect the quality of the extraction, e.g. to a prompt template, to how the output of a model is read, or to a default, is measured there: the version with the change and the version without it are run at the same time and compared. The harness sends live requests, which are paid for and need the API keys of the providers, so the maintainer runs it; say in your pull request if you think a change needs it. Its rules, commands and baselines are in [dev/evals/AGENTS.md](dev/evals/AGENTS.md).
+
+### 📦 Install Check of a Release
+
+The tests run on the locked dependencies, on the platform they run on; a new install gets the newest dependencies that the requirements admit, on its own platform. `uv run fab install-check` resolves the dependencies of `pyproject.toml` for Linux (glibc and musl), Windows and macOS, on x86_64 and arm64, and for each supported Python, from wheels only, as an install without a compiler gets them. uv answers for any platform from the wheels that PyPI lists, so the check takes seconds, needs no machine of the platform, and sends no request. Run it when you change the version or the range of a dependency; the maintainer runs it before each release. `--version latest` (or `--version X.Y.Z`) checks a release as PyPI serves it. The installs known to fail are listed with their reasons in [dev/check_install.py](dev/check_install.py), and the check fails on any difference from the list: a new failure, or an install that no longer fails. Then update the list, and the documentation that names the gap, e.g. the note on Alpine in `docs/source/installation.rst`.
 
 ---
 

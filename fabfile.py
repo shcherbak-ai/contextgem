@@ -382,6 +382,32 @@ def costs(c: Context, changed: bool = False) -> None:
     c.run("uv run python -m dev.evals.costs")
 
 
+@task(name="install-check")
+def install_check(c: Context, version: str = "") -> None:
+    """
+    Check that ContextGem installs on each platform and supported Python.
+
+    Resolves the dependencies of pyproject.toml, or a release from PyPI, for Linux
+    (glibc and musl), Windows and macOS, on x86_64 and arm64, from wheels only, as
+    an install without a compiler gets them (dev/check_install.py). Takes seconds,
+    and sends no LLM request. Fails when an install goes otherwise than the known
+    failures listed there. Run it before a release and after a dependency change.
+
+    Args:
+        version: A release on PyPI, or "latest" (default: pyproject.toml)
+
+    Example:
+        uv run fab install-check
+        uv run fab install-check --version latest
+    """
+    command = "uv run python dev/check_install.py"
+    if version:
+        command += f" --version {version}"
+    result = c.run(command, warn=True)
+    if result is None or result.failed:
+        raise Exit(code=result.exited if result else 1)
+
+
 @task
 def readme(c: Context) -> None:
     """Regenerate README.md from template."""
