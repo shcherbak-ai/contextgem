@@ -215,10 +215,13 @@ log_cli_level = "WARNING"
 [tool.commitizen]
 name = "cz_conventional_commits"
 version = "1.1.0"
+# Commitizen replaces the version on each line that the pattern after the colon
+# finds: anchored, as `cff-version: 1.2.0` (the format of CITATION.cff) and
+# comments that name versions must keep theirs
 version_files = [
     "contextgem/__init__.py:__version__",
-    "pyproject.toml:version",
-    "CITATION.cff:version",
+    "pyproject.toml:^version",
+    "CITATION.cff:^version:",
 ]
 tag_format = "v$version"
 annotated_tag = true

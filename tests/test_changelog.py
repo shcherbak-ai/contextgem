@@ -76,3 +76,6 @@ class TestChangelog:
         # heading and here. Run as the last of the `pre_bump_hooks`, this test
         # stops a bump that forgot either.
         assert date == released[version]
+        # The version of the CFF format, which `cz bump` must leave alone: an
+        # unanchored pattern in `version_files` rewrote it in a bump from 1.2.0
+        assert re.findall(r"^cff-version: (\S+)$", _CITATION, re.MULTILINE) == ["1.2.0"]
