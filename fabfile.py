@@ -18,6 +18,7 @@ import re
 import shutil
 import socket
 import tempfile
+import threading
 import urllib.error
 import urllib.parse
 import urllib.request
@@ -81,10 +82,16 @@ def _port_in_use(port: int) -> bool:
 # repository. Without a token it answers 60 requests an hour.
 _MARKDOWN_API = "https://api.github.com/markdown"
 
-# github-markdown-css gives the page GitHub's look; npm installs it (package.json).
-_MARKDOWN_CSS = "node_modules/github-markdown-css/github-markdown.css"
+# github-markdown-css gives the page GitHub's look, one stylesheet per theme;
+# npm installs it (package.json).
+_MARKDOWN_CSS = "node_modules/github-markdown-css/github-markdown-{scheme}.css"
 
-# What the preview serves besides its page: the stylesheet, and the folders the
+# The preview's two pages, each in one of GitHub's themes whatever the browser
+# is set to, so that both can be open side by side, with GitHub's ground in it.
+# The light one is served on the task's port, the dark one on the next.
+_PREVIEW_SCHEMES = {"light": "#ffffff", "dark": "#0d1117"}
+
+# What the preview serves besides its page: the stylesheets, and the folders the
 # README's images come from. Nothing else in the repository is reachable.
 _PREVIEW_PATHS = (
     "node_modules/github-markdown-css/",
@@ -92,23 +99,21 @@ _PREVIEW_PATHS = (
     "assets/",
 )
 
-# The page around GitHub's HTML. The title names the project, so that an agent
-# can tell this preview from another project's. The column is as wide as the
-# README's on the repository's page on GitHub at 1280 pixels and wider, and
-# below 768, where the sidebar goes under it; in between, GitHub's is narrower.
-# The grounds are GitHub's light and dark ones, and links are underlined, as
-# GitHub has them.
-_PREVIEW_PAGE = f"""<!doctype html>
+# The page around GitHub's HTML. The title names the project and the theme, so
+# that an agent can tell this preview from another project's. The column is as
+# wide as the README's on the repository's page on GitHub at 1280 pixels and
+# wider, and below 768, where the sidebar goes under it; in between, GitHub's is
+# narrower. Links are underlined, as GitHub has them.
+_PREVIEW_PAGE = """<!doctype html>
 <html lang="en">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<meta name="color-scheme" content="light dark">
-<title>README.md · contextgem</title>
-<link rel="stylesheet" href="/{_MARKDOWN_CSS}">
+<meta name="color-scheme" content="{scheme}">
+<title>README.md · contextgem · {scheme}</title>
+<link rel="stylesheet" href="/{stylesheet}">
 <style>
-  body {{ margin: 0; background: #ffffff; }}
-  @media (prefers-color-scheme: dark) {{ body {{ background: #0d1117; }} }}
+  body {{ margin: 0; background: {background}; }}
   .markdown-body {{
     box-sizing: content-box; max-width: 838px; margin: 0 auto; padding: 32px 33px;
   }}
@@ -210,6 +215,11 @@ def _render_markdown(text: str, mode: str) -> str:
 class _ReadmePreview(http.server.SimpleHTTPRequestHandler):
     """Serves README.md as GitHub renders it at ``/``, and the files its page loads."""
 
+    def __init__(self, *args, scheme: str, **kwargs) -> None:
+        # Set before the base class's __init__, which handles the request.
+        self.scheme = scheme
+        super().__init__(*args, **kwargs)
+
     # Windows can map these types to others in its registry, and a browser
     # refuses a stylesheet that is not served as text/css.
     extensions_map = {  # noqa: RUF012 - overrides the attribute of the handler
@@ -241,7 +251,12 @@ class _ReadmePreview(http.server.SimpleHTTPRequestHandler):
         """Send the headers of the page, and return its body."""
         try:
             html = _render_readme(_README.read_text(encoding="utf-8"))
-            status, page = HTTPStatus.OK, _PREVIEW_PAGE.replace("<!-- README -->", html)
+            frame = _PREVIEW_PAGE.format(
+                scheme=self.scheme,
+                stylesheet=_MARKDOWN_CSS.format(scheme=self.scheme),
+                background=_PREVIEW_SCHEMES[self.scheme],
+            )
+            status, page = HTTPStatus.OK, frame.replace("<!-- README -->", html)
         except _RenderError as error:
             print(error)
             status, page = HTTPStatus.BAD_GATEWAY, f"<pre>{escape(str(error))}</pre>"
@@ -421,39 +436,60 @@ def readme_preview(c: Context, port: int = 9120) -> None:
     Serve README.md as GitHub renders it, to look at before it is pushed.
 
     GitHub's Markdown API makes the HTML, so what GitHub removes is removed,
-    and github-markdown-css gives it GitHub's look (``npm ci`` installs it).
-    A reload renders the README again when it has changed, one request to
-    GitHub each, two where it has alerts: 60 an hour are allowed without a
-    token. The preview shows
-    README.md as it is: regenerate it from the template first (``fab readme``).
+    and github-markdown-css gives it GitHub's look (``npm ci`` installs it):
+    light on the port, dark on the next one. A reload renders the README again
+    when it has changed, one request to GitHub for both pages, two where it has
+    alerts: 60 an hour are allowed without a token. The preview shows README.md
+    as it is: regenerate it from the template first (``fab readme``).
 
     Args:
-        port: Port number for the preview server (default: 9120)
+        port: Port of the light page; the dark one is on the next (default: 9120)
 
     Example:
         uv run fab readme-preview
-        uv run fab readme-preview --port 9121
+        uv run fab readme-preview --port 9122
     """
-    if not (_ROOT / _MARKDOWN_CSS).is_file():
+    if not all(
+        (_ROOT / _MARKDOWN_CSS.format(scheme=scheme)).is_file()
+        for scheme in _PREVIEW_SCHEMES
+    ):
         raise Exit(
             "The preview needs github-markdown-css. Install it first: npm ci", code=1
         )
-    if _port_in_use(port):
+    ports = {scheme: port + offset for offset, scheme in enumerate(_PREVIEW_SCHEMES)}
+    if busy := [p for p in ports.values() if _port_in_use(p)]:
+        free = busy[-1] + 1
+        while any(_port_in_use(free + offset) for offset in range(len(ports))):
+            free += 1
         raise Exit(
-            f"Port {port} is in use by another program. Pass a free one: "
-            f"uv run fab readme-preview --port {port + 1}",
+            f"Port {busy[0]} is in use by another program. Pass a free pair: "
+            f"uv run fab readme-preview --port {free}",
             code=1,
         )
-    handler = functools.partial(_ReadmePreview, directory=str(_ROOT))
-    # 127.0.0.1, not localhost: on Windows a request to localhost tries IPv6
-    # first and waits two seconds for the refusal.
-    with http.server.ThreadingHTTPServer(("127.0.0.1", port), handler) as server:
-        print(
-            f"Serving README.md at http://127.0.0.1:{port}/ (Ctrl+C stops it)",
-            flush=True,
-        )
+    with contextlib.ExitStack() as stack:
+        servers = []
+        for scheme, scheme_port in ports.items():
+            handler = functools.partial(
+                _ReadmePreview, scheme=scheme, directory=str(_ROOT)
+            )
+            # 127.0.0.1, not localhost: on Windows a request to localhost tries
+            # IPv6 first and waits two seconds for the refusal.
+            address = ("127.0.0.1", scheme_port)
+            servers.append(
+                stack.enter_context(http.server.ThreadingHTTPServer(address, handler))
+            )
+            print(
+                f"Serving README.md {scheme} at http://127.0.0.1:{scheme_port}/",
+                flush=True,
+            )
+        # The first page is served in this thread, where Ctrl+C reaches it; the
+        # others are stopped before their sockets are closed.
+        for server in servers[1:]:
+            threading.Thread(target=server.serve_forever, daemon=True).start()
+            stack.callback(server.shutdown)
+        print("Ctrl+C stops them", flush=True)
         with contextlib.suppress(KeyboardInterrupt):
-            server.serve_forever()
+            servers[0].serve_forever()
 
 
 @task(name="social-preview")
