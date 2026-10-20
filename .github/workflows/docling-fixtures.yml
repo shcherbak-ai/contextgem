@@ -3,9 +3,10 @@ name: Docling fixtures
 # Converts the fixtures of the tests of the docling extra with full Docling, on
 # the CPU-only PyTorch, and checks that ContextGem makes the same paragraphs from
 # them as from the committed Docling documents (dev/docling_fixtures.py). The
-# tests convert the DOCX, XLSX, PPTX, HTML and Markdown fixtures themselves, with
+# tests convert the fixtures in the formats that need no models themselves, with
 # the torch-free docling-slim of the dev group. A PDF file needs the models of
-# Docling, which only this workflow runs. It runs when the version of Docling can
+# Docling, which only this workflow runs, and an email or OpenDocument file
+# packages that the dev group does not have. It runs when the version of Docling can
 # change (uv.lock) or the converter does, and weekly with the latest Docling, to
 # find its changes before an upgrade.
 

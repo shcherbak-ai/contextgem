@@ -77,7 +77,13 @@ from contextgem.public import (
     StringConcept,
     release_sat_model,
 )
-from dev.docling_fixtures import contextgem_output, output_path, read_output
+from dev.docling_fixtures import (
+    SOURCE_SUFFIXES,
+    TEST_CONVERTED_SUFFIXES,
+    contextgem_output,
+    output_path,
+    read_output,
+)
 from tests.base import BaseTest
 from tests.utils import capture_logs, get_test_document_text
 
@@ -187,8 +193,8 @@ def _docling_image(color: str, size: int = 4) -> ImageRef:
 def _docling_converter() -> DocumentConverter:
     """
     Returns the converter of Docling, created once for the tests: the torch-free
-    docling-slim of the dev group, which converts DOCX, XLSX, PPTX, HTML and
-    Markdown files without models.
+    docling-slim of the dev group, which converts the formats that need no models,
+    e.g. DOCX, XLSX, PPTX, HTML and Markdown files (`TEST_CONVERTED_SUFFIXES`).
 
     :return: The converter.
     :rtype: DocumentConverter
@@ -246,18 +252,19 @@ def _check_docling_text_kept(
                     assert clean(cell.text) in paragraphs, item.self_ref
 
 
-# The fixture files that the tests convert with Docling, in the formats that need no
-# models, and the PDF files, which they read the committed Docling documents of:
-# the files written for ContextGem and the test documents of Docling, by their paths
-# in `tests/other_files/docling/`
+# The fixture files that the tests convert with Docling, in the formats that the
+# docling-slim of the dev group converts, and the others, e.g. PDF files, which
+# they read the committed Docling documents of: the files written for ContextGem
+# and the test documents of Docling, by their paths in `tests/other_files/docling/`
 _DOCLING_CONVERTED_FILES = sorted(
     path.relative_to(_DOCLING_FILES_DIR).as_posix()
     for path in _DOCLING_FILES_DIR.rglob("*")
-    if path.suffix in {".docx", ".xlsx", ".pptx", ".html", ".md"}
+    if path.suffix in TEST_CONVERTED_SUFFIXES
 )
-_DOCLING_PDF_FILES = sorted(
+_DOCLING_UNCONVERTED_FILES = sorted(
     path.relative_to(_DOCLING_FILES_DIR).as_posix()
-    for path in _DOCLING_FILES_DIR.rglob("*.pdf")
+    for path in _DOCLING_FILES_DIR.rglob("*")
+    if path.suffix in SOURCE_SUFFIXES - TEST_CONVERTED_SUFFIXES
 )
 
 # The paragraphs that each fixture file written for ContextGem must give, which show
@@ -328,6 +335,64 @@ _DOCLING_FILE_PARAGRAPHS = {
         (
             "SLA-2026-04: critical incidents within 2 hours",
             "Code; Section: Decisions",
+            [],
+        ),
+    ],
+    # A JATS article: its sections and subsections, its table with the label and
+    # the title of its caption, and its references as a list
+    "field_study.nxml": [
+        (
+            "deficit irrigation, at 70% from flowering to harvest;",
+            "List item; Section: Materials and methods > Treatments",
+            [],
+        ),
+        (
+            "Treatment: Deficit irrigation; Yield (t/ha): 79.1; Water use (mm): 331",
+            (
+                "Table row; Table caption: Table 1. Marketable yield and water use by "
+                "treatment, mean of the two seasons.; Section: Results"
+            ),
+            [],
+        ),
+        (
+            (
+                "Brandt L. Deficit irrigation of field crops. Irrigation Science "
+                "39:211–224 (2021)."
+            ),
+            "List item; Section: References",
+            [],
+        ),
+    ],
+    # A patent grant of the USPTO: its description and its claims, a claim with
+    # its parts in one paragraph
+    "patent_grant.xml": [
+        (
+            "Hole: Second; Angle: 20 degrees",
+            "Table row; Section: DETAILED DESCRIPTION",
+            [],
+        ),
+        (
+            (
+                "1. A laptop stand comprising: a base; a support plate; and a hinge "
+                "between the base and the support plate, the hinge having a locking "
+                "pin that engages one of a row of holes."
+            ),
+            "Section: CLAIMS",
+            [],
+        ),
+    ],
+    # An EPUB file: the documents of its spine in order, the heading of each
+    # a title
+    "employee_handbook.epub": [
+        ("Leave", "Title", []),
+        (
+            "their manager has agreed to the start time;",
+            "List item; Section: Flexible hours",
+            [],
+        ),
+        (
+            "Type of leave: Unpaid leave; Days per year: Up to 20; Paid: No",
+            "Table row; Table caption: Days of leave per year, by type",
             [],
         ),
     ],
@@ -2868,14 +2933,17 @@ class TestDocuments(BaseTest):
         # The additional context and the custom data are kept in serialization
         self.check_instance_serialization_and_cloning(document)
 
-    # Docling skips the broken pictures of its test presentations, with a warning
+    # Docling skips the broken pictures of its test presentations, and reads the
+    # rows of its test CSV file that are longer than the header, with a warning
     @pytest.mark.filterwarnings("ignore:Skipping malformed picture shape:UserWarning")
+    @pytest.mark.filterwarnings("ignore:Inconsistent column lengths:UserWarning")
     @pytest.mark.parametrize("file_name", _DOCLING_CONVERTED_FILES)
     def test_from_docling_converted_files(self, file_name: str):
         """
         Tests documents created from files in the formats that Docling converts
-        without models: DOCX, XLSX, PPTX, HTML and Markdown, those written for
-        ContextGem and test documents of Docling (`docling_tests/`).
+        without models (`TEST_CONVERTED_SUFFIXES`): DOCX, XLSX, PPTX, HTML,
+        Markdown, CSV, AsciiDoc, LaTeX, WebVTT, EPUB, JATS and USPTO XML, those
+        written for ContextGem and test documents of Docling (`docling_tests/`).
 
         Each file of `tests/other_files/docling/` is converted in the test with the
         torch-free docling-slim of the dev group, i.e. with the Docling of
@@ -2907,13 +2975,18 @@ class TestDocuments(BaseTest):
             assert len(document.images) == (1 if file_name.endswith(".docx") else 0)
             assert not any("Confidential" in p.raw_text for p in document.paragraphs)
 
-    @pytest.mark.parametrize("file_name", _DOCLING_PDF_FILES)
-    def test_from_docling_pdf_files(self, file_name: str):
+    # docling-core moves the boxes of the cells of the test spreadsheet of Docling
+    # onto its page, with a warning
+    @pytest.mark.filterwarnings("ignore:Provenance bbox coordinate:UserWarning")
+    @pytest.mark.parametrize("file_name", _DOCLING_UNCONVERTED_FILES)
+    def test_from_docling_unconverted_files(self, file_name: str):
         """
-        Tests documents created from the Docling documents of the PDF files of
-        `tests/other_files/docling/`, which full Docling converted them into, those
-        written for ContextGem and test documents of Docling (`docling_tests/`):
-        a PDF file needs the models of Docling, and is not converted in the tests.
+        Tests documents created from the Docling documents of the files of
+        `tests/other_files/docling/` that the tests do not convert, which full
+        Docling converted them into, those written for ContextGem and test
+        documents of Docling (`docling_tests/`): a PDF file needs the models of
+        Docling, and an email (EML, MSG) or OpenDocument file (ODT, ODS, ODP)
+        packages that the dev group does not have.
         """
         path = _DOCLING_FILES_DIR / file_name
         docling_document = DoclingDocument.load_from_json(
@@ -2925,10 +2998,12 @@ class TestDocuments(BaseTest):
         for paragraph in document.paragraphs:
             assert "\n" not in (paragraph.additional_context or "")
             # Each paragraph of a PDF file is on a page
-            assert paragraph.page_numbers
+            if path.suffix == ".pdf":
+                assert paragraph.page_numbers
 
+    @pytest.mark.filterwarnings("ignore:Provenance bbox coordinate:UserWarning")
     @pytest.mark.parametrize(
-        "file_name", [*_DOCLING_CONVERTED_FILES, *_DOCLING_PDF_FILES]
+        "file_name", [*_DOCLING_CONVERTED_FILES, *_DOCLING_UNCONVERTED_FILES]
     )
     def test_from_docling_fixture_outputs(self, file_name: str):
         """

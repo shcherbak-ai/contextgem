@@ -13,13 +13,15 @@ ContextGem, and in ``docling_tests/``, test documents of Docling. The tests crea
 ContextGem documents from these Docling documents, and check that they give the
 committed outputs, which show in review how a change of the converter or of the
 Docling documents changes what ContextGem makes of these files. They also convert
-the DOCX, XLSX, PPTX, HTML and Markdown files with the torch-free docling-slim of
-the dev group, and check that the result is the committed Docling document. A PDF
-file needs the layout and table models of Docling, which run on PyTorch, and is
-not converted in the tests.
+the files in the formats that the torch-free docling-slim of the dev group
+converts (``TEST_CONVERTED_SUFFIXES``), and check that the result is the committed
+Docling document. A PDF file needs the layout and table models of Docling, which
+run on PyTorch, and an email or OpenDocument file packages that the dev group does
+not have: they are not converted in the tests.
 
 This script converts each file with full Docling, the version in ``uv.lock`` by
-default, in a throwaway environment with the CPU-only build of PyTorch:
+default, and the OpenDocument support of docling-slim, which full Docling does not
+install, in a throwaway environment with the CPU-only build of PyTorch:
 
 - By default, it checks that ContextGem makes the same paragraphs and images from
   the new Docling documents as from the committed ones: the text, additional
@@ -68,8 +70,19 @@ if TYPE_CHECKING:
 
 ROOT = Path(__file__).resolve().parents[1]
 FIXTURES_DIR = ROOT / "tests" / "other_files" / "docling"
-# The formats of the fixture files
-SOURCE_SUFFIXES = {".pdf", ".docx", ".xlsx", ".pptx", ".html", ".md"}
+# The formats of the fixture files that the tests convert with the docling-slim of
+# the dev group, which needs neither models nor the packages of other formats
+TEST_CONVERTED_SUFFIXES = {
+    *(".docx", ".xlsx", ".pptx", ".html", ".md", ".csv", ".asciidoc", ".tex"),
+    # WebVTT subtitles, EPUB, JATS articles and USPTO patents
+    *(".vtt", ".epub", ".nxml", ".xml"),
+}
+# The formats of all the fixture files: also PDF, email (EML and Outlook) and
+# OpenDocument (text, spreadsheet and presentation)
+SOURCE_SUFFIXES = {
+    *TEST_CONVERTED_SUFFIXES,
+    *(".pdf", ".eml", ".msg", ".odt", ".ods", ".odp"),
+}
 # How many times the conversions run on Windows, where the page renderer of
 # docling-parse crashes them now and then, as its threads corrupt the heap when
 # they exit (https://github.com/docling-project/docling-parse/issues/357). With
@@ -121,11 +134,14 @@ def _setup(docling_version: str, scratch: Path) -> Path:
     if uv is None:
         sys.exit("uv was not found.")
     if docling_version == "locked":
-        requirement = f"docling=={_locked_docling_version()}"
+        version = f"=={_locked_docling_version()}"
     elif docling_version == "latest":
-        requirement = "docling"
+        version = ""
     else:
-        requirement = f"docling=={docling_version}"
+        version = f"=={docling_version}"
+    requirement = f"docling{version}"
+    # The OpenDocument support, of the docling-slim release that Docling is made of
+    opendocument = f"docling-slim[format-opendocument]{version}"
     venv = scratch / "venv"
     python_version = (ROOT / ".python-version").read_text(encoding="utf-8").strip()
     subprocess.run(  # nosec B603 - uv with arguments of its own, no shell
@@ -133,7 +149,8 @@ def _setup(docling_version: str, scratch: Path) -> Path:
     )
     python = venv / ("Scripts/python.exe" if os.name == "nt" else "bin/python")
     print(
-        f"Installing ContextGem and {requirement}, with the CPU-only PyTorch...",
+        f"Installing ContextGem, {requirement} and {opendocument}, with the CPU-only "
+        f"PyTorch...",
         flush=True,
     )
     subprocess.run(  # nosec B603 - uv with arguments of its own, no shell
@@ -141,7 +158,7 @@ def _setup(docling_version: str, scratch: Path) -> Path:
             *(uv, "pip", "install", "--quiet", "--python", str(python)),
             # The CPU-only build: on Linux, the default one comes with CUDA
             *("--torch-backend", "cpu"),
-            *("--editable", str(ROOT), requirement),
+            *("--editable", str(ROOT), requirement, opendocument),
         ],
         check=True,
     )
