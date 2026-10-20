@@ -402,11 +402,12 @@ def install_check(c: Context, version: str = "") -> None:
     """
     Check that ContextGem installs on each platform and supported Python.
 
-    Resolves the dependencies of pyproject.toml, or a release from PyPI, for Linux
-    (glibc and musl), Windows and macOS, on x86_64 and arm64, from wheels only, as
-    an install without a compiler gets them (dev/check_install.py). Takes seconds,
-    and sends no LLM request. Fails when an install goes otherwise than the known
-    failures listed there. Run it before a release and after a dependency change.
+    Resolves the dependencies of pyproject.toml, or a release from PyPI, without
+    and with their extras, for Linux (glibc and musl), Windows and macOS, on x86_64
+    and arm64, from wheels only, as an install without a compiler gets them
+    (dev/check_install.py). Takes seconds, and sends no LLM request. Fails when an
+    install goes otherwise than the known failures listed there. Run it before
+    a release and after a dependency change.
 
     Args:
         version: A release on PyPI, or "latest" (default: pyproject.toml)
@@ -418,6 +419,39 @@ def install_check(c: Context, version: str = "") -> None:
     command = "uv run python dev/check_install.py"
     if version:
         command += f" --version {version}"
+    result = c.run(command, warn=True)
+    if result is None or result.failed:
+        raise Exit(code=result.exited if result else 1)
+
+
+@task(name="docling-fixtures")
+def docling_fixtures(
+    c: Context, write: bool = False, docling_version: str = "locked"
+) -> None:
+    """
+    Check or write the Docling documents of the test fixtures, with full Docling.
+
+    Converts each file of tests/other_files/docling/ with full Docling, in
+    a throwaway environment with the CPU-only PyTorch (dev/docling_fixtures.py),
+    and checks that ContextGem makes the same paragraphs from it as from the
+    committed Docling document, or writes the Docling documents. Downloads the
+    models of Docling on the first run (about 0.5 GB), and sends no LLM request.
+    Run it after a Docling upgrade fails the tests, or before a release.
+
+    Args:
+        write: Write the Docling documents instead of checking them
+        docling_version: "locked" (uv.lock, default), "latest" or X.Y.Z
+
+    Example:
+        uv run fab docling-fixtures
+        uv run fab docling-fixtures --write
+        uv run fab docling-fixtures --docling-version latest
+    """
+    command = (
+        f"uv run python dev/docling_fixtures.py --docling-version {docling_version}"
+    )
+    if write:
+        command += " --write"
     result = c.run(command, warn=True)
     if result is None or result.failed:
         raise Exit(code=result.exited if result else 1)

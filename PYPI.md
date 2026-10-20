@@ -13,6 +13,7 @@ Or, with pip: `pip install -U contextgem`.
 - Generates the prompts from your descriptions of what to extract: there are no prompts to write.
 - Returns typed, validated values: text, numbers, dates, booleans, labels, ratings and JSON objects.
 - Maps each extracted item back to the paragraphs or sentences of the document that it came from, and can give the reasoning behind it.
+- Takes files converted with [Docling](https://github.com/docling-project/docling), e.g. PDF, DOCX, PPTX, XLSX and HTML, with their structure and the page of each paragraph.
 - Extracts in context: aspects, sub-aspects and concepts focus the model on the text that matters.
 - Runs as one declarative pipeline, reusable and serializable, with model routing, fallbacks and cost tracking.
 - Uses the right model for each question: cloud and local LLMs through LiteLLM where it takes reasoning, and decision models where a fast, low-cost answer is enough.

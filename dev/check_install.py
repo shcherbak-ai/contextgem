@@ -5,9 +5,10 @@
 Checks that ContextGem installs on each platform and supported Python.
 
 Resolves the dependencies of ``pyproject.toml``, or with ``--version`` a release
-from PyPI, with ``uv pip compile --only-binary :all: --python-platform <platform>
---python-version <X.Y>``, i.e. as an install without a compiler gets them, with
-the newest versions that the requirements admit. uv answers for any platform from
+from PyPI, with all their extras, e.g. ``docling``, with ``uv pip compile
+--only-binary :all: --python-platform <platform> --python-version <X.Y>``, i.e. as
+an install without a compiler gets them, with the newest versions that the
+requirements admit. uv answers for any platform from
 the wheels that PyPI lists, so no machine of the platform is needed. Sends no LLM
 request, and needs no API key.
 
@@ -63,7 +64,7 @@ PLATFORMS = {
 MACOS_TARGET = "14.0"
 
 # The installs known to fail, by platform and Python (None: on every Python)
-EXPECTED_FAILURES = {
+EXPECTED_FAILURES: dict[tuple[str, str | None], str] = {
     ("x86_64-unknown-linux-musl", None): (
         "onnxruntime publishes no wheels for musl (docs/source/installation.rst)"
     ),
@@ -76,15 +77,42 @@ EXPECTED_FAILURES = {
     ),
 }
 
+# The installs with the extras that are known to fail where ContextGem installs
+# without them, by platform and Python (None: on every Python)
+EXPECTED_EXTRA_FAILURES: dict[tuple[str, str | None], str] = {
+    ("x86_64-apple-darwin", None): (
+        "docling-parse 7+, needed by Docling 2.112+ (the docling extra), publishes "
+        "no Intel Mac wheels (docs/source/installation.rst)"
+    ),
+}
 
-def _release(version: str | None) -> tuple[str, str]:
+
+def _expected(
+    failures: dict[tuple[str, str | None], str], target: str, python: str
+) -> str | None:
+    """
+    Look up why an install is known to fail.
+
+    :param failures: The known failures, by platform and Python.
+    :type failures: dict[tuple[str, str | None], str]
+    :param target: The platform.
+    :type target: str
+    :param python: The Python version.
+    :type python: str
+    :returns: The reason, or None for an install that is expected to work.
+    :rtype: str | None
+    """
+    return failures.get((target, python), failures.get((target, None)))
+
+
+def _release(version: str | None) -> tuple[str, str, list[str]]:
     """
     Look the release up on PyPI.
 
     :param version: The version, or None for the latest release.
     :type version: str | None
-    :returns: The version and its ``requires-python``.
-    :rtype: tuple[str, str]
+    :returns: The version, its ``requires-python`` and its extras.
+    :rtype: tuple[str, str, list[str]]
     """
     path = f"contextgem/{version}/json" if version else "contextgem/json"
     try:
@@ -96,18 +124,26 @@ def _release(version: str | None) -> tuple[str, str]:
         sys.exit(f"contextgem {version} is not on PyPI ({e.code}).")
     except urllib.error.URLError as e:
         sys.exit(f"Cannot reach PyPI: {e.reason}")
-    return info["version"], info["requires_python"]
+    return (
+        info["version"],
+        info["requires_python"],
+        list(info.get("provides_extra") or []),
+    )
 
 
-def _working_tree() -> tuple[str, str]:
+def _working_tree() -> tuple[str, str, list[str]]:
     """
-    Read the version and ``requires-python`` of ``pyproject.toml``.
+    Read the version, ``requires-python`` and extras of ``pyproject.toml``.
 
-    :returns: The version and its ``requires-python``.
-    :rtype: tuple[str, str]
+    :returns: The version, its ``requires-python`` and its extras.
+    :rtype: tuple[str, str, list[str]]
     """
     project = tomllib.loads(PYPROJECT.read_text(encoding="utf-8"))["project"]
-    return project["version"], project["requires-python"]
+    return (
+        project["version"],
+        project["requires-python"],
+        list(project.get("optional-dependencies", {})),
+    )
 
 
 def _python_versions(requires_python: str) -> list[str]:
@@ -203,62 +239,113 @@ def main() -> int:
     # Outside the checkout, so that no configuration of the project applies
     with tempfile.TemporaryDirectory(prefix="contextgem-check-install-") as scratch:
         if args.version:
-            version, requires_python = _release(
+            version, requires_python, extras = _release(
                 None if args.version == "latest" else args.version
             )
-            requirements = Path(scratch) / "requirements.in"
-            requirements.write_text(f"contextgem=={version}\n", encoding="utf-8")
-            # PyPI lets its index be cached for 10 minutes: without the refresh, a
-            # release published since the last check can be missing
-            sources = ["--refresh-package", "contextgem", str(requirements)]
             subject = f"contextgem {version} from PyPI"
+
+            def sources(with_extras: bool) -> list[str]:
+                """
+                Write the requirement of the release, with or without its extras.
+
+                :param with_extras: Whether to require the extras.
+                :type with_extras: bool
+                :returns: The arguments that give ``uv pip compile`` the requirement.
+                :rtype: list[str]
+                """
+                requirement = "contextgem"
+                if with_extras:
+                    requirement += f"[{','.join(extras)}]"
+                path = Path(scratch) / f"requirements-{int(with_extras)}.in"
+                path.write_text(f"{requirement}=={version}\n", encoding="utf-8")
+                # PyPI lets its index be cached for 10 minutes: without the refresh,
+                # a release published since the last check can be missing
+                return ["--refresh-package", "contextgem", str(path)]
+
         else:
-            version, requires_python = _working_tree()
-            sources = [str(PYPROJECT)]
+            version, requires_python, extras = _working_tree()
             subject = f"The dependencies of pyproject.toml (contextgem {version})"
+
+            def sources(with_extras: bool) -> list[str]:
+                """
+                Give the dependencies of ``pyproject.toml``, with or without its extras.
+
+                :param with_extras: Whether to include the extras.
+                :type with_extras: bool
+                :returns: The arguments that give ``uv pip compile`` the requirements.
+                :rtype: list[str]
+                """
+                return [*(["--all-extras"] if with_extras else []), str(PYPROJECT)]
+
         pythons = _python_versions(requires_python)
-        cells = [(target, python) for target in PLATFORMS for python in pythons]
+        # Without the extras, then with them, where ContextGem has extras
+        variants = [(False, subject)]
+        if extras:
+            plural = "s" if len(extras) > 1 else ""
+            variants.append((True, f"With the extra{plural} {', '.join(extras)}"))
+        cells = [
+            (with_extras, target, python)
+            for with_extras, _ in variants
+            for target in PLATFORMS
+            for python in pythons
+        ]
+        # Once for each variant, before the resolutions: a requirements file written
+        # while another resolution reads it can be read empty, which resolves
+        arguments = {with_extras: sources(with_extras) for with_extras, _ in variants}
         with concurrent.futures.ThreadPoolExecutor(max_workers=8) as pool:
             blockers = dict(
                 zip(
                     cells,
-                    pool.map(lambda cell: _resolve(uv, sources, *cell, scratch), cells),
+                    pool.map(
+                        lambda cell: _resolve(
+                            uv, arguments[cell[0]], cell[1], cell[2], scratch
+                        ),
+                        cells,
+                    ),
                     strict=True,
                 )
             )
 
-    print(f"{subject}: wheels only, macOS {MACOS_TARGET}+")
-    width = max(len(name) for name in PLATFORMS.values()) + 2
-    print((" " * width + "".join(f"{python:<14}" for python in pythons)).rstrip())
     notes = []
-    for target, name in PLATFORMS.items():
-        row = name.ljust(width)
-        for python in pythons:
-            blocker = blockers[(target, python)]
-            expected = EXPECTED_FAILURES.get(
-                (target, python), EXPECTED_FAILURES.get((target, None))
-            )
-            if blocker is None:
-                cell = "ok" if expected is None else "ok!"
-                if expected is not None:
-                    notes.append(
-                        f"! {name}, Python {python}: installs now ({expected})"
-                    )
-            else:
-                cell = f"{blocker}*" if expected is not None else f"{blocker}!"
-                if expected is None:
-                    notes.append(f"! {name}, Python {python}: no longer installs")
-            row += f"{cell[:13]:<14}"
-        print(row.rstrip())
+    for with_extras, title in variants:
+        print(f"{title}: wheels only, macOS {MACOS_TARGET}+")
+        width = max(len(name) for name in PLATFORMS.values()) + 2
+        print((" " * width + "".join(f"{python:<14}" for python in pythons)).rstrip())
+        for target, name in PLATFORMS.items():
+            row = name.ljust(width)
+            for python in pythons:
+                blocker = blockers[(with_extras, target, python)]
+                expected = _expected(EXPECTED_FAILURES, target, python)
+                if with_extras and expected is None:
+                    expected = _expected(EXPECTED_EXTRA_FAILURES, target, python)
+                on = f"{name}, Python {python}{' with the extras' if with_extras else ''}"
+                if blocker is None:
+                    cell = "ok" if expected is None else "ok!"
+                    if expected is not None:
+                        notes.append(f"! {on}: installs now ({expected})")
+                else:
+                    # The name is shortened, not the mark after it
+                    mark = "*" if expected is not None else "!"
+                    cell = f"{blocker[:12]}{mark}"
+                    if expected is None:
+                        notes.append(f"! {on}: no longer installs")
+                row += f"{cell:<14}"
+            print(row.rstrip())
+        print()
     print("* expected:")
-    for (target, python), reason in EXPECTED_FAILURES.items():
-        on = f"Python {python}" if python else "every Python"
-        print(f"  {PLATFORMS[target]}, {on}: {reason}")
+    known = [(EXPECTED_FAILURES, "")]
+    if extras:
+        known.append((EXPECTED_EXTRA_FAILURES, ", with the extras"))
+    for failures, suffix in known:
+        for (target, python), reason in failures.items():
+            on = f"Python {python}" if python else "every Python"
+            print(f"  {PLATFORMS[target]}, {on}{suffix}: {reason}")
     for note in notes:
         print(note)
     if notes:
         print(
-            "Update EXPECTED_FAILURES in dev/check_install.py, and the docs that name the gap."
+            "Update EXPECTED_FAILURES or EXPECTED_EXTRA_FAILURES in "
+            "dev/check_install.py, and the docs that name the gap."
         )
     return 1 if notes else 0
 

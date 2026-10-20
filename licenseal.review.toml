@@ -45,3 +45,152 @@ package = "tiktoken"
 version = "0.14.0"
 license = "MIT"
 note = "PyPI metadata gives the license as free text (\"License: MIT License\"), not as an SPDX expression (hence UNKNOWN); the wheel ships the MIT LICENSE file, and GitHub's license-detection API reports MIT for the openai/tiktoken repo (spdx_id MIT). Detection override — MIT is permissive and compatible with Apache-2.0."
+
+# detected: UNKNOWN
+# status: unknown
+[[review]]
+ecosystem = "python"
+package = "cuda-toolkit"
+version = "13.0.3"
+license = "Proprietary"
+note = "NVIDIA's CUDA Toolkit meta-package, which declares no license (hence UNKNOWN) and holds no code of its own: it pulls in NVIDIA's proprietary CUDA libraries. As for nvidia-cublas: installed only with the optional docling extra, on Linux, through PyTorch, and not included, modified or redistributed by ContextGem. Reviewed and accepted as an optional, transitive runtime dependency, which does not affect the Apache-2.0 license of ContextGem."
+
+# detected: Proprietary
+# status: unknown
+# raw: LicenseRef-NVIDIA-Proprietary
+[[review]]
+ecosystem = "python"
+package = "nvidia-cublas"
+version = "13.1.1.3"
+license = "Proprietary"
+note = "NVIDIA CUDA library under NVIDIA's proprietary license (LicenseRef-NVIDIA-Proprietary). Installed only with the optional docling extra, and only on Linux: Docling needs PyTorch, whose Linux wheels on PyPI depend on the CUDA libraries. ContextGem does not include, modify or redistribute it: the user's package manager downloads it from PyPI, under NVIDIA's terms, and the installs of ContextGem without the extra do not have it. A CPU-only PyTorch (see Docling's installation guide) avoids it. Reviewed and accepted as an optional, transitive runtime dependency, which does not affect the Apache-2.0 license of ContextGem."
+
+# detected: Proprietary
+# status: unknown
+# raw: LicenseRef-NVIDIA-Proprietary
+[[review]]
+ecosystem = "python"
+package = "nvidia-cuda-cupti"
+version = "13.0.85"
+license = "Proprietary"
+note = "NVIDIA CUDA library under NVIDIA's proprietary license (LicenseRef-NVIDIA-Proprietary). Installed only with the optional docling extra, and only on Linux: Docling needs PyTorch, whose Linux wheels on PyPI depend on the CUDA libraries. ContextGem does not include, modify or redistribute it: the user's package manager downloads it from PyPI, under NVIDIA's terms, and the installs of ContextGem without the extra do not have it. A CPU-only PyTorch (see Docling's installation guide) avoids it. Reviewed and accepted as an optional, transitive runtime dependency, which does not affect the Apache-2.0 license of ContextGem."
+
+# detected: Proprietary
+# status: unknown
+# raw: LicenseRef-NVIDIA-Proprietary
+[[review]]
+ecosystem = "python"
+package = "nvidia-cuda-nvrtc"
+version = "13.0.88"
+license = "Proprietary"
+note = "NVIDIA CUDA library under NVIDIA's proprietary license (LicenseRef-NVIDIA-Proprietary). Installed only with the optional docling extra, and only on Linux: Docling needs PyTorch, whose Linux wheels on PyPI depend on the CUDA libraries. ContextGem does not include, modify or redistribute it: the user's package manager downloads it from PyPI, under NVIDIA's terms, and the installs of ContextGem without the extra do not have it. A CPU-only PyTorch (see Docling's installation guide) avoids it. Reviewed and accepted as an optional, transitive runtime dependency, which does not affect the Apache-2.0 license of ContextGem."
+
+# detected: Proprietary
+# status: unknown
+# raw: LicenseRef-NVIDIA-Proprietary
+[[review]]
+ecosystem = "python"
+package = "nvidia-cuda-runtime"
+version = "13.0.96"
+license = "Proprietary"
+note = "NVIDIA CUDA library under NVIDIA's proprietary license (LicenseRef-NVIDIA-Proprietary). Installed only with the optional docling extra, and only on Linux: Docling needs PyTorch, whose Linux wheels on PyPI depend on the CUDA libraries. ContextGem does not include, modify or redistribute it: the user's package manager downloads it from PyPI, under NVIDIA's terms, and the installs of ContextGem without the extra do not have it. A CPU-only PyTorch (see Docling's installation guide) avoids it. Reviewed and accepted as an optional, transitive runtime dependency, which does not affect the Apache-2.0 license of ContextGem."
+
+# detected: Proprietary
+# status: unknown
+# raw: LicenseRef-NVIDIA-Proprietary
+[[review]]
+ecosystem = "python"
+package = "nvidia-cudnn-cu13"
+version = "9.24.0.43"
+license = "Proprietary"
+note = "NVIDIA CUDA library under NVIDIA's proprietary license (LicenseRef-NVIDIA-Proprietary). Installed only with the optional docling extra, and only on Linux: Docling needs PyTorch, whose Linux wheels on PyPI depend on the CUDA libraries. ContextGem does not include, modify or redistribute it: the user's package manager downloads it from PyPI, under NVIDIA's terms, and the installs of ContextGem without the extra do not have it. A CPU-only PyTorch (see Docling's installation guide) avoids it. Reviewed and accepted as an optional, transitive runtime dependency, which does not affect the Apache-2.0 license of ContextGem."
+
+# detected: Proprietary
+# status: unknown
+# raw: LicenseRef-NVIDIA-Proprietary
+[[review]]
+ecosystem = "python"
+package = "nvidia-cufft"
+version = "12.0.0.61"
+license = "Proprietary"
+note = "NVIDIA CUDA library under NVIDIA's proprietary license (LicenseRef-NVIDIA-Proprietary). Installed only with the optional docling extra, and only on Linux: Docling needs PyTorch, whose Linux wheels on PyPI depend on the CUDA libraries. ContextGem does not include, modify or redistribute it: the user's package manager downloads it from PyPI, under NVIDIA's terms, and the installs of ContextGem without the extra do not have it. A CPU-only PyTorch (see Docling's installation guide) avoids it. Reviewed and accepted as an optional, transitive runtime dependency, which does not affect the Apache-2.0 license of ContextGem."
+
+# detected: Proprietary
+# status: unknown
+# raw: LicenseRef-NVIDIA-Proprietary
+[[review]]
+ecosystem = "python"
+package = "nvidia-cufile"
+version = "1.15.1.6"
+license = "Proprietary"
+note = "NVIDIA CUDA library under NVIDIA's proprietary license (LicenseRef-NVIDIA-Proprietary). Installed only with the optional docling extra, and only on Linux: Docling needs PyTorch, whose Linux wheels on PyPI depend on the CUDA libraries. ContextGem does not include, modify or redistribute it: the user's package manager downloads it from PyPI, under NVIDIA's terms, and the installs of ContextGem without the extra do not have it. A CPU-only PyTorch (see Docling's installation guide) avoids it. Reviewed and accepted as an optional, transitive runtime dependency, which does not affect the Apache-2.0 license of ContextGem."
+
+# detected: Proprietary
+# status: unknown
+# raw: LicenseRef-NVIDIA-Proprietary
+[[review]]
+ecosystem = "python"
+package = "nvidia-curand"
+version = "10.4.0.35"
+license = "Proprietary"
+note = "NVIDIA CUDA library under NVIDIA's proprietary license (LicenseRef-NVIDIA-Proprietary). Installed only with the optional docling extra, and only on Linux: Docling needs PyTorch, whose Linux wheels on PyPI depend on the CUDA libraries. ContextGem does not include, modify or redistribute it: the user's package manager downloads it from PyPI, under NVIDIA's terms, and the installs of ContextGem without the extra do not have it. A CPU-only PyTorch (see Docling's installation guide) avoids it. Reviewed and accepted as an optional, transitive runtime dependency, which does not affect the Apache-2.0 license of ContextGem."
+
+# detected: Proprietary
+# status: unknown
+# raw: LicenseRef-NVIDIA-Proprietary
+[[review]]
+ecosystem = "python"
+package = "nvidia-cusolver"
+version = "12.0.4.66"
+license = "Proprietary"
+note = "NVIDIA CUDA library under NVIDIA's proprietary license (LicenseRef-NVIDIA-Proprietary). Installed only with the optional docling extra, and only on Linux: Docling needs PyTorch, whose Linux wheels on PyPI depend on the CUDA libraries. ContextGem does not include, modify or redistribute it: the user's package manager downloads it from PyPI, under NVIDIA's terms, and the installs of ContextGem without the extra do not have it. A CPU-only PyTorch (see Docling's installation guide) avoids it. Reviewed and accepted as an optional, transitive runtime dependency, which does not affect the Apache-2.0 license of ContextGem."
+
+# detected: Proprietary
+# status: unknown
+# raw: LicenseRef-NVIDIA-Proprietary
+[[review]]
+ecosystem = "python"
+package = "nvidia-cusparse"
+version = "12.6.3.3"
+license = "Proprietary"
+note = "NVIDIA CUDA library under NVIDIA's proprietary license (LicenseRef-NVIDIA-Proprietary). Installed only with the optional docling extra, and only on Linux: Docling needs PyTorch, whose Linux wheels on PyPI depend on the CUDA libraries. ContextGem does not include, modify or redistribute it: the user's package manager downloads it from PyPI, under NVIDIA's terms, and the installs of ContextGem without the extra do not have it. A CPU-only PyTorch (see Docling's installation guide) avoids it. Reviewed and accepted as an optional, transitive runtime dependency, which does not affect the Apache-2.0 license of ContextGem."
+
+# detected: Proprietary
+# status: unknown
+# raw: NVIDIA Proprietary Software
+[[review]]
+ecosystem = "python"
+package = "nvidia-cusparselt-cu13"
+version = "0.8.1"
+license = "Proprietary"
+note = "NVIDIA CUDA library under NVIDIA's proprietary license (LicenseRef-NVIDIA-Proprietary). Installed only with the optional docling extra, and only on Linux: Docling needs PyTorch, whose Linux wheels on PyPI depend on the CUDA libraries. ContextGem does not include, modify or redistribute it: the user's package manager downloads it from PyPI, under NVIDIA's terms, and the installs of ContextGem without the extra do not have it. A CPU-only PyTorch (see Docling's installation guide) avoids it. Reviewed and accepted as an optional, transitive runtime dependency, which does not affect the Apache-2.0 license of ContextGem."
+
+# detected: Proprietary
+# status: unknown
+# raw: LicenseRef-NVIDIA-Proprietary
+[[review]]
+ecosystem = "python"
+package = "nvidia-nccl-cu13"
+version = "2.30.7"
+license = "Proprietary"
+note = "NVIDIA CUDA library under NVIDIA's proprietary license (LicenseRef-NVIDIA-Proprietary). Installed only with the optional docling extra, and only on Linux: Docling needs PyTorch, whose Linux wheels on PyPI depend on the CUDA libraries. ContextGem does not include, modify or redistribute it: the user's package manager downloads it from PyPI, under NVIDIA's terms, and the installs of ContextGem without the extra do not have it. A CPU-only PyTorch (see Docling's installation guide) avoids it. Reviewed and accepted as an optional, transitive runtime dependency, which does not affect the Apache-2.0 license of ContextGem."
+
+# detected: Proprietary
+# status: unknown
+# raw: LicenseRef-NVIDIA-Proprietary
+[[review]]
+ecosystem = "python"
+package = "nvidia-nvjitlink"
+version = "13.4.92"
+license = "Proprietary"
+note = "NVIDIA CUDA library under NVIDIA's proprietary license (LicenseRef-NVIDIA-Proprietary). Installed only with the optional docling extra, and only on Linux: Docling needs PyTorch, whose Linux wheels on PyPI depend on the CUDA libraries. ContextGem does not include, modify or redistribute it: the user's package manager downloads it from PyPI, under NVIDIA's terms, and the installs of ContextGem without the extra do not have it. A CPU-only PyTorch (see Docling's installation guide) avoids it. Reviewed and accepted as an optional, transitive runtime dependency, which does not affect the Apache-2.0 license of ContextGem."
+
+# detected: Proprietary
+# status: unknown
+# raw: LicenseRef-NVIDIA-Proprietary
+[[review]]
+ecosystem = "python"
+package = "nvidia-nvshmem-cu13"
+version = "3.4.5"
+license = "Proprietary"
+note = "NVIDIA CUDA library under NVIDIA's proprietary license (LicenseRef-NVIDIA-Proprietary). Installed only with the optional docling extra, and only on Linux: Docling needs PyTorch, whose Linux wheels on PyPI depend on the CUDA libraries. ContextGem does not include, modify or redistribute it: the user's package manager downloads it from PyPI, under NVIDIA's terms, and the installs of ContextGem without the extra do not have it. A CPU-only PyTorch (see Docling's installation guide) avoids it. Reviewed and accepted as an optional, transitive runtime dependency, which does not affect the Apache-2.0 license of ContextGem."

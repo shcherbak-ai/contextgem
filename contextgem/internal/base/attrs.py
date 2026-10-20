@@ -619,3 +619,28 @@ class _RefParasAndSentsAttrituteProcessor(_PropertyProcessor):
             "_reference_sentences",
             "Sentences must be a list of `_Sentence` objects",
         )
+
+    @property
+    def reference_page_numbers(self) -> list[int]:
+        """
+        Provides the numbers of the pages that the instance's reference paragraphs
+        and sentences are on, e.g. to cite the pages of an extracted item.
+
+        The pages come from the ``page_numbers`` of the paragraphs and sentences,
+        which a document created from a file converted with Docling has (see
+        ``Document.from_docling()``).
+
+        :return: The page numbers in ascending order, each once. Empty if the
+            references have no page numbers.
+        :rtype: list[int]
+        """
+        return sorted(
+            {
+                page_number
+                for reference in (
+                    *self._reference_paragraphs,
+                    *self._reference_sentences,
+                )
+                for page_number in reference.page_numbers
+            }
+        )

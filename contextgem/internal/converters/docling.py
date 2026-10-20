@@ -1,0 +1,1024 @@
+# SPDX-FileCopyrightText: Shcherbak AI AS
+# SPDX-License-Identifier: Apache-2.0
+
+"""
+Module for converting Docling documents into the paragraphs and images of
+a ContextGem document.
+
+A Docling document (``DoclingDocument`` of ``docling-core``) holds what Docling found
+in a file: its headings, text, lists, tables, pictures and form fields, in reading
+order, each with the page and the bounding box that it was found at. This module
+walks the body of such a document and makes a paragraph of each piece of text. The
+additional context of the paragraph describes its place in the structure of the
+document, and its custom data keeps its Docling reference and provenance.
+
+``docling-core`` is an optional dependency, installed with the ``docling`` extra.
+This module is imported only when a Docling document is converted. It checks
+first that ``docling-core`` is installed, in a version that it works with: it can
+also be installed without the extra, e.g. with an older Docling.
+"""
+
+from __future__ import annotations
+
+import base64
+import importlib.metadata
+import io
+import re
+from collections.abc import Iterable, Sequence
+from pathlib import Path
+from typing import Any
+
+from contextgem.internal.base.images import _Image
+from contextgem.internal.base.paras_and_sents import _Paragraph
+from contextgem.internal.loggers import logger
+from contextgem.internal.registry import _publicize
+from contextgem.internal.utils import _is_text_content_empty
+
+
+# The oldest docling-core that the converter works with: the lower bound of
+# docling-core in the `docling` extra of pyproject.toml, which a test compares
+_MIN_DOCLING_CORE_VERSION = "2.87.0"
+
+# How to install or upgrade docling-core, with Docling, for the errors below
+_INSTALL_DOCLING_EXTRA = (
+    'uv add "contextgem[docling]", or pip install -U "contextgem[docling]"'
+)
+
+
+def _release_numbers(version: str) -> tuple[int, ...] | None:
+    """
+    Returns the release numbers of a version, e.g. (2, 87, 0) for "2.87.0rc1".
+
+    :param version: The version.
+    :type version: str
+    :return: The numbers, or None for a version that does not start with them.
+    :rtype: tuple[int, ...] | None
+    """
+    match = re.match(r"\d+(?:\.\d+)*", version)
+    return tuple(int(number) for number in match.group().split(".")) if match else None
+
+
+def _check_docling_core() -> None:
+    """
+    Checks that docling-core is installed, in a version that the converter works
+    with.
+
+    :return: None
+    :rtype: None
+    :raises ImportError: If docling-core is not installed, or is older than
+        the converter needs.
+    """
+    try:
+        installed = importlib.metadata.version("docling-core")
+    except importlib.metadata.PackageNotFoundError:
+        raise ImportError(
+            "Converting a Docling document requires docling-core, the document "
+            "model of Docling, which the `docling` extra of ContextGem installs "
+            f"with Docling: {_INSTALL_DOCLING_EXTRA}"
+        ) from None
+    numbers = _release_numbers(installed)
+    minimum = _release_numbers(_MIN_DOCLING_CORE_VERSION)
+    if numbers is not None and minimum is not None and numbers < minimum:
+        raise ImportError(
+            f"Converting a Docling document requires docling-core "
+            f"{_MIN_DOCLING_CORE_VERSION} or later, and docling-core {installed} is "
+            f"installed. The `docling` extra of ContextGem upgrades it, with "
+            f"Docling: {_INSTALL_DOCLING_EXTRA}"
+        )
+
+
+_check_docling_core()
+
+from docling_core.types.doc import (  # noqa: E402 - imported once its version is checked
+    ContentLayer,
+    DocItemLabel,
+    DoclingDocument,
+    FieldItem,
+    FormItem,
+    GraphLinkLabel,
+    GroupItem,
+    InlineGroup,
+    KeyValueItem,
+    ListGroup,
+    ListItem,
+    NodeItem,
+    PictureItem,
+    ProvenanceItem,
+    RefItem,
+    SectionHeaderItem,
+    TableCell,
+    TableItem,
+    TextItem,
+)
+
+
+# The Docling labels of body text, which the additional context of a paragraph
+# does not name
+_BODY_TEXT_LABELS = frozenset({DocItemLabel.TEXT, DocItemLabel.PARAGRAPH})
+
+# What the additional context of a paragraph calls a text, by its Docling label.
+# A text with another label is named after the label, e.g. "Footnote" or "Code".
+_TEXT_KINDS = {
+    DocItemLabel.CHECKBOX_SELECTED: "Checkbox, checked",
+    DocItemLabel.CHECKBOX_UNSELECTED: "Checkbox, unchecked",
+}
+
+# The values of the checkboxes of form fields, by their Docling label
+_CHECKBOX_VALUES = {
+    DocItemLabel.CHECKBOX_SELECTED: "checked",
+    DocItemLabel.CHECKBOX_UNSELECTED: "unchecked",
+}
+
+# The MIME types of the images that a ContextGem document holds
+_IMAGE_MIME_TYPES = frozenset({"image/jpg", "image/jpeg", "image/png", "image/webp"})
+
+# The parts of an inline text are joined with a space, except before closing
+# punctuation and after an opening bracket
+_NO_SPACE_BEFORE = tuple(",.;:!?)]}")
+_NO_SPACE_AFTER = tuple("([{")
+
+# The name that Docling gives the group of a slide, e.g. "slide-0" for the first one
+_SLIDE_GROUP_NAME = re.compile(r"slide-(\d+)")
+
+# The length that the caption of a table is shortened to in the additional context
+# of its rows, which repeats it for each row. The whole caption is a paragraph of
+# its own before the rows.
+_MAX_CAPTION_LENGTH_IN_ROWS = 100
+
+
+def _clean(text: str) -> str:
+    """
+    Collapses the whitespace of a text, line breaks included, to single spaces.
+
+    :param text: The text to clean.
+    :type text: str
+    :return: The text on a single line, without leading or trailing whitespace.
+    :rtype: str
+    """
+    return " ".join(text.split())
+
+
+def _shorten(text: str, max_length: int) -> str:
+    """
+    Shortens a text to a maximum length, at the end of a word.
+
+    :param text: The text, on a single line.
+    :type text: str
+    :param max_length: The maximum length of the text, the ellipsis included.
+    :type max_length: int
+    :return: The text, or its beginning followed by "...".
+    :rtype: str
+    """
+    if len(text) <= max_length:
+        return text
+    shortened = text[: max_length - 3].rsplit(" ", 1)[0] or text[: max_length - 3]
+    return shortened.rstrip(",;:") + "..."
+
+
+def _labelled(label: str, value: str) -> str:
+    """
+    Returns a value after its label, e.g. the value of a table cell after the header
+    of its column, or the value of a form field after its key.
+
+    :param label: The label, which may end with a colon, e.g. "Full name:".
+    :type label: str
+    :param value: The value.
+    :type value: str
+    :return: e.g. "Full name: Ada Lovelace", or the value or the label alone if the
+        other one is empty, or the value alone if it is the label.
+    :rtype: str
+    """
+    label = label.strip().rstrip(":").rstrip()
+    if label and value and label != value:
+        return f"{label}: {value}"
+    return value or label
+
+
+def _join_inline(parts: Iterable[str]) -> str:
+    """
+    Joins the parts of an inline text, e.g. the differently formatted runs of
+    a sentence, into one text.
+
+    :param parts: The parts of the text, in order.
+    :type parts: Iterable[str]
+    :return: The parts joined with a space, except before closing punctuation and
+        after an opening bracket.
+    :rtype: str
+    """
+    text = ""
+    for part in parts:
+        part = part.strip()
+        if not part:
+            continue
+        if (
+            text
+            and not part.startswith(_NO_SPACE_BEFORE)
+            and not text.endswith(_NO_SPACE_AFTER)
+        ):
+            text += " "
+        text += part
+    return text
+
+
+def _label_of(item: NodeItem) -> str:
+    """
+    Returns the Docling label of an item.
+
+    :param item: The Docling item.
+    :type item: NodeItem
+    :return: The label, e.g. "list_item" or "table", or an empty string for an item
+        without one.
+    :rtype: str
+    """
+    label = getattr(item, "label", None)
+    return str(getattr(label, "value", label or ""))
+
+
+def _provenance_entry(prov: ProvenanceItem) -> dict[str, Any]:
+    """
+    Returns the page and the bounding box of a Docling provenance item.
+
+    :param prov: The provenance item.
+    :type prov: ProvenanceItem
+    :return: The page number and the bounding box, as JSON-serializable data.
+    :rtype: dict[str, Any]
+    """
+    box = prov.bbox
+    return {
+        "page_no": prov.page_no,
+        "bbox": {
+            "l": box.l,
+            "t": box.t,
+            "r": box.r,
+            "b": box.b,
+            "coord_origin": str(box.coord_origin.value),
+        },
+    }
+
+
+def _provenance(provs: Iterable[object]) -> list[dict[str, Any]]:
+    """
+    Returns the pages and the bounding boxes of Docling provenance items.
+
+    :param provs: The provenance items. Other objects, e.g. ``None`` for a part
+        without provenance, are skipped.
+    :type provs: Iterable[object]
+    :return: The page and the bounding box of each item, without repetitions.
+    :rtype: list[dict[str, Any]]
+    """
+    entries: list[dict[str, Any]] = []
+    for prov in provs:
+        if isinstance(prov, ProvenanceItem):
+            entry = _provenance_entry(prov)
+            if entry not in entries:
+                entries.append(entry)
+    return entries
+
+
+def _provenance_of_items(items: Iterable[NodeItem]) -> list[dict[str, Any]]:
+    """
+    Returns the pages and the bounding boxes of Docling items.
+
+    :param items: The Docling items. Groups have no provenance of their own.
+    :type items: Iterable[NodeItem]
+    :return: The page and the bounding box of each part of the items.
+    :rtype: list[dict[str, Any]]
+    """
+    return _provenance(prov for item in items for prov in getattr(item, "prov", []))
+
+
+def _count_header_rows(grid: Sequence[Sequence[TableCell]]) -> int:
+    """
+    Counts the rows at the top of a table whose cells are column headers.
+
+    :param grid: The cells of the table, by row and column.
+    :type grid: Sequence[Sequence[TableCell]]
+    :return: The number of header rows.
+    :rtype: int
+    """
+    count = 0
+    for row in grid:
+        cells = [cell for cell in row if cell.text.strip()]
+        if not cells or not all(cell.column_header for cell in cells):
+            break
+        count += 1
+    return count
+
+
+def _column_labels(header_rows: Sequence[Sequence[TableCell]]) -> list[str]:
+    """
+    Returns the label of each column of a table, from its header rows.
+
+    :param header_rows: The header rows of the table.
+    :type header_rows: Sequence[Sequence[TableCell]]
+    :return: The headers of each column, from the top, joined with " > ", e.g.
+        "Fees > 2026" under a header that spans several columns.
+    :rtype: list[str]
+    """
+    labels = []
+    for column in range(max((len(row) for row in header_rows), default=0)):
+        headers: list[str] = []
+        for row in header_rows:
+            header = _clean(row[column].text) if column < len(row) else ""
+            # A header that spans several rows is in each of them
+            if header and header not in headers:
+                headers.append(header)
+        labels.append(" > ".join(headers))
+    return labels
+
+
+def _cell_label(cell: TableCell, labels: Sequence[str]) -> str:
+    """
+    Returns the label of a table cell, from the labels of the columns it spans.
+
+    :param cell: The cell.
+    :type cell: TableCell
+    :param labels: The label of each column of the table.
+    :type labels: Sequence[str]
+    :return: The labels of the columns of the cell, e.g. "Monthly fee", or "Q1, Q2"
+        for a cell that spans two columns. A cell that spans the row under different
+        labels, as a section of a table does, has no label.
+    :rtype: str
+    """
+    if cell.row_section:
+        return ""
+    columns = range(
+        cell.start_col_offset_idx, min(cell.end_col_offset_idx, len(labels))
+    )
+    names = list(dict.fromkeys(labels[column] for column in columns if labels[column]))
+    if len(names) > 1 and len(columns) >= len(labels):
+        return ""
+    return ", ".join(names)
+
+
+def _row_text(row: Sequence[TableCell], labels: Sequence[str]) -> str:
+    """
+    Returns the text of a table row, with each value after the label of its column.
+
+    :param row: The cells of the row.
+    :type row: Sequence[TableCell]
+    :param labels: The label of each column, if the table has headers.
+    :type labels: Sequence[str]
+    :return: The values of the row, e.g. "Service: Hosting; Monthly fee: 1,200 EUR".
+        A value whose column has no label is given without one.
+    :rtype: str
+    """
+    parts = []
+    starts = set()
+    for cell in row:
+        # A cell that spans several columns is in each of them
+        start = (cell.start_row_offset_idx, cell.start_col_offset_idx)
+        if start in starts:
+            continue
+        starts.add(start)
+        value = _clean(cell.text)
+        if not value:
+            continue
+        parts.append(_labelled(_cell_label(cell, labels), value))
+    return "; ".join(parts)
+
+
+def _image_data(
+    picture: PictureItem, document: DoclingDocument
+) -> tuple[str, str] | None:
+    """
+    Returns the image data of a picture.
+
+    An image embedded in the Docling document is taken as it is, if it is of a type
+    that a ContextGem document holds, else converted to PNG. A picture without an
+    embedded image is cropped from the image of its page, if the Docling document
+    has the images of its pages. An image referenced by a remote URL is not
+    fetched, and an image in a local file is read only if Docling allows it (see
+    ``DoclingDocument.load_local_images()``).
+
+    :param picture: The picture.
+    :type picture: PictureItem
+    :param document: The Docling document of the picture.
+    :type document: DoclingDocument
+    :return: The MIME type and the base64-encoded data of the image, or None if the
+        Docling document has no image data for the picture that can be read.
+    :rtype: tuple[str, str] | None
+    """
+    image_ref = picture.image
+    if image_ref is not None and not isinstance(image_ref.uri, Path):
+        header, _, data = str(image_ref.uri).partition(",")
+        mime_type = header.removeprefix("data:").split(";")[0].lower()
+        if (
+            header.startswith("data:")
+            and header.endswith(";base64")
+            and mime_type in _IMAGE_MIME_TYPES
+            and data
+        ):
+            return mime_type, data
+    try:
+        image = picture.get_image(document)
+        if image is None:
+            return None
+        if image.mode not in ("1", "L", "LA", "P", "RGB", "RGBA"):
+            image = image.convert("RGBA" if "A" in image.getbands() else "RGB")
+        buffer = io.BytesIO()
+        image.save(buffer, format="PNG")
+    except (OSError, ValueError) as e:
+        logger.debug(f"Image of the picture {picture.self_ref} not read: {e}")
+        return None
+    return "image/png", base64.b64encode(buffer.getvalue()).decode("ascii")
+
+
+class _DoclingConverter:
+    """
+    Converts the body of a Docling document into ContextGem paragraphs and images,
+    in reading order.
+    """
+
+    def __init__(self, document: DoclingDocument) -> None:
+        """
+        Prepares the conversion of a Docling document.
+
+        :param document: The Docling document to convert.
+        :type document: DoclingDocument
+        """
+        self._document = document
+        self.paragraphs: list[_Paragraph] = []
+        self.images: list[_Image] = []
+        self.pictures_without_images = 0
+        # The headings of the current section, from the top, as (level, text) pairs.
+        # The title of the document is not one of them: as the first paragraph,
+        # it would be repeated in the additional context of all the others.
+        self._headings: list[tuple[int, str]] = []
+        # The sheet or the slide that the converted items are on, e.g. "Slide 2"
+        self._containers: list[str] = []
+        # The captions and the footnotes of tables and pictures, which are converted
+        # with the table or the picture that they belong to, not where the body
+        # of the document has them
+        self._attached_refs = {
+            ref.cref
+            for item in (*document.tables, *document.pictures)
+            for ref in (*item.captions, *item.footnotes)
+        }
+
+    def convert(self) -> None:
+        """
+        Converts the body of the Docling document into paragraphs and images.
+
+        :return: None
+        :rtype: None
+        """
+        self._convert_children(self._document.body, list_level=0)
+
+    def _children(self, item: NodeItem) -> list[NodeItem]:
+        """
+        Returns the children of an item that are converted where the body of
+        the document has them.
+
+        :param item: The parent item.
+        :type item: NodeItem
+        :return: The children in the body layer of the document, except the captions
+            and the footnotes of tables and pictures.
+        :rtype: list[NodeItem]
+        """
+        children = []
+        for ref in item.children:
+            child = ref.resolve(self._document)
+            if (
+                child.content_layer == ContentLayer.BODY
+                and child.self_ref not in self._attached_refs
+            ):
+                children.append(child)
+        return children
+
+    def _convert_children(self, item: NodeItem, list_level: int) -> None:
+        """
+        Converts the children of an item.
+
+        :param item: The parent item.
+        :type item: NodeItem
+        :param list_level: The nesting level of the list that the children are in,
+            0 outside lists.
+        :type list_level: int
+        :return: None
+        :rtype: None
+        """
+        for child in self._children(item):
+            self._convert_item(child, list_level)
+
+    def _convert_item(self, item: NodeItem, list_level: int) -> None:
+        """
+        Converts an item and the items under it.
+
+        :param item: The item.
+        :type item: NodeItem
+        :param list_level: The nesting level of the list that the item is in,
+            0 outside lists.
+        :type list_level: int
+        :return: None
+        :rtype: None
+        """
+        if isinstance(item, TableItem):
+            self._convert_table(item)
+        elif isinstance(item, PictureItem):
+            self._convert_picture(item)
+        elif isinstance(item, KeyValueItem | FormItem):
+            self._convert_graph(item)
+        elif isinstance(item, FieldItem):
+            self._convert_field(item)
+        elif isinstance(item, InlineGroup):
+            texts = self._inline_texts(item)
+            self._add_paragraph(
+                _join_inline(text.text for text in texts),
+                None,
+                item,
+                _provenance_of_items(texts),
+            )
+            # The tables and the pictures in the text, e.g. an image in a line of
+            # Markdown
+            for child in self._floating_items_in(item):
+                self._convert_item(child, list_level)
+        elif isinstance(item, ListItem):
+            self._convert_list_item(item, list_level)
+        elif isinstance(item, SectionHeaderItem) or (
+            isinstance(item, TextItem) and item.label == DocItemLabel.TITLE
+        ):
+            self._convert_heading(item, list_level)
+        elif isinstance(item, TextItem):
+            for child in self._add_text(item, self._text_kind(item)):
+                self._convert_item(child, list_level)
+        elif isinstance(item, ListGroup):
+            self._convert_children(item, list_level + 1)
+        elif isinstance(item, GroupItem):
+            container = self._container_name(item)
+            if container:
+                self._containers.append(container)
+            self._convert_children(item, list_level)
+            if container:
+                self._containers.pop()
+        else:
+            # Other items, e.g. the regions of form fields, hold no text of their
+            # own
+            self._convert_children(item, list_level)
+
+    def _add_paragraph(
+        self,
+        text: str,
+        kind: str | None,
+        source: NodeItem,
+        provenance: list[dict[str, Any]],
+        **docling_data: Any,
+    ) -> None:
+        """
+        Adds a paragraph, unless its text is empty.
+
+        :param text: The text of the paragraph.
+        :type text: str
+        :param kind: What the paragraph is, e.g. "List item", or None for body text.
+        :type kind: str | None
+        :param source: The Docling item that the paragraph is made from.
+        :type source: NodeItem
+        :param provenance: The pages and the bounding boxes of the paragraph.
+        :type provenance: list[dict[str, Any]]
+        :param docling_data: Other data to keep in the custom data of the paragraph,
+            e.g. the index of a table row.
+        :type docling_data: Any
+        :return: None
+        :rtype: None
+        """
+        text = text.strip()
+        if _is_text_content_empty(text):
+            return
+        context = [kind] if kind else []
+        context.extend(self._containers)
+        if self._headings:
+            context.append(
+                "Section: " + " > ".join(heading for _, heading in self._headings)
+            )
+        self.paragraphs.append(
+            _publicize(
+                _Paragraph,
+                raw_text=text,
+                additional_context=_clean("; ".join(context)) or None,
+                page_numbers=[entry["page_no"] for entry in provenance],
+                custom_data={
+                    "docling": {
+                        "self_ref": source.self_ref,
+                        "label": _label_of(source),
+                        "prov": provenance,
+                        **docling_data,
+                    }
+                },
+            )
+        )
+
+    def _add_text(self, item: TextItem, kind: str | None) -> list[NodeItem]:
+        """
+        Adds a paragraph with the text of a text item.
+
+        :param item: The text item.
+        :type item: TextItem
+        :param kind: What the paragraph is, or None for body text.
+        :type kind: str | None
+        :return: The items under the text item, to convert after it.
+        :rtype: list[NodeItem]
+        """
+        text, sources, children = self._text_of(item)
+        self._add_paragraph(text, kind, item, _provenance_of_items(sources))
+        return children
+
+    def _text_of(self, item: TextItem) -> tuple[str, list[NodeItem], list[NodeItem]]:
+        """
+        Returns the text of a text item, with the items that it is made from and
+        the items under it that are converted after it.
+
+        A text item whose text is in an inline group or a text item under it, e.g.
+        a heading or a list item with formatted text, takes the text of that item.
+        The tables and the pictures in that inline group, e.g. an image in a line
+        of Markdown, are converted after the text item.
+
+        :param item: The text item.
+        :type item: TextItem
+        :return: The text, the items that it is made from, and the items to convert
+            after it.
+        :rtype: tuple[str, list[NodeItem], list[NodeItem]]
+        """
+        children = self._children(item)
+        text = item.text.strip()
+        sources: list[NodeItem] = [item]
+        if not text and children:
+            first = children[0]
+            if isinstance(first, InlineGroup):
+                texts = self._inline_texts(first)
+                text = _join_inline(text_item.text for text_item in texts)
+                sources.extend(texts)
+                children = [*self._floating_items_in(first), *children[1:]]
+            elif isinstance(first, TextItem) and first.label in _BODY_TEXT_LABELS:
+                text = first.text.strip()
+                sources.append(first)
+                children = children[1:]
+        return text, sources, children
+
+    def _add_attached_texts(self, refs: Iterable[RefItem], kind: str) -> None:
+        """
+        Adds a paragraph for each caption or footnote of a table or a picture.
+
+        :param refs: The references of the captions or footnotes.
+        :type refs: Iterable[RefItem]
+        :param kind: What the paragraphs are, e.g. "Table caption".
+        :type kind: str
+        :return: None
+        :rtype: None
+        """
+        for ref in refs:
+            item = ref.resolve(self._document)
+            if isinstance(item, TextItem) and item.content_layer == ContentLayer.BODY:
+                for child in self._add_text(item, kind):
+                    self._convert_item(child, list_level=0)
+
+    @staticmethod
+    def _text_kind(item: TextItem) -> str | None:
+        """
+        Returns what the additional context of a paragraph calls a text item.
+
+        :param item: The text item.
+        :type item: TextItem
+        :return: The kind of the text, e.g. "Footnote", or None for body text.
+        :rtype: str | None
+        """
+        if item.label in _BODY_TEXT_LABELS:
+            return None
+        return _TEXT_KINDS.get(
+            item.label, _label_of(item).replace("_", " ").capitalize()
+        )
+
+    @staticmethod
+    def _container_name(group: GroupItem) -> str | None:
+        """
+        Returns the name of a sheet or a slide, for the additional context of its
+        paragraphs.
+
+        :param group: The Docling group.
+        :type group: GroupItem
+        :return: e.g. "Sheet: Q3" or "Slide 2", or None for a group that is not
+            a sheet or a slide.
+        :rtype: str | None
+        """
+        label = _label_of(group)
+        if label == "sheet" and _clean(group.name):
+            return f"Sheet: {_clean(group.name)}"
+        slide = _SLIDE_GROUP_NAME.fullmatch(group.name)
+        if label in ("chapter", "slide") and slide:
+            return f"Slide {int(slide.group(1)) + 1}"
+        return None
+
+    def _convert_heading(self, item: TextItem, list_level: int) -> None:
+        """
+        Adds a paragraph for the title or a heading, and converts the items under
+        it. A heading becomes the heading of the paragraphs that follow it, up to
+        the next heading of its level or above. The title ends the sections before
+        it.
+
+        :param item: The title or the section header.
+        :type item: TextItem
+        :param list_level: The nesting level of the list that the item is in,
+            0 outside lists.
+        :type list_level: int
+        :return: None
+        :rtype: None
+        """
+        level = item.level if isinstance(item, SectionHeaderItem) else 0
+        self._headings = [heading for heading in self._headings if heading[0] < level]
+        text, sources, children = self._text_of(item)
+        self._add_paragraph(
+            text,
+            f"Heading, level {level}" if level else "Title",
+            item,
+            _provenance_of_items(sources),
+        )
+        if level and _clean(text):
+            self._headings.append((level, _clean(text)))
+        for child in children:
+            self._convert_item(child, list_level)
+
+    def _inline_texts(self, group: NodeItem) -> list[TextItem]:
+        """
+        Returns the text items of an inline group, in order.
+
+        :param group: The inline group.
+        :type group: NodeItem
+        :return: The text items with text, including those of the groups in it.
+        :rtype: list[TextItem]
+        """
+        texts: list[TextItem] = []
+        for child in self._children(group):
+            if isinstance(child, TextItem) and child.text.strip():
+                texts.append(child)
+            elif isinstance(child, GroupItem):
+                texts.extend(self._inline_texts(child))
+        return texts
+
+    def _convert_list_item(self, item: ListItem, list_level: int) -> None:
+        """
+        Adds a paragraph for a list item, and converts the items under it, e.g.
+        a nested list. The text of a numbered list item starts with its number.
+
+        :param item: The list item.
+        :type item: ListItem
+        :param list_level: The nesting level of the list, 1 for a list that is not
+            in another list.
+        :type list_level: int
+        :return: None
+        :rtype: None
+        """
+        text, sources, children = self._text_of(item)
+        marker = item.marker.strip()
+        if text and item.enumerated and marker:
+            text = f"{marker} {text}"
+        level = max(list_level, 1)
+        self._add_paragraph(
+            text,
+            "List item" if level == 1 else f"List item, level {level}",
+            item,
+            _provenance_of_items(sources),
+        )
+        for child in children:
+            self._convert_item(child, list_level)
+
+    def _convert_table(self, table: TableItem) -> None:
+        """
+        Adds a paragraph for the header and for each row of a table, after its
+        captions and before its footnotes.
+
+        The header paragraph lists the labels of the columns. A row is given with
+        the label of each column, so that it can be read on its own, as a decision
+        model reads it. The tables and the pictures in the cells of the table are
+        converted after it: a cell has their captions, but not their content, in
+        its text.
+
+        :param table: The table.
+        :type table: TableItem
+        :return: None
+        :rtype: None
+        """
+        captions = [ref.resolve(self._document) for ref in table.captions]
+        caption = _clean(
+            " ".join(item.text for item in captions if isinstance(item, TextItem))
+        )
+        self._add_attached_texts(table.captions, "Table caption")
+        in_caption = (
+            f"; Table caption: {_shorten(caption, _MAX_CAPTION_LENGTH_IN_ROWS)}"
+            if caption
+            else ""
+        )
+        provenance = _provenance_of_items([table])
+        grid = table.data.grid
+        header_count = _count_header_rows(grid)
+        labels = _column_labels(grid[:header_count])
+        # A label that spans several columns is listed once
+        header = [
+            label
+            for i, label in enumerate(labels)
+            if label and (i == 0 or label != labels[i - 1])
+        ]
+        self._add_paragraph(
+            "; ".join(header), "Table header" + in_caption, table, provenance
+        )
+        for index, row in list(enumerate(grid))[header_count:]:
+            self._add_paragraph(
+                _row_text(row, labels),
+                "Table row" + in_caption,
+                table,
+                provenance,
+                row_index=index,
+            )
+        self._add_attached_texts(table.footnotes, "Table footnote")
+        for item in self._floating_items_in(table):
+            self._convert_item(item, list_level=0)
+
+    def _floating_items_in(self, item: NodeItem) -> list[NodeItem]:
+        """
+        Returns the tables and the pictures under an item, e.g. in the cells of
+        a table or in an inline group, without the items around them, whose text
+        is converted with the item.
+
+        :param item: The item, e.g. a table.
+        :type item: NodeItem
+        :return: The tables and the pictures, in order.
+        :rtype: list[NodeItem]
+        """
+        items: list[NodeItem] = []
+        for child in self._children(item):
+            if isinstance(child, TableItem | PictureItem):
+                items.append(child)
+            else:
+                items.extend(self._floating_items_in(child))
+        return items
+
+    def _convert_picture(self, picture: PictureItem) -> None:
+        """
+        Adds the image of a picture, after the paragraphs of its captions and before
+        those of its footnotes. The text found inside the picture is not added.
+
+        :param picture: The picture.
+        :type picture: PictureItem
+        :return: None
+        :rtype: None
+        """
+        self._add_attached_texts(picture.captions, "Picture caption")
+        image_data = _image_data(picture, self._document)
+        if image_data is None:
+            self.pictures_without_images += 1
+        elif any(image.base64_data == image_data[1] for image in self.images):
+            # The images of a document are unique: a picture that repeats an
+            # earlier one, e.g. a logo on each page, is attached once
+            logger.debug(f"Picture {picture.self_ref} repeats an earlier picture")
+        else:
+            mime_type, base64_data = image_data
+            self.images.append(
+                _publicize(
+                    _Image,
+                    mime_type=mime_type,
+                    base64_data=base64_data,
+                    custom_data={
+                        "docling": {
+                            "self_ref": picture.self_ref,
+                            "label": _label_of(picture),
+                            "prov": _provenance_of_items([picture]),
+                        }
+                    },
+                )
+            )
+        self._add_attached_texts(picture.footnotes, "Picture footnote")
+
+    def _convert_field(self, field: FieldItem) -> None:
+        """
+        Adds a paragraph for a form field, with its key and its value, e.g.
+        "Full name: Ada Lovelace" or "I agree to the terms: checked".
+
+        :param field: The form field.
+        :type field: FieldItem
+        :return: None
+        :rtype: None
+        """
+        keys = []
+        values = []
+        sources: list[NodeItem] = [field]
+        for child in self._children(field):
+            if not isinstance(child, TextItem) or child.label == DocItemLabel.MARKER:
+                continue
+            if child.label == DocItemLabel.FIELD_KEY:
+                keys.append(_clean(child.text))
+                sources.append(child)
+            else:
+                values.append(self._field_value(child, sources))
+        self._add_paragraph(
+            _labelled(
+                " ".join(key for key in keys if key),
+                " ".join(value for value in values if value),
+            ),
+            "Form field",
+            field,
+            _provenance_of_items(sources),
+        )
+
+    def _field_value(self, item: TextItem, sources: list[NodeItem]) -> str:
+        """
+        Returns the value of a form field, from its value item and the items under
+        it, e.g. a checkbox.
+
+        :param item: The value item, or an item under it.
+        :type item: TextItem
+        :param sources: The items that the paragraph of the field is made from,
+            which the items of the value are added to.
+        :type sources: list[NodeItem]
+        :return: The value, e.g. "Ada Lovelace" or "checked".
+        :rtype: str
+        """
+        sources.append(item)
+        parts = [_clean(item.text)]
+        if item.label in _CHECKBOX_VALUES:
+            state = _CHECKBOX_VALUES[item.label]
+            parts = [f"{parts[0]} ({state})" if parts[0] else state]
+        for child in self._children(item):
+            if isinstance(child, TextItem):
+                parts.append(self._field_value(child, sources))
+        return " ".join(part for part in parts if part)
+
+    def _convert_graph(self, item: KeyValueItem | FormItem) -> None:
+        """
+        Adds a paragraph for each key of a key-value region or a form, with its
+        values, and for each cell that is not linked to a key.
+
+        :param item: The key-value region or the form.
+        :type item: KeyValueItem | FormItem
+        :return: None
+        :rtype: None
+        """
+        cells = {cell.cell_id: cell for cell in item.graph.cells}
+        values_of_keys: dict[int, list[int]] = {}
+        for link in item.graph.links:
+            if (
+                link.label == GraphLinkLabel.TO_VALUE
+                and link.source_cell_id in cells
+                and link.target_cell_id in cells
+            ):
+                values_of_keys.setdefault(link.source_cell_id, []).append(
+                    link.target_cell_id
+                )
+        linked_values = {
+            value for values in values_of_keys.values() for value in values
+        }
+        kind = "Form field" if isinstance(item, FormItem) else "Key-value pair"
+        for cell in item.graph.cells:
+            if cell.cell_id in linked_values:
+                continue
+            parts = [cells[value] for value in values_of_keys.get(cell.cell_id, [])]
+            value = "; ".join(_clean(part.text) for part in parts if _clean(part.text))
+            self._add_paragraph(
+                _labelled(_clean(cell.text), value),
+                kind,
+                item,
+                # Where the cells have no provenance, e.g. from DocTags, the pages
+                # of the region
+                _provenance(part.prov for part in (cell, *parts))
+                or _provenance_of_items([item]),
+            )
+
+
+def _convert_docling_document(
+    document: DoclingDocument,
+) -> tuple[list[_Paragraph], list[_Image]]:
+    """
+    Converts a Docling document into the paragraphs and the images of a ContextGem
+    document.
+
+    :param document: The Docling document.
+    :type document: DoclingDocument
+    :return: The paragraphs and the images, in the order of the Docling document.
+    :rtype: tuple[list[_Paragraph], list[_Image]]
+    :raises TypeError: If ``document`` is not a Docling document.
+    :raises ValueError: If the body of the Docling document has no text or images.
+    """
+    if not isinstance(document, DoclingDocument):
+        hint = (
+            " A Docling conversion result holds it in `document`: "
+            "Document.from_docling(result.document)."
+            if isinstance(getattr(document, "document", None), DoclingDocument)
+            else ""
+        )
+        raise TypeError(
+            f"Expected a DoclingDocument of docling-core, "
+            f"got {type(document).__name__}.{hint}"
+        )
+    converter = _DoclingConverter(document)
+    converter.convert()
+    if converter.pictures_without_images:
+        logger.info(
+            f"{converter.pictures_without_images} picture(s) of the Docling document "
+            f"are not attached to the document as images, as the Docling document "
+            f"has no image data for them. To attach the pictures of a PDF file, "
+            f"convert it with `generate_picture_images=True` in the PDF pipeline "
+            f"options of Docling."
+        )
+    if not converter.paragraphs and not converter.images:
+        raise ValueError(
+            "The body of the Docling document has no text or images to create "
+            "a document from."
+        )
+    return converter.paragraphs, converter.images

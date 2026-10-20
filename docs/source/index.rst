@@ -281,6 +281,7 @@ Indices and tables
    :hidden:
 
    documents/document_config
+   documents/docling
 
 .. toctree::
    :maxdepth: 2

@@ -1,6 +1,9 @@
 # Signed contributor agreements live verbatim — do not lint or auto-fix.
+# The Markdown files that the Docling converter is tested on are its inputs,
+# with unusual Markdown on purpose, which the tests convert as they are.
 ignores:
   - ".github/contributors/**"
+  - "tests/other_files/docling/**"
 
 config:
   no-duplicate-heading:

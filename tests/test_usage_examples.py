@@ -9,14 +9,21 @@ from __future__ import annotations
 
 import importlib
 import sys
+import types
 from pathlib import Path
 
 import pytest
+from docling_core.types.doc import DoclingDocument
 
 from tests.base import BaseTest
 
 
 _USAGE_EXAMPLES_DIR = Path(__file__).parent.parent / "dev" / "usage_examples"
+
+# The Docling document of the file that the usage examples convert with Docling
+_DOCLING_DOCUMENT_PATH = (
+    Path(__file__).parent / "other_files" / "docling" / "service_agreement.pdf.json"
+)
 
 # The usage examples of the documentation and of the README that send requests to
 # the API of a model, as the names of their modules in `dev/usage_examples/`. Each
@@ -58,6 +65,7 @@ _EXAMPLES_WITH_REQUESTS = [
     "docs.decision_models.decision_model_concepts",
     "docs.decision_models.decision_model_group",
     "docs.decision_models.decision_model_usage_and_cost",
+    "docs.documents.docling_cited_pages",
     "docs.llm_config.chat_with_tools",
     "docs.llm_config.chat_with_tools_simple",
     "docs.llms.llm_extraction_methods.extract_all",
@@ -87,6 +95,7 @@ _EXAMPLES_WITHOUT_REQUESTS = [
     "docs.decision_models.decision_model_init",
     "docs.decision_models.decision_model_local",
     "docs.decision_models.decision_model_threshold",
+    "docs.documents.docling_conversion",
     "docs.llm_config.cost_tracking",
     "docs.llm_config.detailed_usage",
     "docs.llm_config.fallback_models",
@@ -101,6 +110,68 @@ _EXAMPLES_WITHOUT_REQUESTS = [
     "docs.optimizations.optimization_speed",
 ]
 
+# The usage examples that convert a PDF file with Docling. A PDF file needs the
+# models of Docling, which run on PyTorch and are not in the tests: these examples
+# are run with a stand-in for its converter.
+_EXAMPLES_WITH_DOCLING = [
+    "docs.documents.docling_cited_pages",
+    "docs.documents.docling_conversion",
+]
+
+
+class _DoclingConversionResult:
+    """
+    Stands in for the result of a conversion with Docling.
+    """
+
+    def __init__(self, document: DoclingDocument) -> None:
+        """
+        Creates the result of a conversion.
+
+        :param document: The Docling document of the converted file.
+        :type document: DoclingDocument
+        """
+        self.document = document
+
+
+class _DoclingDocumentConverter:
+    """
+    Stands in for the ``DocumentConverter`` of Docling, for the usage examples that
+    convert `service_agreement.pdf` with it. It returns the Docling document that
+    full Docling converted that file into, `tests/other_files/docling/
+    service_agreement.pdf.json` (see ``test_from_docling_converted_pdf`` in
+    `tests/test_documents.py`).
+    """
+
+    def convert(self, source: str | Path) -> _DoclingConversionResult:
+        """
+        Converts the file of the usage examples.
+
+        :param source: The path of the file.
+        :type source: str | Path
+        :return: The result of the conversion.
+        :rtype: _DoclingConversionResult
+        """
+        assert Path(source).name == "service_agreement.pdf", source
+        return _DoclingConversionResult(
+            DoclingDocument.load_from_json(_DOCLING_DOCUMENT_PATH)
+        )
+
+
+def _docling_stand_in_modules() -> dict[str, types.ModuleType]:
+    """
+    Returns the modules of a stand-in for Docling, whose ``DocumentConverter`` is
+    ``_DoclingDocumentConverter``.
+
+    :return: The modules, by name, to put in ``sys.modules``.
+    :rtype: dict[str, types.ModuleType]
+    """
+    docling = types.ModuleType("docling")
+    document_converter = types.ModuleType("docling.document_converter")
+    setattr(document_converter, "DocumentConverter", _DoclingDocumentConverter)  # noqa: B010
+    setattr(docling, "document_converter", document_converter)  # noqa: B010
+    return {"docling": docling, "docling.document_converter": document_converter}
+
 
 def _run_usage_example(example: str) -> None:
     """
@@ -108,7 +179,8 @@ def _run_usage_example(example: str) -> None:
 
     A module is executed only when it is first imported. If the module is already
     imported, e.g. by another test, it is removed from the imported modules first,
-    so that the example is run by the test that calls this function.
+    so that the example is run by the test that calls this function. An example
+    that converts a file with Docling is run with a stand-in for Docling.
 
     :param example: The name of the module of the example in `dev/usage_examples/`,
         e.g. "docs.quickstart.quickstart_aspect".
@@ -118,7 +190,17 @@ def _run_usage_example(example: str) -> None:
     """
     module_name = f"dev.usage_examples.{example}"
     sys.modules.pop(module_name, None)
-    importlib.import_module(module_name)
+    stand_ins = _docling_stand_in_modules() if example in _EXAMPLES_WITH_DOCLING else {}
+    # Only the stand-ins are taken out afterwards: the modules that the example
+    # imports for the first time stay imported
+    replaced = {name: sys.modules[name] for name in stand_ins if name in sys.modules}
+    sys.modules.update(stand_ins)
+    try:
+        importlib.import_module(module_name)
+    finally:
+        for name in stand_ins:
+            sys.modules.pop(name, None)
+        sys.modules.update(replaced)
 
 
 class TestUsageExamples(BaseTest):

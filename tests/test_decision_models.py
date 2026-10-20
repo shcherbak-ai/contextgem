@@ -17,8 +17,7 @@ import re
 import sys
 import types
 import warnings
-from collections.abc import Callable, Generator, Sequence
-from contextlib import contextmanager
+from collections.abc import Callable, Sequence
 from decimal import ROUND_HALF_UP, Decimal
 from pathlib import Path
 from typing import Any, Literal
@@ -73,7 +72,6 @@ from contextgem.internal.items import (
     _LabelItem,
     _StringItem,
 )
-from contextgem.internal.loggers import logger
 from contextgem.public import (
     Aspect,
     BooleanConcept,
@@ -94,7 +92,7 @@ from contextgem.public import (
 )
 from tests.base import BaseTest
 from tests.conftest import VCR_DUMMY_ENDPOINT_PREFIX, VCR_REDACTION_MARKER
-from tests.utils import REDACTED_VALUE
+from tests.utils import REDACTED_VALUE, capture_logs
 
 
 # The module object that the decision model calls the Decisions API through,
@@ -824,41 +822,6 @@ def _create_sentences_responder(
         return _create_decisions_response(request["questions"], answers, **usage_kwargs)
 
     return respond
-
-
-@contextmanager
-def _capture_logs(level: int = stdlib_logging.INFO) -> Generator[list[str]]:
-    """
-    Captures the messages logged by the framework at the given level and above.
-
-    :param level: The lowest level of the messages to capture. Defaults to INFO.
-    :type level: int
-    :return: Context manager that gives the list the messages are added to.
-    :rtype: Generator[list[str]]
-    """
-    captured_logs: list[str] = []
-
-    class CaptureHandler(stdlib_logging.Handler):
-        """
-        Handler to capture log messages for testing.
-        """
-
-        def emit(self, record: stdlib_logging.LogRecord) -> None:
-            """
-            Adds the log message to the captured ones.
-
-            :param record: The log record.
-            :type record: stdlib_logging.LogRecord
-            """
-            captured_logs.append(record.getMessage())
-
-    capture_handler = CaptureHandler()
-    capture_handler.setLevel(level)
-    logger.addHandler(capture_handler)
-    try:
-        yield captured_logs
-    finally:
-        logger.removeHandler(capture_handler)
 
 
 def _predicate_answer(
@@ -3139,7 +3102,7 @@ class TestDecisionModels(BaseTest):
         decisions_stub = _DecisionsAPIStub({_DECISION_MODEL: [respond]})
         with (
             patch.object(litellm, "adecisions", new=decisions_stub),
-            _capture_logs() as captured_logs,
+            capture_logs() as captured_logs,
         ):
             extracted_concepts = decision_model.extract_concepts_from_document(
                 document, max_paragraphs_to_analyze_per_call=2
@@ -3230,7 +3193,7 @@ class TestDecisionModels(BaseTest):
             decisions_stub.requests.clear()
             with (
                 patch.object(litellm, "adecisions", new=decisions_stub),
-                _capture_logs() as captured_logs,
+                capture_logs() as captured_logs,
             ):
                 decision_model.extract_concepts_from_document(
                     document,
@@ -3821,7 +3784,7 @@ class TestDecisionModels(BaseTest):
                 )
                 with (
                     patch.object(litellm, "adecisions", new=decisions_stub),
-                    _capture_logs(stdlib_logging.ERROR) as captured_logs,
+                    capture_logs(stdlib_logging.ERROR) as captured_logs,
                     pytest.raises(
                         ModelExtractionError,
                         match="Some concepts could not be processed due to "
@@ -4068,7 +4031,7 @@ class TestDecisionModels(BaseTest):
         decisions_stub = _DecisionsAPIStub({_DECISION_MODEL: [respond]})
         with (
             patch.object(litellm, "adecisions", new=decisions_stub),
-            _capture_logs() as captured_logs,
+            capture_logs() as captured_logs,
         ):
             decision_model.extract_all(document, max_paragraphs_to_analyze_per_call=2)
 
@@ -4603,7 +4566,7 @@ class TestDecisionModels(BaseTest):
             # without sending the failed request again: only the warning on
             # the failed request, as the model returned no response to report
             for extraction_kwargs in [{}, {"use_concurrency": True}]:
-                with _capture_logs(stdlib_logging.WARNING) as captured_logs:
+                with capture_logs(stdlib_logging.WARNING) as captured_logs:
                     decisions_stub, document, decision_model = extract(
                         [rate_limit_error],
                         document=create_document(n_concepts=2),
@@ -4632,7 +4595,7 @@ class TestDecisionModels(BaseTest):
             completions_stub = _CompletionsAPIStub({_LLM_MODEL: [llm_auth_error]})
             with (
                 patch.object(litellm, "acompletion", new=completions_stub),
-                _capture_logs(stdlib_logging.WARNING) as captured_logs,
+                capture_logs(stdlib_logging.WARNING) as captured_logs,
             ):
                 llm.extract_concepts_from_document(
                     document,
@@ -4833,7 +4796,7 @@ class TestDecisionModels(BaseTest):
             )
             with (
                 patch.object(litellm, "adecisions", new=decisions_stub),
-                _capture_logs(stdlib_logging.ERROR) as captured_logs,
+                capture_logs(stdlib_logging.ERROR) as captured_logs,
                 pytest.raises(
                     ModelExtractionError,
                     match="Some concepts could not be processed due to "
@@ -4913,7 +4876,7 @@ class TestDecisionModels(BaseTest):
         decisions_stub = _DecisionsAPIStub({_DECISION_MODEL: [invalid_outcomes[0][0]]})
         with (
             patch.object(litellm, "adecisions", new=decisions_stub),
-            _capture_logs(stdlib_logging.WARNING) as captured_logs,
+            capture_logs(stdlib_logging.WARNING) as captured_logs,
         ):
             decision_model.extract_concepts_from_document(
                 document, raise_exception_on_extraction_error=False
@@ -5284,7 +5247,7 @@ class TestDecisionModels(BaseTest):
                 {_LLM_MODEL: [llm_auth_error]},
             )
         assert exc_info.value.original_error is auth_error
-        with _capture_logs(stdlib_logging.WARNING) as captured_logs:
+        with capture_logs(stdlib_logging.WARNING) as captured_logs:
             document, _ = extract(
                 create_llm_with_decision_model_fallback(),
                 {_DECISION_MODEL: [auth_error]},
@@ -6741,7 +6704,7 @@ class TestDecisionModels(BaseTest):
         with (
             patch.object(litellm, "adecisions", new=decisions_stub),
             patch.object(litellm, "acompletion", new=completions_stub),
-            _capture_logs() as captured_logs,
+            capture_logs() as captured_logs,
         ):
             assert llm.chat("What's 2+2?") == "4"
         assert completions_stub.requested_models() == [_LLM_MODEL]
@@ -6756,7 +6719,7 @@ class TestDecisionModels(BaseTest):
         with (
             patch.object(litellm, "adecisions", new=decisions_stub),
             patch.object(litellm, "acompletion", new=completions_stub),
-            _capture_logs() as captured_logs,
+            capture_logs() as captured_logs,
         ):
             assert llm.chat("What's 2+2?") == "4"
         assert completions_stub.requested_models() == [_LLM_MODEL, _OTHER_LLM_MODEL]
@@ -6773,7 +6736,7 @@ class TestDecisionModels(BaseTest):
         with (
             patch.object(litellm, "adecisions", new=decisions_stub),
             patch.object(litellm, "acompletion", new=completions_stub),
-            _capture_logs() as captured_logs,
+            capture_logs() as captured_logs,
             pytest.raises(ModelAPIError) as exc_info,
         ):
             llm.chat("What's 2+2?")
@@ -6815,7 +6778,7 @@ class TestDecisionModels(BaseTest):
         completions_stub = _CompletionsAPIStub({_LLM_MODEL: ["4"]})
         with (
             patch.object(litellm, "acompletion", new=completions_stub),
-            _capture_logs() as captured_logs,
+            capture_logs() as captured_logs,
         ):
             assert llm.chat("What's 2+2?") == "4"
         assert not any("cannot chat" in log for log in captured_logs)
@@ -7338,7 +7301,7 @@ class TestDecisionModels(BaseTest):
             # paragraph is always sent in a request of its own, i.e. any such limit
             # is met, which there is no message about
             decisions_stub.requests.clear()
-            with _capture_logs() as captured_logs:
+            with capture_logs() as captured_logs:
                 decision_model.extract_aspects_from_document(
                     document,
                     overwrite_existing=True,
@@ -7870,7 +7833,7 @@ class TestDecisionModels(BaseTest):
             decisions_stub = _DecisionsAPIStub({_DECISION_MODEL: [respond_or_fail]})
             with (
                 patch.object(litellm, "adecisions", new=decisions_stub),
-                _capture_logs(stdlib_logging.ERROR) as captured_logs,
+                capture_logs(stdlib_logging.ERROR) as captured_logs,
                 pytest.raises(ModelExtractionError),
             ):
                 decision_model.extract_aspects_from_document(document)
@@ -9583,7 +9546,7 @@ class TestDecisionModels(BaseTest):
             decisions_stub.requests.clear()
             with (
                 patch.object(litellm, "adecisions", new=decisions_stub),
-                _capture_logs(stdlib_logging.WARNING) as captured_logs,
+                capture_logs(stdlib_logging.WARNING) as captured_logs,
             ):
                 decision_model.extract_aspects_from_document(
                     document,
@@ -9639,7 +9602,7 @@ class TestDecisionModels(BaseTest):
             )
             with (
                 patch.object(litellm, "adecisions", new=decisions_stub),
-                _capture_logs(stdlib_logging.ERROR) as captured_logs,
+                capture_logs(stdlib_logging.ERROR) as captured_logs,
                 pytest.raises(
                     ModelExtractionError,
                     match="Some aspects could not be processed due to "
@@ -9674,7 +9637,7 @@ class TestDecisionModels(BaseTest):
         )
         with (
             patch.object(litellm, "adecisions", new=decisions_stub),
-            _capture_logs(stdlib_logging.ERROR) as captured_logs,
+            capture_logs(stdlib_logging.ERROR) as captured_logs,
             pytest.raises(ModelExtractionError),
         ):
             decision_model.extract_aspects_from_document(document)
@@ -10777,7 +10740,7 @@ class TestDecisionModels(BaseTest):
             decisions_stub.requests.clear()
             with (
                 patch.object(litellm, "adecisions", new=decisions_stub),
-                _capture_logs(stdlib_logging.WARNING) as captured_logs,
+                capture_logs(stdlib_logging.WARNING) as captured_logs,
             ):
                 decision_model.extract_aspects_from_document(
                     document,
@@ -10881,7 +10844,7 @@ class TestDecisionModels(BaseTest):
             )
             with (
                 patch.object(litellm, "adecisions", new=decisions_stub),
-                _capture_logs(stdlib_logging.ERROR) as captured_logs,
+                capture_logs(stdlib_logging.ERROR) as captured_logs,
                 pytest.raises(
                     ModelExtractionError,
                     match="Some aspects could not be processed due to "
@@ -11231,7 +11194,7 @@ class TestDecisionModels(BaseTest):
             """
             with (
                 patch.object(litellm, "adecisions", new=decisions_stub),
-                _capture_logs(stdlib_logging.WARNING) as captured_logs,
+                capture_logs(stdlib_logging.WARNING) as captured_logs,
                 warnings.catch_warnings(record=True) as caught_warnings,
             ):
                 warnings.simplefilter("always")
@@ -11377,7 +11340,7 @@ class TestDecisionModels(BaseTest):
             decisions_stub = _DecisionsAPIStub({_DECISION_MODEL: [respond_refusing]})
             with (
                 patch.object(litellm, "adecisions", new=decisions_stub),
-                _capture_logs(stdlib_logging.WARNING) as captured_logs,
+                capture_logs(stdlib_logging.WARNING) as captured_logs,
                 pytest.raises(
                     ModelExtractionError,
                     match="Some aspects could not be processed due to "
@@ -11442,7 +11405,7 @@ class TestDecisionModels(BaseTest):
                 "adecisions",
                 new=_DecisionsAPIStub({_DECISION_MODEL: [respond_refusing]}),
             ),
-            _capture_logs(stdlib_logging.WARNING) as captured_logs,
+            capture_logs(stdlib_logging.WARNING) as captured_logs,
         ):
             decision_model.extract_aspects_from_document(
                 document, raise_exception_on_extraction_error=False
@@ -12442,7 +12405,7 @@ class TestDecisionModels(BaseTest):
             )
             with (
                 patch.object(litellm, "adecisions", new=decisions_stub),
-                _capture_logs(stdlib_logging.ERROR) as captured_logs,
+                capture_logs(stdlib_logging.ERROR) as captured_logs,
                 pytest.raises(
                     ModelExtractionError,
                     match="an invalid response returned by decision model",

@@ -12,7 +12,7 @@ import itertools
 from collections.abc import Sequence
 from copy import deepcopy
 from pathlib import Path
-from typing import Annotated, Any, Literal, Self, TypeVar
+from typing import TYPE_CHECKING, Annotated, Any, Literal, Self, TypeVar
 
 from pydantic import (
     BeforeValidator,
@@ -46,6 +46,10 @@ from contextgem.internal.utils import (
     _split_into_sentences,
     _split_text_into_paragraphs,
 )
+
+
+if TYPE_CHECKING:
+    from docling_core.types.doc import DoclingDocument
 
 
 # Instance-dict keys for the lazily built paragraph/sentence position lookup caches.
@@ -413,6 +417,89 @@ class _Document(_AssignedInstancesProcessor):
         document._relink_references()
         return document
 
+    @classmethod
+    def from_docling(cls, docling_document: DoclingDocument, **kwargs: Any) -> Self:
+        """
+        Creates a document from a file converted with Docling.
+
+        `Docling <https://github.com/docling-project/docling>`_ converts files such as
+        PDF, DOCX, PPTX, XLSX, HTML and scanned images into a ``DoclingDocument``,
+        which holds the text, the tables and the pictures of the file, with their
+        structure and their place on the page. This method makes a paragraph of each
+        piece of text in the body of the Docling document, in reading order:
+
+        - The title, the headings, the paragraphs, the list items, the captions,
+          the footnotes, the code and the formulas are paragraphs of their own.
+          The text of a numbered list item starts with its number.
+        - A table is a paragraph with the headers of its columns, if it has them,
+          followed by a paragraph for each row, with each value after the header
+          of its column, e.g. ``Service: Hosting; Monthly fee: 1,200 EUR``.
+        - Each form field is a paragraph with its key and its value.
+        - The pictures are attached as images, if the Docling document has image
+          data for them. For a PDF file, convert it with
+          ``generate_picture_images=True`` in the PDF pipeline options of Docling.
+
+        The additional context of each paragraph says what the paragraph is, e.g.
+        ``List item`` or ``Table row``, and gives the headings of its section, e.g.
+        ``List item; Section: 3. Fees > 3.1 Invoices``. It is sent to the models
+        together with the paragraph (see :ref:`paragraph-additional-context`).
+
+        The ``page_numbers`` of each paragraph are the numbers of the pages that its
+        text is on, and its sentences have them too. The ``reference_page_numbers``
+        of an aspect or of an extracted item are then the pages of its references,
+        e.g. to cite them. For a presentation, the pages are the slides, and for
+        a spreadsheet, the sheets. They are empty for the formats without pages,
+        e.g. DOCX and HTML.
+
+        The custom data of each paragraph and image holds, under the key
+        ``"docling"``, the reference of the Docling item it is made from
+        (``self_ref``, e.g. ``"#/texts/12"``), the label of that item (``label``,
+        e.g. ``"list_item"``), and its provenance (``prov``): for each part of the
+        item, the number of its page (``page_no``) and its bounding box on the page
+        (``bbox``). A paragraph made from a table row also has the index of the row
+        in the table (``row_index``). The provenance is empty for the formats
+        without pages, e.g. DOCX and HTML.
+
+        Page headers and footers, comments and the text found inside pictures are
+        not converted.
+
+        Requires the ``docling`` extra, which installs Docling:
+        ``uv add "contextgem[docling]"``. A Docling document converted elsewhere,
+        e.g. loaded from JSON, needs only ``docling-core``.
+
+        :param docling_document: The document converted with Docling, e.g.
+            ``DocumentConverter().convert(source).document``.
+        :type docling_document: DoclingDocument
+        :param kwargs: Other attributes of the document, e.g. ``aspects``,
+            ``concepts`` or ``sat_model_id``. The ``raw_text``, the ``paragraphs``
+            and the ``images`` of the document are made from the Docling document.
+        :type kwargs: Any
+        :return: A new document with the paragraphs and the images of the Docling
+            document.
+        :rtype: Self
+        :raises ImportError: If docling-core, which the ``docling`` extra installs,
+            is not installed, or is older than the version that the method needs,
+            e.g. with an older Docling installed without the extra.
+        :raises TypeError: If ``docling_document`` is not a ``DoclingDocument``, or
+            if ``raw_text``, ``paragraphs`` or ``images`` is passed.
+        :raises ValueError: If the body of the Docling document has no text and no
+            images.
+        """
+        reserved = sorted({"raw_text", "paragraphs", "images"} & kwargs.keys())
+        if reserved:
+            raise TypeError(
+                f"`{'`, `'.join(reserved)}` cannot be passed to from_docling(): "
+                f"the text, the paragraphs and the images of the document are made "
+                f"from the Docling document."
+            )
+        # docling-core is an optional dependency, imported only for the conversion
+        from contextgem.internal.converters.docling import (
+            _convert_docling_document,
+        )
+
+        paragraphs, images = _convert_docling_document(docling_document)
+        return cls(paragraphs=paragraphs, images=images, **kwargs)
+
     def _segment_document_text(self) -> None:
         """
         If no paragraphs are provided, but text exists, segments paragraphs in text,
@@ -581,7 +668,8 @@ class _Document(_AssignedInstancesProcessor):
                         raw_text=i,
                         custom_data=paragraph.custom_data,
                         additional_context=paragraph.additional_context,
-                    )  # inherit custom data and additional context from paragraph object
+                        page_numbers=paragraph.page_numbers,
+                    )  # inherit custom data, additional context and pages from paragraph
                     for i in sent_group
                 ]
 

@@ -124,6 +124,9 @@ When a :class:`~contextgem.public.concepts.NumericalConcept` is extracted, it is
    * - ``reference_sentences``
      - list[:class:`~contextgem.public.sentences.Sentence`]
      - List of sentence objects where the numerical value was found or from which it was calculated or inferred (only if ``add_references=True`` and ``reference_depth="sentences"``)
+   * - ``reference_page_numbers``
+     - list[int]
+     - Numbers of the pages that the reference paragraphs and sentences are on, e.g. in a document created from a file converted with Docling (see :doc:`../documents/docling`) (only if ``add_references=True``). Empty if the references have no page numbers
 
 .. note::
    To find the position of a reference paragraph or sentence in the document, e.g. to cite it or to retrieve its surrounding context, see :ref:`locating-paras-and-sents`.

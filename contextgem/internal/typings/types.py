@@ -108,6 +108,9 @@ JSONDict = dict[str, JSONValue]
 # and use a validator instead.
 JSONDictField = Annotated[dict[str, Any], BeforeValidator(_validate_is_json_dict)]
 
+# The number of a page of a document, from 1
+PageNumber = Annotated[StrictInt, Field(ge=1)]
+
 
 # Tool-calling related types
 # A tool handler can be sync or async, but must return a string.

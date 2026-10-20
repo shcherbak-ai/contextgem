@@ -1,0 +1,79 @@
+name: Docling fixtures
+
+# Converts the fixtures of the tests of the docling extra with full Docling, on
+# the CPU-only PyTorch, and checks that ContextGem makes the same paragraphs from
+# them as from the committed Docling documents (dev/docling_fixtures.py). The
+# tests convert the DOCX, XLSX, PPTX, HTML and Markdown fixtures themselves, with
+# the torch-free docling-slim of the dev group. A PDF file needs the models of
+# Docling, which only this workflow runs. It runs when the version of Docling can
+# change (uv.lock) or the converter does, and weekly with the latest Docling, to
+# find its changes before an upgrade.
+
+on:
+  push:
+    branches: [ main, dev ]
+    paths:
+      - "uv.lock"
+      - "contextgem/internal/converters/**"
+      - "tests/other_files/docling/**"
+      - "dev/docling_fixtures.py"
+      - ".github/workflows/docling-fixtures.yml"
+  pull_request:
+    branches: [ main, dev ]
+    paths:
+      - "uv.lock"
+      - "contextgem/internal/converters/**"
+      - "tests/other_files/docling/**"
+      - "dev/docling_fixtures.py"
+      - ".github/workflows/docling-fixtures.yml"
+  schedule:
+    # Mondays, with the latest Docling
+    - cron: "23 5 * * 1"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+env:
+  PYTHONUTF8: "1"
+  PYTHONIOENCODING: "utf-8"
+  # Give HuggingFace Hub downloads more headroom before timing out, so a slow
+  # CDN response is retried rather than failing the cold-cache model fetch.
+  HF_HUB_DOWNLOAD_TIMEOUT: "30"
+  UV_VERSION: "0.13.1"
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@1c37ad07a6a961277cf70c0d37d6f313000f5884  # v10.3.0
+        with:
+          version: ${{ env.UV_VERSION }}
+          enable-cache: true
+
+      - name: Set up Python from .python-version
+        run: uv python install
+
+      # Fabric, for the task. The script installs ContextGem with full Docling
+      # in a throwaway environment of its own.
+      - name: Install dependencies
+        run: uv sync --locked
+
+      # The layout and table models of Docling, about 0.5 GB
+      - name: Cache the models of Docling
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9  # v6.1.0
+        with:
+          path: ~/.cache/huggingface
+          key: docling-models-${{ runner.os }}-${{ hashFiles('uv.lock') }}
+          restore-keys: |
+            docling-models-${{ runner.os }}-
+
+      - name: Check the Docling documents of the fixtures
+        run: >-
+          uv run fab docling-fixtures
+          --docling-version ${{ github.event_name == 'schedule' && 'latest' || 'locked' }}

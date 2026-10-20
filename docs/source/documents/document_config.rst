@@ -96,7 +96,9 @@ When you create the paragraphs yourself, e.g. from the structured output of a do
    :language: python
    :caption: Paragraphs with additional context
 
-Pass such paragraphs to the document via ``paragraphs``. The additional context:
+Pass such paragraphs to the document via ``paragraphs``. For a file converted with Docling, :meth:`~contextgem.public.documents.Document.from_docling` creates the paragraphs and their additional context from the structure that Docling found in the file (see :doc:`docling`).
+
+The additional context:
 
 - should be a single-line string: it is cleaned before it is sent to a model, as the text of the paragraph is, i.e. control characters are removed, and whitespace, line breaks included, is collapsed to single spaces. A warning is logged if it has line breaks, as they are not kept. Additional context of which nothing is left is not sent;
 - is passed to the LLM together with the paragraph text in the prompts that list paragraphs, i.e. when aspects are extracted, or when concepts are extracted with references (``add_references=True``). It is not used when concepts are extracted from the document text as a whole;
@@ -145,6 +147,13 @@ This makes the methods suitable for working with extraction references, e.g. cit
    # Surrounding context of a reference paragraph
    ref_index = document.get_paragraph_index(ref_para)
    context_window = document.paragraphs[max(0, ref_index - 2) : ref_index + 3]
+
+Paragraphs and sentences can also hold the numbers of the pages that they are on, in ``page_numbers``, which :meth:`~contextgem.public.documents.Document.from_docling` sets for a file with pages, e.g. a PDF file, and which you can set on the paragraphs that you create yourself. Sentences segmented from a paragraph inherit them. The ``reference_page_numbers`` of an aspect or of an extracted item are then the pages of its references:
+
+.. code-block:: python
+
+   # Pages of the references of an extracted item, e.g. [4, 5]
+   pages = concept.extracted_items[0].reference_page_numbers
 
 
 .. _sat-models-offline:

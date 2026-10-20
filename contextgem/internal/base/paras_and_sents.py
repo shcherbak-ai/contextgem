@@ -14,7 +14,7 @@ from pydantic import Field, field_validator, model_validator
 from contextgem.internal.base.instances import _InstanceBase
 from contextgem.internal.decorators import _disable_direct_initialization
 from contextgem.internal.loggers import logger
-from contextgem.internal.typings.types import NonEmptyStr
+from contextgem.internal.typings.types import NonEmptyStr, PageNumber
 from contextgem.internal.utils import _contains_linebreaks
 
 
@@ -29,6 +29,27 @@ class _ParasAndSentsBase(_InstanceBase):
             "Optional supplementary information without linebreaks; used to enrich prompts."
         ),
     )
+    page_numbers: list[PageNumber] = Field(
+        default_factory=list,
+        description=(
+            "Numbers of the pages of the document that the text is on, from 1; "
+            "not sent to the models."
+        ),
+    )
+
+    @field_validator("page_numbers")
+    @classmethod
+    def _validate_page_numbers(cls, page_numbers: list[int]) -> list[int]:
+        """
+        Puts the page numbers in ascending order, without repetitions, e.g. for
+        a text that is on two pages and was found in several parts.
+
+        :param page_numbers: The page numbers.
+        :type page_numbers: list[int]
+        :return: The page numbers in ascending order, each once.
+        :rtype: list[int]
+        """
+        return sorted(set(page_numbers))
 
     @field_validator("additional_context")
     @classmethod

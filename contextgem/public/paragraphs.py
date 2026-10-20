@@ -40,6 +40,14 @@ class Paragraph(_Paragraph):
         model is sent it together with the paragraph text when aspects are extracted.
         Sentences segmented from the paragraph inherit it. Defaults to None.
     :vartype additional_context: str | None
+    :ivar page_numbers: The numbers of the pages of the document that the paragraph is on,
+        from 1, in ascending order, e.g. ``[4, 5]`` for a paragraph that continues on the next
+        page. Set by :meth:`~contextgem.public.documents.Document.from_docling` for the formats
+        with pages, e.g. PDF, and for a presentation (the slides) or a spreadsheet (the sheets).
+        The ``reference_page_numbers`` of aspects and extracted items are
+        made from them, e.g. to cite the pages of an extracted item. They are not sent to the
+        models. Sentences segmented from the paragraph inherit them. Defaults to an empty list.
+    :vartype page_numbers: list[int]
 
     Note:
         Normally, you do not need to construct paragraphs manually, as they are populated automatically

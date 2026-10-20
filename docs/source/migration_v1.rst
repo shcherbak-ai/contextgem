@@ -701,6 +701,8 @@ Accordingly, ``llm.tools`` now returns the functions, not the tool schemas.
 
 ``DocxConverter.convert_to_text_format()`` and the exceptions of the converter (``DocxConverterError`` and its subclasses) are removed as well, and ContextGem no longer depends on ``lxml``.
 
+For a file converted with Docling, :meth:`~contextgem.public.documents.Document.from_docling` creates the document with the images of the file and the additional context of its paragraphs, which the converter provided (see :doc:`documents/docling`).
+
 What else the converter provided, and how to get it in v1.0:
 
 - **Images.** The converter attached the images embedded in a DOCX file to the document. Extract the images with your conversion library, and pass them to the document via ``images``. See :func:`~contextgem.public.utils.create_image`.

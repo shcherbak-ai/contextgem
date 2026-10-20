@@ -12,6 +12,12 @@ from docutils import nodes
 # Add path to the package
 sys.path.insert(0, os.path.abspath("../.."))
 
+# `Document.from_docling()` takes a `DoclingDocument` of docling-core, which
+# ContextGem imports only for type checking. sphinx-autodoc-typehints runs that
+# import to resolve the annotation, with `TYPE_CHECKING` set, where importing
+# docling-core for the first time fails: it is imported here first.
+import docling_core.types.doc  # noqa: F401
+
 from contextgem import __version__
 
 

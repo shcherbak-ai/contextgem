@@ -37,6 +37,10 @@ class Sentence(_Sentence):
         Sentences that are segmented automatically inherit
         the additional context of their paragraph. Defaults to None.
     :vartype additional_context: str | None
+    :ivar page_numbers: The numbers of the pages of the document that the sentence is on, from 1,
+        in ascending order. Sentences that are segmented automatically inherit the page numbers of
+        their paragraph. They are not sent to the models. Defaults to an empty list.
+    :vartype page_numbers: list[int]
 
     Note:
         Normally, you do not need to construct sentences manually, as they are populated automatically

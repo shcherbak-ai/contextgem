@@ -9,11 +9,13 @@ from __future__ import annotations
 
 import itertools
 import json
+import logging as stdlib_logging
 import os
 import re
 import time
 import warnings
-from collections.abc import Callable
+from collections.abc import Callable, Generator
+from contextlib import contextmanager
 from copy import deepcopy
 from decimal import Decimal
 from functools import lru_cache
@@ -143,6 +145,41 @@ DUMMY_API_ENV_VARS = {
     "CONTEXTGEM_AZURE_AI_API_KEY": "DUMMY",
     "CONTEXTGEM_AZURE_AI_API_BASE": VCR_DUMMY_ENDPOINT_PREFIX.rstrip("/"),
 }
+
+
+@contextmanager
+def capture_logs(level: int = stdlib_logging.INFO) -> Generator[list[str]]:
+    """
+    Captures the messages logged by the framework at the given level and above.
+
+    :param level: The lowest level of the messages to capture. Defaults to INFO.
+    :type level: int
+    :return: Context manager that gives the list the messages are added to.
+    :rtype: Generator[list[str]]
+    """
+    captured_logs: list[str] = []
+
+    class CaptureHandler(stdlib_logging.Handler):
+        """
+        Handler to capture log messages for testing.
+        """
+
+        def emit(self, record: stdlib_logging.LogRecord) -> None:
+            """
+            Adds the log message to the captured ones.
+
+            :param record: The log record.
+            :type record: stdlib_logging.LogRecord
+            """
+            captured_logs.append(record.getMessage())
+
+    capture_handler = CaptureHandler()
+    capture_handler.setLevel(level)
+    logger.addHandler(capture_handler)
+    try:
+        yield captured_logs
+    finally:
+        logger.removeHandler(capture_handler)
 
 
 def vcr_before_record_request(request):

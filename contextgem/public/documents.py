@@ -59,6 +59,8 @@ class Document(_Document):
         Normally, you do not need to construct/populate paragraphs manually, as they are
         populated automatically from document's ``raw_text`` attribute. Only use this constructor
         for advanced use cases, such as when you have a custom paragraph segmentation tool.
+        To create a document from a file converted with Docling, with the structure of the
+        file kept in its paragraphs, use :meth:`from_docling`.
 
     Example:
         .. literalinclude:: ../../../dev/usage_examples/docstrings/documents/def_document.py
