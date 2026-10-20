@@ -15,6 +15,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ### Changed
 
+- Upgraded pinned dependency version: `litellm==1.105.2`. Versions remain pinned to maintain stability and avoid occasional breaking changes and API inconsistencies observed in previous unpinned releases. `openai` remains pinned to `2.54.0`, the latest version supported by `litellm`.
+- ContextGem can now be installed with `pillow` 13: the supported range is `pillow>=11.3.0,<14.0.0`. With the `docling` extra, `pillow` stays below 13, as Docling requires.
 - The prompts of LLMs with sentence-level references (`reference_depth="sentences"`) now give the additional context that a sentence shares with its paragraph once, with the paragraph, as the requests to decision models already did. A sentence segmented from a paragraph inherits its additional context, which the prompts gave again under each sentence: for documents created from four files converted with Docling, whose paragraphs all have additional context, the prompts were 7% to 19% longer, and more for a longer document. The additional context of a sentence that differs from that of its paragraph is still given with the sentence.
 
 ### Removed

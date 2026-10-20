@@ -7,14 +7,14 @@
 |[aiolimiter (1.3.0)](https://pypi.org/project/aiolimiter/)|python|prod|[pyproject.toml](pyproject.toml)|[MIT](https://spdx.org/licenses/MIT.html)|permissive|✓|
 |[colorlog (6.12.0)](https://pypi.org/project/colorlog/)|python|prod|[pyproject.toml](pyproject.toml)|[MIT](https://spdx.org/licenses/MIT.html)|permissive|✓|
 |  └─ [colorama (0.4.6)](https://pypi.org/project/colorama/) (also: docling, docling-core +3 more)|python|prod||[BSD-3-Clause](https://spdx.org/licenses/BSD-3-Clause.html)|permissive|✓|
-|[docling (2.140.0)](https://pypi.org/project/docling/)|python|prod|[pyproject.toml](pyproject.toml)|[MIT](https://spdx.org/licenses/MIT.html)|permissive|✓|
+|[docling (2.141.0)](https://pypi.org/project/docling/)|python|prod|[pyproject.toml](pyproject.toml)|[MIT](https://spdx.org/licenses/MIT.html)|permissive|✓|
 |  └─ [accelerate (1.15.0)](https://pypi.org/project/accelerate/)|python|prod||[Apache-2.0](https://spdx.org/licenses/Apache-2.0.html)|permissive|✓|
 |  └─ [annotated-doc (0.0.5)](https://pypi.org/project/annotated-doc/) (also: docling-core)|python|prod||[MIT](https://spdx.org/licenses/MIT.html)|permissive|✓|
 |  └─ [annotated-types (0.8.0)](https://pypi.org/project/annotated-types/) (also: docling-core, genai-prices +3 more)|python|prod||[MIT](https://spdx.org/licenses/MIT.html)|permissive|✓|
 |  └─ [anyio (4.15.1)](https://pypi.org/project/anyio/) (also: docling-core, genai-prices +3 more)|python|prod||[MIT](https://spdx.org/licenses/MIT.html)|permissive|✓|
 |  └─ [attrs (26.1.0)](https://pypi.org/project/attrs/) (also: docling-core, litellm)|python|prod||[MIT](https://spdx.org/licenses/MIT.html)|permissive|✓|
 |  └─ [beautifulsoup4 (4.15.0)](https://pypi.org/project/beautifulsoup4/)|python|prod||[MIT](https://spdx.org/licenses/MIT.html)|permissive|✓|
-|  └─ [certifi (2026.7.22)](https://pypi.org/project/certifi/) (also: docling-core, litellm +2 more)|python|prod||[MPL-2.0](https://spdx.org/licenses/MPL-2.0.html)|weak-copyleft|⚠|
+|  └─ [certifi (2026.10.19)](https://pypi.org/project/certifi/) (also: docling-core, litellm +2 more)|python|prod||[MPL-2.0](https://spdx.org/licenses/MPL-2.0.html)|weak-copyleft|⚠|
 |  └─ [charset-normalizer (3.5.2)](https://pypi.org/project/charset-normalizer/) (also: docling-core, litellm)|python|prod||[MIT](https://spdx.org/licenses/MIT.html)|permissive|✓|
 |  └─ [click (8.5.0)](https://pypi.org/project/click/) (also: docling-core, litellm +1 more)|python|prod||[BSD-3-Clause](https://spdx.org/licenses/BSD-3-Clause.html)|permissive|✓|
 |  └─ [cuda-bindings (13.4.4)](https://pypi.org/project/cuda-bindings/) (also: docling-core)|python|prod||[Apache-2.0](https://spdx.org/licenses/Apache-2.0.html)|permissive|✓|
@@ -79,11 +79,11 @@
 |  └─ [packaging (26.3.0)](https://pypi.org/project/packaging/) (also: docling-core, litellm +2 more)|python|prod||[Apache-2.0](https://spdx.org/licenses/Apache-2.0.html) OR [BSD-2-Clause](https://spdx.org/licenses/BSD-2-Clause.html)|permissive|✓|
 |  └─ [pandas (3.0.6)](https://pypi.org/project/pandas/) (also: docling-core)|python|prod||[BSD-3-Clause](https://spdx.org/licenses/BSD-3-Clause.html)|permissive|✓|
 |  └─ [pluggy (1.7.0)](https://pypi.org/project/pluggy/)|python|prod||[MIT](https://spdx.org/licenses/MIT.html)|permissive|✓|
-|  └─ [polyfactory (3.3.0)](https://pypi.org/project/polyfactory/)|python|prod||[MIT](https://spdx.org/licenses/MIT.html)|permissive|✓|
+|  └─ [polyfactory (3.4.0)](https://pypi.org/project/polyfactory/)|python|prod||[MIT](https://spdx.org/licenses/MIT.html)|permissive|✓|
 |  └─ [psutil (7.2.2)](https://pypi.org/project/psutil/)|python|prod||[BSD-3-Clause](https://spdx.org/licenses/BSD-3-Clause.html)|permissive|✓|
 |  └─ [pyclipper (1.4.0)](https://pypi.org/project/pyclipper/)|python|prod||[MIT](https://spdx.org/licenses/MIT.html)|permissive|✓|
 |  └─ [pydantic-core (2.50.1)](https://pypi.org/project/pydantic-core/) (also: docling-core, genai-prices +3 more)|python|prod||[MIT](https://spdx.org/licenses/MIT.html)|permissive|✓|
-|  └─ [pydantic-settings (2.16.0)](https://pypi.org/project/pydantic-settings/) (also: docling-core, litellm)|python|prod||[MIT](https://spdx.org/licenses/MIT.html)|permissive|✓|
+|  └─ [pydantic-settings (2.16.1)](https://pypi.org/project/pydantic-settings/) (also: docling-core, litellm)|python|prod||[MIT](https://spdx.org/licenses/MIT.html)|permissive|✓|
 |  └─ [pygments (2.21.0)](https://pypi.org/project/pygments/) (also: docling-core)|python|prod||[BSD-2-Clause](https://spdx.org/licenses/BSD-2-Clause.html)|permissive|✓|
 |  └─ [pylatexenc (2.11.0)](https://pypi.org/project/pylatexenc/)|python|prod||[MIT](https://spdx.org/licenses/MIT.html)|permissive|✓|
 |  └─ [pypdfium2 (5.14.0)](https://pypi.org/project/pypdfium2/)|python|prod||[Apache-2.0](https://spdx.org/licenses/Apache-2.0.html) OR [BSD-3-Clause](https://spdx.org/licenses/BSD-3-Clause.html)|permissive|✓|
@@ -104,7 +104,7 @@
 |  └─ [scipy (1.17.1)](https://pypi.org/project/scipy/)|python|prod||[BSD-3-Clause](https://spdx.org/licenses/BSD-3-Clause.html)|permissive|✓|
 |  └─ [scipy (1.18.1)](https://pypi.org/project/scipy/)|python|prod||[BSD-3-Clause](https://spdx.org/licenses/BSD-3-Clause.html)|permissive|✓|
 |  └─ [semchunk (3.2.5)](https://pypi.org/project/semchunk/) (also: docling-core)|python|prod||[MIT](https://spdx.org/licenses/MIT.html)|permissive|✓|
-|  └─ [setuptools (84.2.0)](https://pypi.org/project/setuptools/) (also: docling-core)|python|prod||[MIT](https://spdx.org/licenses/MIT.html)|permissive|✓|
+|  └─ [setuptools (84.2.1)](https://pypi.org/project/setuptools/) (also: docling-core)|python|prod||[MIT](https://spdx.org/licenses/MIT.html)|permissive|✓|
 |  └─ [shapely (2.2.0)](https://pypi.org/project/shapely/)|python|prod||[BSD-3-Clause](https://spdx.org/licenses/BSD-3-Clause.html)|permissive|✓|
 |  └─ [shellingham (1.5.4)](https://pypi.org/project/shellingham/) (also: docling-core)|python|prod||[ISC](https://spdx.org/licenses/ISC.html)|permissive|✓|
 |  └─ [six (1.17.0)](https://pypi.org/project/six/) (also: docling-core, litellm)|python|prod||[MIT](https://spdx.org/licenses/MIT.html)|permissive|✓|
@@ -130,22 +130,22 @@
 |  └─ [urllib3 (2.8.0)](https://pypi.org/project/urllib3/) (also: docling-core, litellm)|python|prod||[MIT](https://spdx.org/licenses/MIT.html)|permissive|✓|
 |  └─ [websockets (16.1.1)](https://pypi.org/project/websockets/)|python|prod||[BSD-3-Clause](https://spdx.org/licenses/BSD-3-Clause.html)|permissive|✓|
 |  └─ [xlsxwriter (3.2.9)](https://pypi.org/project/xlsxwriter/)|python|prod||[BSD-2-Clause](https://spdx.org/licenses/BSD-2-Clause.html)|permissive|✓|
-|[docling-core (2.103.0)](https://pypi.org/project/docling-core/)|python|prod|[pyproject.toml](pyproject.toml)|[MIT](https://spdx.org/licenses/MIT.html)|permissive|✓|
-|[docling-slim (2.140.0)](https://pypi.org/project/docling-slim/)|python|prod|[pyproject.toml](pyproject.toml)|[MIT](https://spdx.org/licenses/MIT.html)|permissive|✓|
+|[docling-core (2.103.1)](https://pypi.org/project/docling-core/)|python|prod|[pyproject.toml](pyproject.toml)|[MIT](https://spdx.org/licenses/MIT.html)|permissive|✓|
+|[docling-slim (2.141.0)](https://pypi.org/project/docling-slim/)|python|prod|[pyproject.toml](pyproject.toml)|[MIT](https://spdx.org/licenses/MIT.html)|permissive|✓|
 |[docstring-parser (0.18.0)](https://pypi.org/project/docstring-parser/)|python|prod|[pyproject.toml](pyproject.toml)|[MIT](https://spdx.org/licenses/MIT.html)|permissive|✓|
 |[fastjsonschema (2.22.2)](https://pypi.org/project/fastjsonschema/)|python|prod|[pyproject.toml](pyproject.toml)|[BSD-3-Clause](https://spdx.org/licenses/BSD-3-Clause.html)|permissive|✓|
 |[genai-prices (0.1.13)](https://pypi.org/project/genai-prices/)|python|prod|[pyproject.toml](pyproject.toml)|[MIT](https://spdx.org/licenses/MIT.html)|permissive|✓|
-|  └─ [httpcore2 (2.13.1)](https://pypi.org/project/httpcore2/)|python|prod||[BSD-3-Clause](https://spdx.org/licenses/BSD-3-Clause.html)|permissive|✓|
-|  └─ [httpx2 (2.13.1)](https://pypi.org/project/httpx2/)|python|prod||[BSD-3-Clause](https://spdx.org/licenses/BSD-3-Clause.html)|permissive|✓|
+|  └─ [httpcore2 (2.15.1)](https://pypi.org/project/httpcore2/)|python|prod||[BSD-3-Clause](https://spdx.org/licenses/BSD-3-Clause.html)|permissive|✓|
+|  └─ [httpx2 (2.15.1)](https://pypi.org/project/httpx2/)|python|prod||[BSD-3-Clause](https://spdx.org/licenses/BSD-3-Clause.html)|permissive|✓|
 |  └─ [httpx2-jsfetch (1.0.0)](https://pypi.org/project/httpx2-jsfetch/)|python|prod||[BSD-3-Clause](https://spdx.org/licenses/BSD-3-Clause.html)|permissive|✓|
 |  └─ [truststore (0.10.5)](https://pypi.org/project/truststore/)|python|prod||[MIT](https://spdx.org/licenses/MIT.html)|permissive|✓|
 |[jinja2 (3.1.6)](https://pypi.org/project/jinja2/)|python|prod|[pyproject.toml](pyproject.toml)|[BSD-3-Clause](https://spdx.org/licenses/BSD-3-Clause.html)|permissive|✓|
-|[litellm (1.105.1)](https://pypi.org/project/litellm/)|python|prod|[pyproject.toml](pyproject.toml)|[MIT](https://spdx.org/licenses/MIT.html)|permissive|✓|
+|[litellm (1.105.2)](https://pypi.org/project/litellm/)|python|prod|[pyproject.toml](pyproject.toml)|[MIT](https://spdx.org/licenses/MIT.html)|permissive|✓|
 |  └─ [aiohappyeyeballs (2.7.1)](https://pypi.org/project/aiohappyeyeballs/)|python|prod||[PSF-2.0](https://spdx.org/licenses/PSF-2.0.html)|permissive|✓|
 |  └─ [aiohttp (3.14.5)](https://pypi.org/project/aiohttp/)|python|prod||[Apache-2.0](https://spdx.org/licenses/Apache-2.0.html) AND [MIT](https://spdx.org/licenses/MIT.html)|permissive|✓|
 |  └─ [aiosignal (1.4.0)](https://pypi.org/project/aiosignal/)|python|prod||[Apache-2.0](https://spdx.org/licenses/Apache-2.0.html)|permissive|✓|
-|  └─ [boto3 (1.43.114)](https://pypi.org/project/boto3/)|python|prod||[Apache-2.0](https://spdx.org/licenses/Apache-2.0.html)|permissive|✓|
-|  └─ [botocore (1.43.114)](https://pypi.org/project/botocore/)|python|prod||[Apache-2.0](https://spdx.org/licenses/Apache-2.0.html)|permissive|✓|
+|  └─ [boto3 (1.43.116)](https://pypi.org/project/boto3/)|python|prod||[Apache-2.0](https://spdx.org/licenses/Apache-2.0.html)|permissive|✓|
+|  └─ [botocore (1.43.116)](https://pypi.org/project/botocore/)|python|prod||[Apache-2.0](https://spdx.org/licenses/Apache-2.0.html)|permissive|✓|
 |  └─ [distro (1.9.0)](https://pypi.org/project/distro/) (also: openai)|python|prod||[Apache-2.0](https://spdx.org/licenses/Apache-2.0.html)|permissive|✓|
 |  └─ [fastuuid (0.14.0)](https://pypi.org/project/fastuuid/)|python|prod||[BSD-3-Clause](https://spdx.org/licenses/BSD-3-Clause.html)|permissive|✓|
 |  └─ [frozenlist (1.8.0)](https://pypi.org/project/frozenlist/)|python|prod||[Apache-2.0](https://spdx.org/licenses/Apache-2.0.html)|permissive|✓|
@@ -154,7 +154,7 @@
 |  └─ [jmespath (1.1.0)](https://pypi.org/project/jmespath/)|python|prod||[MIT](https://spdx.org/licenses/MIT.html)|permissive|✓|
 |  └─ [multidict (7.1.0)](https://pypi.org/project/multidict/)|python|prod||[Apache-2.0](https://spdx.org/licenses/Apache-2.0.html)|permissive|✓|
 |  └─ [propcache (0.5.4)](https://pypi.org/project/propcache/)|python|prod||[Apache-2.0](https://spdx.org/licenses/Apache-2.0.html)|permissive|✓|
-|  └─ [s3transfer (0.19.2)](https://pypi.org/project/s3transfer/)|python|prod||[Apache-2.0](https://spdx.org/licenses/Apache-2.0.html)|permissive|✓|
+|  └─ [s3transfer (0.19.3)](https://pypi.org/project/s3transfer/)|python|prod||[Apache-2.0](https://spdx.org/licenses/Apache-2.0.html)|permissive|✓|
 |  └─ [sniffio (1.3.1)](https://pypi.org/project/sniffio/) (also: openai)|python|prod||[Apache-2.0](https://spdx.org/licenses/Apache-2.0.html) OR [MIT](https://spdx.org/licenses/MIT.html)|permissive|✓|
 |  └─ [tiktoken (0.14.0)](https://pypi.org/project/tiktoken/)|python|prod||[MIT](https://spdx.org/licenses/MIT.html)|permissive|✓|
 |  └─ [yarl (1.25.1)](https://pypi.org/project/yarl/)|python|prod||[Apache-2.0](https://spdx.org/licenses/Apache-2.0.html)|permissive|✓|
@@ -197,7 +197,7 @@
 
 |Package|Detected|Reviewed|Note|
 |---------|----------|----------|----|
-|[certifi (2026.7.22)](https://pypi.org/project/certifi/)|MPL-2.0|[MPL-2.0](https://spdx.org/licenses/MPL-2.0.html)|Apache-2.0 library distributed via PyPI; certifi is an unmodified upstream dependency used with dynamic linkage. MPL-2.0 is file-level weak copyleft that only triggers on modification of the MPL-licensed files — no modifications, so the obligation is dormant.|
+|[certifi (2026.10.19)](https://pypi.org/project/certifi/)|MPL-2.0|[MPL-2.0](https://spdx.org/licenses/MPL-2.0.html)|Apache-2.0 library distributed via PyPI; certifi is an unmodified upstream dependency used with dynamic linkage. MPL-2.0 is file-level weak copyleft that only triggers on modification of the MPL-licensed files — no modifications, so the obligation is dormant.|
 |[cuda-toolkit (13.0.3)](https://pypi.org/project/cuda-toolkit/)|UNKNOWN|Proprietary|NVIDIA's CUDA Toolkit meta-package, which declares no license (hence UNKNOWN) and holds no code of its own: it pulls in NVIDIA's proprietary CUDA libraries. As for nvidia-cublas: installed only with the optional docling extra, on Linux, through PyTorch, and not included, modified or redistributed by ContextGem. Reviewed and accepted as an optional, transitive runtime dependency, which does not affect the Apache-2.0 license of ContextGem.|
 |[nvidia-cublas (13.1.1.3)](https://pypi.org/project/nvidia-cublas/)|Proprietary (raw: LicenseRef-NVIDIA-Proprietary)|Proprietary|NVIDIA CUDA library under NVIDIA's proprietary license (LicenseRef-NVIDIA-Proprietary). Installed only with the optional docling extra, and only on Linux: Docling needs PyTorch, whose Linux wheels on PyPI depend on the CUDA libraries. ContextGem does not include, modify or redistribute it: the user's package manager downloads it from PyPI, under NVIDIA's terms, and the installs of ContextGem without the extra do not have it. A CPU-only PyTorch (see Docling's installation guide) avoids it. Reviewed and accepted as an optional, transitive runtime dependency, which does not affect the Apache-2.0 license of ContextGem.|
 |[nvidia-cuda-cupti (13.0.85)](https://pypi.org/project/nvidia-cuda-cupti/)|Proprietary (raw: LicenseRef-NVIDIA-Proprietary)|Proprietary|NVIDIA CUDA library under NVIDIA's proprietary license (LicenseRef-NVIDIA-Proprietary). Installed only with the optional docling extra, and only on Linux: Docling needs PyTorch, whose Linux wheels on PyPI depend on the CUDA libraries. ContextGem does not include, modify or redistribute it: the user's package manager downloads it from PyPI, under NVIDIA's terms, and the installs of ContextGem without the extra do not have it. A CPU-only PyTorch (see Docling's installation guide) avoids it. Reviewed and accepted as an optional, transitive runtime dependency, which does not affect the Apache-2.0 license of ContextGem.|
