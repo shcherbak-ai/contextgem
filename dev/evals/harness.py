@@ -13,15 +13,22 @@ the paragraphs that are not scored for an aspect (``cases/<case>.neutral.json``)
 The document of a case can also be created with ``Document.from_docling()`` from
 the Docling document of the case (``cases/<case>.docling.json``, written by
 ``dev/evals/docling_cases.py``), whose paragraphs are those of the text, with
-the additional context that the structure of the case gives them.
+the additional context that the structure of the case gives them, or from
+the Docling document of the case printed as a PDF file (``cases/<case>.pdf.docling.json``,
+written by ``dev/evals/docling_pdf_cases.py``), whose paragraphs are what Docling
+reads in the file: they are mapped to those of the reference answers by their text
+(see :func:`map_paragraphs`), and scored as the paragraphs that they hold.
 """
 
 from __future__ import annotations
 
+import difflib
 import hashlib
 import json
 import os
 import re
+import unicodedata
+from collections import Counter
 from collections.abc import Callable
 from importlib import metadata
 from pathlib import Path
@@ -44,6 +51,7 @@ from dev.evals.cases.complex_dpa import build_complex_dpa_pipeline
 from dev.evals.cases.complex_mcu import build_complex_mcu_pipeline
 from dev.evals.cases.complex_nda import build_complex_nda_pipeline
 from dev.evals.cases.complex_stability import build_complex_stability_pipeline
+from dev.evals.docling_pdf_cases import PDF_CASES
 
 
 EVALS_DIR = Path(__file__).parent
@@ -57,9 +65,10 @@ SYSTEM_MESSAGE_DIR = REPO_DIR / "contextgem" / "internal" / "system"
 ModelKind = Literal["llm", "decision"]
 
 # What the document of a case is created from: its text, one paragraph per line,
-# or its Docling document (`Document.from_docling()`), with the additional context
-# of the paragraphs, or without it
-CaseInput = Literal["text", "docling", "docling_without_context"]
+# its Docling document (`Document.from_docling()`), with the additional context
+# of the paragraphs, or without it, or the Docling document of the case printed as
+# a PDF file (the cases of `PDF_CASES`)
+CaseInput = Literal["text", "docling", "docling_without_context", "pdf"]
 
 # The function that builds the extraction pipeline of each case
 _PIPELINE_BUILDERS: dict[str, Callable[[], ExtractionPipeline]] = {
@@ -262,6 +271,147 @@ def _check_docling_paragraphs(
         )
 
 
+def _words(text: str) -> list[str]:
+    """
+    Returns the words of a text, as they are compared to map paragraphs: its runs
+    of letters and digits, in lower case, after the Unicode compatibility
+    normalization, e.g. of a ligature that a PDF file holds. An underscore
+    separates words, as Docling reads "RCC_PLLCFGR" of a PDF file as
+    "RCC _ PLLCFGR".
+
+    :param text: The text.
+    :type text: str
+    :return: The words, in order.
+    :rtype: list[str]
+    """
+    return re.findall(r"[^\W_]+", unicodedata.normalize("NFKC", text).casefold())
+
+
+def map_paragraphs(gold_texts: list[str], texts: list[str]) -> list[list[int]]:
+    """
+    Maps the paragraphs of a document to the paragraphs of the reference answers
+    whose text they hold, for a document whose paragraphs are not those of
+    the reference answers, e.g. created from the Docling document of a PDF file:
+    a paragraph of the reference answers can be split between two paragraphs of
+    the document, e.g. at the end of a page, or a paragraph of the document can
+    hold two of them.
+
+    The words of all the paragraphs are aligned in order (``difflib``), which tells
+    apart paragraphs with the same words, e.g. the rows of two tables, by their
+    places. Docling can read a part of a page out of order, e.g. a table after
+    the paragraphs that follow it, or the end of a paragraph at the foot of a page
+    before it: the words left unaligned are then aligned again, in order among
+    themselves, in blocks of two words at least, until no more are. A paragraph
+    holds a paragraph of the reference answers when at least half of the words of
+    one of the two are aligned with words of the other.
+
+    :param gold_texts: The texts of the paragraphs of the reference answers.
+    :type gold_texts: list[str]
+    :param texts: The texts of the paragraphs of the document, as they are matched:
+        a table row with the values of its cells only.
+    :type texts: list[str]
+    :return: For each paragraph of the document, the positions of the paragraphs
+        of the reference answers that it holds, in order, none for a paragraph
+        that holds none of them.
+    :rtype: list[list[int]]
+    """
+    gold_words: list[str] = []
+    gold_owners: list[int] = []
+    for position, text in enumerate(gold_texts):
+        for word in _words(text):
+            gold_words.append(word)
+            gold_owners.append(position)
+    words: list[str] = []
+    owners: list[int] = []
+    for index, text in enumerate(texts):
+        for word in _words(text):
+            words.append(word)
+            owners.append(index)
+    aligned: Counter[tuple[int, int]] = Counter()
+    # The positions of the words not aligned yet
+    gold_left = list(range(len(gold_words)))
+    left = list(range(len(words)))
+    min_block = 1
+    while gold_left and left:
+        matcher = difflib.SequenceMatcher(
+            None,
+            [gold_words[i] for i in gold_left],
+            [words[i] for i in left],
+            autojunk=False,
+        )
+        blocks = [b for b in matcher.get_matching_blocks() if b.size >= min_block]
+        if not blocks:
+            break
+        gold_done: set[int] = set()
+        done: set[int] = set()
+        for block in blocks:
+            for offset in range(block.size):
+                gold_index = gold_left[block.a + offset]
+                index = left[block.b + offset]
+                aligned[owners[index], gold_owners[gold_index]] += 1
+                gold_done.add(gold_index)
+                done.add(index)
+        gold_left = [i for i in gold_left if i not in gold_done]
+        left = [i for i in left if i not in done]
+        # After the first alignment, single words would align by chance
+        min_block = 2
+    gold_sizes = Counter(gold_owners)
+    sizes = Counter(owners)
+    paragraph_map: list[list[int]] = [[] for _ in texts]
+    for (index, position), count in aligned.items():
+        if 2 * count >= gold_sizes[position] or 2 * count >= sizes[index]:
+            paragraph_map[index].append(position)
+    return [sorted(positions) for positions in paragraph_map]
+
+
+def _texts_to_match(document: Document, docling_document: Any) -> list[str]:
+    """
+    Returns the texts of the paragraphs of a document created from a Docling
+    document, as they are matched to the paragraphs of the reference answers:
+    a table row or header with the values of its cells only, in order, as a row of
+    the text of a case has them, without the headers of the columns that
+    ``Document.from_docling()`` gives each value.
+
+    :param document: The document.
+    :type document: Document
+    :param docling_document: The Docling document that it was created from.
+    :type docling_document: DoclingDocument
+    :return: The texts, one for each paragraph.
+    :rtype: list[str]
+    """
+    from docling_core.types.doc import RefItem, TableItem
+
+    texts = []
+    for paragraph in document.paragraphs:
+        docling = (paragraph.custom_data or {}).get("docling", {})
+        item = RefItem(cref=docling["self_ref"]).resolve(docling_document)
+        if isinstance(item, TableItem):
+            grid = item.data.grid
+            if "row_index" in docling:
+                rows = [grid[docling["row_index"]]]
+            else:
+                # The header rows: the rows at the top whose cells with text are
+                # column headers, as the converter counts them
+                rows = []
+                for row in grid:
+                    filled = [cell for cell in row if cell.text.strip()]
+                    if not filled or not all(cell.column_header for cell in filled):
+                        break
+                    rows.append(row)
+            cells = []
+            for row in rows:
+                starts = set()
+                for cell in row:
+                    start = (cell.start_row_offset_idx, cell.start_col_offset_idx)
+                    if start not in starts:
+                        starts.add(start)
+                        cells.append(cell.text)
+            texts.append(" ".join(cells))
+        else:
+            texts.append(paragraph.raw_text)
+    return texts
+
+
 def load_case(
     case: str, for_decision_model: bool = False, case_input: CaseInput = "text"
 ) -> tuple[Document, dict[str, Any]]:
@@ -282,14 +432,17 @@ def load_case(
         the case, one paragraph per line (default); "docling", the Docling document
         of the case, with ``Document.from_docling()``, i.e. with the additional
         context of the paragraphs and the table rows with the headers of their
-        columns; or "docling_without_context", the same document without
-        the additional context of the paragraphs.
+        columns; "docling_without_context", the same document without
+        the additional context of the paragraphs; or "pdf", the Docling document of
+        the case printed as a PDF file (a case of ``PDF_CASES``), whose paragraphs
+        are mapped to those of the reference answers (``paragraph_map`` of the
+        reference answers, see :func:`map_paragraphs`).
     :type case_input: CaseInput
     :return: The document, and the reference answers of the document (the value of
         ``document`` of the gold file), for the same aspects and concepts.
     :rtype: tuple[Document, dict[str, Any]]
     :raises ValueError: If the paragraphs of the document differ from those of
-        the reference answers.
+        the reference answers, or if the case is not printed as a PDF file.
     """
     pipeline = _PIPELINE_BUILDERS[case]()
     text = (CASES_DIR / f"{case}.txt").read_text(encoding="utf-8")
@@ -314,6 +467,25 @@ def load_case(
                 f"The paragraphs of the document of the case `{case}` differ from "
                 f"those of its reference answers."
             )
+    elif case_input == "pdf":
+        if case not in PDF_CASES:
+            raise ValueError(
+                f"The case `{case}` is not printed as a PDF file: the cases that are "
+                f"are {list(PDF_CASES)}."
+            )
+        # docling-core is in the dev group
+        from docling_core.types.doc import DoclingDocument
+
+        docling_document = DoclingDocument.load_from_json(
+            CASES_DIR / f"{case}.pdf.docling.json"
+        )
+        document = Document.from_docling(docling_document)
+        # The scores refer to the paragraphs of the reference answers, which those
+        # of the document are mapped to
+        gold["paragraph_map"] = map_paragraphs(
+            [paragraph["raw_text"] for paragraph in gold["paragraphs"]],
+            _texts_to_match(document, docling_document),
+        )
     else:
         # docling-core is in the dev group
         from docling_core.types.doc import DoclingDocument

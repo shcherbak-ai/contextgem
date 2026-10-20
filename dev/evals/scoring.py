@@ -24,6 +24,12 @@ What is scored, and how:
 - References of concepts: the paragraphs referenced by the items of a concept
   against those of the reference answers, as precision, recall and F1, where
   the reference answers have references.
+
+The paragraphs are those of the reference answers, by their positions. Those of
+a document whose paragraphs are not, e.g. created from the Docling document of
+a PDF file, count as the paragraphs of the reference answers that they hold
+(``paragraph_map`` of the reference answers, see
+:func:`dev.evals.harness.map_paragraphs`).
 """
 
 from __future__ import annotations
@@ -195,8 +201,39 @@ def score_concept_values(
     return result
 
 
+def get_positions(
+    document: Document,
+    paragraphs: list[Any],
+    paragraph_map: list[list[int]] | None = None,
+) -> set[int]:
+    """
+    Returns the positions of paragraphs of a document among the paragraphs of
+    the reference answers.
+
+    :param document: The document.
+    :type document: Document
+    :param paragraphs: Paragraphs of the document, e.g. those extracted for an
+        aspect.
+    :type paragraphs: list[Any]
+    :param paragraph_map: For each paragraph of a document whose paragraphs are
+        not those of the reference answers, the positions of the paragraphs of
+        the reference answers that it holds, or None.
+    :type paragraph_map: list[list[int]] | None
+    :return: The positions of the paragraphs in the document, or, with a map,
+        the positions of the paragraphs of the reference answers that they hold.
+    :rtype: set[int]
+    """
+    positions = {document.get_paragraph_index(paragraph) for paragraph in paragraphs}
+    if paragraph_map is None:
+        return positions
+    return {held for position in positions for held in paragraph_map[position]}
+
+
 def score_concept(
-    concept: Any, gold_concept: dict[str, Any], document: Document
+    concept: Any,
+    gold_concept: dict[str, Any],
+    document: Document,
+    paragraph_map: list[list[int]] | None = None,
 ) -> dict[str, Any]:
     """
     Scores the extracted items of a concept against its reference answers.
@@ -207,6 +244,10 @@ def score_concept(
     :type gold_concept: dict[str, Any]
     :param document: The document that the concept is extracted from.
     :type document: Document
+    :param paragraph_map: The paragraphs of the reference answers that each
+        paragraph of the document holds, if they are not those of the document
+        (see :func:`get_positions`).
+    :type paragraph_map: list[list[int]] | None
     :return: The scores of the concept (see :func:`score_concept_values`).
     :rtype: dict[str, Any]
     """
@@ -214,11 +255,11 @@ def score_concept(
     result = score_concept_values(
         concept.name,
         [_normalize_value(item.value) for item in items],
-        {
-            document.get_paragraph_index(paragraph)
-            for item in items
-            for paragraph in item.reference_paragraphs
-        },
+        get_positions(
+            document,
+            [paragraph for item in items for paragraph in item.reference_paragraphs],
+            paragraph_map,
+        ),
         gold_concept,
     )
     # Kept for the judge (see dev.evals.judge): the values as extracted, not
@@ -329,7 +370,9 @@ def score_document(document: Document, gold: dict[str, Any]) -> dict[str, Any]:
     :param document: The document, after the extraction.
     :type document: Document
     :param gold: The reference answers of the document, for the same aspects and
-        concepts, in the same order.
+        concepts, in the same order, with the paragraphs of the reference answers
+        that each paragraph of the document holds (``paragraph_map``), if they are
+        not those of the document.
     :type gold: dict[str, Any]
     :return: The scores of each aspect, the scores of each concept of the document
         and of the aspects, and their summary (see :func:`_get_scores`).
@@ -337,18 +380,19 @@ def score_document(document: Document, gold: dict[str, Any]) -> dict[str, Any]:
     """
     aspects: list[dict[str, Any]] = []
     concepts: list[dict[str, Any]] = []
+    paragraph_map = gold.get("paragraph_map")
     for concept, gold_concept in zip(document.concepts, gold["concepts"], strict=True):
         concepts.append(
-            {"context": "document", **score_concept(concept, gold_concept, document)}
+            {
+                "context": "document",
+                **score_concept(concept, gold_concept, document, paragraph_map),
+            }
         )
     for aspect, gold_aspect in zip(document.aspects, gold["aspects"], strict=True):
         aspects.append(
             score_aspect_paragraphs(
                 aspect.name,
-                {
-                    document.get_paragraph_index(paragraph)
-                    for paragraph in aspect.reference_paragraphs
-                },
+                get_positions(document, aspect.reference_paragraphs, paragraph_map),
                 gold_aspect,
             )
         )
@@ -358,7 +402,7 @@ def score_document(document: Document, gold: dict[str, Any]) -> dict[str, Any]:
             concepts.append(
                 {
                     "context": f"aspect: {aspect.name}",
-                    **score_concept(concept, gold_concept, document),
+                    **score_concept(concept, gold_concept, document, paragraph_map),
                 }
             )
     return _get_scores(aspects, concepts)

@@ -1,0 +1,735 @@
+{
+  "case": "complex_mcu",
+  "model": "anthropic/claude-haiku-5-5",
+  "kind": "llm",
+  "mode": "default",
+  "input": "text",
+  "label": "pdf_2026-10-21_text",
+  "run": 2,
+  "error": "ValueError: Aspect `Device limitations of revision C` is not yet processed. Use `extract_aspects_from_document` first.`",
+  "seconds": 11.9,
+  "usage": {
+    "requests": 4,
+    "requests_without_response": 0,
+    "input_tokens": 151780,
+    "output_tokens": 2587,
+    "cache_read_tokens": 0,
+    "cache_write_tokens": 0,
+    "cost_total": "0.01647"
+  },
+  "retries_for_invalid_data": 3,
+  "responses_not_valid_json": 4,
+  "extraction_warnings": [],
+  "refusal_warnings": [],
+  "provenance": {
+    "litellm": "1.105.1",
+    "prompts": {
+      "decision_question_aspect.j2": "7b069363576f",
+      "decision_question_concept.j2": "603962caf35d",
+      "default_system_message.j2": "8bb691c5e36c",
+      "extract_aspect_items.j2": "a73d8b00c6cc",
+      "extract_concept_items.j2": "c95e046ad0d5"
+    }
+  },
+  "scores": {
+    "summary": {
+      "aspect_f1": 0.0,
+      "aspect_precision": 0.0,
+      "aspect_recall": 0.0,
+      "concept_accuracy": 0.0,
+      "n_concepts_scored": 26,
+      "n_concepts_correct": 0,
+      "string_exact": 0.0,
+      "n_strings": 1,
+      "reference_f1": 0.0,
+      "n_concepts_without_items": 27
+    },
+    "aspects": [
+      {
+        "name": "Device limitations of revision C",
+        "n_predicted": 0,
+        "n_gold": 12,
+        "n_neutral_predicted": 0,
+        "predicted_paragraphs": [],
+        "precision": 0.0,
+        "recall": 0.0,
+        "f1": 0.0
+      },
+      {
+        "name": "Flash memory specifications",
+        "n_predicted": 0,
+        "n_gold": 14,
+        "n_neutral_predicted": 0,
+        "predicted_paragraphs": [],
+        "precision": 0.0,
+        "recall": 0.0,
+        "f1": 0.0
+      },
+      {
+        "name": "DR-114 clock configuration",
+        "n_predicted": 0,
+        "n_gold": 33,
+        "n_neutral_predicted": 0,
+        "predicted_paragraphs": [],
+        "precision": 0.0,
+        "recall": 0.0,
+        "f1": 0.0
+      },
+      {
+        "name": "DR-114 thermal assessment",
+        "n_predicted": 0,
+        "n_gold": 21,
+        "n_neutral_predicted": 0,
+        "predicted_paragraphs": [],
+        "precision": 0.0,
+        "recall": 0.0,
+        "f1": 0.0
+      },
+      {
+        "name": "DR-114 errata and firmware",
+        "n_predicted": 0,
+        "n_gold": 22,
+        "n_neutral_predicted": 0,
+        "predicted_paragraphs": [],
+        "precision": 0.0,
+        "recall": 0.0,
+        "f1": 0.0
+      },
+      {
+        "name": "DR-115 errata and PLL1 limits",
+        "n_predicted": 0,
+        "n_gold": 29,
+        "n_neutral_predicted": 0,
+        "predicted_paragraphs": [],
+        "precision": 0.0,
+        "recall": 0.0,
+        "f1": 0.0
+      },
+      {
+        "name": "Revision B end of life",
+        "n_predicted": 0,
+        "n_gold": 7,
+        "n_neutral_predicted": 0,
+        "predicted_paragraphs": [],
+        "precision": 0.0,
+        "recall": 0.0,
+        "f1": 0.0
+      }
+    ],
+    "concepts": [
+      {
+        "context": "document",
+        "name": "Lowest HBM rating of a QFN-48 pin in V",
+        "type": "NumericalConcept",
+        "n_items": 0,
+        "n_gold_items": 1,
+        "predicted": [],
+        "gold": [
+          1000.0
+        ],
+        "scoring": "exact",
+        "correct": false,
+        "predicted_references": [],
+        "references": {
+          "precision": 0.0,
+          "recall": 0.0,
+          "f1": 0.0
+        },
+        "values": [],
+        "justifications": []
+      },
+      {
+        "context": "document",
+        "name": "Revision C BOR level 2 minimum falling threshold in V",
+        "type": "NumericalConcept",
+        "n_items": 0,
+        "n_gold_items": 1,
+        "predicted": [],
+        "gold": [
+          2.21
+        ],
+        "scoring": "exact",
+        "correct": false,
+        "predicted_references": [],
+        "references": {
+          "precision": 0.0,
+          "recall": 0.0,
+          "f1": 0.0
+        },
+        "values": [],
+        "justifications": []
+      },
+      {
+        "context": "document",
+        "name": "VOS0 permitted at a VDD of 1.8 V",
+        "type": "BooleanConcept",
+        "n_items": 0,
+        "n_gold_items": 1,
+        "predicted": [],
+        "gold": [
+          false
+        ],
+        "scoring": "exact",
+        "correct": false,
+        "predicted_references": [],
+        "references": {
+          "precision": 0.0,
+          "recall": 0.0,
+          "f1": 0.0
+        },
+        "values": [],
+        "justifications": []
+      },
+      {
+        "context": "document",
+        "name": "Marking code of revision C",
+        "type": "LabelConcept",
+        "n_items": 0,
+        "n_gold_items": 1,
+        "predicted": [],
+        "gold": [
+          [
+            "y"
+          ]
+        ],
+        "scoring": "exact",
+        "correct": false,
+        "predicted_references": [],
+        "references": {
+          "precision": 0.0,
+          "recall": 0.0,
+          "f1": 0.0
+        },
+        "values": [],
+        "justifications": []
+      },
+      {
+        "context": "document",
+        "name": "DR-115 junction temperature in °C",
+        "type": "NumericalConcept",
+        "n_items": 0,
+        "n_gold_items": 1,
+        "predicted": [],
+        "gold": [
+          100.0
+        ],
+        "scoring": "exact",
+        "correct": false,
+        "predicted_references": [],
+        "references": {
+          "precision": 0.0,
+          "recall": 0.0,
+          "f1": 0.0
+        },
+        "values": [],
+        "justifications": []
+      },
+      {
+        "context": "document",
+        "name": "Start of the first revision C date code",
+        "type": "DateConcept",
+        "n_items": 0,
+        "n_gold_items": 1,
+        "predicted": [],
+        "gold": [
+          "2026-08-17"
+        ],
+        "scoring": "exact",
+        "correct": false,
+        "predicted_references": [],
+        "references": {
+          "precision": 0.0,
+          "recall": 0.0,
+          "f1": 0.0
+        },
+        "values": [],
+        "justifications": []
+      },
+      {
+        "context": "aspect: Device limitations of revision C",
+        "name": "Limitations present in revision C",
+        "type": "JsonObjectConcept",
+        "n_items": 0,
+        "n_gold_items": 4,
+        "predicted": [],
+        "gold": [
+          {
+            "affected_revisions": [
+              "a",
+              "b",
+              "c"
+            ],
+            "function": "adc",
+            "id": "es-04",
+            "impact_class": 3.0
+          },
+          {
+            "affected_revisions": [
+              "a",
+              "b",
+              "c"
+            ],
+            "function": "usart",
+            "id": "es-05",
+            "impact_class": 2.0
+          },
+          {
+            "affected_revisions": [
+              "c"
+            ],
+            "function": "fdcan",
+            "id": "es-08",
+            "impact_class": 4.0
+          },
+          {
+            "affected_revisions": [
+              "b",
+              "c"
+            ],
+            "function": "power",
+            "id": "es-09",
+            "impact_class": 3.0
+          }
+        ],
+        "scoring": "keys_of_objects",
+        "correct": false,
+        "field_match_rate": 0.0,
+        "predicted_references": [],
+        "references": {
+          "precision": 0.0,
+          "recall": 0.0,
+          "f1": 0.0
+        },
+        "values": [],
+        "justifications": []
+      },
+      {
+        "context": "aspect: Device limitations of revision C",
+        "name": "Impact class of ES-08",
+        "type": "RatingConcept",
+        "n_items": 0,
+        "n_gold_items": 1,
+        "predicted": [],
+        "gold": [
+          4.0
+        ],
+        "scoring": "exact",
+        "correct": false,
+        "predicted_references": [],
+        "references": {
+          "precision": 0.0,
+          "recall": 0.0,
+          "f1": 0.0
+        },
+        "values": [],
+        "justifications": []
+      },
+      {
+        "context": "aspect: Device limitations of revision C",
+        "name": "ES-09 present in revision C",
+        "type": "BooleanConcept",
+        "n_items": 0,
+        "n_gold_items": 1,
+        "predicted": [],
+        "gold": [
+          true
+        ],
+        "scoring": "exact",
+        "correct": false,
+        "predicted_references": [],
+        "references": {
+          "precision": 0.0,
+          "recall": 0.0,
+          "f1": 0.0
+        },
+        "values": [],
+        "justifications": []
+      },
+      {
+        "context": "aspect: Device limitations of revision C",
+        "name": "ES-08 workaround",
+        "type": "StringConcept",
+        "n_items": 0,
+        "n_gold_items": 1,
+        "predicted": [],
+        "gold": [
+          "write fdcan_tdcr again after each bus-off recovery, before init is cleared."
+        ],
+        "scoring": "exact_or_accepted",
+        "correct": false,
+        "predicted_references": [],
+        "references": {
+          "precision": 0.0,
+          "recall": 0.0,
+          "f1": 0.0
+        },
+        "values": [],
+        "justifications": []
+      },
+      {
+        "context": "aspect: Flash memory specifications",
+        "name": "HCLK maximum for 2 wait states in VOS1 in MHz",
+        "type": "NumericalConcept",
+        "n_items": 0,
+        "n_gold_items": 1,
+        "predicted": [],
+        "gold": [
+          165.0
+        ],
+        "scoring": "exact",
+        "correct": false,
+        "predicted_references": [],
+        "references": {
+          "precision": 0.0,
+          "recall": 0.0,
+          "f1": 0.0
+        },
+        "values": [],
+        "justifications": []
+      },
+      {
+        "context": "aspect: Flash memory specifications",
+        "name": "Revision C retention after 10 000 cycles at 85 °C",
+        "type": "NumericalConcept",
+        "n_items": 0,
+        "n_gold_items": 1,
+        "predicted": [],
+        "gold": [
+          15.0
+        ],
+        "scoring": "exact",
+        "correct": false,
+        "predicted_references": [],
+        "references": {
+          "precision": 0.0,
+          "recall": 0.0,
+          "f1": 0.0
+        },
+        "values": [],
+        "justifications": []
+      },
+      {
+        "context": "aspect: Flash memory specifications",
+        "name": "Revision C retention after 1 000 cycles at 105 °C",
+        "type": "NumericalConcept",
+        "n_items": 0,
+        "n_gold_items": 1,
+        "predicted": [],
+        "gold": [
+          20.0
+        ],
+        "scoring": "exact",
+        "correct": false,
+        "predicted_references": [],
+        "references": {
+          "precision": 0.0,
+          "recall": 0.0,
+          "f1": 0.0
+        },
+        "values": [],
+        "justifications": []
+      },
+      {
+        "context": "aspect: DR-114 clock configuration",
+        "name": "DR-114 maximum permitted SYSCLK in MHz",
+        "type": "NumericalConcept",
+        "n_items": 0,
+        "n_gold_items": 1,
+        "predicted": [],
+        "gold": [
+          400.0
+        ],
+        "scoring": "exact",
+        "correct": false,
+        "predicted_references": [],
+        "references": {
+          "precision": 0.0,
+          "recall": 0.0,
+          "f1": 0.0
+        },
+        "values": [],
+        "justifications": []
+      },
+      {
+        "context": "aspect: DR-114 clock configuration",
+        "name": "DR-114 PLL1 configuration within specification",
+        "type": "BooleanConcept",
+        "n_items": 0,
+        "n_gold_items": 1,
+        "predicted": [],
+        "gold": [
+          false
+        ],
+        "scoring": "exact",
+        "correct": false,
+        "predicted_references": [],
+        "references": {
+          "precision": 0.0,
+          "recall": 0.0,
+          "f1": 0.0
+        },
+        "values": [],
+        "justifications": []
+      },
+      {
+        "context": "aspect: DR-114 clock configuration",
+        "name": "DR-114 required flash wait states",
+        "type": "NumericalConcept",
+        "n_items": 0,
+        "n_gold_items": 1,
+        "predicted": [],
+        "gold": [
+          3.0
+        ],
+        "scoring": "exact",
+        "correct": false,
+        "predicted_references": [],
+        "references": {
+          "precision": 0.0,
+          "recall": 0.0,
+          "f1": 0.0
+        },
+        "values": [],
+        "justifications": []
+      },
+      {
+        "context": "aspect: DR-114 thermal assessment",
+        "name": "DR-114 junction temperature in °C",
+        "type": "NumericalConcept",
+        "n_items": 0,
+        "n_gold_items": 1,
+        "predicted": [],
+        "gold": [
+          108.0
+        ],
+        "scoring": "exact",
+        "correct": false,
+        "predicted_references": [],
+        "references": {
+          "precision": 0.0,
+          "recall": 0.0,
+          "f1": 0.0
+        },
+        "values": [],
+        "justifications": []
+      },
+      {
+        "context": "aspect: DR-114 thermal assessment",
+        "name": "DR-114 meets HDR-7",
+        "type": "BooleanConcept",
+        "n_items": 0,
+        "n_gold_items": 1,
+        "predicted": [],
+        "gold": [
+          false
+        ],
+        "scoring": "exact",
+        "correct": false,
+        "predicted_references": [],
+        "references": {
+          "precision": 0.0,
+          "recall": 0.0,
+          "f1": 0.0
+        },
+        "values": [],
+        "justifications": []
+      },
+      {
+        "context": "aspect: DR-114 errata and firmware",
+        "name": "Errata applicable to the DR-114 production boards",
+        "type": "LabelConcept",
+        "n_items": 0,
+        "n_gold_items": 1,
+        "predicted": [],
+        "gold": [
+          [
+            "es-04",
+            "es-05",
+            "es-08"
+          ]
+        ],
+        "scoring": "exact",
+        "correct": false,
+        "predicted_references": [],
+        "references": {
+          "precision": 0.0,
+          "recall": 0.0,
+          "f1": 0.0
+        },
+        "values": [],
+        "justifications": []
+      },
+      {
+        "context": "aspect: DR-114 errata and firmware",
+        "name": "DR-114 maximum ADC INL in LSB",
+        "type": "NumericalConcept",
+        "n_items": 0,
+        "n_gold_items": 1,
+        "predicted": [],
+        "gold": [
+          6.0
+        ],
+        "scoring": "exact",
+        "correct": false,
+        "predicted_references": [],
+        "references": {
+          "precision": 0.0,
+          "recall": 0.0,
+          "f1": 0.0
+        },
+        "values": [],
+        "justifications": []
+      },
+      {
+        "context": "aspect: DR-114 errata and firmware",
+        "name": "FW 2.3.0 meets HDR-9 for the DR-114 production boards",
+        "type": "BooleanConcept",
+        "n_items": 0,
+        "n_gold_items": 1,
+        "predicted": [],
+        "gold": [
+          false
+        ],
+        "scoring": "exact",
+        "correct": false,
+        "predicted_references": [],
+        "references": {
+          "precision": 0.0,
+          "recall": 0.0,
+          "f1": 0.0
+        },
+        "values": [],
+        "justifications": []
+      },
+      {
+        "context": "aspect: DR-115 errata and PLL1 limits",
+        "name": "Errata applicable to the DR-115 boards",
+        "type": "LabelConcept",
+        "n_items": 0,
+        "n_gold_items": 1,
+        "predicted": [],
+        "gold": [
+          [
+            "es-02",
+            "es-07"
+          ]
+        ],
+        "scoring": "exact",
+        "correct": false,
+        "predicted_references": [],
+        "references": {
+          "precision": 0.0,
+          "recall": 0.0,
+          "f1": 0.0
+        },
+        "values": [],
+        "justifications": []
+      },
+      {
+        "context": "aspect: DR-115 errata and PLL1 limits",
+        "name": "DR-115 maximum PLL1 VCO frequency in MHz",
+        "type": "NumericalConcept",
+        "n_items": 0,
+        "n_gold_items": 1,
+        "predicted": [],
+        "gold": [
+          836.0
+        ],
+        "scoring": "exact",
+        "correct": false,
+        "predicted_references": [],
+        "references": {
+          "precision": 0.0,
+          "recall": 0.0,
+          "f1": 0.0
+        },
+        "values": [],
+        "justifications": []
+      },
+      {
+        "context": "aspect: DR-115 errata and PLL1 limits",
+        "name": "DR-115 PLL1 configuration within its limits",
+        "type": "BooleanConcept",
+        "n_items": 0,
+        "n_gold_items": 1,
+        "predicted": [],
+        "gold": [
+          false
+        ],
+        "scoring": "exact",
+        "correct": false,
+        "predicted_references": [],
+        "references": {
+          "precision": 0.0,
+          "recall": 0.0,
+          "f1": 0.0
+        },
+        "values": [],
+        "justifications": []
+      },
+      {
+        "context": "aspect: Revision B end of life",
+        "name": "Halyard last-time-buy date for revision B",
+        "type": "DateConcept",
+        "n_items": 0,
+        "n_gold_items": 1,
+        "predicted": [],
+        "gold": [
+          "2026-10-13"
+        ],
+        "scoring": "exact",
+        "correct": false,
+        "predicted_references": [],
+        "references": {
+          "precision": 0.0,
+          "recall": 0.0,
+          "f1": 0.0
+        },
+        "values": [],
+        "justifications": []
+      },
+      {
+        "context": "aspect: Revision B end of life",
+        "name": "Last-shipment date of revision B",
+        "type": "DateConcept",
+        "n_items": 0,
+        "n_gold_items": 1,
+        "predicted": [],
+        "gold": [
+          "2027-03-12"
+        ],
+        "scoring": "exact",
+        "correct": false,
+        "predicted_references": [],
+        "references": {
+          "precision": 0.0,
+          "recall": 0.0,
+          "f1": 0.0
+        },
+        "values": [],
+        "justifications": []
+      },
+      {
+        "context": "aspect: Revision B end of life",
+        "name": "PO-5521 valid last-time-buy order",
+        "type": "BooleanConcept",
+        "n_items": 0,
+        "n_gold_items": 1,
+        "predicted": [],
+        "gold": [
+          true
+        ],
+        "scoring": "exact",
+        "correct": false,
+        "predicted_references": [],
+        "references": {
+          "precision": 0.0,
+          "recall": 0.0,
+          "f1": 0.0
+        },
+        "values": [],
+        "justifications": []
+      }
+    ]
+  }
+}

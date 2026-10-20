@@ -7,7 +7,12 @@ belonging to each aspect, in one pass of the extraction of the aspects.
 
 The probabilities do not depend on the decision threshold, so one pass shows what
 each threshold would extract (see ``threshold_sweep``). They are read from
-the answers that the library records in the usage of the model.
+the answers that the library records in the usage of the model. They are written
+for the paragraphs of the reference answers: for a document whose paragraphs are
+not those, e.g. created from the Docling document of a PDF file, a paragraph of
+the reference answers has the highest probability of the paragraphs of
+the document that hold it (see :func:`project_probabilities`), and the
+probabilities of the paragraphs of the document are kept too.
 
 The requests are live and are paid for. The API keys are read from the environment
 or from the `.env` file of the repo, and are never printed.
@@ -110,6 +115,48 @@ def record_probabilities(
     return probabilities
 
 
+def project_probabilities(
+    probabilities: list[list[float | None]],
+    paragraph_map: list[list[int]],
+    n_gold_paragraphs: int,
+) -> list[list[float | None]]:
+    """
+    Gives the paragraphs of the reference answers the probabilities of
+    the paragraphs of a document that hold them, for a document whose paragraphs
+    are not those of the reference answers (see
+    :func:`dev.evals.harness.map_paragraphs`).
+
+    A paragraph of the reference answers has, for each aspect, the highest
+    probability of the paragraphs that hold it: a threshold extracts it if it
+    extracts one of them, as the scores of the extraction count it.
+
+    :param probabilities: For each paragraph of the document, the probability for
+        each aspect, or None for a refused answer.
+    :type probabilities: list[list[float | None]]
+    :param paragraph_map: For each paragraph of the document, the positions of
+        the paragraphs of the reference answers that it holds.
+    :type paragraph_map: list[list[int]]
+    :param n_gold_paragraphs: The number of paragraphs of the reference answers.
+    :type n_gold_paragraphs: int
+    :return: For each paragraph of the reference answers, the probability for each
+        aspect, or None if no paragraph that holds it has one.
+    :rtype: list[list[float | None]]
+    """
+    n_aspects = len(probabilities[0]) if probabilities else 0
+    projected: list[list[float | None]] = [
+        [None] * n_aspects for _ in range(n_gold_paragraphs)
+    ]
+    for row, positions in zip(probabilities, paragraph_map, strict=True):
+        for position in positions:
+            for aspect_index, probability in enumerate(row):
+                current = projected[position][aspect_index]
+                if probability is not None and (
+                    current is None or probability > current
+                ):
+                    projected[position][aspect_index] = probability
+    return projected
+
+
 def main() -> None:
     """
     Records the probabilities of a decision model on a case, and writes them.
@@ -134,7 +181,8 @@ def main() -> None:
         default="text",
         choices=get_args(CaseInput),
         help="what the document is created from: the text of the case (default), "
-        "or its Docling document, with or without the additional context",
+        "its Docling document, with or without the additional context, or the "
+        "Docling document of the case printed as a PDF file",
     )
     args = parser.parse_args()
 
@@ -163,6 +211,14 @@ def main() -> None:
     # answers, which a score recorded with them would
     aspect_f1 = score_document(document, gold)["summary"]["aspect_f1"]
     usage = get_usage_record(model)
+    paragraph_probabilities: dict[str, list[list[float | None]]] = {}
+    if "paragraph_map" in gold:
+        # Those of the paragraphs of the document, which are not those of
+        # the reference answers
+        paragraph_probabilities["document_probabilities"] = probabilities
+        probabilities = project_probabilities(
+            probabilities, gold["paragraph_map"], len(gold["paragraphs"])
+        )
     write_json(
         path,
         {
@@ -171,14 +227,20 @@ def main() -> None:
             "input": args.input,
             "aspects": [aspect.name for aspect in document.aspects],
             "probabilities": probabilities,
+            **paragraph_probabilities,
             "seconds": seconds,
             "usage": usage,
             "provenance": get_provenance(),
         },
     )
-    n_refused = sum(probability is None for row in probabilities for probability in row)
+    document_probabilities = paragraph_probabilities.get(
+        "document_probabilities", probabilities
+    )
+    n_refused = sum(
+        probability is None for row in document_probabilities for probability in row
+    )
     print(
-        f"{path.name}: {len(probabilities)} paragraphs x {len(document.aspects)} "
+        f"{path.name}: {len(document_probabilities)} paragraphs x {len(document.aspects)} "
         f"aspects, {n_refused} refused, {seconds} s, {usage['input_tokens']} input "
         f"tokens, USD {usage['cost_total']}, aspect F1 at the default threshold "
         f"{aspect_f1:.3f}",

@@ -1,0 +1,632 @@
+{
+  "case": "complex_mcu",
+  "model": "openai/gpt-6-luna",
+  "kind": "decision",
+  "mode": "decision_default",
+  "input": "pdf",
+  "label": "pdf_2026-10-21_pdf",
+  "run": 1,
+  "error": null,
+  "seconds": 100.3,
+  "usage": {
+    "requests": 278,
+    "requests_without_response": 0,
+    "input_tokens": 606507,
+    "output_tokens": 0,
+    "cache_read_tokens": 0,
+    "cache_write_tokens": 22541,
+    "cost_total": "0.06065"
+  },
+  "retries_for_invalid_data": 0,
+  "responses_not_valid_json": 0,
+  "extraction_warnings": [],
+  "refusal_warnings": [],
+  "provenance": {
+    "litellm": "1.105.2",
+    "prompts": {
+      "decision_question_aspect.j2": "7b069363576f",
+      "decision_question_concept.j2": "603962caf35d",
+      "default_system_message.j2": "8bb691c5e36c",
+      "extract_aspect_items.j2": "a73d8b00c6cc",
+      "extract_concept_items.j2": "c95e046ad0d5"
+    }
+  },
+  "scores": {
+    "summary": {
+      "aspect_f1": 0.729559203073725,
+      "aspect_precision": 0.7027239100768512,
+      "aspect_recall": 0.7786769880365939,
+      "concept_accuracy": 0.8181818181818182,
+      "n_concepts_scored": 11,
+      "n_concepts_correct": 9,
+      "string_exact": null,
+      "n_strings": 0,
+      "reference_f1": null,
+      "n_concepts_without_items": 0
+    },
+    "aspects": [
+      {
+        "name": "Device limitations of revision C",
+        "n_predicted": 13,
+        "n_gold": 12,
+        "n_neutral_predicted": 11,
+        "predicted_paragraphs": [
+          182,
+          189,
+          190,
+          191,
+          192,
+          193,
+          194,
+          195,
+          196,
+          197,
+          198,
+          199,
+          200,
+          203,
+          207,
+          208,
+          209,
+          213,
+          217,
+          218,
+          222,
+          235,
+          248,
+          249
+        ],
+        "precision": 0.7692307692307693,
+        "recall": 0.8333333333333334,
+        "f1": 0.8
+      },
+      {
+        "name": "Flash memory specifications",
+        "n_predicted": 16,
+        "n_gold": 14,
+        "n_neutral_predicted": 7,
+        "predicted_paragraphs": [
+          59,
+          60,
+          61,
+          62,
+          63,
+          64,
+          65,
+          66,
+          67,
+          69,
+          70,
+          71,
+          72,
+          73,
+          74,
+          75,
+          76,
+          203,
+          211,
+          223,
+          234,
+          245,
+          258
+        ],
+        "precision": 0.875,
+        "recall": 1.0,
+        "f1": 0.9333333333333333
+      },
+      {
+        "name": "DR-114 clock configuration",
+        "n_predicted": 40,
+        "n_gold": 33,
+        "n_neutral_predicted": 16,
+        "predicted_paragraphs": [
+          2,
+          3,
+          26,
+          27,
+          28,
+          29,
+          30,
+          31,
+          32,
+          34,
+          45,
+          46,
+          47,
+          48,
+          49,
+          50,
+          51,
+          52,
+          53,
+          54,
+          55,
+          56,
+          57,
+          58,
+          60,
+          61,
+          62,
+          63,
+          64,
+          65,
+          66,
+          67,
+          107,
+          109,
+          165,
+          178,
+          180,
+          182,
+          193,
+          194,
+          197,
+          202,
+          203,
+          211,
+          217,
+          221,
+          222,
+          231,
+          233,
+          234,
+          241,
+          242,
+          243,
+          245,
+          249,
+          263
+        ],
+        "precision": 0.7,
+        "recall": 0.8484848484848485,
+        "f1": 0.7671232876712328
+      },
+      {
+        "name": "DR-114 thermal assessment",
+        "n_predicted": 30,
+        "n_gold": 21,
+        "n_neutral_predicted": 14,
+        "predicted_paragraphs": [
+          14,
+          15,
+          21,
+          22,
+          33,
+          90,
+          91,
+          92,
+          93,
+          94,
+          95,
+          96,
+          97,
+          98,
+          100,
+          101,
+          102,
+          103,
+          104,
+          105,
+          106,
+          107,
+          108,
+          109,
+          110,
+          111,
+          112,
+          113,
+          115,
+          116,
+          117,
+          121,
+          122,
+          123,
+          124,
+          125,
+          126,
+          232,
+          236,
+          242,
+          244,
+          247,
+          248,
+          250
+        ],
+        "precision": 0.4,
+        "recall": 0.5714285714285714,
+        "f1": 0.47058823529411764
+      },
+      {
+        "name": "DR-114 errata and firmware",
+        "n_predicted": 24,
+        "n_gold": 22,
+        "n_neutral_predicted": 20,
+        "predicted_paragraphs": [
+          1,
+          2,
+          3,
+          11,
+          78,
+          79,
+          81,
+          82,
+          83,
+          85,
+          86,
+          87,
+          181,
+          182,
+          183,
+          184,
+          185,
+          186,
+          187,
+          190,
+          191,
+          192,
+          193,
+          194,
+          195,
+          196,
+          197,
+          198,
+          199,
+          200,
+          201,
+          204,
+          205,
+          206,
+          207,
+          214,
+          217,
+          218,
+          222,
+          242,
+          245,
+          248,
+          249,
+          263
+        ],
+        "precision": 0.75,
+        "recall": 0.8181818181818182,
+        "f1": 0.7826086956521738
+      },
+      {
+        "name": "DR-115 errata and PLL1 limits",
+        "n_predicted": 17,
+        "n_gold": 29,
+        "n_neutral_predicted": 11,
+        "predicted_paragraphs": [
+          2,
+          3,
+          5,
+          11,
+          46,
+          47,
+          49,
+          51,
+          52,
+          53,
+          54,
+          55,
+          58,
+          183,
+          184,
+          185,
+          186,
+          187,
+          193,
+          202,
+          217,
+          222,
+          233,
+          254,
+          255,
+          256,
+          258,
+          263
+        ],
+        "precision": 0.6470588235294118,
+        "recall": 0.3793103448275862,
+        "f1": 0.4782608695652174
+      },
+      {
+        "name": "Revision B end of life",
+        "n_predicted": 9,
+        "n_gold": 7,
+        "n_neutral_predicted": 4,
+        "predicted_paragraphs": [
+          2,
+          4,
+          186,
+          219,
+          220,
+          224,
+          225,
+          226,
+          228,
+          240,
+          263,
+          264,
+          265
+        ],
+        "precision": 0.7777777777777778,
+        "recall": 1.0,
+        "f1": 0.8750000000000001
+      }
+    ],
+    "concepts": [
+      {
+        "context": "document",
+        "name": "VOS0 permitted at a VDD of 1.8 V",
+        "type": "BooleanConcept",
+        "n_items": 1,
+        "n_gold_items": 1,
+        "predicted": [
+          false
+        ],
+        "gold": [
+          false
+        ],
+        "scoring": "exact",
+        "correct": true,
+        "predicted_references": [],
+        "values": [
+          false
+        ],
+        "justifications": [
+          null
+        ]
+      },
+      {
+        "context": "document",
+        "name": "Marking code of revision C",
+        "type": "LabelConcept",
+        "n_items": 1,
+        "n_gold_items": 1,
+        "predicted": [
+          [
+            "y"
+          ]
+        ],
+        "gold": [
+          [
+            "y"
+          ]
+        ],
+        "scoring": "exact",
+        "correct": true,
+        "predicted_references": [],
+        "values": [
+          [
+            "Y"
+          ]
+        ],
+        "justifications": [
+          null
+        ]
+      },
+      {
+        "context": "aspect: Device limitations of revision C",
+        "name": "Impact class of ES-08",
+        "type": "RatingConcept",
+        "n_items": 1,
+        "n_gold_items": 1,
+        "predicted": [
+          4.0
+        ],
+        "gold": [
+          4.0
+        ],
+        "scoring": "exact",
+        "correct": true,
+        "predicted_references": [],
+        "values": [
+          4
+        ],
+        "justifications": [
+          null
+        ]
+      },
+      {
+        "context": "aspect: Device limitations of revision C",
+        "name": "ES-09 present in revision C",
+        "type": "BooleanConcept",
+        "n_items": 1,
+        "n_gold_items": 1,
+        "predicted": [
+          true
+        ],
+        "gold": [
+          true
+        ],
+        "scoring": "exact",
+        "correct": true,
+        "predicted_references": [],
+        "values": [
+          true
+        ],
+        "justifications": [
+          null
+        ]
+      },
+      {
+        "context": "aspect: DR-114 clock configuration",
+        "name": "DR-114 PLL1 configuration within specification",
+        "type": "BooleanConcept",
+        "n_items": 1,
+        "n_gold_items": 1,
+        "predicted": [
+          false
+        ],
+        "gold": [
+          false
+        ],
+        "scoring": "exact",
+        "correct": true,
+        "predicted_references": [],
+        "values": [
+          false
+        ],
+        "justifications": [
+          null
+        ]
+      },
+      {
+        "context": "aspect: DR-114 thermal assessment",
+        "name": "DR-114 meets HDR-7",
+        "type": "BooleanConcept",
+        "n_items": 1,
+        "n_gold_items": 1,
+        "predicted": [
+          false
+        ],
+        "gold": [
+          false
+        ],
+        "scoring": "exact",
+        "correct": true,
+        "predicted_references": [],
+        "values": [
+          false
+        ],
+        "justifications": [
+          null
+        ]
+      },
+      {
+        "context": "aspect: DR-114 errata and firmware",
+        "name": "Errata applicable to the DR-114 production boards",
+        "type": "LabelConcept",
+        "n_items": 1,
+        "n_gold_items": 1,
+        "predicted": [
+          [
+            "es-05",
+            "es-08",
+            "es-09"
+          ]
+        ],
+        "gold": [
+          [
+            "es-04",
+            "es-05",
+            "es-08"
+          ]
+        ],
+        "scoring": "exact",
+        "correct": false,
+        "predicted_references": [],
+        "values": [
+          [
+            "ES-05",
+            "ES-08",
+            "ES-09"
+          ]
+        ],
+        "justifications": [
+          null
+        ]
+      },
+      {
+        "context": "aspect: DR-114 errata and firmware",
+        "name": "FW 2.3.0 meets HDR-9 for the DR-114 production boards",
+        "type": "BooleanConcept",
+        "n_items": 1,
+        "n_gold_items": 1,
+        "predicted": [
+          false
+        ],
+        "gold": [
+          false
+        ],
+        "scoring": "exact",
+        "correct": true,
+        "predicted_references": [],
+        "values": [
+          false
+        ],
+        "justifications": [
+          null
+        ]
+      },
+      {
+        "context": "aspect: DR-115 errata and PLL1 limits",
+        "name": "Errata applicable to the DR-115 boards",
+        "type": "LabelConcept",
+        "n_items": 1,
+        "n_gold_items": 1,
+        "predicted": [
+          [
+            "es-02",
+            "es-04",
+            "es-05"
+          ]
+        ],
+        "gold": [
+          [
+            "es-02",
+            "es-07"
+          ]
+        ],
+        "scoring": "exact",
+        "correct": false,
+        "predicted_references": [],
+        "values": [
+          [
+            "ES-02",
+            "ES-04",
+            "ES-05"
+          ]
+        ],
+        "justifications": [
+          null
+        ]
+      },
+      {
+        "context": "aspect: DR-115 errata and PLL1 limits",
+        "name": "DR-115 PLL1 configuration within its limits",
+        "type": "BooleanConcept",
+        "n_items": 1,
+        "n_gold_items": 1,
+        "predicted": [
+          false
+        ],
+        "gold": [
+          false
+        ],
+        "scoring": "exact",
+        "correct": true,
+        "predicted_references": [],
+        "values": [
+          false
+        ],
+        "justifications": [
+          null
+        ]
+      },
+      {
+        "context": "aspect: Revision B end of life",
+        "name": "PO-5521 valid last-time-buy order",
+        "type": "BooleanConcept",
+        "n_items": 1,
+        "n_gold_items": 1,
+        "predicted": [
+          true
+        ],
+        "gold": [
+          true
+        ],
+        "scoring": "exact",
+        "correct": true,
+        "predicted_references": [],
+        "values": [
+          true
+        ],
+        "justifications": [
+          null
+        ]
+      }
+    ]
+  }
+}

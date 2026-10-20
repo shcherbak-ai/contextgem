@@ -251,7 +251,8 @@ def main() -> None:
         default="text",
         choices=get_args(CaseInput),
         help="what the document is created from: the text of the case (default), "
-        "or its Docling document, with or without the additional context",
+        "its Docling document, with or without the additional context, or the "
+        "Docling document of the case printed as a PDF file",
     )
     args = parser.parse_args()
 

@@ -15,6 +15,9 @@ Measures the quality and the cost of extraction on evaluation cases with referen
 | `cases/<case>.docling.json` | Docling document of the case, from which `--input docling` creates its document with `Document.from_docling()` |
 | `cases/<case>.docling.html` | HTML rendering of the text of the case that Docling converted into it |
 | `docling_cases.py` | Writes the Docling documents of the cases and checks them (offline, no request) |
+| `cases/<case>.pdf` | The HTML rendering of a case with tables printed as a PDF file, as a report is printed (`complex_mcu`, `complex_stability`) |
+| `cases/<case>.pdf.docling.json` | The Docling document that full Docling converts the PDF file into, from which `--input pdf` creates the document of the case |
+| `docling_pdf_cases.py` | Prints the PDF files, converts them with full Docling in a throwaway environment, and reports how their paragraphs map to those of the reference answers (no request to a model; needs Chrome, Chromium or Edge) |
 | `harness.py` | Loads a case, creates the model, writes results |
 | `scoring.py` | Scores an extracted document against the reference answers |
 | `run_eval.py` | Extracts a case with a model and scores it (**live requests**) |
@@ -95,6 +98,12 @@ uv run python -m dev.evals.check_scorer
 # the Docling documents written again after a change in a case (offline)
 uv run python -m dev.evals.run_eval --case complex_mcu --model openai/gpt-6-luna --runs 3 --label my_experiment --input docling
 uv run python -m dev.evals.docling_cases
+
+# The same from the Docling document of the case printed as a PDF file (live), and
+# the PDF files printed and converted again (offline), or only their mapping reported
+uv run python -m dev.evals.run_eval --case complex_mcu --model openai/gpt-6-luna --runs 3 --label my_experiment --input pdf
+uv run python -m dev.evals.docling_pdf_cases
+uv run python -m dev.evals.docling_pdf_cases --report
 ```
 
 `--concurrency` runs the extraction with `use_concurrency=True`. One line is printed per run, which starts with the name of its file. The library prints its logs as usual: set `CONTEXTGEM_LOGGER_LEVEL=WARNING` for a quiet run.
@@ -134,7 +143,7 @@ Every experiment and baseline runs the same models, each for a purpose, so that 
 - **The top LLM tells the limit of a model from a problem of a case** or of its reference answers. A run costs about 20 times one of `openai/gpt-6-luna`, so it is in the baselines only.
 - **Each model runs with its defaults**: the harness sets no temperature, reasoning effort or output limit.
 - **Local models are run when a question concerns them**, under a label of their own: `baseline_2026-10-11` is what is known of them.
-- **The second LLM was `openai/gpt-5.6-luna` until 2026-10-20**, in every label recorded until then: an older model of the same provider, which got fewer concepts than `openai/gpt-6-luna` at about twice the cost of a run. `anthropic/claude-haiku-5-5` has no baseline yet: compare its runs with the control recorded at the same time. The tests keep `openai/gpt-5.6-luna` as a second, distinct model (fallbacks, a model with a role), whose extraction they do not measure.
+- **The second LLM was `openai/gpt-5.6-luna` until 2026-10-20**, in every label recorded until then: an older model of the same provider, which got fewer concepts than `openai/gpt-6-luna` at about twice the cost of a run. `anthropic/claude-haiku-5-5` has no baseline yet: compare its runs with the control recorded at the same time. It returns invalid JSON for the aspects of `complex_mcu` often enough to fail whole runs (see From a PDF File): count its failed runs, and compare the valid ones. The tests keep `openai/gpt-5.6-luna` as a second, distinct model (fallbacks, a model with a role), whose extraction they do not measure.
 
 ## Comparing a Change with the Baseline
 
@@ -206,11 +215,45 @@ Not tested: the questions of concepts (each case has six concepts that a decisio
 
 ## Extraction from Docling Documents
 
-`--input` of `run_eval` and `decision_probabilities` says what the document of a case is created from: `text` (the default, as in every baseline), `docling`, or `docling_without_context`. The two Docling inputs create the document with `Document.from_docling()` from `cases/<case>.docling.json`, i.e. with the structure that Docling gives a file: the additional context of each paragraph (what it is, e.g. `Table row`, the headings of its section, the caption of its table) and each table row with the header of each column before its value. `docling_without_context` leaves out the additional context, to tell its effect from that of the table rows. A run and a pass of the probabilities record their input (`input`); those recorded before 2026-10-20 have none, and are of the text.
+`--input` of `run_eval` and `decision_probabilities` says what the document of a case is created from: `text` (the default, as in every baseline), `docling`, `docling_without_context`, or `pdf` (below). The two Docling inputs create the document with `Document.from_docling()` from `cases/<case>.docling.json`, i.e. with the structure that Docling gives a file: the additional context of each paragraph (what it is, e.g. `Table row`, the headings of its section, the caption of its table) and each table row with the header of each column before its value. `docling_without_context` leaves out the additional context, to tell its effect from that of the table rows. A run and a pass of the probabilities record their input (`input`); those recorded before 2026-10-20 have none, and are of the text.
 
 `docling_cases.py` writes the Docling documents: it renders the text of each case as HTML (each heading of `.neutral.json` at the level of its section, the title of a table as its caption, the first row of a table as its header row), converts it with the docling-slim of the dev group, and writes the HTML and the Docling document. The HTML backend of Docling replaces some characters with ASCII ones, e.g. "—" with "-", which a PDF file of the same text keeps: the script sets a table cell that differs from the case only by them back to the text of the case, so that the Docling document differs from the text only in its structure. The paragraphs of a Docling document are those of the reference answers, position by position (a table row with the values of the cells of its line, in order): `load_case` checks it each time, and `check_scorer` checks each case with both inputs. After a change in the text of a case, write the Docling documents again.
 
 This measures what ContextGem makes of the structure of a document, not how well Docling reads a file: the HTML comes from the text, so Docling finds exactly its sections and tables.
+
+### From a PDF File
+
+`--input pdf` creates the document from the Docling document of the case printed as a PDF file, i.e. with what the layout and table models of Docling read in a real file. `docling_pdf_cases.py` prints the HTML rendering of each case with tables (`PDF_CASES`: `complex_mcu` and `complex_stability`) with headless Chrome, on A4 pages with the title of the case in their header and their number in their footer, and the tables with borders, and converts the file with full Docling, without OCR, as it has a text layer. Docling then gives every heading at level 1, leaves the headers and footers of the pages out, splits a paragraph or a table at the end of a page (the part of a table on the next page is a table of its own, without the caption, under the header row that the browser repeats), reads a part of a page out of order now and then (e.g. a table after the paragraphs below it), and spaces out underscores ("RCC _ PLLCFGR").
+
+The paragraphs of such a document are not those of the reference answers, so they are mapped to them by their text (`map_paragraphs` in `harness.py`): the words of all the paragraphs are aligned in order, which tells apart the rows of tables that look alike by their places, and the words left unaligned are aligned again among themselves, for the parts that Docling read out of order. A paragraph holds a paragraph of the reference answers when half of the words of one of the two are aligned with words of the other (a table row compared by the values of its cells). The scores then count what is extracted as the paragraphs of the reference answers that it holds, so the three inputs are scored on the same paragraphs; the probabilities of a decision model are written for the paragraphs of the reference answers, each with the highest probability of the paragraphs that hold it (and those of the paragraphs of the document are kept, `document_probabilities`). `docling_pdf_cases.py --report` prints the mapping, and `check_scorer` checks that the paragraphs that hold the reference ones find all of them. On the files of 2026-10-21, every paragraph of the reference answers is found, no paragraph holds two of them, one is split between two pages, and the paragraphs that hold none are the header rows that the browser repeats.
+
+#### Measured on 2026-10-21
+
+Three labels recorded at the same time: `pdf_2026-10-21_text` (the control), `pdf_2026-10-21_docling` (the HTML rendering) and `pdf_2026-10-21_pdf`, each with the models of every label (`openai/gpt-6-luna` and `anthropic/claude-haiku-5-5`, 3 runs each; the three hosted decision models, 1 run and one pass of `decision_probabilities` each; the judge, which agreed with 75 of the 76 checks for each label), on `complex_mcu` and `complex_stability`. Cost: USD 1.28 for the three labels.
+
+| Case | Model | Measure | Text | Docling (HTML) | PDF |
+|------|-------|---------|------|----------------|-----|
+| `complex_stability` | `openai/gpt-6-luna` | Aspect F1 | 0.961 | 0.962 | 0.958 |
+| `complex_stability` | `openai/gpt-6-luna` | Concepts correct (of 16) | 15.7 | 15.3 | 14.7 |
+| `complex_stability` | `openai/gpt-6-luna` | Reference F1 | 0.855 | 0.865 | 0.860 |
+| `complex_stability` | `anthropic/claude-haiku-5-5` | Aspect F1 | 0.903 | 0.870 | 0.917 |
+| `complex_stability` | `anthropic/claude-haiku-5-5` | Reference F1 | 0.755 | 0.714 | 0.769 |
+| `complex_mcu` | `openai/gpt-6-luna` | Aspect F1 | 0.936 | 0.956 | 0.950 |
+| `complex_mcu` | `openai/gpt-6-luna` | Concepts correct (of 26) | 25.7 | 23.3 | 25.7 |
+| `complex_mcu` | `openai/gpt-6-luna` | Reference F1 | 0.733 | 0.673 | 0.740 |
+| `complex_mcu` | `anthropic/claude-haiku-5-5` | Aspect F1 (valid runs) | none of 3 | 0.757 (3) | 0.714 (2) |
+| `complex_stability` | Decision models, each | Aspect F1 | 0.34 to 0.41 | 0.64 to 0.77 | 0.62 to 0.76 |
+| `complex_mcu` | Decision models, each | Aspect F1 | 0.56 to 0.65 | 0.69 to 0.75 | 0.65 to 0.73 |
+| Both | Decision models, each | Aspect F1 at its best threshold (mean of the cases) | 0.51 to 0.55 | 0.73 to 0.78 | 0.74 to 0.76 |
+
+- **The PDF file keeps most of what the structure gives the decision models**: the mean aspect F1 of the three rises from the text by 0.33 on `complex_stability` and 0.09 on `complex_mcu` with the PDF file, against 0.34 and 0.10 with the HTML rendering, although the parts of tables after a page break come without their captions and every heading is at level 1. `typesafe/jev-latest` does better with the PDF file than with the HTML rendering on `complex_mcu` (0.725 against 0.690).
+- **The LLMs show no difference beyond the variation between runs**, as with the HTML rendering on 2026-10-20. With `openai/gpt-6-luna` on `complex_mcu`, the HTML rendering gave fewer concepts and a lower reference F1 than both the text and the PDF file, as on 2026-10-20 (24.0 against 25.7 then); its section paths are the longest of the three inputs, but three runs do not tell that apart from the variation.
+- **`anthropic/claude-haiku-5-5` returns invalid JSON for the aspects of `complex_mcu`**, e.g. `{"aspect_id":"A4":"A4","paragraph_ids":[]}`, and leaves the last aspects empty: all three runs from the text, and one of the three from the PDF file, failed after three retries, and most of its other runs on the case needed retries. On `complex_stability` it failed none. The length of the answer is the cause: extracting only the aspects of `complex_mcu` from the text, 2 runs each, 3 of its 5 answers with all the aspects in one request were invalid (both runs succeeded on a retry), against none of its 14 answers with one aspect in each request (`max_items_per_call=1`), whose aspect F1 was lower, though (0.54 and 0.64, against 0.75 and 0.79), at about three times the cost. It gets no cached tokens, as ContextGem does not ask Anthropic to cache, so a run costs about three times one of `openai/gpt-6-luna`.
+- **The input tokens**: the PDF file adds about as many as the HTML rendering: 32% to 39% for `openai/gpt-6-luna`, 10% for `anthropic/claude-haiku-5-5` on `complex_stability`.
+
+The limits: two cases, printed from their text by one browser, i.e. a born-digital PDF file with a text layer, not a scanned one; one run of each decision model.
+
+The environment of the project was upgraded by another piece of work during the recording, so the runs record `litellm` 1.105.1, 1.106.1 or 1.105.2 (`provenance`). The three inputs share one version on `complex_stability` for both LLMs and for `typesafe/jev-latest` and `openai/gpt-6-luna` as decision models (1.105.1), and on `complex_mcu` for `openai/gpt-6-luna` and `azure_ai/ms-decision-model` as decision models (1.105.2), and these show what is said above; the other comparisons mix versions. Record an experiment in an environment that nothing else changes meanwhile, e.g. a worktree.
 
 ### Measured on 2026-10-20
 

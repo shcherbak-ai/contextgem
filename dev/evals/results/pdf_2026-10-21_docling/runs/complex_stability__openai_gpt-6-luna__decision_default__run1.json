@@ -1,0 +1,322 @@
+{
+  "case": "complex_stability",
+  "model": "openai/gpt-6-luna",
+  "kind": "decision",
+  "mode": "decision_default",
+  "input": "docling",
+  "label": "pdf_2026-10-21_docling",
+  "run": 1,
+  "error": null,
+  "seconds": 26.6,
+  "usage": {
+    "requests": 128,
+    "requests_without_response": 0,
+    "input_tokens": 152560,
+    "output_tokens": 0,
+    "cache_read_tokens": 0,
+    "cache_write_tokens": 5174,
+    "cost_total": "0.01526"
+  },
+  "retries_for_invalid_data": 0,
+  "responses_not_valid_json": 0,
+  "extraction_warnings": [],
+  "refusal_warnings": [],
+  "provenance": {
+    "litellm": "1.105.1",
+    "prompts": {
+      "decision_question_aspect.j2": "7b069363576f",
+      "decision_question_concept.j2": "603962caf35d",
+      "default_system_message.j2": "8bb691c5e36c",
+      "extract_aspect_items.j2": "a73d8b00c6cc",
+      "extract_concept_items.j2": "c95e046ad0d5"
+    }
+  },
+  "scores": {
+    "summary": {
+      "aspect_f1": 0.7419615355720832,
+      "aspect_precision": 0.6630952380952381,
+      "aspect_recall": 0.9038461538461539,
+      "concept_accuracy": 1.0,
+      "n_concepts_scored": 5,
+      "n_concepts_correct": 5,
+      "string_exact": null,
+      "n_strings": 0,
+      "reference_f1": null,
+      "n_concepts_without_items": 0
+    },
+    "aspects": [
+      {
+        "name": "Shelf-life acceptance criteria",
+        "n_predicted": 10,
+        "n_gold": 7,
+        "n_neutral_predicted": 5,
+        "predicted_paragraphs": [
+          12,
+          21,
+          22,
+          23,
+          24,
+          25,
+          26,
+          27,
+          28,
+          29,
+          38,
+          96,
+          106,
+          107,
+          116
+        ],
+        "precision": 0.7,
+        "recall": 1.0,
+        "f1": 0.8235294117647058
+      },
+      {
+        "name": "Stability results of V20-2604",
+        "n_predicted": 20,
+        "n_gold": 20,
+        "n_neutral_predicted": 8,
+        "predicted_paragraphs": [
+          57,
+          58,
+          59,
+          60,
+          61,
+          62,
+          63,
+          64,
+          65,
+          66,
+          67,
+          68,
+          69,
+          70,
+          71,
+          72,
+          73,
+          74,
+          75,
+          76,
+          77,
+          78,
+          79,
+          96,
+          97,
+          98,
+          99,
+          100
+        ],
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0
+      },
+      {
+        "name": "Results outside the shelf-life specification",
+        "n_predicted": 14,
+        "n_gold": 13,
+        "n_neutral_predicted": 4,
+        "predicted_paragraphs": [
+          29,
+          38,
+          67,
+          69,
+          70,
+          71,
+          76,
+          77,
+          78,
+          79,
+          92,
+          96,
+          97,
+          98,
+          99,
+          100,
+          101,
+          116
+        ],
+        "precision": 0.5714285714285714,
+        "recall": 0.6153846153846154,
+        "f1": 0.5925925925925927
+      },
+      {
+        "name": "Shelf-life rules and proposal",
+        "n_predicted": 21,
+        "n_gold": 8,
+        "n_neutral_predicted": 7,
+        "predicted_paragraphs": [
+          4,
+          12,
+          21,
+          28,
+          33,
+          35,
+          38,
+          42,
+          56,
+          58,
+          67,
+          79,
+          81,
+          83,
+          100,
+          102,
+          103,
+          104,
+          105,
+          106,
+          107,
+          108,
+          109,
+          110,
+          111,
+          112,
+          115,
+          116
+        ],
+        "precision": 0.38095238095238093,
+        "recall": 1.0,
+        "f1": 0.5517241379310345
+      }
+    ],
+    "concepts": [
+      {
+        "context": "document",
+        "name": "Batches with a significant change at the accelerated condition",
+        "type": "LabelConcept",
+        "n_items": 1,
+        "n_gold_items": 1,
+        "predicted": [
+          [
+            "v20-2604",
+            "v20-2607"
+          ]
+        ],
+        "gold": [
+          [
+            "v20-2604",
+            "v20-2607"
+          ]
+        ],
+        "scoring": "exact",
+        "correct": true,
+        "predicted_references": [],
+        "values": [
+          [
+            "V20-2604",
+            "V20-2607"
+          ]
+        ],
+        "justifications": [
+          null
+        ]
+      },
+      {
+        "context": "document",
+        "name": "The conclusion on V20-2607 at the accelerated condition agrees with its results",
+        "type": "BooleanConcept",
+        "n_items": 1,
+        "n_gold_items": 1,
+        "predicted": [
+          false
+        ],
+        "gold": [
+          false
+        ],
+        "scoring": "exact",
+        "correct": true,
+        "predicted_references": [],
+        "values": [
+          false
+        ],
+        "justifications": [
+          null
+        ]
+      },
+      {
+        "context": "aspect: Results outside the shelf-life specification",
+        "name": "Tests with a result outside the shelf-life specification",
+        "type": "LabelConcept",
+        "n_items": 1,
+        "n_gold_items": 1,
+        "predicted": [
+          [
+            "impurity d",
+            "total impurities",
+            "water content"
+          ]
+        ],
+        "gold": [
+          [
+            "impurity d",
+            "total impurities",
+            "water content"
+          ]
+        ],
+        "scoring": "exact",
+        "correct": true,
+        "predicted_references": [],
+        "values": [
+          [
+            "Impurity D",
+            "Total impurities",
+            "Water content"
+          ]
+        ],
+        "justifications": [
+          null
+        ]
+      },
+      {
+        "context": "aspect: Results outside the shelf-life specification",
+        "name": "Every result outside the shelf-life specification is investigated in section 5",
+        "type": "BooleanConcept",
+        "n_items": 1,
+        "n_gold_items": 1,
+        "predicted": [
+          false
+        ],
+        "gold": [
+          false
+        ],
+        "scoring": "exact",
+        "correct": true,
+        "predicted_references": [],
+        "values": [
+          false
+        ],
+        "justifications": [
+          null
+        ]
+      },
+      {
+        "context": "aspect: Shelf-life rules and proposal",
+        "name": "Rule that gives the proposed shelf life of the PVC/Alu blister",
+        "type": "LabelConcept",
+        "n_items": 1,
+        "n_gold_items": 1,
+        "predicted": [
+          [
+            "6.2"
+          ]
+        ],
+        "gold": [
+          [
+            "6.2"
+          ]
+        ],
+        "scoring": "exact",
+        "correct": true,
+        "predicted_references": [],
+        "values": [
+          [
+            "6.2"
+          ]
+        ],
+        "justifications": [
+          null
+        ]
+      }
+    ]
+  }
+}

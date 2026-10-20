@@ -1,0 +1,702 @@
+[
+  {
+    "case": "complex_mcu",
+    "model": "anthropic/claude-haiku-5-5",
+    "mode": "default",
+    "runs": 3,
+    "aspect_f1": [
+      0.6611905149331249,
+      0.0,
+      0.7666601205705562
+    ],
+    "aspect_precision": [
+      0.6277378010460717,
+      0.0,
+      0.7133820194744563
+    ],
+    "aspect_recall": [
+      0.7695071759111168,
+      0.0,
+      0.884300428635404
+    ],
+    "concepts_correct": [
+      21,
+      0,
+      15
+    ],
+    "n_concepts_scored": 26,
+    "closed_concepts_correct": [
+      8,
+      0,
+      6
+    ],
+    "n_closed_concepts": 11,
+    "reference_f1": [
+      0.624568907375925,
+      0.0,
+      0.48372451303485786
+    ],
+    "requests": [
+      12,
+      4,
+      13
+    ],
+    "input_tokens": [
+      337502,
+      223048,
+      401161
+    ],
+    "cache_read_tokens": [
+      0,
+      0,
+      0
+    ],
+    "output_tokens": [
+      17876,
+      2554,
+      16189
+    ],
+    "cost_total": [
+      "0.04269",
+      "0.02358",
+      "0.04821"
+    ],
+    "seconds": [
+      86.4,
+      13.3,
+      81.7
+    ],
+    "retries": [
+      2,
+      3,
+      3
+    ],
+    "errors": [
+      "ValueError: Aspect `Device limitations of revision C` is not yet processed. Use `extract_aspects_from_document` first.`"
+    ],
+    "warnings": 0,
+    "judged": [
+      {
+        "n_strings": 1,
+        "n_strings_correct": 1,
+        "n_justifications": 23,
+        "n_justifications_correct": 22,
+        "n_fields": 12,
+        "n_fields_correct": 12
+      },
+      {
+        "n_strings": 1,
+        "n_strings_correct": 0,
+        "n_justifications": 0,
+        "n_justifications_correct": 0,
+        "n_fields": 0,
+        "n_fields_correct": 0
+      },
+      {
+        "n_strings": 1,
+        "n_strings_correct": 1,
+        "n_justifications": 17,
+        "n_justifications_correct": 16,
+        "n_fields": 12,
+        "n_fields_correct": 12
+      }
+    ]
+  },
+  {
+    "case": "complex_mcu",
+    "model": "azure_ai/ms-decision-model",
+    "mode": "decision_default",
+    "runs": 1,
+    "aspect_f1": [
+      0.6450657641492115
+    ],
+    "aspect_precision": [
+      0.6324871943624707
+    ],
+    "aspect_recall": [
+      0.7734203399228029
+    ],
+    "concepts_correct": [
+      8
+    ],
+    "n_concepts_scored": 11,
+    "closed_concepts_correct": [
+      8
+    ],
+    "n_closed_concepts": 11,
+    "reference_f1": [
+      null
+    ],
+    "requests": [
+      278
+    ],
+    "input_tokens": [
+      365420
+    ],
+    "cache_read_tokens": [
+      0
+    ],
+    "output_tokens": [
+      1924
+    ],
+    "cost_total": [
+      "0.01535"
+    ],
+    "seconds": [
+      82.9
+    ],
+    "retries": [
+      0
+    ],
+    "errors": [],
+    "warnings": 0
+  },
+  {
+    "case": "complex_mcu",
+    "model": "openai/gpt-6-luna",
+    "mode": "decision_default",
+    "runs": 1,
+    "aspect_f1": [
+      0.729559203073725
+    ],
+    "aspect_precision": [
+      0.7027239100768512
+    ],
+    "aspect_recall": [
+      0.7786769880365939
+    ],
+    "concepts_correct": [
+      9
+    ],
+    "n_concepts_scored": 11,
+    "closed_concepts_correct": [
+      9
+    ],
+    "n_closed_concepts": 11,
+    "reference_f1": [
+      null
+    ],
+    "requests": [
+      278
+    ],
+    "input_tokens": [
+      606507
+    ],
+    "cache_read_tokens": [
+      0
+    ],
+    "output_tokens": [
+      0
+    ],
+    "cost_total": [
+      "0.06065"
+    ],
+    "seconds": [
+      100.3
+    ],
+    "retries": [
+      0
+    ],
+    "errors": [],
+    "warnings": 0
+  },
+  {
+    "case": "complex_mcu",
+    "model": "openai/gpt-6-luna",
+    "mode": "default",
+    "runs": 3,
+    "aspect_f1": [
+      0.9442152545197221,
+      0.9553671986098583,
+      0.9499175521992201
+    ],
+    "aspect_precision": [
+      0.9121759039163558,
+      0.947261663286004,
+      0.9427128427128427
+    ],
+    "aspect_recall": [
+      0.9913419913419913,
+      0.9712643678160919,
+      0.9693877551020408
+    ],
+    "concepts_correct": [
+      26,
+      26,
+      25
+    ],
+    "n_concepts_scored": 26,
+    "closed_concepts_correct": [
+      11,
+      11,
+      10
+    ],
+    "n_closed_concepts": 11,
+    "reference_f1": [
+      0.7405502534055415,
+      0.7631585724775689,
+      0.7173136548679454
+    ],
+    "requests": [
+      10,
+      10,
+      10
+    ],
+    "input_tokens": [
+      135615,
+      134535,
+      134324
+    ],
+    "cache_read_tokens": [
+      13670,
+      83240,
+      84524
+    ],
+    "output_tokens": [
+      14197,
+      12982,
+      14433
+    ],
+    "cost_total": [
+      "0.02248",
+      "0.01373",
+      "0.01429"
+    ],
+    "seconds": [
+      145.1,
+      138.2,
+      154.8
+    ],
+    "retries": [
+      0,
+      0,
+      0
+    ],
+    "errors": [],
+    "warnings": 0,
+    "judged": [
+      {
+        "n_strings": 1,
+        "n_strings_correct": 1,
+        "n_justifications": 26,
+        "n_justifications_correct": 26,
+        "n_fields": 12,
+        "n_fields_correct": 12
+      },
+      {
+        "n_strings": 1,
+        "n_strings_correct": 1,
+        "n_justifications": 26,
+        "n_justifications_correct": 26,
+        "n_fields": 12,
+        "n_fields_correct": 12
+      },
+      {
+        "n_strings": 1,
+        "n_strings_correct": 1,
+        "n_justifications": 26,
+        "n_justifications_correct": 24,
+        "n_fields": 12,
+        "n_fields_correct": 12
+      }
+    ]
+  },
+  {
+    "case": "complex_mcu",
+    "model": "typesafe/jev-latest",
+    "mode": "decision_default",
+    "runs": 1,
+    "aspect_f1": [
+      0.7247687824737005
+    ],
+    "aspect_precision": [
+      0.8635471671185957
+    ],
+    "aspect_recall": [
+      0.7005096709530206
+    ],
+    "concepts_correct": [
+      9
+    ],
+    "n_concepts_scored": 11,
+    "closed_concepts_correct": [
+      9
+    ],
+    "n_closed_concepts": 11,
+    "reference_f1": [
+      null
+    ],
+    "requests": [
+      278
+    ],
+    "input_tokens": [
+      423583
+    ],
+    "cache_read_tokens": [
+      0
+    ],
+    "output_tokens": [
+      33885
+    ],
+    "cost_total": [
+      "0.01779"
+    ],
+    "seconds": [
+      67.5
+    ],
+    "retries": [
+      0
+    ],
+    "errors": [],
+    "warnings": 0
+  },
+  {
+    "case": "complex_stability",
+    "model": "anthropic/claude-haiku-5-5",
+    "mode": "default",
+    "runs": 3,
+    "aspect_f1": [
+      0.9078947368421053,
+      0.9014844804318488,
+      0.9404761904761905
+    ],
+    "aspect_precision": [
+      1.0,
+      1.0,
+      1.0
+    ],
+    "aspect_recall": [
+      0.8653846153846154,
+      0.8528846153846154,
+      0.9038461538461539
+    ],
+    "concepts_correct": [
+      14,
+      14,
+      14
+    ],
+    "n_concepts_scored": 16,
+    "closed_concepts_correct": [
+      4,
+      4,
+      4
+    ],
+    "n_closed_concepts": 5,
+    "reference_f1": [
+      0.8082231040564374,
+      0.7347089947089948,
+      0.7628375255826236
+    ],
+    "requests": [
+      7,
+      7,
+      7
+    ],
+    "input_tokens": [
+      123895,
+      123716,
+      123932
+    ],
+    "cache_read_tokens": [
+      0,
+      0,
+      0
+    ],
+    "output_tokens": [
+      5430,
+      5621,
+      8033
+    ],
+    "cost_total": [
+      "0.01511",
+      "0.01518",
+      "0.01641"
+    ],
+    "seconds": [
+      27.4,
+      26.2,
+      38.2
+    ],
+    "retries": [
+      0,
+      0,
+      0
+    ],
+    "errors": [],
+    "warnings": 0,
+    "judged": [
+      {
+        "n_strings": 2,
+        "n_strings_correct": 2,
+        "n_justifications": 17,
+        "n_justifications_correct": 14,
+        "n_fields": 6,
+        "n_fields_correct": 6
+      },
+      {
+        "n_strings": 2,
+        "n_strings_correct": 2,
+        "n_justifications": 17,
+        "n_justifications_correct": 15,
+        "n_fields": 6,
+        "n_fields_correct": 6
+      },
+      {
+        "n_strings": 2,
+        "n_strings_correct": 2,
+        "n_justifications": 17,
+        "n_justifications_correct": 15,
+        "n_fields": 6,
+        "n_fields_correct": 6
+      }
+    ]
+  },
+  {
+    "case": "complex_stability",
+    "model": "azure_ai/ms-decision-model",
+    "mode": "decision_default",
+    "runs": 1,
+    "aspect_f1": [
+      0.6190876242095754
+    ],
+    "aspect_precision": [
+      0.49329972195825855
+    ],
+    "aspect_recall": [
+      0.9615384615384616
+    ],
+    "concepts_correct": [
+      1
+    ],
+    "n_concepts_scored": 5,
+    "closed_concepts_correct": [
+      1
+    ],
+    "n_closed_concepts": 5,
+    "reference_f1": [
+      null
+    ],
+    "requests": [
+      130
+    ],
+    "input_tokens": [
+      90924
+    ],
+    "cache_read_tokens": [
+      0
+    ],
+    "output_tokens": [
+      519
+    ],
+    "cost_total": [
+      "0.00382"
+    ],
+    "seconds": [
+      38.8
+    ],
+    "retries": [
+      0
+    ],
+    "errors": [],
+    "warnings": 0
+  },
+  {
+    "case": "complex_stability",
+    "model": "openai/gpt-6-luna",
+    "mode": "decision_default",
+    "runs": 1,
+    "aspect_f1": [
+      0.7258928571428572
+    ],
+    "aspect_precision": [
+      0.6518518518518519
+    ],
+    "aspect_recall": [
+      0.9038461538461539
+    ],
+    "concepts_correct": [
+      2
+    ],
+    "n_concepts_scored": 5,
+    "closed_concepts_correct": [
+      2
+    ],
+    "n_closed_concepts": 5,
+    "reference_f1": [
+      null
+    ],
+    "requests": [
+      130
+    ],
+    "input_tokens": [
+      155163
+    ],
+    "cache_read_tokens": [
+      0
+    ],
+    "output_tokens": [
+      0
+    ],
+    "cost_total": [
+      "0.01552"
+    ],
+    "seconds": [
+      43.1
+    ],
+    "retries": [
+      0
+    ],
+    "errors": [],
+    "warnings": 0
+  },
+  {
+    "case": "complex_stability",
+    "model": "openai/gpt-6-luna",
+    "mode": "default",
+    "runs": 3,
+    "aspect_f1": [
+      0.9277087646652864,
+      0.9746716697936211,
+      0.9725581395348837
+    ],
+    "aspect_precision": [
+      0.9272727272727272,
+      0.9688644688644689,
+      0.967391304347826
+    ],
+    "aspect_recall": [
+      0.9423076923076923,
+      0.9807692307692308,
+      0.9807692307692308
+    ],
+    "concepts_correct": [
+      15,
+      15,
+      14
+    ],
+    "n_concepts_scored": 16,
+    "closed_concepts_correct": [
+      5,
+      5,
+      4
+    ],
+    "n_closed_concepts": 5,
+    "reference_f1": [
+      0.8180776014109347,
+      0.8716727716727717,
+      0.8895299145299145
+    ],
+    "requests": [
+      7,
+      7,
+      7
+    ],
+    "input_tokens": [
+      77508,
+      77466,
+      77844
+    ],
+    "cache_read_tokens": [
+      9569,
+      61589,
+      61589
+    ],
+    "output_tokens": [
+      5638,
+      4722,
+      4760
+    ],
+    "cost_total": [
+      "0.01141",
+      "0.00496",
+      "0.00503"
+    ],
+    "seconds": [
+      60.0,
+      50.6,
+      61.2
+    ],
+    "retries": [
+      0,
+      0,
+      0
+    ],
+    "errors": [],
+    "warnings": 0,
+    "judged": [
+      {
+        "n_strings": 2,
+        "n_strings_correct": 2,
+        "n_justifications": 17,
+        "n_justifications_correct": 16,
+        "n_fields": 6,
+        "n_fields_correct": 6
+      },
+      {
+        "n_strings": 2,
+        "n_strings_correct": 2,
+        "n_justifications": 17,
+        "n_justifications_correct": 16,
+        "n_fields": 6,
+        "n_fields_correct": 6
+      },
+      {
+        "n_strings": 2,
+        "n_strings_correct": 2,
+        "n_justifications": 17,
+        "n_justifications_correct": 15,
+        "n_fields": 6,
+        "n_fields_correct": 6
+      }
+    ]
+  },
+  {
+    "case": "complex_stability",
+    "model": "typesafe/jev-latest",
+    "mode": "decision_default",
+    "runs": 1,
+    "aspect_f1": [
+      0.7598235098235099
+    ],
+    "aspect_precision": [
+      0.7392628205128206
+    ],
+    "aspect_recall": [
+      0.8721153846153846
+    ],
+    "concepts_correct": [
+      2
+    ],
+    "n_concepts_scored": 5,
+    "closed_concepts_correct": [
+      2
+    ],
+    "n_closed_concepts": 5,
+    "reference_f1": [
+      null
+    ],
+    "requests": [
+      130
+    ],
+    "input_tokens": [
+      118949
+    ],
+    "cache_read_tokens": [
+      0
+    ],
+    "output_tokens": [
+      9385
+    ],
+    "cost_total": [
+      "0.00500"
+    ],
+    "seconds": [
+      29.3
+    ],
+    "retries": [
+      0
+    ],
+    "errors": [],
+    "warnings": 0
+  }
+]

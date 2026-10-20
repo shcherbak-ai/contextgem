@@ -8,6 +8,11 @@ the reference answers of the case must score everything. Each case is checked
 with its document created from its text, and from its Docling document, whose
 paragraphs must be those of the reference answers (see
 ``dev/evals/docling_cases.py``, which writes it again after a change in a case).
+A case printed as a PDF file is checked with the Docling document of the file
+too, whose paragraphs are mapped to those of the reference answers: filled with
+the paragraphs that hold those of the reference answers, it must find all of
+them, and its precision, which a paragraph that holds two of them can lower, is
+printed.
 
 Run it from the root of the repo, after a change in the scorer, in a case or in
 its reference answers:
@@ -23,12 +28,44 @@ from datetime import date
 from typing import Any
 
 from contextgem import Document
+from dev.evals.docling_pdf_cases import PDF_CASES
 from dev.evals.harness import CASE_NAMES, CaseInput, load_case
 from dev.evals.scoring import score_document
 
 
+def _paragraphs(
+    document: Document, positions: list[int], paragraph_map: list[list[int]] | None
+) -> list[Any]:
+    """
+    Returns the paragraphs of a document that hold paragraphs of the reference
+    answers.
+
+    :param document: The document.
+    :type document: Document
+    :param positions: The positions of paragraphs of the reference answers.
+    :type positions: list[int]
+    :param paragraph_map: For each paragraph of the document, the positions of
+        the paragraphs of the reference answers that it holds, or None if they are
+        the paragraphs of the document.
+    :type paragraph_map: list[list[int]] | None
+    :return: The paragraphs, in the order of the document, each once.
+    :rtype: list[Any]
+    """
+    if paragraph_map is None:
+        return [document.paragraphs[position] for position in sorted(set(positions))]
+    wanted = set(positions)
+    return [
+        paragraph
+        for paragraph, held in zip(document.paragraphs, paragraph_map, strict=True)
+        if wanted & set(held)
+    ]
+
+
 def _fill_concept(
-    concept: Any, gold_concept: dict[str, Any], document: Document
+    concept: Any,
+    gold_concept: dict[str, Any],
+    document: Document,
+    paragraph_map: list[list[int]] | None = None,
 ) -> None:
     """
     Gives a concept the extracted items that its reference answers describe.
@@ -40,6 +77,9 @@ def _fill_concept(
     :param document: The document of the concept, whose paragraphs the items
         reference.
     :type document: Document
+    :param paragraph_map: The paragraphs of the reference answers that each
+        paragraph of the document holds, if they are not those of the document.
+    :type paragraph_map: list[list[int]] | None
     :return: None
     :rtype: None
     """
@@ -50,10 +90,9 @@ def _fill_concept(
             value = date.fromisoformat(value)
         # The class of the items that the concept accepts
         item = concept._item_class(value=value)
-        item.reference_paragraphs = [
-            document.paragraphs[position]
-            for position in gold_item["reference_paragraphs"]
-        ]
+        item.reference_paragraphs = _paragraphs(
+            document, gold_item["reference_paragraphs"], paragraph_map
+        )
         items.append(item)
     concept.extracted_items = items
 
@@ -84,18 +123,39 @@ def check_case(case: str, case_input: CaseInput = "text") -> None:
     ), summary
     assert summary["string_exact"] == 0, summary
 
+    paragraph_map = gold.get("paragraph_map")
     for concept, gold_concept in zip(document.concepts, gold["concepts"], strict=True):
-        _fill_concept(concept, gold_concept, document)
+        _fill_concept(concept, gold_concept, document, paragraph_map)
     for aspect, gold_aspect in zip(document.aspects, gold["aspects"], strict=True):
-        aspect.reference_paragraphs = [
-            document.paragraphs[position]
-            for position in gold_aspect["reference_paragraphs"]
-        ]
+        aspect.reference_paragraphs = _paragraphs(
+            document, gold_aspect["reference_paragraphs"], paragraph_map
+        )
         for concept, gold_concept in zip(
             aspect.concepts, gold_aspect["concepts"], strict=True
         ):
-            _fill_concept(concept, gold_concept, document)
-    summary = score_document(document, gold)["summary"]
+            _fill_concept(concept, gold_concept, document, paragraph_map)
+    scores = score_document(document, gold)
+    summary = scores["summary"]
+    if paragraph_map is not None:
+        # The paragraphs that hold those of the reference answers find all of
+        # them; a paragraph that holds two can lower the precision
+        assert summary["aspect_recall"] == 1, summary
+        assert all(
+            concept["references"]["recall"] == 1
+            for concept in scores["concepts"]
+            if "references" in concept
+        ), scores["concepts"]
+        assert summary["n_concepts_correct"] == summary["n_concepts_scored"] > 0, (
+            summary
+        )
+        assert summary["string_exact"] == 1, summary
+        print(
+            f"{case} ({case_input}): ok ({len(document.paragraphs)} paragraphs for "
+            f"{len(gold['paragraphs'])} of the reference answers; with all their "
+            f"paragraphs, aspect precision {summary['aspect_precision']:.3f}, "
+            f"reference F1 {summary['reference_f1']:.3f})"
+        )
+        return
     assert summary["aspect_f1"] == 1, summary
     assert summary["aspect_precision"] == 1 and summary["aspect_recall"] == 1, summary
     assert summary["n_concepts_correct"] == summary["n_concepts_scored"] > 0, summary
@@ -140,6 +200,8 @@ def main() -> None:
     for case in CASE_NAMES:
         for case_input in ("text", "docling"):
             check_case(case, case_input)
+        if case in PDF_CASES:
+            check_case(case, "pdf")
 
 
 if __name__ == "__main__":
