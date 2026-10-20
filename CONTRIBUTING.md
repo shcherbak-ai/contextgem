@@ -147,7 +147,7 @@ contextgem/
 
 **🎯 Quick Start for Your Contribution:**
 
-- **Adding new functionality?** → Implement it in `contextgem/internal/` (base classes, validation, serialization, typing). Then expose it through a thin, documented facade in `contextgem/public/` that inherits from the internal class and is registered with the `@_expose_in_registry` decorator, so that deserialization and instance creation return public types. Do not import public classes in internal modules: use the registry to resolve types.
+- **Adding new functionality?** → Implement it in `contextgem/internal/` (base classes, validation, serialization, typing). Then expose it through a thin, documented facade in `contextgem/public/` that inherits from the internal class and is registered with the `@_expose_in_registry` decorator, so that deserialization and instance creation return public types. Do not import public classes in internal modules: use the registry to resolve types. Import an internal name from the module that defines it: the `__init__.py` files under `contextgem/internal/` stay empty.
 - **Writing tests?** → Most tests go to the module of the relevant feature area (`tests/test_<area>.py`, e.g. `tests/test_extraction.py::TestExtraction`). See [Testing](#-testing) for the others.
 - **Updating docs?** → Edit the pages in `docs/source/`, and the code they show in `dev/usage_examples/`
 - **Fixing README?** → Edit `dev/readme.template.md`

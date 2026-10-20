@@ -10,6 +10,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ### Removed
 
+- Removed the names that the `__init__.py` files under `contextgem.internal` imported from their modules. A name that was imported from one of these packages, e.g. `from contextgem.internal import ReasoningEffort`, is now imported from its module: `from contextgem.internal.typings.types import ReasoningEffort`, the path the API reference shows. The public API (`contextgem`) is unchanged.
 - Removed the `trace()` method that `import contextgem` added to the `logging.Logger` class, i.e. to every logger of the process. ContextGem never logged with it. The `TRACE` level of `CONTEXTGEM_LOGGER_LEVEL` works as before.
 
 ## [1.1.0] - 2026-10-17

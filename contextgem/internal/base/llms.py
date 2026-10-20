@@ -765,10 +765,8 @@ class _DocumentLLM(_DocumentModel):
         :raises TypeError: If the definition of a tool cannot be generated, e.g. for
             an unsupported type hint.
         """
-        from contextgem.internal.tools import (
-            _generate_tool_schema,
-            _parse_docstring,
-        )
+        from contextgem.internal.tools.docstring_parser import _parse_docstring
+        from contextgem.internal.tools.schema_generator import _generate_tool_schema
 
         new_registry: dict[str, ToolRegistration] = {}
         for handler in self.tools or []:

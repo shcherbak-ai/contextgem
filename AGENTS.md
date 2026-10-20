@@ -55,6 +55,7 @@ class StringConcept(_StringConcept):
 | Internal classes | `_Aspect`, `_Document` (underscore prefix) |
 | Public classes | `Aspect`, `Document` (no prefix) |
 | Constants | `_MAX_NESTING_LEVEL` (ALL_CAPS) |
+| Internal imports | From the module that defines the name: `from contextgem.internal.base.concepts import _StringConcept`. The `__init__.py` files under `contextgem/internal/` stay empty; only `contextgem/__init__.py` and `contextgem/public/__init__.py` import names to give them a shorter path |
 | Required import | `from __future__ import annotations` (except `__init__.py` and the files under `dev/`, e.g. the usage examples) |
 | File header | `# SPDX-FileCopyrightText: Shcherbak AI AS` and `# SPDX-License-Identifier: Apache-2.0` as the first two lines of every Python file, except empty `__init__.py` files and the usage examples (`dev/usage_examples/`), which the documentation shows; documentation pages have no header. The `add-file-headers` pre-commit hook adds the lines where they are missing |
 | Formatter | Ruff (line length: 88) |
