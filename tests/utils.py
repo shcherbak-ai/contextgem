@@ -462,7 +462,9 @@ class TestUtils:
                 hasattr(instance, attr_name)
                 or attr_name in instance.__private_attributes__
             ):
-                assert getattr(instance, attr_name) == getattr(new_instance, attr_name)
+                assert getattr(instance, attr_name) == getattr(
+                    instance_clone, attr_name
+                )
         with pytest.raises(NotImplementedError):
             instance.model_copy(deep=True)
 
