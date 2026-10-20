@@ -26,7 +26,7 @@ import io
 import re
 from collections.abc import Iterable, Sequence
 from pathlib import Path
-from typing import Any
+from typing import Any, NamedTuple
 
 from PIL import Image as PILImage
 
@@ -454,6 +454,20 @@ def _image_data(
     return "image/png", base64.b64encode(buffer.getvalue()).decode("ascii")
 
 
+class _PendingParagraph(NamedTuple):
+    """
+    A paragraph that the converter has added, before the headings of its section
+    are written in its additional context.
+    """
+
+    text: str
+    # What the paragraph is, the speakers of its tracks, and its sheet or slide
+    context: list[str]
+    headings: list[tuple[int, str]]
+    page_numbers: list[int]
+    custom_data: dict[str, Any]
+
+
 class _DoclingConverter:
     """
     Converts the body of a Docling document into ContextGem paragraphs and images,
@@ -471,10 +485,14 @@ class _DoclingConverter:
         self.paragraphs: list[_Paragraph] = []
         self.images: list[_Image] = []
         self.pictures_without_images = 0
-        # The headings of the current section, from the top, as (level, text) pairs.
-        # The title of the document is not one of them: as the first paragraph,
-        # it would be repeated in the additional context of all the others.
+        # The headings of the current section, from the top, as (level, text) pairs,
+        # a title at level 0
         self._headings: list[tuple[int, str]] = []
+        # The paragraphs added, with the headings of their sections, until
+        # the headings are written in their additional context once all are added
+        # (see `convert()`), and the number of titles among them
+        self._pending: list[_PendingParagraph] = []
+        self._titles = 0
         # The sheet or the slide that the converted items are on, e.g. "Slide 2"
         self._containers: list[str] = []
         # The captions and the footnotes of tables, pictures, code blocks, key-value
@@ -499,10 +517,34 @@ class _DoclingConverter:
         """
         Converts the body of the Docling document into paragraphs and images.
 
+        The additional context of a paragraph ends with the headings of its section.
+        The titles are among them in a document with several titles, e.g.
+        the slides of a presentation, the chapters of an EPUB file, or the top-level
+        headings of a Markdown file, of which Docling makes titles. The title of
+        a document with one title is not: it would be in the additional context of
+        all the other paragraphs.
+
         :return: None
         :rtype: None
         """
         self._convert_children(self._document.body, list_level=0)
+        titles_in_sections = self._titles > 1
+        for pending in self._pending:
+            context = list(pending.context)
+            path = [
+                text for level, text in pending.headings if level or titles_in_sections
+            ]
+            if path:
+                context.append("Section: " + " > ".join(path))
+            self.paragraphs.append(
+                _publicize(
+                    _Paragraph,
+                    raw_text=pending.text,
+                    additional_context=_clean("; ".join(context)) or None,
+                    page_numbers=pending.page_numbers,
+                    custom_data=pending.custom_data,
+                )
+            )
 
     def _children(self, item: NodeItem) -> list[NodeItem]:
         """
@@ -588,11 +630,14 @@ class _DoclingConverter:
             self._convert_children(item, list_level + 1)
         elif isinstance(item, GroupItem):
             container = self._container_name(item)
+            # The headings in a sheet or a slide, e.g. its title, end with it
+            headings = list(self._headings)
             if container:
                 self._containers.append(container)
             self._convert_children(item, list_level)
             if container:
                 self._containers.pop()
+                self._headings = headings
         else:
             # Other items, e.g. the regions of form fields, hold no text of their
             # own
@@ -606,7 +651,7 @@ class _DoclingConverter:
         provenance: list[dict[str, Any]],
         tracks: Sequence[dict[str, Any]] = (),
         **docling_data: Any,
-    ) -> None:
+    ) -> bool:
         """
         Adds a paragraph, unless its text is empty.
 
@@ -624,12 +669,12 @@ class _DoclingConverter:
         :param docling_data: Other data to keep in the custom data of the paragraph,
             e.g. the index of a table row.
         :type docling_data: Any
-        :return: None
-        :rtype: None
+        :return: Whether the paragraph is added.
+        :rtype: bool
         """
         text = text.strip()
         if _is_text_content_empty(text):
-            return
+            return False
         context = [kind] if kind else []
         speakers = list(
             dict.fromkeys(
@@ -642,15 +687,12 @@ class _DoclingConverter:
             label = "Speaker" if len(speakers) == 1 else "Speakers"
             context.append(f"{label}: {', '.join(speakers)}")
         context.extend(self._containers)
-        if self._headings:
-            context.append(
-                "Section: " + " > ".join(heading for _, heading in self._headings)
-            )
-        self.paragraphs.append(
-            _publicize(
-                _Paragraph,
-                raw_text=text,
-                additional_context=_clean("; ".join(context)) or None,
+        self._pending.append(
+            _PendingParagraph(
+                text=text,
+                context=context,
+                # The headings of its section, which `convert()` adds to the context
+                headings=list(self._headings),
                 page_numbers=[entry["page_no"] for entry in provenance],
                 custom_data={
                     "docling": {
@@ -663,6 +705,7 @@ class _DoclingConverter:
                 },
             )
         )
+        return True
 
     def _add_text(self, item: TextItem, kind: str | None) -> list[NodeItem]:
         """
@@ -789,15 +832,17 @@ class _DoclingConverter:
         level = item.level if isinstance(item, SectionHeaderItem) else 0
         self._headings = [heading for heading in self._headings if heading[0] < level]
         text, sources, children = self._text_of(item)
-        self._add_paragraph(
+        added = self._add_paragraph(
             text,
             f"Heading, level {level}" if level else "Title",
             item,
             _provenance_of_items(sources),
             _tracks_of_items(sources),
         )
-        if level and _clean(text):
+        if added:
             self._headings.append((level, _clean(text)))
+            if not level:
+                self._titles += 1
         for child in children:
             self._convert_item(child, list_level)
 

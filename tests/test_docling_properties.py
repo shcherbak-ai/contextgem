@@ -1116,7 +1116,10 @@ class _Expected:
     Works out the paragraphs and the images of the document of a generated
     structure, in the order that the converter documents: in reading order, with
     the captions of a table or a picture before it and its footnotes after it,
-    and the pictures in formatted text or in a table after it.
+    and the pictures in formatted text or in a table after it. The section of
+    a paragraph is given by the headings before it, and by the titles before it
+    in a document with several titles; the headings in a sheet or a slide end
+    with it.
     """
 
     def __init__(self, blocks: list[_Block]) -> None:
@@ -1132,9 +1135,29 @@ class _Expected:
         self.images: list[tuple[str, str]] = []
         self.pictures_without_images = 0
         self.structures: set[str] = set()
+        # The headings of the current section, a title at level 0
         self._headings: list[tuple[int, str]] = []
         self._containers: list[str] = []
+        # The paragraphs, with the headings of their sections, until it is known
+        # whether the titles are among them, and the number of titles
+        self._pending: list[
+            tuple[str, list[str], list[tuple[int, str]], list[int | None]]
+        ] = []
+        self._titles = 0
         self._items(blocks, list_level=0)
+        if self._titles > 1:
+            self.structures.add("several titles")
+        for text, context, headings, pages in self._pending:
+            path = [heading for level, heading in headings if level or self._titles > 1]
+            if path:
+                context = [*context, "Section: " + " > ".join(path)]
+            self.paragraphs.append(
+                (
+                    text,
+                    "; ".join(context) or None,
+                    sorted({page for page in pages if page is not None}),
+                )
+            )
 
     def _paragraph(
         self,
@@ -1142,7 +1165,7 @@ class _Expected:
         kind: str | None,
         pages: list[int | None],
         texts: list[_Text] | None = None,
-    ) -> None:
+    ) -> bool:
         """
         Adds a paragraph, unless its text is empty, with its additional context:
         what it is, the speakers of its tracks, the sheets or slides it is on, and
@@ -1157,11 +1180,11 @@ class _Expected:
         :type pages: list[int | None]
         :param texts: The text items it is made from that can be from a track.
         :type texts: list[_Text] | None
-        :return: None
-        :rtype: None
+        :return: Whether the paragraph is added.
+        :rtype: bool
         """
         if not text:
-            return
+            return False
         context = [kind] if kind else []
         speakers = list(
             dict.fromkeys(text.speaker for text in texts or [] if text.speaker)
@@ -1171,15 +1194,8 @@ class _Expected:
             label = "Speaker" if len(speakers) == 1 else "Speakers"
             context.append(f"{label}: {', '.join(speakers)}")
         context += self._containers
-        if self._headings:
-            context.append("Section: " + " > ".join(text for _, text in self._headings))
-        self.paragraphs.append(
-            (
-                text,
-                "; ".join(context) or None,
-                sorted({page for page in pages if page is not None}),
-            )
-        )
+        self._pending.append((text, context, list(self._headings), pages))
+        return True
 
     def _items(self, blocks: list[_Block], list_level: int) -> None:
         """
@@ -1247,12 +1263,17 @@ class _Expected:
                 container = f"Sheet: {block.name}"
             elif block.kind == "slide":
                 container = f"Slide {block.slide_number + 1}"
+            # The headings in a sheet or a slide, e.g. its title, end with it
+            headings = list(self._headings)
             if container:
                 self.structures.add("sheet or slide")
                 self._containers.append(container)
             self._items(block.children, list_level)
             if container:
                 self._containers.pop()
+                if self._headings != headings:
+                    self.structures.add("heading that ends with its sheet or slide")
+                self._headings = headings
 
     def _floating_pictures(self, inline: _Inline) -> None:
         """
@@ -1291,11 +1312,13 @@ class _Expected:
         else:
             assert heading.own is not None
             text = heading.own.word
-        self._paragraph(
+        added = self._paragraph(
             text, f"Heading, level {level}" if level else "Title", pages, texts
         )
-        if level and text:
+        if added:
             self._headings.append((level, text))
+            if not level:
+                self._titles += 1
         if heading.formatted:
             self._floating_pictures(heading.formatted)
         self._items(heading.children, list_level)

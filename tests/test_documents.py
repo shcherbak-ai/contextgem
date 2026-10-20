@@ -301,10 +301,19 @@ _DOCLING_FILE_PARAGRAPHS = {
             [2],
         ),
     ],
-    # The page of a slide is its number
+    # The page of a slide is its number, and the content of a slide is in the
+    # section of its title, as the presentation has several titles
     "quarterly_review.pptx": [
-        ("Both were caused by a network provider.", "List item, level 2; Slide 2", [2]),
-        ("Service: Hosting; Monthly fee: 1,200 EUR", "Table row; Slide 3", [3]),
+        (
+            "Both were caused by a network provider.",
+            "List item, level 2; Slide 2; Section: Results",
+            [2],
+        ),
+        (
+            "Service: Hosting; Monthly fee: 1,200 EUR",
+            "Table row; Slide 3; Section: Fees",
+            [3],
+        ),
     ],
     "service_agreement.html": [
         (
@@ -382,17 +391,20 @@ _DOCLING_FILE_PARAGRAPHS = {
         ),
     ],
     # An EPUB file: the documents of its spine in order, the heading of each
-    # a title
+    # a title, which is the section of its paragraphs
     "employee_handbook.epub": [
         ("Leave", "Title", []),
         (
             "their manager has agreed to the start time;",
-            "List item; Section: Flexible hours",
+            "List item; Section: Working hours > Flexible hours",
             [],
         ),
         (
             "Type of leave: Unpaid leave; Days per year: Up to 20; Paid: No",
-            "Table row; Table caption: Days of leave per year, by type",
+            (
+                "Table row; Table caption: Days of leave per year, by type; "
+                "Section: Leave"
+            ),
             [],
         ),
     ],
@@ -2158,7 +2170,8 @@ class TestDocuments(BaseTest):
         # Without provenance, e.g. in a DOCX file, the pages are not known
         assert all(not paragraph.page_numbers for paragraph in document.paragraphs)
 
-        # A title ends the sections before it
+        # A title ends the sections before it, and the title of a document with one
+        # title is in the section of no paragraph
         docling_document = DoclingDocument(name="two documents")
         docling_document.add_heading("Annex", level=1)
         docling_document.add_title("Second document")
@@ -2167,6 +2180,23 @@ class TestDocuments(BaseTest):
             ("Annex", "Heading, level 1"),
             ("Second document", "Title"),
             ("Its first paragraph.", None),
+        ]
+
+        # In a document with several titles, e.g. the top-level headings of
+        # a Markdown file or the chapters of an EPUB file, of which Docling makes
+        # titles, the titles are the top level of the sections
+        docling_document = DoclingDocument(name="readme")
+        docling_document.add_title("Install")
+        docling_document.add_text(DocItemLabel.TEXT, "Run the installer.")
+        docling_document.add_title("Configure")
+        docling_document.add_heading("Logging", level=1)
+        docling_document.add_text(DocItemLabel.TEXT, "Set the log level.")
+        assert _texts_and_contexts(Document.from_docling(docling_document)) == [
+            ("Install", "Title"),
+            ("Run the installer.", "Section: Install"),
+            ("Configure", "Title"),
+            ("Logging", "Heading, level 1; Section: Configure"),
+            ("Set the log level.", "Section: Configure > Logging"),
         ]
 
         # The numbered items of a list that Docling gives no numbers, e.g. of HTML,
@@ -2732,6 +2762,26 @@ class TestDocuments(BaseTest):
             ("Results", "Title; Slide 2"),
             ("Revenue grew by 12%.", "List item; Slide 2"),
             ("After the slides.", None),
+        ]
+
+        # In a presentation with several titles, the content of a slide is in
+        # the section of its title, which ends with the slide
+        docling_document = DoclingDocument(name="presentation")
+        for index, title in enumerate(("Agenda", "Results", None)):
+            slide = docling_document.add_group(
+                label=GroupLabel.SLIDE, name=f"slide-{index}"
+            )
+            if title:
+                docling_document.add_title(title, parent=slide)
+            docling_document.add_text(
+                DocItemLabel.TEXT, f"Text of slide {index + 1}.", parent=slide
+            )
+        assert _texts_and_contexts(Document.from_docling(docling_document)) == [
+            ("Agenda", "Title; Slide 1"),
+            ("Text of slide 1.", "Slide 1; Section: Agenda"),
+            ("Results", "Title; Slide 2"),
+            ("Text of slide 2.", "Slide 2; Section: Results"),
+            ("Text of slide 3.", "Slide 3"),
         ]
 
     def test_from_docling_errors_and_document_attributes(self):
