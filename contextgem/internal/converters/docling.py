@@ -96,6 +96,7 @@ def _check_docling_core() -> None:
 _check_docling_core()
 
 from docling_core.types.doc import (  # noqa: E402 - imported once its version is checked
+    CodeItem,
     ContentLayer,
     DocItemLabel,
     DoclingDocument,
@@ -115,6 +116,7 @@ from docling_core.types.doc import (  # noqa: E402 - imported once its version i
     TableCell,
     TableItem,
     TextItem,
+    TrackSource,
 )
 
 
@@ -293,6 +295,28 @@ def _provenance_of_items(items: Iterable[NodeItem]) -> list[dict[str, Any]]:
     return _provenance(prov for item in items for prov in getattr(item, "prov", []))
 
 
+def _tracks_of_items(items: Iterable[NodeItem]) -> list[dict[str, Any]]:
+    """
+    Returns the tracks that Docling items are from: the cues of a subtitle file,
+    e.g. WebVTT, or the segments of a transcript.
+
+    :param items: The Docling items. Groups have no tracks of their own.
+    :type items: Iterable[NodeItem]
+    :return: The start and the end time of each track, in seconds, and its
+        identifier and voice (the speaker) where it has them, as JSON-serializable
+        data, without repetitions.
+    :rtype: list[dict[str, Any]]
+    """
+    entries: list[dict[str, Any]] = []
+    for item in items:
+        for source in getattr(item, "source", None) or []:
+            if isinstance(source, TrackSource):
+                entry = source.model_dump(mode="json", exclude_none=True)
+                if entry not in entries:
+                    entries.append(entry)
+    return entries
+
+
 def _count_header_rows(grid: Sequence[Sequence[TableCell]]) -> int:
     """
     Counts the rows at the top of a table whose cells are column headers.
@@ -453,12 +477,18 @@ class _DoclingConverter:
         self._headings: list[tuple[int, str]] = []
         # The sheet or the slide that the converted items are on, e.g. "Slide 2"
         self._containers: list[str] = []
-        # The captions and the footnotes of tables and pictures, which are converted
-        # with the table or the picture that they belong to, not where the body
-        # of the document has them
+        # The captions and the footnotes of tables, pictures, code blocks, key-value
+        # regions and forms, which are converted with the item that they belong to,
+        # not where the body of the document has them
         self._attached_refs = {
             ref.cref
-            for item in (*document.tables, *document.pictures)
+            for item in (
+                *document.tables,
+                *document.pictures,
+                *(text for text in document.texts if isinstance(text, CodeItem)),
+                *document.key_value_items,
+                *document.form_items,
+            )
             for ref in (*item.captions, *item.footnotes)
         }
 
@@ -534,6 +564,7 @@ class _DoclingConverter:
                 None,
                 item,
                 _provenance_of_items(texts),
+                _tracks_of_items(texts),
             )
             # The tables and the pictures in the text, e.g. an image in a line of
             # Markdown
@@ -545,6 +576,8 @@ class _DoclingConverter:
             isinstance(item, TextItem) and item.label == DocItemLabel.TITLE
         ):
             self._convert_heading(item, list_level)
+        elif isinstance(item, CodeItem):
+            self._convert_code(item, list_level)
         elif isinstance(item, TextItem):
             for child in self._add_text(item, self._text_kind(item)):
                 self._convert_item(child, list_level)
@@ -568,6 +601,7 @@ class _DoclingConverter:
         kind: str | None,
         source: NodeItem,
         provenance: list[dict[str, Any]],
+        tracks: Sequence[dict[str, Any]] = (),
         **docling_data: Any,
     ) -> None:
         """
@@ -581,6 +615,9 @@ class _DoclingConverter:
         :type source: NodeItem
         :param provenance: The pages and the bounding boxes of the paragraph.
         :type provenance: list[dict[str, Any]]
+        :param tracks: The tracks that the paragraph is from, e.g. the cue of
+            a subtitle file, whose speakers the additional context gives.
+        :type tracks: Sequence[dict[str, Any]]
         :param docling_data: Other data to keep in the custom data of the paragraph,
             e.g. the index of a table row.
         :type docling_data: Any
@@ -591,6 +628,16 @@ class _DoclingConverter:
         if _is_text_content_empty(text):
             return
         context = [kind] if kind else []
+        speakers = list(
+            dict.fromkeys(
+                _clean(track.get("voice") or "")
+                for track in tracks
+                if _clean(track.get("voice") or "")
+            )
+        )
+        if speakers:
+            label = "Speaker" if len(speakers) == 1 else "Speakers"
+            context.append(f"{label}: {', '.join(speakers)}")
         context.extend(self._containers)
         if self._headings:
             context.append(
@@ -607,6 +654,7 @@ class _DoclingConverter:
                         "self_ref": source.self_ref,
                         "label": _label_of(source),
                         "prov": provenance,
+                        **({"source": list(tracks)} if tracks else {}),
                         **docling_data,
                     }
                 },
@@ -625,7 +673,13 @@ class _DoclingConverter:
         :rtype: list[NodeItem]
         """
         text, sources, children = self._text_of(item)
-        self._add_paragraph(text, kind, item, _provenance_of_items(sources))
+        self._add_paragraph(
+            text,
+            kind,
+            item,
+            _provenance_of_items(sources),
+            _tracks_of_items(sources),
+        )
         return children
 
     def _text_of(self, item: TextItem) -> tuple[str, list[NodeItem], list[NodeItem]]:
@@ -662,7 +716,8 @@ class _DoclingConverter:
 
     def _add_attached_texts(self, refs: Iterable[RefItem], kind: str) -> None:
         """
-        Adds a paragraph for each caption or footnote of a table or a picture.
+        Adds a paragraph for each caption or footnote of an item, e.g. a table or
+        a picture.
 
         :param refs: The references of the captions or footnotes.
         :type refs: Iterable[RefItem]
@@ -736,6 +791,7 @@ class _DoclingConverter:
             f"Heading, level {level}" if level else "Title",
             item,
             _provenance_of_items(sources),
+            _tracks_of_items(sources),
         )
         if level and _clean(text):
             self._headings.append((level, _clean(text)))
@@ -782,7 +838,27 @@ class _DoclingConverter:
             "List item" if level == 1 else f"List item, level {level}",
             item,
             _provenance_of_items(sources),
+            _tracks_of_items(sources),
         )
+        for child in children:
+            self._convert_item(child, list_level)
+
+    def _convert_code(self, item: CodeItem, list_level: int) -> None:
+        """
+        Adds a paragraph for a code block, after the paragraphs of its captions and
+        before those of its footnotes, and converts the items under it.
+
+        :param item: The code block.
+        :type item: CodeItem
+        :param list_level: The nesting level of the list that the item is in,
+            0 outside lists.
+        :type list_level: int
+        :return: None
+        :rtype: None
+        """
+        self._add_attached_texts(item.captions, "Code caption")
+        children = self._add_text(item, self._text_kind(item))
+        self._add_attached_texts(item.footnotes, "Code footnote")
         for child in children:
             self._convert_item(child, list_level)
 
@@ -921,6 +997,7 @@ class _DoclingConverter:
             "Form field",
             field,
             _provenance_of_items(sources),
+            _tracks_of_items(sources),
         )
 
     def _field_value(self, item: TextItem, sources: list[NodeItem]) -> str:
@@ -949,14 +1026,17 @@ class _DoclingConverter:
     def _convert_graph(self, item: KeyValueItem | FormItem) -> None:
         """
         Adds a paragraph for each key of a key-value region or a form, with its
-        values, and for each cell that is not linked to a key. A key and its value
-        are linked from the key to the value, from the value to the key, or both.
+        values, and for each cell that is not linked to a key, after the paragraphs
+        of its captions and before those of its footnotes. A key and its value are
+        linked from the key to the value, from the value to the key, or both.
 
         :param item: The key-value region or the form.
         :type item: KeyValueItem | FormItem
         :return: None
         :rtype: None
         """
+        name = "Form" if isinstance(item, FormItem) else "Key-value"
+        self._add_attached_texts(item.captions, f"{name} caption")
         cells = {cell.cell_id: cell for cell in item.graph.cells}
         values_of_keys: dict[int, list[int]] = {}
         for link in item.graph.links:
@@ -989,6 +1069,7 @@ class _DoclingConverter:
                 _provenance(part.prov for part in (cell, *parts))
                 or _provenance_of_items([item]),
             )
+        self._add_attached_texts(item.footnotes, f"{name} footnote")
 
 
 def _convert_docling_document(

@@ -8,10 +8,12 @@ Docling documents (``Document.from_docling()``).
 Hypothesis generates Docling documents with the structures that Docling gives
 the files it converts: the title and headings, also with formatted text, texts
 of several kinds, formatted text with pictures in it, nested lists, tables with
-captions, footnotes and pictures, pictures, key-value regions and forms, form
-fields, sheets and slides, and the furniture and the notes of the pages, each
-item on a page or on none. Each text is a word of its own, with whitespace
-around it, so that the tests can tell where it went.
+captions, footnotes and pictures, pictures, code blocks, key-value regions and
+forms, each with captions and footnotes, form fields, sheets and slides, and
+the furniture and the notes of the pages, each item on a page or on none, and
+texts from the tracks of a subtitle file or a transcript, with their speakers.
+Each text is a word of its own, with whitespace around it, so that the tests can
+tell where it went.
 
 One test works out from the generated structure what the document must have:
 its paragraphs, in order, with their text, additional context and page numbers,
@@ -45,6 +47,7 @@ from docling_core.types.doc import (
     ProvenanceItem,
     TableCell,
     TableData,
+    TrackSource,
 )
 from hypothesis import HealthCheck, event, given, note, settings
 from hypothesis import strategies as st
@@ -104,7 +107,8 @@ _TEXT_KINDS = {
 class _Text:
     """
     A text: a text item, or a part of formatted text, a cell or a caption. Its word
-    is given when the Docling document is built.
+    is given when the Docling document is built. A text item can be from a track,
+    e.g. the cue of a subtitle file, with or without the voice of a speaker.
     """
 
     label: DocItemLabel
@@ -112,7 +116,18 @@ class _Text:
     layer: ContentLayer
     before: str
     after: str
+    tracked: bool = False
+    voice: str | None = None
     word: str = ""
+
+    @property
+    def speaker(self) -> str | None:
+        """
+        The speaker of the text, as the additional context gives it, if it is from
+        a track with a voice.
+        """
+        voice = " ".join((self.voice or "").split())
+        return voice if self.tracked and voice else None
 
 
 @dataclass
@@ -197,11 +212,24 @@ class _Table:
 
 
 @dataclass
+class _Code:
+    """
+    A code block, with its caption and footnote. Its caption is before or after it
+    in the body, as Docling gives it in different formats.
+    """
+
+    text: _Text
+    caption: _Text | None
+    caption_after: bool
+    footnote: _Text | None
+
+
+@dataclass
 class _Graph:
     """
     A key-value region or a form: its cells, the key cell that each value cell is
     linked to, if any, how it is linked ("to value" from the key, "to key" from
-    the value, or "both"), and the page of the region.
+    the value, or "both"), the page of the region, and its caption and footnote.
     """
 
     form: bool
@@ -210,6 +238,8 @@ class _Graph:
     value_of: list[int | None]
     links: list[str]
     page: int | None
+    caption: _Text | None
+    footnote: _Text | None
 
 
 @dataclass
@@ -249,7 +279,16 @@ class _Group:
 
 
 _Block = (
-    _Text | _Inline | _Heading | _List | _Table | _Picture | _Graph | _Field | _Group
+    _Text
+    | _Inline
+    | _Heading
+    | _List
+    | _Table
+    | _Picture
+    | _Code
+    | _Graph
+    | _Field
+    | _Group
 )
 
 
@@ -260,10 +299,12 @@ _Block = (
 _PAGES = st.one_of(st.none(), st.integers(min_value=1, max_value=3))
 # Unicode whitespace, which the converter strips from the ends of a text
 _NOISE = st.sampled_from(["", " ", "\n", " \t", "\u00a0", "\u2003"])
+# The voices of the tracks: a speaker, once with whitespace around the name, or none
+_VOICES = st.sampled_from([None, "", "Ann", " Ann\n", "Bob Lee"])
 
 
 def _texts(
-    *labels: DocItemLabel, layer: ContentLayer = ContentLayer.BODY
+    *labels: DocItemLabel, layer: ContentLayer = ContentLayer.BODY, tracks: bool = False
 ) -> st.SearchStrategy[_Text]:
     """
     Returns a strategy for texts with one of the labels.
@@ -272,6 +313,8 @@ def _texts(
     :type labels: DocItemLabel
     :param layer: The content layer of the texts.
     :type layer: ContentLayer
+    :param tracks: Whether a text can be from a track, as a text item can.
+    :type tracks: bool
     :return: The strategy.
     :rtype: st.SearchStrategy[_Text]
     """
@@ -282,6 +325,8 @@ def _texts(
         layer=st.just(layer),
         before=_NOISE,
         after=_NOISE,
+        tracked=st.booleans() if tracks else st.just(False),
+        voice=_VOICES if tracks else st.none(),
     )
 
 
@@ -314,12 +359,16 @@ _ANY_PICTURES = _pictures(
 _INLINES = st.recursive(
     st.builds(
         _Inline,
-        parts=st.lists(st.one_of(_texts(), _BODY_PICTURES), min_size=1, max_size=4),
+        parts=st.lists(
+            st.one_of(_texts(tracks=True), _BODY_PICTURES), min_size=1, max_size=4
+        ),
     ),
     lambda inner: st.builds(
         _Inline,
         parts=st.lists(
-            st.one_of(_texts(), _BODY_PICTURES, inner), min_size=1, max_size=4
+            st.one_of(_texts(tracks=True), _BODY_PICTURES, inner),
+            min_size=1,
+            max_size=4,
         ),
     ),
     max_leaves=6,
@@ -335,6 +384,7 @@ _TEXT_BLOCKS = st.one_of(
         DocItemLabel.CAPTION,
         DocItemLabel.CHECKBOX_SELECTED,
         DocItemLabel.CHECKBOX_UNSELECTED,
+        tracks=True,
     ),
     _texts(
         DocItemLabel.PAGE_HEADER,
@@ -374,6 +424,15 @@ def _tables(draw: st.DrawFn) -> _Table:
     )
 
 
+_CODES = st.builds(
+    _Code,
+    text=_texts(DocItemLabel.CODE, tracks=True),
+    caption=st.one_of(st.none(), _texts(DocItemLabel.CAPTION)),
+    caption_after=st.booleans(),
+    footnote=st.one_of(st.none(), _texts(DocItemLabel.FOOTNOTE)),
+)
+
+
 @st.composite
 def _graphs(draw: st.DrawFn) -> _Graph:
     """
@@ -407,6 +466,8 @@ def _graphs(draw: st.DrawFn) -> _Graph:
             )
         ),
         page=draw(_PAGES),
+        caption=draw(st.one_of(st.none(), _texts(DocItemLabel.CAPTION))),
+        footnote=draw(st.one_of(st.none(), _texts(DocItemLabel.FOOTNOTE))),
     )
 
 
@@ -513,6 +574,7 @@ _BLOCKS = st.recursive(
         _INLINES,
         _tables(),
         _ANY_PICTURES,
+        _CODES,
         _graphs(),
         _FIELDS,
         _headings(_NO_CHILDREN),
@@ -604,6 +666,21 @@ class _Builder:
             charspan=(0, 0),
         )
 
+    @staticmethod
+    def _source(text: _Text) -> TrackSource | None:
+        """
+        Returns the track that a text is from.
+
+        :param text: The text.
+        :type text: _Text
+        :return: The track, with the voice of the text, or None for a text that is
+            not from a track.
+        :rtype: TrackSource | None
+        """
+        if not text.tracked:
+            return None
+        return TrackSource(start_time=1.5, end_time=4.0, voice=text.voice)
+
     def _blocks(self, blocks: list[_Block], parent: NodeItem | None) -> None:
         """
         Adds items under a parent.
@@ -637,11 +714,14 @@ class _Builder:
                 prov=self._prov(block.page),
                 parent=parent,
                 content_layer=block.layer,
+                source=self._source(block),
             )
         elif isinstance(block, _Inline):
             self._inline(block, parent)
         elif isinstance(block, _Picture):
             self._picture(block, parent)
+        elif isinstance(block, _Code):
+            self._code(block, parent)
         elif isinstance(block, _Heading):
             text = self._text(block.own) if block.own else ""
             if block.level == 0:
@@ -678,6 +758,14 @@ class _Builder:
         elif isinstance(block, _Table):
             self._table(block, parent)
         elif isinstance(block, _Graph):
+            caption = None
+            if block.caption:
+                caption = document.add_text(
+                    DocItemLabel.CAPTION,
+                    self._text(block.caption),
+                    prov=self._prov(block.caption.page),
+                    parent=parent,
+                )
             cells = []
             for index, (cell, is_key) in enumerate(
                 zip(block.cells, block.keys, strict=True)
@@ -714,7 +802,17 @@ class _Builder:
                     )
             graph = GraphData(cells=cells, links=links)
             add = document.add_form if block.form else document.add_key_values
-            add(graph=graph, prov=self._prov(block.page), parent=parent)
+            item = add(graph=graph, prov=self._prov(block.page), parent=parent)
+            if caption:
+                item.captions.append(caption.get_ref())
+            if block.footnote:
+                footnote = document.add_text(
+                    DocItemLabel.FOOTNOTE,
+                    self._text(block.footnote),
+                    prov=self._prov(block.footnote.page),
+                    parent=parent,
+                )
+                item.footnotes.append(footnote.get_ref())
         elif isinstance(block, _Field):
             self._field(block, parent)
         else:
@@ -753,6 +851,7 @@ class _Builder:
                     self._text(part),
                     prov=self._prov(part.page),
                     parent=group,
+                    source=self._source(part),
                 )
             elif isinstance(part, _Picture):
                 self._picture(part, group)
@@ -807,6 +906,53 @@ class _Builder:
                 prov=self._prov(picture.footnote.page),
                 parent=parent,
                 content_layer=layer,
+            )
+            item.footnotes.append(footnote.get_ref())
+
+    def _code(self, code: _Code, parent: NodeItem | None) -> None:
+        """
+        Adds a code block, with its caption before it or after it, and its footnote
+        after it.
+
+        :param code: The code block.
+        :type code: _Code
+        :param parent: The parent, or None for the body.
+        :type parent: NodeItem | None
+        :return: None
+        :rtype: None
+        """
+        document = self.document
+
+        def add_caption() -> NodeItem | None:
+            """
+            Adds the caption of the code block, if it has one.
+            """
+            if not code.caption:
+                return None
+            return document.add_text(
+                DocItemLabel.CAPTION,
+                self._text(code.caption),
+                prov=self._prov(code.caption.page),
+                parent=parent,
+            )
+
+        caption = None if code.caption_after else add_caption()
+        item = document.add_code(
+            self._text(code.text),
+            prov=self._prov(code.text.page),
+            parent=parent,
+            source=self._source(code.text),
+        )
+        if code.caption_after:
+            caption = add_caption()
+        if caption:
+            item.captions.append(caption.get_ref())
+        if code.footnote:
+            footnote = document.add_text(
+                DocItemLabel.FOOTNOTE,
+                self._text(code.footnote),
+                prov=self._prov(code.footnote.page),
+                parent=parent,
             )
             item.footnotes.append(footnote.get_ref())
 
@@ -986,10 +1132,17 @@ class _Expected:
         self._containers: list[str] = []
         self._items(blocks, list_level=0)
 
-    def _paragraph(self, text: str, kind: str | None, pages: list[int | None]) -> None:
+    def _paragraph(
+        self,
+        text: str,
+        kind: str | None,
+        pages: list[int | None],
+        texts: list[_Text] | None = None,
+    ) -> None:
         """
         Adds a paragraph, unless its text is empty, with its additional context:
-        what it is, the sheets or slides it is on, and the headings of its section.
+        what it is, the speakers of its tracks, the sheets or slides it is on, and
+        the headings of its section.
 
         :param text: The text of the paragraph.
         :type text: str
@@ -998,12 +1151,22 @@ class _Expected:
         :param pages: The pages of the items it is made from, None for an item on
             no page.
         :type pages: list[int | None]
+        :param texts: The text items it is made from that can be from a track.
+        :type texts: list[_Text] | None
         :return: None
         :rtype: None
         """
         if not text:
             return
-        context = ([kind] if kind else []) + self._containers
+        context = [kind] if kind else []
+        speakers = list(
+            dict.fromkeys(text.speaker for text in texts or [] if text.speaker)
+        )
+        if speakers:
+            self.structures.add("speakers" if len(speakers) > 1 else "speaker")
+            label = "Speaker" if len(speakers) == 1 else "Speakers"
+            context.append(f"{label}: {', '.join(speakers)}")
+        context += self._containers
         if self._headings:
             context.append("Section: " + " > ".join(text for _, text in self._headings))
         self.paragraphs.append(
@@ -1041,17 +1204,22 @@ class _Expected:
         :rtype: None
         """
         if isinstance(block, _Text):
-            self._paragraph(block.word, _TEXT_KINDS.get(block.label), [block.page])
+            self._paragraph(
+                block.word, _TEXT_KINDS.get(block.label), [block.page], [block]
+            )
         elif isinstance(block, _Inline):
             texts = _inline_words(block)
             self._paragraph(
                 " ".join(text.word for text in texts),
                 None,
                 [text.page for text in texts],
+                texts,
             )
             self._floating_pictures(block)
         elif isinstance(block, _Picture):
             self._picture(block)
+        elif isinstance(block, _Code):
+            self._code(block)
         elif isinstance(block, _Heading):
             self._heading(block, list_level)
         elif isinstance(block, _List):
@@ -1107,6 +1275,7 @@ class _Expected:
         level = heading.level
         self._headings = [item for item in self._headings if item[0] < level]
         pages: list[int | None] = [heading.page]
+        texts: list[_Text] = []
         if heading.formatted:
             self.structures.add("formatted heading")
             texts = _inline_words(heading.formatted)
@@ -1115,7 +1284,9 @@ class _Expected:
         else:
             assert heading.own is not None
             text = heading.own.word
-        self._paragraph(text, f"Heading, level {level}" if level else "Title", pages)
+        self._paragraph(
+            text, f"Heading, level {level}" if level else "Title", pages, texts
+        )
         if level and text:
             self._headings.append((level, text))
         if heading.formatted:
@@ -1139,6 +1310,7 @@ class _Expected:
         children = [child for child in item.children if _in_body(child)]
         pages: list[int | None] = [item.page]
         text = ""
+        texts: list[_Text] = []
         pictures: list[_Picture] = []
         if item.own:
             text = item.own.word
@@ -1160,6 +1332,7 @@ class _Expected:
                 self.structures.add("list item with the text of its first item")
                 text = first.word
                 pages.append(first.page)
+                texts = [first]
                 children = children[1:]
             if inline is not None:
                 texts = _inline_words(inline)
@@ -1170,7 +1343,10 @@ class _Expected:
             text = f"{marker} {text}"
         level = max(list_level, 1)
         self._paragraph(
-            text, "List item" if level == 1 else f"List item, level {level}", pages
+            text,
+            "List item" if level == 1 else f"List item, level {level}",
+            pages,
+            texts,
         )
         for picture in pictures:
             self.structures.add("picture in formatted text")
@@ -1204,6 +1380,24 @@ class _Expected:
             self._paragraph(
                 picture.footnote.word, "Picture footnote", [picture.footnote.page]
             )
+
+    def _code(self, code: _Code) -> None:
+        """
+        Converts a code block: its caption, wherever the body has it, its text, and
+        its footnote.
+
+        :param code: The code block.
+        :type code: _Code
+        :return: None
+        :rtype: None
+        """
+        if code.caption:
+            if code.caption_after:
+                self.structures.add("caption after its code block")
+            self._paragraph(code.caption.word, "Code caption", [code.caption.page])
+        self._paragraph(code.text.word, "Code", [code.text.page], [code.text])
+        if code.footnote:
+            self._paragraph(code.footnote.word, "Code footnote", [code.footnote.page])
 
     def _table(self, table: _Table) -> None:
         """
@@ -1252,9 +1446,9 @@ class _Expected:
 
     def _graph(self, graph: _Graph) -> None:
         """
-        Converts a key-value region or a form: a paragraph for each cell that is
-        not the value of a key, with its values, on the pages of its cells, or of
-        the region where its cells are on none.
+        Converts a key-value region or a form: its caption, a paragraph for each
+        cell that is not the value of a key, with its values, on the pages of its
+        cells, or of the region where its cells are on none, and its footnote.
 
         :param graph: The key-value region or the form.
         :type graph: _Graph
@@ -1262,6 +1456,9 @@ class _Expected:
         :rtype: None
         """
         self.structures.add("key-value region or form")
+        name = "Form" if graph.form else "Key-value"
+        if graph.caption:
+            self._paragraph(graph.caption.word, f"{name} caption", [graph.caption.page])
         for index, key in enumerate(graph.value_of):
             if key is not None:
                 self.structures.add(f"value linked {graph.links[index]}")
@@ -1284,6 +1481,10 @@ class _Expected:
                 else cell.word,
                 "Form field" if graph.form else "Key-value pair",
                 pages or [graph.page],
+            )
+        if graph.footnote:
+            self._paragraph(
+                graph.footnote.word, f"{name} footnote", [graph.footnote.page]
             )
 
     def _field(self, field_spec: _Field) -> None:
@@ -1389,9 +1590,10 @@ class TestDoclingProperties(BaseTest):
         paragraph (that of the header of a table column also in each row with
         a value in the column), no text of the furniture, the notes or a picture is
         in the document, the paragraphs are not empty and have contexts on one line
-        and the pages of their items, the images are those of the pictures of the
-        body, once each, the Docling document is left as it was, and the document
-        round-trips through serialization.
+        and the pages of their items, the speakers in their contexts are those of
+        the tracks in their custom data, the images are those of the pictures of
+        the body, once each, the Docling document is left as it was, and
+        the document round-trips through serialization.
         """
         builder = _Builder()
         docling_document = builder.build(blocks)
@@ -1427,6 +1629,15 @@ class TestDoclingProperties(BaseTest):
             assert paragraph.page_numbers == sorted(
                 {entry["page_no"] for entry in paragraph.custom_data["docling"]["prov"]}
             )
+            tracks = paragraph.custom_data["docling"].get("source", [])
+            assert all(track["kind"] == "track" for track in tracks)
+            voices = [" ".join((track.get("voice") or "").split()) for track in tracks]
+            speakers = list(dict.fromkeys(voice for voice in voices if voice))
+            label = "Speaker" if len(speakers) == 1 else "Speakers"
+            if speakers:
+                assert f"{label}: {', '.join(speakers)}" in (context or "")
+            else:
+                assert "Speaker" not in (context or "")
         images = [image.base64_data for image in document.images]
         assert len(images) == len(set(images))
         assert set(images) == builder.body_images

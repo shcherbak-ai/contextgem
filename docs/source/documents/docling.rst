@@ -59,12 +59,12 @@ Each piece of text in the body of the Docling document becomes a paragraph, in r
      - ``Table header``, ``Table row``, with the caption of the table
    * - Caption, footnote, code, formula
      - The text
-     - e.g. ``Table caption``, ``Picture caption``, ``Footnote``
+     - e.g. ``Table caption``, ``Picture caption``, ``Code caption``, ``Footnote``
    * - Form field, key-value pair
      - The key and the value, e.g. ``Full name: Ada Lovelace`` or ``I agree to the terms: checked``
      - ``Form field``, ``Key-value pair``
 
-The additional context also gives the headings of the section of the paragraph, e.g. ``Section: 3. Term and Termination > 3.2 Notice``, and, in spreadsheets and presentations, its sheet or slide, e.g. ``Sheet: Q3 figures`` or ``Slide 2``. It is sent to the models together with the paragraph (see :ref:`paragraph-additional-context`): to an LLM, which gets the structure of the file without Markdown syntax in the text of the paragraphs, and to a decision model, which reads each paragraph on its own.
+The additional context also gives the headings of the section of the paragraph, e.g. ``Section: 3. Term and Termination > 3.2 Notice``, in spreadsheets and presentations, its sheet or slide, e.g. ``Sheet: Q3 figures`` or ``Slide 2``, and in a subtitle file, e.g. WebVTT, the speaker of its cue, e.g. ``Speaker: Ann Berg``. It is sent to the models together with the paragraph (see :ref:`paragraph-additional-context`): to an LLM, which gets the structure of the file without Markdown syntax in the text of the paragraphs, and to a decision model, which reads each paragraph on its own.
 
 Page headers and footers, comments, and the text that Docling finds inside pictures are not converted.
 
@@ -94,6 +94,7 @@ For more than the page, e.g. to highlight a paragraph in the file, the custom da
 - ``label``: the label of that item, e.g. ``"list_item"`` or ``"table"``.
 - ``prov``: for each part of the item, the number of its page (``page_no``) and its bounding box on the page (``bbox``, with the coordinates ``l``, ``t``, ``r`` and ``b`` from the origin ``coord_origin``).
 - ``row_index``: for a table row, the index of the row in the table.
+- ``source``: for a cue of a subtitle file, its start and end times in seconds (``start_time``, ``end_time``), and its identifier and speaker (``identifier``, ``voice``) where it has them, e.g. to cite the time of an extracted item. The times are not sent to the models.
 
 E.g. the custom data of the first row of the fee table in the example above, with the coordinates rounded:
 

@@ -51,6 +51,7 @@ from docling_core.types.doc import (
     TableData,
     TableItem,
     TextItem,
+    TrackSource,
 )
 from huggingface_hub import try_to_load_from_cache
 from PIL import Image as PILImage
@@ -2531,6 +2532,88 @@ class TestDocuments(BaseTest):
             assert _texts_and_contexts(Document.from_docling(docling_document)) == [
                 ("Total: 100 EUR", "Key-value pair")
             ]
+
+    def test_from_docling_code_blocks(self):
+        """
+        Tests that the caption of a code block is a paragraph before it, and its
+        footnote one after it, also where the body of the Docling document has the
+        caption after the code block, e.g. from AsciiDoc or a PDF file.
+        """
+        docling_document = DoclingDocument(name="manual")
+        docling_document.add_heading("Configuration", level=1)
+        code = docling_document.add_code('{ "retries": 3 }')
+        caption = docling_document.add_text(DocItemLabel.CAPTION, "Listing 1: Retries")
+        code.captions.append(caption.get_ref())
+        footnote = docling_document.add_text(DocItemLabel.FOOTNOTE, "In seconds.")
+        code.footnotes.append(footnote.get_ref())
+        docling_document.add_heading("Logging", level=1)
+
+        assert _texts_and_contexts(Document.from_docling(docling_document)) == [
+            ("Configuration", "Heading, level 1"),
+            ("Listing 1: Retries", "Code caption; Section: Configuration"),
+            ('{ "retries": 3 }', "Code; Section: Configuration"),
+            ("In seconds.", "Code footnote; Section: Configuration"),
+            ("Logging", "Heading, level 1"),
+        ]
+
+    def test_from_docling_transcripts(self):
+        """
+        Tests that a paragraph from a track, e.g. a cue of a WebVTT subtitle file,
+        has the speaker of the track in its additional context, and the track in its
+        custom data, with its times.
+        """
+        docling_document = DoclingDocument(name="meeting")
+        docling_document.add_text(
+            DocItemLabel.TEXT,
+            "Shall we start with the budget?",
+            source=TrackSource(
+                start_time=4.9, end_time=8.5, identifier="cue-1", voice="Ann Berg"
+            ),
+        )
+        # A cue with formatted text is an inline group, each part of it from
+        # the track
+        inline = docling_document.add_inline_group()
+        for part in ("The budget is", "approved", "."):
+            docling_document.add_text(
+                DocItemLabel.TEXT,
+                part,
+                parent=inline,
+                source=TrackSource(start_time=8.5, end_time=11.0, voice="Bo Lind"),
+            )
+        # A cue without a voice
+        docling_document.add_text(
+            DocItemLabel.TEXT,
+            "Applause.",
+            source=TrackSource(start_time=11.0, end_time=12.0),
+        )
+
+        document = Document.from_docling(docling_document)
+        assert _texts_and_contexts(document) == [
+            ("Shall we start with the budget?", "Speaker: Ann Berg"),
+            ("The budget is approved.", "Speaker: Bo Lind"),
+            ("Applause.", None),
+        ]
+        assert document.paragraphs[0].custom_data["docling"]["source"] == [
+            {
+                "kind": "track",
+                "start_time": 4.9,
+                "end_time": 8.5,
+                "identifier": "cue-1",
+                "voice": "Ann Berg",
+            }
+        ]
+        # The track of the parts of the inline group is given once
+        assert document.paragraphs[1].custom_data["docling"]["source"] == [
+            {"kind": "track", "start_time": 8.5, "end_time": 11.0, "voice": "Bo Lind"}
+        ]
+        # The times are not pages
+        assert all(not paragraph.page_numbers for paragraph in document.paragraphs)
+        # A paragraph from no track has no track in its custom data
+        docling_document = DoclingDocument(name="notes")
+        docling_document.add_text(DocItemLabel.TEXT, "No speaker here.")
+        paragraph = Document.from_docling(docling_document).paragraphs[0]
+        assert "source" not in paragraph.custom_data["docling"]
+        self.check_instance_serialization_and_cloning(document)
 
     def test_from_docling_sheets_and_slides(self):
         """
