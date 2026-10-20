@@ -92,6 +92,20 @@ repos:
         language: system
         pass_filenames: false
 
+      # The ranges admit the latest releases and the lockfiles hold them, but
+      # for the packages in its EXCEPTIONS. At each commit, as a release comes
+      # out without a change to a file, and asking PyPI and npm. CI skips it
+      # (SKIP), where its result would depend on the day, not on the commit.
+      # Verbose, for the warning of a newer release of a package left out,
+      # which does not fail it.
+      - id: latest-versions
+        name: dependencies at their latest versions
+        entry: uv run python dev/check_latest_versions.py
+        language: system
+        pass_filenames: false
+        always_run: true
+        verbose: true
+
       - id: update-readme
         name: Update README.md
         entry: uv run python dev/populate_project_readme.py

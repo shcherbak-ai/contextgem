@@ -195,11 +195,12 @@ contextgem/
     - **update-readme**: regenerates `README.md` from its template (see [Updating README.md](#-updating-readmemd))
     - **package-check**: builds the package and validates its metadata (`uv build` + `twine check`)
     - **uv lock check**: `uv.lock` is in sync with `pyproject.toml`
+    - **latest-versions**: the ranges of `pyproject.toml` and `package.json` admit the latest release of each dependency, and `uv.lock` and `package-lock.json` hold the newest versions that the ranges admit, but for the packages listed with their reasons in `EXCEPTIONS` in [dev/check_latest_versions.py](dev/check_latest_versions.py), e.g. the pinned `litellm`, of whose newer releases it warns without failing. It asks PyPI and npm at each commit, as a release can come out at any time, so it can fail on a change that touches no dependency: commit with `SKIP=latest-versions` in front of the command, and the maintainer upgrades the dependencies
     - **Commitizen**: the format of the commit message (see below)
     - **claude hooks tests**: the tests of the Claude Code hook in `.claude/hooks/` and of the settings that start it, with `node --test`
     - the checks of YAML and TOML files, trailing whitespace and the ends of files. The last two skip the files whose bytes go into the requests recorded in the VCR cassettes (the package, the tests, the usage examples and the evaluation cases) and the signed contributor agreements.
 
-    The hooks run the tools through `uv run`, at the versions locked in `uv.lock`, and CI runs the same hooks (`uv run pre-commit run --all-files`), so a check that passes locally passes in CI. CI also checks the license compatibility of the dependencies, with licenseal.
+    The hooks run the tools through `uv run`, at the versions locked in `uv.lock`, and CI runs the same hooks (`uv run pre-commit run --all-files`), so a check that passes locally passes in CI. CI skips latest-versions, whose result depends on the day rather than on the commit. CI also checks the license compatibility of the dependencies, with licenseal.
 
     - **If a hook modifies files** (e.g. Ruff formatting, the README): review the changes, add the modified files to the staging area, and commit again.
     - **If a hook reports a problem** (e.g. a Bandit finding or a type error): fix it, add the fixed files to the staging area, and commit again.

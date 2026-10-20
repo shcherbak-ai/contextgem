@@ -44,8 +44,12 @@ jobs:
       - name: Install dependencies
         run: uv sync --locked --all-groups
 
+      # Without the check of the latest versions, which fails on a release of
+      # the day, whatever the commit
       - name: Run pre-commit checks
         run: uv run pre-commit run --all-files
+        env:
+          SKIP: latest-versions
 
   prefetch-models:
     # Download the SaT model ONCE on a single runner and publish the warmed
