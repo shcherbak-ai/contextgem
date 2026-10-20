@@ -1,6 +1,6 @@
 # Review of the Reference Answers
 
-The reference answers of `complex_nda` and `complex_dpa` were reviewed on 2026-10-11 (the sections up to "Limits"). `complex_mcu` was written with its reference answers on 2026-10-15 and reviewed in the same way (its own section, at the end).
+The reference answers of `complex_nda` and `complex_dpa` were reviewed on 2026-10-11 (the sections up to "Limits"). `complex_mcu` was written with its reference answers on 2026-10-15, and `complex_stability` on 2026-10-20, and each was reviewed in the same way (their own sections, at the end).
 
 The reference answers of the two contract cases (`complex_nda.gold.json`, `complex_dpa.gold.json`) were produced by an AI agent. This is the record of their review, which was also done by AI agents: no person has verified the answers. The maintainer delegated the review.
 
@@ -201,3 +201,52 @@ The scores of `baseline_2026-10-15` were computed again after this (`rescore`): 
 ## complex_dpa: the wording of two justifications (2026-10-15)
 
 When the judge was added, two reference justifications of `complex_dpa` said that the 24-hour notification limit is "effective on 1 November", for a limit that A1.1 puts in force from 1 October 2026. The judge then found the justifications of the LLMs that say "from 1 October" wrong, in 4 runs. Both are now worded as in force from 1 October, and so on 1 November ("Breach notification deadline in force on 1 November 2026" and "Breach notification obligation summary"). No answer changed, and the scores do not depend on the justifications.
+
+## complex_stability (2026-10-20)
+
+### How the case was made
+
+An AI agent wrote the document and its reference answers together, from one set of facts, to measure what the structure of a document gives the models (see "Extraction from Docling Documents" in `dev/evals/AGENTS.md`). The document is a fictional stability study report of a tablet: three batches in three container closure systems, a release and a shelf-life specification, and a table of results for each batch at each storage condition.
+
+The answers depend on the following, which is what the case tests:
+
+- **Tables that look alike.** The release and the shelf-life specification list the same tests with other limits. The tables of results have the same tests, and the long-term and accelerated ones the same number of columns, with other time points: a row tells its batch, its condition and its time points only through the caption and the header of its table.
+- **The concepts of an aspect are extracted from the paragraphs of the aspect only**, where a row can come without the caption and the header of its table: e.g. the 6-month total impurities of V20-2604 at the accelerated condition, among the rows of its three tables.
+- **The narrative contradicts the tables**, which the document says record the measured results: it misses two of the five results outside the shelf-life specification (the 3-month water content of V20-2604, and the 6-month impurity D of V20-2607 at the accelerated condition), dates the significant change of V20-2604 at 6 months instead of 3, says that V20-2607 shows no significant change, and proposes 24 months for the Alu/Alu blister, which the rules of section 6 do not allow (12 months, by 6.3).
+
+The results outside the specification, the significant changes and the shelf lives that the rules allow were recomputed by script from the tables.
+
+### Method
+
+As for `complex_mcu`, one separate agent got only the text with numbered paragraphs and the definitions of the aspects and concepts, derived every concept answer with its evidence, listed the paragraphs of every aspect (apart from the headings, the header rows of tables and the paragraphs it was unsure about), and reported every error and ambiguity that it found. Each difference was ruled on against the text.
+
+### Concepts
+
+The blind derivation reaches the same value on all 18 concepts, the two string concepts in substance. It found every planted contradiction, and says for each concept of an aspect that the answer is in the paragraphs of the aspect.
+
+Two definitions it found ambiguous stay as they are, as their descriptions decide them: the shelf life of the Alu/Alu blister is the one that the rules of section 6 allow "applied to the results in the tables, whatever the report proposes" (12 months, not the proposed 24), and the date on which V20-2604 was placed at the intermediate condition is that of Table 1 (3.1), not the start of its testing there. A third was made precise: whether every result outside the specification is investigated now reads "each result in the tables", as the narrative alone would give True.
+
+### Errors in the document, found by the blind derivation and corrected
+
+Three errors that were not planted, corrected in the text; no answer changed:
+
+- 6.5 said that no batch is expected to fall outside the shelf-life specification within 24 months, which the water content of V20-2604 at the long-term condition contradicts (4.0 % at about 18 months on a straight line). It now says it of the assay only, which its decrease of no more than 0.15 % per month supports.
+- 3.2 tested the intermediate samples "from the first time point after the significant change is found", which a change found at 6 months would make 9 months, not the 6 of Table 9. They are now tested at each of their time points from the one at which the change is found.
+- The investigation INV-27-031, opened in 2026, is now INV-26-031.
+
+### Aspects
+
+The blind annotation has exactly the paragraphs of the reference answers for each of the four aspects, and leaves out the same ones.
+
+The header rows of tables are linked context of the aspects whose rows they label (`complex_stability.neutral.json`): a header row has no result of its own, but it gives the rows their columns, i.e. their time points, and a model that extracts it with the rows is not wrong. The other cases have no such entries. So are the headings of the sections of the batches, which start with the caption of a table, so that their section holds no paragraph and they would otherwise be scored. The borderline and linked paragraphs that the blind annotation was unsure about are listed with the reasons in the same file: e.g. 3.2, the rule that explains why the intermediate results of V20-2604 start at 6 months, and 4.2.1 and 4.3.1, the statements of the narrative that the results outside the specification contradict.
+
+### After the first runs
+
+The runs of `stability_2026-10-20_text` (`openai/gpt-6-luna` and `openai/gpt-5.6-luna`, 3 runs each, and the three hosted decision models) were compared with the reference answers, as for the other cases. Rulings:
+
+- **Shelf-life acceptance criteria**: 2.1 [12], which 4 of the 6 LLM runs leave out, is now borderline: it says that the stability samples are tested against the shelf-life specification, but also introduces the release specification, which the aspect leaves out (the blind annotation was unsure about it too). 3.3 [38], which all the decision models add, is linked context: the definition of a significant change applies the shelf-life specification to results. 7.3 [116], which they add too, is borderline: a rule on results outside the specification, but a commitment.
+- **Stability results of V20-2604**: 5.5 [101], which all the decision models leave out, is now borderline: it closes the investigation of the batch, and says that no other result of the study was outside the specification.
+- **Results outside the shelf-life specification**: [38] is linked context and [116] borderline here too. The 6-month impurity D of V20-2607 [91], which 5 of the 6 LLM runs leave out, stays: it is the result outside the specification that only the tables give, i.e. what the case tests.
+- What else the decision models add or leave out on the text are table rows, which they cannot tell apart without the caption and the header of their table, and rows of results within the specification: these stay as they are.
+
+The judge agrees with 75 of the 76 checks (`judge --checks`): of the 14 checks of this case, it judges correct the wrong justification that 6.2 applies because the intermediate samples of V20-2604 showed a significant change (a probability of 0.55), where 6.2 requires that they show none.

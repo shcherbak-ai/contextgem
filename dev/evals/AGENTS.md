@@ -34,8 +34,11 @@ Measures the quality and the cost of extraction on evaluation cases with referen
 | `complex_nda` | A non-disclosure agreement with annexes and a disclosure register | 72 | 4 | 21 |
 | `complex_dpa` | A data processing agreement with two amendments and operational records | 153 | 6 | 24 |
 | `complex_mcu` | The technical documentation of a microcontroller: datasheet, errata sheet, change notification with an amendment, application note, and the design review and purchasing records of a customer | 268 | 7 | 27 |
+| `complex_stability` | The stability study report of a tablet: three batches in three container closure systems, a release and a shelf-life specification, and the results of each batch at each storage condition | 125 | 4 | 18 |
 
 `complex_mcu` is a technical document with dense terminology (voltage-scaling ranges, PLL dividers, wait states, thermal resistances, errata conditions). It has many values in tables, one row per paragraph, and later documents that change values of earlier ones. Many of its answers are computed: junction temperatures from currents and thermal resistances, clock frequencies from divider settings, calendar dates and ISO weeks. Its document concepts ask for references, as its aspect concepts do.
+
+`complex_stability` has most of its answers in tables that look alike: two specifications with the same tests, and a table of results for each batch and condition with the same tests and, for the long-term and accelerated conditions, the same number of columns. A row tells its batch, its condition and its time points only through the caption and the header of its table, and the concepts of its aspects are extracted from the paragraphs of the aspect only, where a row can come without them. It was made to measure the structure of a document (see Extraction from Docling Documents), and its narrative contradicts its tables, which record the results: two of its five results outside the specification are only in the tables.
 
 ## Rules
 
@@ -219,7 +222,30 @@ Three labels recorded at the same time, with `litellm` 1.105.1, before `Document
 - On `complex_mcu`, `openai/gpt-6-luna` got 24.0 of 26 concepts (22 to 26) against 25.7 with the text: two runs gave no item for the computed junction temperature of DR-114 and the HDR-7 check that depends on it, while all the paragraphs of their aspect were extracted. Without the additional context it got 25.7, and both LLMs had their highest reference F1 there (0.743 and 0.657, against 0.716 and 0.616 with the text).
 - The input tokens: 5% to 12% more on the contracts, 40% more on `complex_mcu`, whose table rows repeat the caption of their table and the headings of their section in their additional context.
 
-So the additional context is worth its tokens for decision models, which judge each paragraph on its own; LLMs, which read the paragraphs of the whole document in order, do as well without it. Not settled: whether the prompts of LLMs should leave out the additional context of table rows, which a change of the library would decide. The limits: the structure is that of the text, so it is clean, where a converted PDF has the errors of Docling; three cases, one of them with tables; one run of each decision model.
+So the additional context is worth its tokens for decision models, which judge each paragraph on its own; LLMs, which read the paragraphs of the whole document in order, do as well without it on these cases. The prompts of LLMs keep the additional context of table rows (decided by the maintainer on 2026-10-20): it also tells which table a row is from where its caption and header are not in the same prompt, i.e. for the concepts of an aspect, which are extracted from the paragraphs of the aspect only, and when `max_paragraphs_to_analyze_per_call` splits a table between requests. `complex_stability` was added the same day to test the first of these (below); none of the cases tests the second. The limits: the structure is that of the text, so it is clean, where a converted PDF has the errors of Docling; three cases, one of them with tables; one run of each decision model.
+
+### `complex_stability`, measured on 2026-10-20
+
+The same configurations on `complex_stability`, under `stability_2026-10-20_text`, `stability_2026-10-20_docling` and `stability_2026-10-20_without_context`, recorded at the same time with `litellm` 1.105.1 (USD 0.29 for the three labels). Mean of 3 runs for the LLMs, 1 run for the decision models:
+
+| Model | Measure | Text | Docling | Without context |
+|-------|---------|------|---------|-----------------|
+| `openai/gpt-6-luna` | Aspect F1 | 0.936 | 0.978 | 0.977 |
+| `openai/gpt-6-luna` | Concepts correct (of 16) | 14.7 | 15.7 | 14.7 |
+| `openai/gpt-6-luna` | Reference F1 | 0.802 | 0.871 | 0.801 |
+| `openai/gpt-6-luna` | Justifications correct (of 51, judged) | 47 | 50 | 47 |
+| `openai/gpt-5.6-luna` | Aspect F1 | 0.967 | 0.983 | 0.980 |
+| `openai/gpt-5.6-luna` | Concepts correct (of 16) | 13.7 | 13.7 | 14.3 |
+| `openai/gpt-5.6-luna` | Reference F1 | 0.728 | 0.864 | 0.829 |
+| Decision models, each | Aspect F1 | 0.36 to 0.41 | 0.65 to 0.76 | 0.39 to 0.45 |
+| Decision models, each | Aspect F1 at its best threshold | 0.45 to 0.48 | 0.83 to 0.85 | 0.47 to 0.54 |
+
+- **The concepts of an aspect gain where the case puts the table rows without their caption**: the number of results outside the specification is right in 0 of 3 runs of `openai/gpt-6-luna` with the text and without the additional context, and in 2 of 3 with it (the wrong answers, 3 and 4, are the count of the narrative, or leave out the result of V20-2607, whose batch only the caption tells); whether every such result is investigated, in 2, 3 and 2 of 3. `openai/gpt-5.6-luna` mostly gives the count of the narrative with every input, and gave the proposed 24 months for the Alu/Alu blister in 2 of its 3 runs with the Docling document (a concept of the document as a whole, 0 of 3 with the text).
+- **The references gain for both LLMs** (0.07 and 0.14), and the aspects for `openai/gpt-6-luna`, with the table rows with the headers of their columns as much as with the additional context.
+- **The decision models gain from the additional context only**: without it, their aspect F1 is that of the text. The table rows of this case differ only by their caption, which a decision model, judging each paragraph on its own, sees only in the additional context.
+- **The input tokens**: 38% more for the LLMs, 20% to 40% for the decision models.
+
+So on a document whose table rows look alike, the additional context of table rows pays for both kinds of model, as the maintainer expected; on the three other cases, it pays for the decision models.
 
 ## Adding a Case
 

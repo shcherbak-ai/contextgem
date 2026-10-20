@@ -1,0 +1,298 @@
+{
+  "judge": {
+    "model": "typesafe/jev-latest",
+    "questions": "a08ad6e4d950",
+    "litellm": "1.105.1"
+  },
+  "threshold": 0.5,
+  "reference": "cda2ac1c53d9",
+  "summary": {
+    "n_strings": 2,
+    "n_strings_correct": 2,
+    "n_justifications": 17,
+    "n_justifications_correct": 15,
+    "n_fields": 6,
+    "n_fields_correct": 6
+  },
+  "usage": {
+    "requests": 18,
+    "input_tokens": 9263,
+    "output_tokens": 360,
+    "cost_total": "0.00039"
+  },
+  "concepts": [
+    {
+      "context": "document",
+      "name": "Batches on stability",
+      "type": "JsonObjectConcept",
+      "fields": [
+        {
+          "object": "V20-2601",
+          "field": "scale",
+          "verdict": true,
+          "decided_by": "exact"
+        },
+        {
+          "object": "V20-2601",
+          "field": "container_closure_system",
+          "verdict": true,
+          "decided_by": "exact"
+        },
+        {
+          "object": "V20-2604",
+          "field": "scale",
+          "verdict": true,
+          "decided_by": "exact"
+        },
+        {
+          "object": "V20-2604",
+          "field": "container_closure_system",
+          "verdict": true,
+          "decided_by": "exact"
+        },
+        {
+          "object": "V20-2607",
+          "field": "scale",
+          "verdict": true,
+          "decided_by": "exact"
+        },
+        {
+          "object": "V20-2607",
+          "field": "container_closure_system",
+          "verdict": true,
+          "decided_by": "exact"
+        }
+      ]
+    },
+    {
+      "context": "document",
+      "name": "Batches with a significant change at the accelerated condition",
+      "type": "LabelConcept",
+      "justifications": [
+        {
+          "item": 0,
+          "probability": 0.97,
+          "verdict": true,
+          "decided_by": "judge"
+        }
+      ]
+    },
+    {
+      "context": "document",
+      "name": "Shelf life supported for the Alu/Alu blister by the rules of section 6 in months",
+      "type": "NumericalConcept",
+      "justifications": [
+        {
+          "item": 0,
+          "probability": 0.96,
+          "verdict": true,
+          "decided_by": "judge"
+        }
+      ]
+    },
+    {
+      "context": "document",
+      "name": "The conclusion on V20-2607 at the accelerated condition agrees with its results",
+      "type": "BooleanConcept",
+      "justifications": [
+        {
+          "item": 0,
+          "probability": 0.95,
+          "verdict": true,
+          "decided_by": "judge"
+        }
+      ]
+    },
+    {
+      "context": "document",
+      "name": "Date on which V20-2604 was placed at the intermediate condition",
+      "type": "DateConcept",
+      "justifications": [
+        {
+          "item": 0,
+          "probability": 0.97,
+          "verdict": true,
+          "decided_by": "judge"
+        }
+      ]
+    },
+    {
+      "context": "aspect: Shelf-life acceptance criteria",
+      "name": "Shelf-life limit of impurity D in %",
+      "type": "NumericalConcept",
+      "justifications": [
+        {
+          "item": 0,
+          "probability": 0.98,
+          "verdict": true,
+          "decided_by": "judge"
+        }
+      ]
+    },
+    {
+      "context": "aspect: Shelf-life acceptance criteria",
+      "name": "Shelf-life limit of water content in %",
+      "type": "NumericalConcept",
+      "justifications": [
+        {
+          "item": 0,
+          "probability": 0.98,
+          "verdict": true,
+          "decided_by": "judge"
+        }
+      ]
+    },
+    {
+      "context": "aspect: Shelf-life acceptance criteria",
+      "name": "Lower shelf-life limit of assay in %",
+      "type": "NumericalConcept",
+      "justifications": [
+        {
+          "item": 0,
+          "probability": 0.98,
+          "verdict": true,
+          "decided_by": "judge"
+        }
+      ]
+    },
+    {
+      "context": "aspect: Stability results of V20-2604",
+      "name": "Total impurities of V20-2604 after 6 months at the accelerated condition in %",
+      "type": "NumericalConcept",
+      "justifications": [
+        {
+          "item": 0,
+          "probability": 0.98,
+          "verdict": true,
+          "decided_by": "judge"
+        }
+      ]
+    },
+    {
+      "context": "aspect: Stability results of V20-2604",
+      "name": "Water content of V20-2604 after 12 months at the long-term condition in %",
+      "type": "NumericalConcept",
+      "justifications": [
+        {
+          "item": 0,
+          "probability": 0.99,
+          "verdict": true,
+          "decided_by": "judge"
+        }
+      ]
+    },
+    {
+      "context": "aspect: Stability results of V20-2604",
+      "name": "Assay of V20-2604 after 12 months at the intermediate condition in %",
+      "type": "NumericalConcept",
+      "justifications": [
+        {
+          "item": 0,
+          "probability": 0.98,
+          "verdict": true,
+          "decided_by": "judge"
+        }
+      ]
+    },
+    {
+      "context": "aspect: Results outside the shelf-life specification",
+      "name": "Tests with a result outside the shelf-life specification",
+      "type": "LabelConcept",
+      "justifications": [
+        {
+          "item": 0,
+          "probability": 0.86,
+          "verdict": true,
+          "decided_by": "judge"
+        }
+      ]
+    },
+    {
+      "context": "aspect: Results outside the shelf-life specification",
+      "name": "Number of results outside the shelf-life specification",
+      "type": "NumericalConcept",
+      "justifications": [
+        {
+          "item": 0,
+          "probability": 0.04,
+          "verdict": false,
+          "decided_by": "judge"
+        }
+      ]
+    },
+    {
+      "context": "aspect: Results outside the shelf-life specification",
+      "name": "Every result outside the shelf-life specification is investigated in section 5",
+      "type": "BooleanConcept",
+      "justifications": [
+        {
+          "item": 0,
+          "probability": 0.04,
+          "verdict": false,
+          "decided_by": "judge"
+        }
+      ]
+    },
+    {
+      "context": "aspect: Results outside the shelf-life specification",
+      "name": "Root cause of the results of V20-2604 outside the shelf-life specification",
+      "type": "StringConcept",
+      "value": {
+        "probability": 0.98,
+        "verdict": true,
+        "decided_by": "judge"
+      },
+      "justifications": [
+        {
+          "item": 0,
+          "probability": 0.91,
+          "verdict": true,
+          "decided_by": "judge"
+        }
+      ]
+    },
+    {
+      "context": "aspect: Shelf-life rules and proposal",
+      "name": "Proposed shelf life of the PVC/Alu blister in months",
+      "type": "NumericalConcept",
+      "justifications": [
+        {
+          "item": 0,
+          "probability": 0.99,
+          "verdict": true,
+          "decided_by": "judge"
+        }
+      ]
+    },
+    {
+      "context": "aspect: Shelf-life rules and proposal",
+      "name": "Storage statement of the PVC/Alu blister",
+      "type": "StringConcept",
+      "value": {
+        "verdict": true,
+        "decided_by": "exact"
+      },
+      "justifications": [
+        {
+          "item": 0,
+          "probability": 0.98,
+          "verdict": true,
+          "decided_by": "judge"
+        }
+      ]
+    },
+    {
+      "context": "aspect: Shelf-life rules and proposal",
+      "name": "Rule that gives the proposed shelf life of the PVC/Alu blister",
+      "type": "LabelConcept",
+      "justifications": [
+        {
+          "item": 0,
+          "probability": 0.89,
+          "verdict": true,
+          "decided_by": "judge"
+        }
+      ]
+    }
+  ]
+}

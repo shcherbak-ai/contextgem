@@ -77,6 +77,10 @@ def _heading_level(case: str, position: int, heading: str) -> int:
         # The parts of the package, and the numbered sections and the records
         # within them
         return 2 if heading.startswith("PART ") else 3
+    if case == "complex_stability":
+        # The numbered sections and the annex, and the section of each batch
+        # within the results
+        return 3 if re.match(r"\d+\.\d+ ", heading) else 2
     return 2
 
 

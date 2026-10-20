@@ -1,0 +1,730 @@
+{
+  "judge": {
+    "model": "typesafe/jev-latest",
+    "questions": "a08ad6e4d950",
+    "litellm": "1.105.1"
+  },
+  "threshold": 0.5,
+  "agreement": {
+    "value": {
+      "checks": 28,
+      "agree": 28,
+      "correct_judged_wrong": 0,
+      "wrong_judged_correct": 0,
+      "refused": 0
+    },
+    "justification": {
+      "checks": 38,
+      "agree": 37,
+      "correct_judged_wrong": 0,
+      "wrong_judged_correct": 1,
+      "refused": 0
+    },
+    "field": {
+      "checks": 10,
+      "agree": 10,
+      "correct_judged_wrong": 0,
+      "wrong_judged_correct": 0,
+      "refused": 0
+    },
+    "all": {
+      "checks": 76,
+      "agree": 75,
+      "correct_judged_wrong": 0,
+      "wrong_judged_correct": 1,
+      "refused": 0
+    }
+  },
+  "usage": {
+    "requests": 76,
+    "input_tokens": 38542,
+    "output_tokens": 1520,
+    "cost_total": "0.00162"
+  },
+  "checks": [
+    {
+      "id": "complex_nda-value-purpose-paraphrase",
+      "kind": "value",
+      "expected": true,
+      "probability": 0.96,
+      "verdict": true,
+      "decided_by": "judge",
+      "agrees": true
+    },
+    {
+      "id": "complex_nda-value-purpose-reordered",
+      "kind": "value",
+      "expected": true,
+      "probability": 0.97,
+      "verdict": true,
+      "decided_by": "judge",
+      "agrees": true
+    },
+    {
+      "id": "complex_nda-value-purpose-majority",
+      "kind": "value",
+      "expected": false,
+      "probability": 0.02,
+      "verdict": false,
+      "decided_by": "judge",
+      "agrees": true
+    },
+    {
+      "id": "complex_nda-value-purpose-parties-swapped",
+      "kind": "value",
+      "expected": false,
+      "probability": 0.03,
+      "verdict": false,
+      "decided_by": "judge",
+      "agrees": true
+    },
+    {
+      "id": "complex_nda-value-forum-paraphrase",
+      "kind": "value",
+      "expected": true,
+      "probability": 0.93,
+      "verdict": true,
+      "decided_by": "judge",
+      "agrees": true
+    },
+    {
+      "id": "complex_nda-value-forum-reordered",
+      "kind": "value",
+      "expected": true,
+      "probability": 0.93,
+      "verdict": true,
+      "decided_by": "judge",
+      "agrees": true
+    },
+    {
+      "id": "complex_nda-value-forum-stockholm",
+      "kind": "value",
+      "expected": false,
+      "probability": 0.01,
+      "verdict": false,
+      "decided_by": "judge",
+      "agrees": true
+    },
+    {
+      "id": "complex_nda-value-forum-governing-law",
+      "kind": "value",
+      "expected": false,
+      "probability": 0.02,
+      "verdict": false,
+      "decided_by": "judge",
+      "agrees": true
+    },
+    {
+      "id": "complex_nda-value-oracle-timeline-paraphrase",
+      "kind": "value",
+      "expected": true,
+      "probability": 0.59,
+      "verdict": true,
+      "decided_by": "judge",
+      "agrees": true
+    },
+    {
+      "id": "complex_nda-value-oracle-timeline-reordered",
+      "kind": "value",
+      "expected": true,
+      "probability": 0.87,
+      "verdict": true,
+      "decided_by": "judge",
+      "agrees": true
+    },
+    {
+      "id": "complex_nda-value-oracle-timeline-wrong-deadline",
+      "kind": "value",
+      "expected": false,
+      "probability": 0.03,
+      "verdict": false,
+      "decided_by": "judge",
+      "agrees": true
+    },
+    {
+      "id": "complex_nda-value-oracle-timeline-sending-as-delivery",
+      "kind": "value",
+      "expected": false,
+      "probability": 0.02,
+      "verdict": false,
+      "decided_by": "judge",
+      "agrees": true
+    },
+    {
+      "id": "complex_dpa-value-breach-summary-paraphrase",
+      "kind": "value",
+      "expected": true,
+      "probability": 0.96,
+      "verdict": true,
+      "decided_by": "judge",
+      "agrees": true
+    },
+    {
+      "id": "complex_dpa-value-breach-summary-shorter",
+      "kind": "value",
+      "expected": true,
+      "probability": 0.93,
+      "verdict": true,
+      "decided_by": "judge",
+      "agrees": true
+    },
+    {
+      "id": "complex_dpa-value-breach-summary-48-hours",
+      "kind": "value",
+      "expected": false,
+      "probability": 0.06,
+      "verdict": false,
+      "decided_by": "judge",
+      "agrees": true
+    },
+    {
+      "id": "complex_dpa-value-breach-summary-expedited-12-hours",
+      "kind": "value",
+      "expected": false,
+      "probability": 0.11,
+      "verdict": false,
+      "decided_by": "judge",
+      "agrees": true
+    },
+    {
+      "id": "complex_dpa-value-email-providers-paraphrase",
+      "kind": "value",
+      "expected": true,
+      "probability": 0.84,
+      "verdict": true,
+      "decided_by": "judge",
+      "agrees": true
+    },
+    {
+      "id": "complex_dpa-value-email-providers-with-country",
+      "kind": "value",
+      "expected": true,
+      "probability": 0.9,
+      "verdict": true,
+      "decided_by": "judge",
+      "agrees": true
+    },
+    {
+      "id": "complex_dpa-value-email-providers-extra-meridian",
+      "kind": "value",
+      "expected": false,
+      "probability": 0.04,
+      "verdict": false,
+      "decided_by": "judge",
+      "agrees": true
+    },
+    {
+      "id": "complex_dpa-value-email-providers-extra-nordlicht",
+      "kind": "value",
+      "expected": false,
+      "probability": 0.04,
+      "verdict": false,
+      "decided_by": "judge",
+      "agrees": true
+    },
+    {
+      "id": "complex_mcu-value-es08-workaround-paraphrase",
+      "kind": "value",
+      "expected": true,
+      "probability": 0.98,
+      "verdict": true,
+      "decided_by": "judge",
+      "agrees": true
+    },
+    {
+      "id": "complex_mcu-value-es08-workaround-reordered",
+      "kind": "value",
+      "expected": true,
+      "probability": 0.97,
+      "verdict": true,
+      "decided_by": "judge",
+      "agrees": true
+    },
+    {
+      "id": "complex_mcu-value-es08-workaround-after-init",
+      "kind": "value",
+      "expected": false,
+      "probability": 0.01,
+      "verdict": false,
+      "decided_by": "judge",
+      "agrees": true
+    },
+    {
+      "id": "complex_mcu-value-es08-workaround-software-recovery",
+      "kind": "value",
+      "expected": false,
+      "probability": 0.01,
+      "verdict": false,
+      "decided_by": "judge",
+      "agrees": true
+    },
+    {
+      "id": "complex_nda-justification-oracle-deadline-correct",
+      "kind": "justification",
+      "expected": true,
+      "probability": 0.98,
+      "verdict": true,
+      "decided_by": "judge",
+      "agrees": true
+    },
+    {
+      "id": "complex_nda-justification-oracle-deadline-excluded-days-counted",
+      "kind": "justification",
+      "expected": false,
+      "probability": 0.01,
+      "verdict": false,
+      "decided_by": "judge",
+      "agrees": true
+    },
+    {
+      "id": "complex_nda-justification-talus-votes-correct",
+      "kind": "justification",
+      "expected": true,
+      "probability": 0.96,
+      "verdict": true,
+      "decided_by": "judge",
+      "agrees": true
+    },
+    {
+      "id": "complex_nda-justification-talus-votes-revocable-proxy-counted",
+      "kind": "justification",
+      "expected": false,
+      "probability": 0.02,
+      "verdict": false,
+      "decided_by": "judge",
+      "agrees": true
+    },
+    {
+      "id": "complex_nda-justification-lumen-access-correct",
+      "kind": "justification",
+      "expected": true,
+      "probability": 0.96,
+      "verdict": true,
+      "decided_by": "judge",
+      "agrees": true
+    },
+    {
+      "id": "complex_nda-justification-lumen-access-adviser-excluded",
+      "kind": "justification",
+      "expected": false,
+      "probability": 0.09,
+      "verdict": false,
+      "decided_by": "judge",
+      "agrees": true
+    },
+    {
+      "id": "complex_nda-justification-q27-lateness-correct",
+      "kind": "justification",
+      "expected": true,
+      "probability": 0.88,
+      "verdict": true,
+      "decided_by": "judge",
+      "agrees": true
+    },
+    {
+      "id": "complex_nda-justification-q27-lateness-send-time",
+      "kind": "justification",
+      "expected": false,
+      "probability": 0.02,
+      "verdict": false,
+      "decided_by": "judge",
+      "agrees": true
+    },
+    {
+      "id": "complex_nda-justification-shore-excluded-correct",
+      "kind": "justification",
+      "expected": true,
+      "probability": 0.97,
+      "verdict": true,
+      "decided_by": "judge",
+      "agrees": true
+    },
+    {
+      "id": "complex_nda-justification-shore-excluded-component-as-whole",
+      "kind": "justification",
+      "expected": false,
+      "probability": 0.02,
+      "verdict": false,
+      "decided_by": "judge",
+      "agrees": true
+    },
+    {
+      "id": "complex_dpa-justification-year-end-deletion-correct",
+      "kind": "justification",
+      "expected": true,
+      "probability": 0.92,
+      "verdict": true,
+      "decided_by": "judge",
+      "agrees": true
+    },
+    {
+      "id": "complex_dpa-justification-year-end-deletion-amendment-2-misread",
+      "kind": "justification",
+      "expected": false,
+      "probability": 0.03,
+      "verdict": false,
+      "decided_by": "judge",
+      "agrees": true
+    },
+    {
+      "id": "complex_dpa-justification-ir27-lateness-correct",
+      "kind": "justification",
+      "expected": true,
+      "probability": 0.91,
+      "verdict": true,
+      "decided_by": "judge",
+      "agrees": true
+    },
+    {
+      "id": "complex_dpa-justification-ir27-lateness-clock-from-confirmation",
+      "kind": "justification",
+      "expected": false,
+      "probability": 0.03,
+      "verdict": false,
+      "decided_by": "judge",
+      "agrees": true
+    },
+    {
+      "id": "complex_dpa-justification-held-ord-deletion-correct",
+      "kind": "justification",
+      "expected": true,
+      "probability": 0.86,
+      "verdict": true,
+      "decided_by": "judge",
+      "agrees": true
+    },
+    {
+      "id": "complex_dpa-justification-held-ord-deletion-alias-as-other-dataset",
+      "kind": "justification",
+      "expected": false,
+      "probability": 0.04,
+      "verdict": false,
+      "decided_by": "judge",
+      "agrees": true
+    },
+    {
+      "id": "complex_dpa-justification-lc27-total-correct",
+      "kind": "justification",
+      "expected": true,
+      "probability": 0.77,
+      "verdict": true,
+      "decided_by": "judge",
+      "agrees": true
+    },
+    {
+      "id": "complex_dpa-justification-lc27-total-earlier-year-payment-deducted",
+      "kind": "justification",
+      "expected": false,
+      "probability": 0.02,
+      "verdict": false,
+      "decided_by": "judge",
+      "agrees": true
+    },
+    {
+      "id": "complex_mcu-justification-dr115-tj-correct",
+      "kind": "justification",
+      "expected": true,
+      "probability": 0.97,
+      "verdict": true,
+      "decided_by": "judge",
+      "agrees": true
+    },
+    {
+      "id": "complex_mcu-justification-dr115-tj-2s2p-board",
+      "kind": "justification",
+      "expected": false,
+      "probability": 0.05,
+      "verdict": false,
+      "decided_by": "judge",
+      "agrees": true
+    },
+    {
+      "id": "complex_mcu-justification-dr114-wait-states-correct",
+      "kind": "justification",
+      "expected": true,
+      "probability": 0.94,
+      "verdict": true,
+      "decided_by": "judge",
+      "agrees": true
+    },
+    {
+      "id": "complex_mcu-justification-dr114-wait-states-uncorrected-table",
+      "kind": "justification",
+      "expected": false,
+      "probability": 0.04,
+      "verdict": false,
+      "decided_by": "judge",
+      "agrees": true
+    },
+    {
+      "id": "complex_mcu-justification-ltb-date-correct",
+      "kind": "justification",
+      "expected": true,
+      "probability": 0.98,
+      "verdict": true,
+      "decided_by": "judge",
+      "agrees": true
+    },
+    {
+      "id": "complex_mcu-justification-ltb-date-revised-forecast",
+      "kind": "justification",
+      "expected": false,
+      "probability": 0.05,
+      "verdict": false,
+      "decided_by": "judge",
+      "agrees": true
+    },
+    {
+      "id": "complex_mcu-justification-dr114-errata-correct",
+      "kind": "justification",
+      "expected": true,
+      "probability": 0.93,
+      "verdict": true,
+      "decided_by": "judge",
+      "agrees": true
+    },
+    {
+      "id": "complex_mcu-justification-dr114-errata-prototype-marking",
+      "kind": "justification",
+      "expected": false,
+      "probability": 0.09,
+      "verdict": false,
+      "decided_by": "judge",
+      "agrees": true
+    },
+    {
+      "id": "complex_mcu-justification-dr114-hdr7-correct",
+      "kind": "justification",
+      "expected": true,
+      "probability": 0.97,
+      "verdict": true,
+      "decided_by": "judge",
+      "agrees": true
+    },
+    {
+      "id": "complex_mcu-justification-dr114-hdr7-sensor-reading",
+      "kind": "justification",
+      "expected": false,
+      "probability": 0.03,
+      "verdict": false,
+      "decided_by": "judge",
+      "agrees": true
+    },
+    {
+      "id": "complex_nda-field-talus-role-paraphrase",
+      "kind": "field",
+      "expected": true,
+      "probability": 0.82,
+      "verdict": true,
+      "decided_by": "judge",
+      "agrees": true
+    },
+    {
+      "id": "complex_nda-field-talus-role-swapped",
+      "kind": "field",
+      "expected": false,
+      "probability": 0.02,
+      "verdict": false,
+      "decided_by": "judge",
+      "agrees": true
+    },
+    {
+      "id": "complex_dpa-field-baltika-service-paraphrase",
+      "kind": "field",
+      "expected": true,
+      "probability": 0.94,
+      "verdict": true,
+      "decided_by": "judge",
+      "agrees": true
+    },
+    {
+      "id": "complex_dpa-field-baltika-service-customer-analytics",
+      "kind": "field",
+      "expected": false,
+      "probability": 0.05,
+      "verdict": false,
+      "decided_by": "judge",
+      "agrees": true
+    },
+    {
+      "id": "complex_dpa-field-dagmar-country-paraphrase",
+      "kind": "field",
+      "expected": true,
+      "probability": 0.93,
+      "verdict": true,
+      "decided_by": "judge",
+      "agrees": true
+    },
+    {
+      "id": "complex_dpa-field-dagmar-country-germany",
+      "kind": "field",
+      "expected": false,
+      "probability": 0.01,
+      "verdict": false,
+      "decided_by": "judge",
+      "agrees": true
+    },
+    {
+      "id": "complex_dpa-field-cendrillon-service-paraphrase",
+      "kind": "field",
+      "expected": true,
+      "probability": 0.96,
+      "verdict": true,
+      "decided_by": "judge",
+      "agrees": true
+    },
+    {
+      "id": "complex_dpa-field-cendrillon-service-marketing",
+      "kind": "field",
+      "expected": false,
+      "probability": 0.07,
+      "verdict": false,
+      "decided_by": "judge",
+      "agrees": true
+    },
+    {
+      "id": "complex_mcu-field-es04-function-paraphrase",
+      "kind": "field",
+      "expected": true,
+      "probability": 0.93,
+      "verdict": true,
+      "decided_by": "judge",
+      "agrees": true
+    },
+    {
+      "id": "complex_mcu-field-es04-function-dac",
+      "kind": "field",
+      "expected": false,
+      "probability": 0.02,
+      "verdict": false,
+      "decided_by": "judge",
+      "agrees": true
+    },
+    {
+      "id": "complex_stability-value-root-cause-paraphrase",
+      "kind": "value",
+      "expected": true,
+      "probability": 0.73,
+      "verdict": true,
+      "decided_by": "judge",
+      "agrees": true
+    },
+    {
+      "id": "complex_stability-value-root-cause-laboratory-error",
+      "kind": "value",
+      "expected": false,
+      "probability": 0.01,
+      "verdict": false,
+      "decided_by": "judge",
+      "agrees": true
+    },
+    {
+      "id": "complex_stability-value-storage-statement-paraphrase",
+      "kind": "value",
+      "expected": true,
+      "probability": 0.98,
+      "verdict": true,
+      "decided_by": "judge",
+      "agrees": true
+    },
+    {
+      "id": "complex_stability-value-storage-statement-other-pack",
+      "kind": "value",
+      "expected": false,
+      "probability": 0.02,
+      "verdict": false,
+      "decided_by": "judge",
+      "agrees": true
+    },
+    {
+      "id": "complex_stability-justification-total-impurities-correct",
+      "kind": "justification",
+      "expected": true,
+      "probability": 0.98,
+      "verdict": true,
+      "decided_by": "judge",
+      "agrees": true
+    },
+    {
+      "id": "complex_stability-justification-total-impurities-wrong-table",
+      "kind": "justification",
+      "expected": false,
+      "probability": 0.1,
+      "verdict": false,
+      "decided_by": "judge",
+      "agrees": true
+    },
+    {
+      "id": "complex_stability-justification-count-correct",
+      "kind": "justification",
+      "expected": true,
+      "probability": 0.98,
+      "verdict": true,
+      "decided_by": "judge",
+      "agrees": true
+    },
+    {
+      "id": "complex_stability-justification-count-wrong-results",
+      "kind": "justification",
+      "expected": false,
+      "probability": 0.18,
+      "verdict": false,
+      "decided_by": "judge",
+      "agrees": true
+    },
+    {
+      "id": "complex_stability-justification-alu-shelf-life-correct",
+      "kind": "justification",
+      "expected": true,
+      "probability": 0.97,
+      "verdict": true,
+      "decided_by": "judge",
+      "agrees": true
+    },
+    {
+      "id": "complex_stability-justification-alu-shelf-life-wrong-cause",
+      "kind": "justification",
+      "expected": false,
+      "probability": 0.33,
+      "verdict": false,
+      "decided_by": "judge",
+      "agrees": true
+    },
+    {
+      "id": "complex_stability-justification-significant-change-correct",
+      "kind": "justification",
+      "expected": true,
+      "probability": 0.94,
+      "verdict": true,
+      "decided_by": "judge",
+      "agrees": true
+    },
+    {
+      "id": "complex_stability-justification-significant-change-wrong-fact",
+      "kind": "justification",
+      "expected": false,
+      "probability": 0.43,
+      "verdict": false,
+      "decided_by": "judge",
+      "agrees": true
+    },
+    {
+      "id": "complex_stability-justification-rule-correct",
+      "kind": "justification",
+      "expected": true,
+      "probability": 0.96,
+      "verdict": true,
+      "decided_by": "judge",
+      "agrees": true
+    },
+    {
+      "id": "complex_stability-justification-rule-wrong-condition",
+      "kind": "justification",
+      "expected": false,
+      "probability": 0.55,
+      "verdict": true,
+      "decided_by": "judge",
+      "agrees": false
+    }
+  ]
+}

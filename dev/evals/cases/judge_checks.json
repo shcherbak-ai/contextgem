@@ -854,5 +854,201 @@
     },
     "expected": false,
     "note": "ES-04 affects the INL of ADC1 and ADC2; the DAC is a different peripheral."
+  },
+  {
+    "id": "complex_stability-value-root-cause-paraphrase",
+    "kind": "value",
+    "case": "complex_stability",
+    "context": "aspect: Results outside the shelf-life specification",
+    "concept": "Root cause of the results of V20-2604 outside the shelf-life specification",
+    "candidate": {
+      "values": [
+        "Moisture got through the PVC film of the blister at high humidity, raising the water content of the tablets and with it the hydrolysis product impurity D."
+      ]
+    },
+    "expected": true,
+    "note": "The root cause of 5.3 in other words."
+  },
+  {
+    "id": "complex_stability-value-root-cause-laboratory-error",
+    "kind": "value",
+    "case": "complex_stability",
+    "context": "aspect: Results outside the shelf-life specification",
+    "concept": "Root cause of the results of V20-2604 outside the shelf-life specification",
+    "candidate": {
+      "values": [
+        "A laboratory error in the sample preparation for the 6-month test."
+      ]
+    },
+    "expected": false,
+    "note": "5.2 excludes a laboratory error; the root cause is moisture ingress."
+  },
+  {
+    "id": "complex_stability-value-storage-statement-paraphrase",
+    "kind": "value",
+    "case": "complex_stability",
+    "context": "aspect: Shelf-life rules and proposal",
+    "concept": "Storage statement of the PVC/Alu blister",
+    "candidate": {
+      "values": [
+        "Do not store above 25 °C, and keep in the original package to protect from moisture."
+      ]
+    },
+    "expected": true,
+    "note": "The statement of Table 12 with the same temperature and the same protection, in other words."
+  },
+  {
+    "id": "complex_stability-value-storage-statement-other-pack",
+    "kind": "value",
+    "case": "complex_stability",
+    "context": "aspect: Shelf-life rules and proposal",
+    "concept": "Storage statement of the PVC/Alu blister",
+    "candidate": {
+      "values": [
+        "Do not store above 30 °C. Store in the original package in order to protect from moisture."
+      ]
+    },
+    "expected": false,
+    "note": "30 °C is the limit of the bottle and the Alu/Alu blister; the PVC/Alu blister is not to be stored above 25 °C."
+  },
+  {
+    "id": "complex_stability-justification-total-impurities-correct",
+    "kind": "justification",
+    "case": "complex_stability",
+    "context": "aspect: Stability results of V20-2604",
+    "concept": "Total impurities of V20-2604 after 6 months at the accelerated condition in %",
+    "candidate": {
+      "value": 1.12,
+      "justification": "The table of V20-2604 at 40 °C/75 % RH gives 1.12 % of total impurities in its 6-month column."
+    },
+    "expected": true,
+    "note": "Same table and column as the reference, in other words."
+  },
+  {
+    "id": "complex_stability-justification-total-impurities-wrong-table",
+    "kind": "justification",
+    "case": "complex_stability",
+    "context": "aspect: Stability results of V20-2604",
+    "concept": "Total impurities of V20-2604 after 6 months at the accelerated condition in %",
+    "candidate": {
+      "value": 1.12,
+      "justification": "Table 7, the long-term condition of V20-2604, gives 1.12 % of total impurities at 6 months."
+    },
+    "expected": false,
+    "note": "Table 7 is the long-term table, which gives 0.20 % at 6 months; 1.12 % is in Table 8, the accelerated condition."
+  },
+  {
+    "id": "complex_stability-justification-count-correct",
+    "kind": "justification",
+    "case": "complex_stability",
+    "context": "aspect: Results outside the shelf-life specification",
+    "concept": "Number of results outside the shelf-life specification",
+    "candidate": {
+      "value": 5,
+      "justification": "At 40 °C/75 % RH, V20-2604 exceeds the water content limit at 3 and 6 months and the impurity D and total impurities limits at 6 months, and V20-2607 exceeds the impurity D limit at 6 months."
+    },
+    "expected": true,
+    "note": "The same five results as the reference, in other words."
+  },
+  {
+    "id": "complex_stability-justification-count-wrong-results",
+    "kind": "justification",
+    "case": "complex_stability",
+    "context": "aspect: Results outside the shelf-life specification",
+    "concept": "Number of results outside the shelf-life specification",
+    "candidate": {
+      "value": 5,
+      "justification": "V20-2604 at 40 °C/75 % RH fails water content, impurity D, total impurities and dissolution (79 %) at 6 months, and V20-2607 fails impurity D at 6 months."
+    },
+    "expected": false,
+    "note": "A dissolution of 79 % meets the shelf-life limit of 75 %, and the 3-month water content of 4.4 % of V20-2604 is left out: right count, wrong results."
+  },
+  {
+    "id": "complex_stability-justification-alu-shelf-life-correct",
+    "kind": "justification",
+    "case": "complex_stability",
+    "context": "document",
+    "concept": "Shelf life supported for the Alu/Alu blister by the rules of section 6 in months",
+    "candidate": {
+      "value": 12,
+      "justification": "V20-2607, the Alu/Alu batch, has 0.31 % of impurity D at 6 months at 40 °C/75 % RH, above the 0.30 % limit, which is a significant change; without intermediate data, 6.3 keeps the shelf life to the 12 months of long-term data."
+    },
+    "expected": true,
+    "note": "Same result, rule and period as the reference, in other words."
+  },
+  {
+    "id": "complex_stability-justification-alu-shelf-life-wrong-cause",
+    "kind": "justification",
+    "case": "complex_stability",
+    "context": "document",
+    "concept": "Shelf life supported for the Alu/Alu blister by the rules of section 6 in months",
+    "candidate": {
+      "value": 12,
+      "justification": "The assay of V20-2607 falls by more than 5 % at 40 °C/75 % RH, a significant change, so 6.3 limits the shelf life to the 12 months of long-term data."
+    },
+    "expected": false,
+    "note": "The assay of V20-2607 falls by 2.2 % only; the significant change is its impurity D of 0.31 %."
+  },
+  {
+    "id": "complex_stability-justification-significant-change-correct",
+    "kind": "justification",
+    "case": "complex_stability",
+    "context": "document",
+    "concept": "Batches with a significant change at the accelerated condition",
+    "candidate": {
+      "value": [
+        "V20-2604",
+        "V20-2607"
+      ],
+      "justification": "V20-2604 exceeds the water content limit from 3 months, and the impurity D and total impurities limits at 6 months; V20-2607 exceeds the impurity D limit at 6 months; V20-2601 stays within the shelf-life specification."
+    },
+    "expected": true,
+    "note": "Same results as the reference, in other words."
+  },
+  {
+    "id": "complex_stability-justification-significant-change-wrong-fact",
+    "kind": "justification",
+    "case": "complex_stability",
+    "context": "document",
+    "concept": "Batches with a significant change at the accelerated condition",
+    "candidate": {
+      "value": [
+        "V20-2604",
+        "V20-2607"
+      ],
+      "justification": "Both V20-2604 and V20-2607 exceed the total impurities limit of 1.00 % at 6 months at 40 °C/75 % RH."
+    },
+    "expected": false,
+    "note": "V20-2607 has 0.52 % of total impurities at 6 months; its significant change is impurity D."
+  },
+  {
+    "id": "complex_stability-justification-rule-correct",
+    "kind": "justification",
+    "case": "complex_stability",
+    "context": "aspect: Shelf-life rules and proposal",
+    "concept": "Rule that gives the proposed shelf life of the PVC/Alu blister",
+    "candidate": {
+      "value": [
+        "6.2"
+      ],
+      "justification": "18 months is one and a half times the 12 months of long-term data, which 6.2 allows when there is a significant change at the accelerated condition only."
+    },
+    "expected": true,
+    "note": "Same arithmetic and rule as the reference, in other words."
+  },
+  {
+    "id": "complex_stability-justification-rule-wrong-condition",
+    "kind": "justification",
+    "case": "complex_stability",
+    "context": "aspect: Shelf-life rules and proposal",
+    "concept": "Rule that gives the proposed shelf life of the PVC/Alu blister",
+    "candidate": {
+      "value": [
+        "6.2"
+      ],
+      "justification": "6.2 applies because the samples of V20-2604 at the intermediate condition showed a significant change."
+    },
+    "expected": false,
+    "note": "A significant change at the intermediate condition would bring 6.3; 6.2 applies because there is none there."
   }
 ]
