@@ -127,6 +127,8 @@ The bounding box of a table row is that of its table.
 
 The pictures of the Docling document are attached to the document as images, if the Docling document has image data for them, e.g. for extraction with a vision model (see :ref:`vision-concept-extraction-label`). A picture that repeats an earlier one, e.g. a logo on each page, is attached once. The custom data of each image holds the same Docling data as that of a paragraph. The captions of a picture are paragraphs.
 
+A concept with the ``"image"`` or ``"multimodal"`` modality is extracted from all the images of the document in one request by default, and many providers accept only a limited number of images in a request: for a file with many pictures, pass ``max_images_to_analyze_per_call`` to the extraction method, below the limit of your provider, to send the images in parts, one request per part (see :doc:`../optimizations/optimization_long_docs`). Each request then sees only the images of its part.
+
 Docling keeps the images of the pictures of a PDF file only when asked to:
 
 .. code-block:: python
