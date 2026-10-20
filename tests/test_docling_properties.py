@@ -200,13 +200,15 @@ class _Table:
 class _Graph:
     """
     A key-value region or a form: its cells, the key cell that each value cell is
-    linked to, if any, and the page of the region.
+    linked to, if any, how it is linked ("to value" from the key, "to key" from
+    the value, or "both"), and the page of the region.
     """
 
     form: bool
     cells: list[_Text]
     keys: list[bool]
     value_of: list[int | None]
+    links: list[str]
     page: int | None
 
 
@@ -397,6 +399,13 @@ def _graphs(draw: st.DrawFn) -> _Graph:
         cells=cells,
         keys=keys,
         value_of=value_of,
+        links=draw(
+            st.lists(
+                st.sampled_from(["to value", "to key", "both"]),
+                min_size=len(cells),
+                max_size=len(cells),
+            )
+        ),
         page=draw(_PAGES),
     )
 
@@ -683,18 +692,27 @@ class _Builder:
                         prov=self._prov(cell.page),
                     )
                 )
-            graph = GraphData(
-                cells=cells,
-                links=[
-                    GraphLink(
-                        label=GraphLinkLabel.TO_VALUE,
-                        source_cell_id=key,
-                        target_cell_id=index,
+            links = []
+            for index, key in enumerate(block.value_of):
+                if key is None:
+                    continue
+                if block.links[index] in ("to value", "both"):
+                    links.append(
+                        GraphLink(
+                            label=GraphLinkLabel.TO_VALUE,
+                            source_cell_id=key,
+                            target_cell_id=index,
+                        )
                     )
-                    for index, key in enumerate(block.value_of)
-                    if key is not None
-                ],
-            )
+                if block.links[index] in ("to key", "both"):
+                    links.append(
+                        GraphLink(
+                            label=GraphLinkLabel.TO_KEY,
+                            source_cell_id=index,
+                            target_cell_id=key,
+                        )
+                    )
+            graph = GraphData(cells=cells, links=links)
             add = document.add_form if block.form else document.add_key_values
             add(graph=graph, prov=self._prov(block.page), parent=parent)
         elif isinstance(block, _Field):
@@ -1244,6 +1262,9 @@ class _Expected:
         :rtype: None
         """
         self.structures.add("key-value region or form")
+        for index, key in enumerate(graph.value_of):
+            if key is not None:
+                self.structures.add(f"value linked {graph.links[index]}")
         for index, cell in enumerate(graph.cells):
             if graph.value_of[index] is not None:
                 continue

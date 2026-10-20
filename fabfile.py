@@ -426,7 +426,10 @@ def install_check(c: Context, version: str = "") -> None:
 
 @task(name="docling-fixtures")
 def docling_fixtures(
-    c: Context, write: bool = False, docling_version: str = "locked"
+    c: Context,
+    write: bool = False,
+    outputs: bool = False,
+    docling_version: str = "locked",
 ) -> None:
     """
     Check or write the Docling documents of the test fixtures, with full Docling.
@@ -434,17 +437,21 @@ def docling_fixtures(
     Converts each file of tests/other_files/docling/ with full Docling, in
     a throwaway environment with the CPU-only PyTorch (dev/docling_fixtures.py),
     and checks that ContextGem makes the same paragraphs from it as from the
-    committed Docling document, or writes the Docling documents. Downloads the
-    models of Docling on the first run (about 0.5 GB), and sends no LLM request.
-    Run it after a Docling upgrade fails the tests, or before a release.
+    committed Docling document, or writes the Docling documents and the outputs of
+    ContextGem from them (<file name>.contextgem.jsonl). Downloads the models of
+    Docling on the first run (about 0.5 GB), and sends no LLM request. Run it after
+    a Docling upgrade fails the tests, or before a release.
 
     Args:
-        write: Write the Docling documents instead of checking them
+        write: Write the Docling documents and the outputs instead of checking them
+        outputs: Only write the outputs of ContextGem from the committed Docling
+            documents, without Docling: after a change of the converter
         docling_version: "locked" (uv.lock, default), "latest" or X.Y.Z
 
     Example:
         uv run fab docling-fixtures
         uv run fab docling-fixtures --write
+        uv run fab docling-fixtures --outputs
         uv run fab docling-fixtures --docling-version latest
     """
     command = (
@@ -452,7 +459,28 @@ def docling_fixtures(
     )
     if write:
         command += " --write"
+    if outputs:
+        command += " --outputs"
     result = c.run(command, warn=True)
+    if result is None or result.failed:
+        raise Exit(code=result.exited if result else 1)
+
+
+@task(name="docling-floor")
+def docling_floor(c: Context) -> None:
+    """
+    Run the tests of Document.from_docling() with the oldest docling-core allowed.
+
+    Replaces docling-core with the lower bound of the docling extra, without
+    Docling, in a throwaway environment created from uv.lock, and runs the tests of
+    Document.from_docling() there, except the one that converts files with Docling
+    (dev/docling_floor.py). Takes a minute or two, and sends no LLM request. CI runs
+    it on each push.
+
+    Example:
+        uv run fab docling-floor
+    """
+    result = c.run("uv run python dev/docling_floor.py", warn=True)
     if result is None or result.failed:
         raise Exit(code=result.exited if result else 1)
 

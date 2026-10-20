@@ -189,6 +189,43 @@ jobs:
             coverage_quick.xml
           retention-days: 1
 
+  tests-docling-floor:
+    # The tests of Document.from_docling() with the lower bound of docling-core in
+    # the docling extra, without Docling, where the matrix runs them with the
+    # versions of uv.lock (dev/docling_floor.py).
+    needs: prefetch-models
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@1c37ad07a6a961277cf70c0d37d6f313000f5884  # v10.3.0
+        with:
+          version: ${{ env.UV_VERSION }}
+          enable-cache: true
+
+      - name: Set up Python from .python-version
+        run: uv python install
+
+      # Fabric, for the task. The script creates an environment of its own.
+      - name: Install dependencies
+        run: uv sync --locked
+
+      # The SaT model, which tests/base.py loads during collection, from the
+      # cache of the `prefetch-models` job
+      - name: Restore HuggingFace models cache
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9  # v6.1.0
+        with:
+          path: ~/.cache/huggingface
+          key: hf-models-${{ runner.os }}-v1
+          restore-keys: |
+            hf-models-${{ runner.os }}-
+
+      - name: Run the Docling tests with the oldest docling-core allowed
+        run: uv run fab docling-floor
+
   update-badge:
     needs: tests-with-vcr
     runs-on: ubuntu-latest

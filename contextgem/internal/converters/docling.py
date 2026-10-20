@@ -28,6 +28,8 @@ from collections.abc import Iterable, Sequence
 from pathlib import Path
 from typing import Any
 
+from PIL import Image as PILImage
+
 from contextgem.internal.base.images import _Image
 from contextgem.internal.base.paras_and_sents import _Paragraph
 from contextgem.internal.loggers import logger
@@ -36,8 +38,12 @@ from contextgem.internal.utils import _is_text_content_empty
 
 
 # The oldest docling-core that the converter works with: the lower bound of
-# docling-core in the `docling` extra of pyproject.toml, which a test compares
-_MIN_DOCLING_CORE_VERSION = "2.87.0"
+# docling-core in the `docling` extra of pyproject.toml, which a test compares, and
+# with which `uv run fab docling-floor` runs the tests. It is the first that reads
+# the image of a picture from a local file, given by a path or a file:// URI, only
+# after an opt-in (`DoclingDocument.load_local_images()`): 2.102.0 reads one given
+# by a path, from a document that could come from anyone.
+_MIN_DOCLING_CORE_VERSION = "2.103.0"
 
 # How to install or upgrade docling-core, with Docling, for the errors below
 _INSTALL_DOCLING_EXTRA = (
@@ -389,7 +395,8 @@ def _image_data(
     embedded image is cropped from the image of its page, if the Docling document
     has the images of its pages. An image referenced by a remote URL is not
     fetched, and an image in a local file is read only if Docling allows it (see
-    ``DoclingDocument.load_local_images()``).
+    ``DoclingDocument.load_local_images()``). An image larger than Pillow decodes
+    (``PIL.Image.MAX_IMAGE_PIXELS``) is not read.
 
     :param picture: The picture.
     :type picture: PictureItem
@@ -402,14 +409,13 @@ def _image_data(
     image_ref = picture.image
     if image_ref is not None and not isinstance(image_ref.uri, Path):
         header, _, data = str(image_ref.uri).partition(",")
-        mime_type = header.removeprefix("data:").split(";")[0].lower()
-        if (
-            header.startswith("data:")
-            and header.endswith(";base64")
-            and mime_type in _IMAGE_MIME_TYPES
-            and data
-        ):
-            return mime_type, data
+        if header.startswith("data:"):
+            if not data:
+                # Docling fails to read a data URI without data
+                return None
+            mime_type = header.removeprefix("data:").split(";")[0].lower()
+            if header.endswith(";base64") and mime_type in _IMAGE_MIME_TYPES:
+                return mime_type, data
     try:
         image = picture.get_image(document)
         if image is None:
@@ -418,7 +424,7 @@ def _image_data(
             image = image.convert("RGBA" if "A" in image.getbands() else "RGB")
         buffer = io.BytesIO()
         image.save(buffer, format="PNG")
-    except (OSError, ValueError) as e:
+    except (OSError, ValueError, PILImage.DecompressionBombError) as e:
         logger.debug(f"Image of the picture {picture.self_ref} not read: {e}")
         return None
     return "image/png", base64.b64encode(buffer.getvalue()).decode("ascii")
@@ -943,7 +949,8 @@ class _DoclingConverter:
     def _convert_graph(self, item: KeyValueItem | FormItem) -> None:
         """
         Adds a paragraph for each key of a key-value region or a form, with its
-        values, and for each cell that is not linked to a key.
+        values, and for each cell that is not linked to a key. A key and its value
+        are linked from the key to the value, from the value to the key, or both.
 
         :param item: The key-value region or the form.
         :type item: KeyValueItem | FormItem
@@ -953,14 +960,17 @@ class _DoclingConverter:
         cells = {cell.cell_id: cell for cell in item.graph.cells}
         values_of_keys: dict[int, list[int]] = {}
         for link in item.graph.links:
-            if (
-                link.label == GraphLinkLabel.TO_VALUE
-                and link.source_cell_id in cells
-                and link.target_cell_id in cells
-            ):
-                values_of_keys.setdefault(link.source_cell_id, []).append(
-                    link.target_cell_id
-                )
+            if link.label == GraphLinkLabel.TO_VALUE:
+                key, value = link.source_cell_id, link.target_cell_id
+            elif link.label == GraphLinkLabel.TO_KEY:
+                key, value = link.target_cell_id, link.source_cell_id
+            else:
+                continue
+            if key in cells and value in cells:
+                values = values_of_keys.setdefault(key, [])
+                # A pair linked both ways is one pair
+                if value not in values:
+                    values.append(value)
         linked_values = {
             value for values in values_of_keys.values() for value in values
         }

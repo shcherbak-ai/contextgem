@@ -117,7 +117,7 @@ dependencies = [
 [project.optional-dependencies]
 docling = [
     "docling (>=2.112.0,<3.0.0)", # converts files into the Docling documents of Document.from_docling()
-    "docling-core (>=2.87.0,<3.0.0)", # the Docling document model, which Document.from_docling() maps
+    "docling-core (>=2.103.0,<3.0.0)", # the Docling document model, which Document.from_docling() maps
 ]
 
 [project.urls]
@@ -134,8 +134,8 @@ dev = [
     "commitizen (>=4.5.1,<5.0.0)",
     "coverage (>=7.6.12,<8.0.0)",
     "deptry (>=0.23.0,<1.0.0)",
-    "docling-core (>=2.87.0,<3.0.0)", # the docling extra, for its tests and docs: same range
-    "docling-slim[convert-core,format-office,format-web] (>=2.112.0,<3.0.0)", # Docling without torch: converts the DOCX, PPTX, XLSX, HTML and Markdown fixtures in the tests
+    "docling-core (>=2.103.0,<3.0.0)", # the docling extra, for its tests and docs: same range
+    "docling-slim[convert-core,format-office,format-web] (>=2.130.0,<3.0.0)", # Docling without torch: converts the DOCX, PPTX, XLSX, HTML and Markdown fixtures in the tests (2.130.0 is the first whose converter imports with these extras)
     "fabric (>=3.2.0,<4.0.0)",
     "hypothesis (>=6.122.0,<7.0.0)",
     "interrogate (>=1.7.0,<2.0.0)",

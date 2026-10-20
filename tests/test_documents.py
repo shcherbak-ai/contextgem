@@ -16,6 +16,7 @@ import io
 import os
 import re
 import shutil
+import socket
 import subprocess  # nosec B404 - runs the Python of the tests, no shell
 import sys
 import tempfile
@@ -25,11 +26,10 @@ import tomllib
 import weakref
 from collections.abc import Generator
 from pathlib import Path
-from typing import Any
+from typing import TYPE_CHECKING, Any
 from unittest.mock import patch
 
 import pytest
-from docling.document_converter import DocumentConverter
 from docling_core.types.doc import (
     BoundingBox,
     ContentLayer,
@@ -76,8 +76,13 @@ from contextgem.public import (
     StringConcept,
     release_sat_model,
 )
+from dev.docling_fixtures import contextgem_output, output_path, read_output
 from tests.base import BaseTest
 from tests.utils import capture_logs, get_test_document_text
+
+
+if TYPE_CHECKING:
+    from docling.document_converter import DocumentConverter
 
 
 # A PDF file and the Docling document that Docling converted it into
@@ -187,6 +192,10 @@ def _docling_converter() -> DocumentConverter:
     :return: The converter.
     :rtype: DocumentConverter
     """
+    # Imported here: the other tests of Document.from_docling() run without Docling,
+    # with docling-core only, as `uv run fab docling-floor` runs them
+    from docling.document_converter import DocumentConverter
+
     return DocumentConverter()
 
 
@@ -2307,6 +2316,72 @@ class TestDocuments(BaseTest):
             for message in logs
         )
 
+    def test_from_docling_picture_image_sources(self, tmp_path: Path):
+        """
+        Tests that a picture whose image is not in the Docling document, or cannot
+        be read, is left out without stopping the conversion: an image at a remote
+        URL is not fetched, an image in a local file is not read, and a malformed
+        or oversized image is skipped. An image of another format or mode is
+        converted to PNG.
+        """
+
+        def data_uri(image: PILImage.Image, image_format: str, mime_type: str) -> str:
+            """
+            Returns a data URI with an image in a format.
+            """
+            buffer = io.BytesIO()
+            image.save(buffer, format=image_format)
+            data = base64.b64encode(buffer.getvalue()).decode("ascii")
+            return f"data:{mime_type};base64,{data}"
+
+        local_image = tmp_path / "logo.png"
+        PILImage.new("RGB", (4, 4), "red").save(local_image)
+        # A GIF whose header gives it more pixels than Pillow decodes
+        oversized = bytearray(
+            base64.b64decode(
+                data_uri(PILImage.new("P", (1, 1)), "GIF", "image/gif").split(",")[1]
+            )
+        )
+        oversized[6:10] = (20000).to_bytes(2, "little") * 2
+        uris = [
+            "https://example.invalid/logo.png",
+            local_image,
+            local_image.as_uri(),
+            "data:image/gif;base64",
+            "data:image/gif;base64,@@@",
+            "data:image/gif;base64," + base64.b64encode(oversized).decode("ascii"),
+            data_uri(PILImage.new("P", (4, 4)), "GIF", "image/gif"),
+            data_uri(
+                PILImage.new("CMYK", (4, 4), (0, 255, 0, 0)), "TIFF", "image/tiff"
+            ),
+        ]
+        docling_document = DoclingDocument(name="pictures")
+        docling_document.add_text(DocItemLabel.TEXT, "Text.")
+        for uri in uris:
+            docling_document.add_picture(
+                image=ImageRef.model_validate(
+                    {
+                        "mimetype": "image/png",
+                        "dpi": 72,
+                        "size": {"width": 4, "height": 4},
+                        "uri": uri,
+                    }
+                )
+            )
+
+        with patch.object(
+            socket.socket, "connect", side_effect=AssertionError("Image fetched")
+        ):
+            document = Document.from_docling(docling_document)
+        assert [
+            image.custom_data["docling"]["self_ref"] for image in document.images
+        ] == ["#/pictures/6", "#/pictures/7"]
+        for image in document.images:
+            assert image.mime_type == "image/png"
+            with PILImage.open(io.BytesIO(base64.b64decode(image.base64_data))) as png:
+                assert png.format == "PNG"
+                assert png.size == (4, 4)
+
     def test_from_docling_forms(self):
         """
         Tests that each form field and each key-value pair of a Docling document is
@@ -2396,6 +2471,38 @@ class TestDocuments(BaseTest):
             (paragraph.raw_text, paragraph.page_numbers)
             for paragraph in Document.from_docling(docling_document).paragraphs
         ] == [("Total: 100 EUR", [2])]
+
+        # A value can be linked to its key, and a pair both ways
+        to_key = GraphLink(
+            label=GraphLinkLabel.TO_KEY, source_cell_id=1, target_cell_id=0
+        )
+        to_value = GraphLink(
+            label=GraphLinkLabel.TO_VALUE, source_cell_id=0, target_cell_id=1
+        )
+        for links in ([to_key], [to_value, to_key]):
+            docling_document = DoclingDocument(name="invoice")
+            docling_document.add_key_values(
+                graph=GraphData(
+                    cells=[
+                        GraphCell(
+                            label=GraphCellLabel.KEY,
+                            cell_id=0,
+                            text="Total",
+                            orig="Total",
+                        ),
+                        GraphCell(
+                            label=GraphCellLabel.VALUE,
+                            cell_id=1,
+                            text="100 EUR",
+                            orig="100 EUR",
+                        ),
+                    ],
+                    links=links,
+                )
+            )
+            assert _texts_and_contexts(Document.from_docling(docling_document)) == [
+                ("Total: 100 EUR", "Key-value pair")
+            ]
 
     def test_from_docling_sheets_and_slides(self):
         """
@@ -2502,10 +2609,10 @@ class TestDocuments(BaseTest):
         for docling_core_version, message in (
             (None, r"requires docling-core, the document model of Docling"),
             (
-                "2.86.0",
+                "2.102.0",
                 (
-                    r"requires docling-core 2\.87\.0 or later, "
-                    r"and docling-core 2\.86\.0 is installed"
+                    r"requires docling-core 2\.103\.0 or later, "
+                    r"and docling-core 2\.102\.0 is installed"
                 ),
             ),
             ("2.48.0", r"docling-core 2\.48\.0 is installed"),
@@ -2524,7 +2631,7 @@ class TestDocuments(BaseTest):
                     Document.from_docling(DoclingDocument(name="any"))
                 assert 'uv add "contextgem[docling]"' in str(error.value)
         # A newer docling-core, or a pre-release of the oldest, is accepted
-        for docling_core_version in ("2.87.0rc1", "2.103.0", "3.0.0"):
+        for docling_core_version in ("2.103.0rc1", "2.110.0", "3.0.0"):
             with (
                 patch.dict(sys.modules),
                 patch.object(
@@ -2535,9 +2642,9 @@ class TestDocuments(BaseTest):
             ):
                 sys.modules.pop("contextgem.internal.converters.docling", None)
                 document = Document.from_docling(
-                    _docling_converter()
-                    .convert(_DOCLING_FILES_DIR / "meeting_notes.md")
-                    .document
+                    DoclingDocument.load_from_json(
+                        _DOCLING_FILES_DIR / "meeting_notes.md.json"
+                    )
                 )
                 assert document.paragraphs
 
@@ -2708,3 +2815,24 @@ class TestDocuments(BaseTest):
             assert "\n" not in (paragraph.additional_context or "")
             # Each paragraph of a PDF file is on a page
             assert paragraph.page_numbers
+
+    @pytest.mark.parametrize(
+        "file_name", [*_DOCLING_CONVERTED_FILES, *_DOCLING_PDF_FILES]
+    )
+    def test_from_docling_fixture_outputs(self, file_name: str):
+        """
+        Tests that ContextGem makes of the committed Docling document of each file of
+        `tests/other_files/docling/` what its committed output holds
+        (`<file name>.contextgem.jsonl`): each paragraph, with its text, additional
+        context and page numbers, and each image. The outputs show in review how
+        a change of the converter, or of the Docling documents after an upgrade of
+        Docling, changes what ContextGem makes of these files.
+        """
+        path = _DOCLING_FILES_DIR / file_name
+        output = contextgem_output(
+            DoclingDocument.load_from_json(path.with_name(f"{path.name}.json"))
+        )
+        assert output == read_output(output_path(path)), (
+            "If the new output is right, write the outputs with "
+            "`uv run fab docling-fixtures --outputs`"
+        )
