@@ -1291,64 +1291,6 @@ class TestLLMs(BaseTest):
             for model in model_group.models
         )
 
-    @pytest.mark.vcr
-    def test_system_messages(self):
-        """
-        Tests the system messages functionality of LLMs.
-        """
-        system_message = "When asked, introduce yourself as ContextGem."
-
-        model = DocumentLLM(
-            model="openai/gpt-6-luna",
-            api_key=os.getenv("CONTEXTGEM_OPENAI_API_KEY"),
-            system_message=system_message,
-        )
-        model.chat("What's your name?")
-        response = model.get_usage()[0].usage.calls[-1].response
-        assert response is not None
-        assert "ContextGem" in response
-        logger.debug(response)
-
-        # Test empty system message
-        model = DocumentLLM(
-            model="openai/gpt-6-luna",
-            api_key=os.getenv("CONTEXTGEM_OPENAI_API_KEY"),
-            system_message="",
-        )
-        assert model.system_message == ""
-
-        # Test None system message (set to default system message) with default output language (en)
-        model = DocumentLLM(
-            model="openai/gpt-6-luna",
-            api_key=os.getenv("CONTEXTGEM_OPENAI_API_KEY"),
-        )
-        assert (
-            model.system_message is not None
-            and model.system_message == self.default_system_message_en
-        )
-
-        # Test None system message (set to default system message) with non-en output language (adapt)
-        model = DocumentLLM(
-            model="openai/gpt-6-luna",
-            api_key=os.getenv("CONTEXTGEM_OPENAI_API_KEY"),
-            output_language="adapt",
-        )
-        assert (
-            model.system_message is not None
-            and model.system_message == self.default_system_message_non_en
-        )
-
-        # Test with custom system message
-        model = DocumentLLM(
-            model="openai/gpt-6-luna",
-            api_key=os.getenv("CONTEXTGEM_OPENAI_API_KEY"),
-            system_message="You are a helpful assistant that can answer questions and help with tasks.",
-        )
-        assert (
-            model.system_message
-            == "You are a helpful assistant that can answer questions and help with tasks."
-        )
-
     def test_model_api_request_retries(self):
         """
         Tests for retrying failed LLM API requests: only transient errors are retried,

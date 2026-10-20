@@ -186,7 +186,6 @@ class BaseTest(TestUtils):
     test_img_png_invoice = get_test_img("invoice.png", "invoices")
     test_img_jpg_invoice = get_test_img("invoice.jpg", "invoices")
     test_img_jpg_2_invoice = get_test_img("invoice2.jpg", "invoices")
-    test_img_webp_invoice = get_test_img("invoice.webp", "invoices")
     # Other
     test_img_png_apt_plan = get_test_img("apt_plan.png", "other")
 

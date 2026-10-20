@@ -42,14 +42,8 @@ class TestImages(BaseTest):
     llm_extractor = BaseTest.llm_extractor
     llm_reasoner = BaseTest.llm_reasoner
     model_group = BaseTest.model_group
-    test_img_png_invoice = BaseTest.test_img_png_invoice
-    test_img_jpg_invoice = BaseTest.test_img_jpg_invoice
-    test_img_webp_invoice = BaseTest.test_img_webp_invoice
 
-    @pytest.mark.parametrize(
-        "image", [test_img_png_invoice, test_img_jpg_invoice, test_img_webp_invoice]
-    )
-    def test_init_and_attach_image(self, image: Image):
+    def test_init_and_attach_image(self):
         """
         Tests for constructing a Image instance and attaching it to a Document instance.
         """
@@ -67,6 +61,9 @@ class TestImages(BaseTest):
                 base64_data="base 64 encoded string",
                 extra=True,  # ty: ignore[unknown-argument]  # extra fields not permitted
             )
+        # A document does not depend on the format of its images, which only the
+        # requests of an LLM use (see `test_create_image` for the formats)
+        image = self.test_img_png_invoice
         document = Document(images=[image])
         with pytest.raises(ValueError):
             Document(images=[image, image])  # duplicate images with same base64 string
@@ -173,20 +170,13 @@ class TestImages(BaseTest):
         with pytest.raises(OSError, match="Cannot open image from file-like object"):
             create_image(invalid_buffer)
 
-    @pytest.mark.parametrize(
-        "test_image_path",
-        [
-            "tests/images/invoices/invoice.png",
-            "tests/images/invoices/invoice.jpg",
-            "tests/images/invoices/invoice.webp",
-        ],
-    )
-    def test_image_to_base64(self, test_image_path: str):
+    def test_image_to_base64(self):
         """
         Tests for the `image_to_base64` utility function with various input types.
+        It encodes the bytes of an image whatever its format is.
         """
         project_root = get_project_root_path()
-        full_image_path = project_root / test_image_path
+        full_image_path = project_root / "tests/images/invoices/invoice.png"
 
         # Ensure test image exists
         assert full_image_path.exists(), f"Test image not found: {full_image_path}"
@@ -297,7 +287,6 @@ class TestImages(BaseTest):
             llm=self.model_group,
             expected_n_calls_no_concurrency=3,
             expected_n_calls_with_concurrency=4,
-            expected_n_calls_1_item_per_call=4,
             func=self.model_group.extract_concepts_from_document,
             func_kwargs={
                 "document": document,
@@ -339,7 +328,6 @@ class TestImages(BaseTest):
             llm=self.model_group,
             expected_n_calls_no_concurrency=2,
             expected_n_calls_with_concurrency=3,
-            expected_n_calls_1_item_per_call=3,
             func=self.model_group.extract_concepts_from_document,
             func_kwargs={
                 "document": document,

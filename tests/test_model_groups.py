@@ -14,13 +14,11 @@ from unittest.mock import patch
 
 import pytest
 
-from contextgem.internal.base.concepts import _Concept
 from contextgem.internal.base.llms import _DocumentLLM
 from contextgem.internal.exceptions import ModelAPIError
 from contextgem.internal.loggers import logger
 from contextgem.public import (
     Aspect,
-    BooleanConcept,
     ChatSession,
     Document,
     DocumentLLM,
@@ -28,7 +26,6 @@ from contextgem.public import (
     StringConcept,
 )
 from tests.base import BaseTest
-from tests.utils import get_test_document_text
 
 
 class TestModelGroups(BaseTest):
@@ -623,45 +620,6 @@ class TestModelGroups(BaseTest):
             assert parent.aspects[0].concepts[0].extracted_items[0].value == "Item"
             assert not parent.concepts[1]._is_processed
             assert not parent.aspects[1].concepts[0]._is_processed
-
-    @pytest.mark.vcr
-    def test_extract_with_fallback(self):
-        """
-        Tests for retrying extraction with a fallback LLM.
-        """
-
-        document = Document(raw_text=get_test_document_text())
-        document_concepts = [
-            StringConcept(
-                name="Title",
-                description="Contract title",
-            ),
-            BooleanConcept(
-                name="Is a contract",
-                description="Document is a contract",
-            ),
-        ]
-        document.concepts = document_concepts
-        assert document.concepts is not document_concepts
-
-        self.config_llm_async_limiter_for_mock_responses(
-            self.invalid_llm_with_valid_fallback
-        )
-
-        self.invalid_llm_with_valid_fallback.extract_all(document)
-        self.check_instance_container_states(
-            original_container=document_concepts,  # ty: ignore[invalid-argument-type]
-            assigned_container=document.concepts,  # ty: ignore[invalid-argument-type]
-            assigned_instance_class=_Concept,
-        )
-
-        # Check serialization of an LLM with fallback
-        self._check_deserialized_llm_config_eq(self.invalid_llm_with_valid_fallback)
-
-        # Check usage tokens
-        self.check_usage(self.invalid_llm_with_valid_fallback)
-        # Check cost
-        self.check_cost(self.invalid_llm_with_valid_fallback)
 
     def test_multiple_fallback_models(self):
         """

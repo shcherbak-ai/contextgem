@@ -1098,7 +1098,7 @@ class TestSerialization(BaseTest):
                 removed_keys_count += cls._remove_probabilities_keys(value)
         return removed_keys_count
 
-    @pytest.mark.parametrize("restore_method", ["from_dict", "from_json", "from_disk"])
+    @pytest.mark.parametrize("restore_method", ["from_dict", "from_json"])
     def test_restored_document_references_its_paragraphs_and_sentences(
         self, restore_method: str, tmp_path: Path
     ):
@@ -1107,10 +1107,11 @@ class TestSerialization(BaseTest):
         of a document restored from its serialized form, of their sub-aspects,
         and of the extracted items of the aspects and of the concepts at both
         levels, are the paragraphs and sentences of the restored document itself,
-        i.e. the same objects, with each of ``from_dict()``, ``from_json()`` and
-        ``from_disk()``: when the document is restored, and after more is
-        extracted from the restored document. The restored document is equal to
-        the one that was serialized, and is serialized to the same data.
+        i.e. the same objects, with each of ``from_dict()`` and ``from_json()``
+        (which ``from_disk()`` calls with what the file holds): when the document
+        is restored, and after more is extracted from the restored document.
+        The restored document is equal to the one that was serialized, and is
+        serialized to the same data.
 
         The serialized data has each reference on its own, and each was restored
         as a separate object: an equal copy of a paragraph or of a sentence of
@@ -1272,10 +1273,8 @@ class TestSerialization(BaseTest):
             document.to_disk(disk_path)
             if restore_method == "from_dict":
                 restored_document = Document.from_dict(serialized_dict)
-            elif restore_method == "from_json":
-                restored_document = Document.from_json(serialized_json)
             else:
-                restored_document = Document.from_disk(disk_path)
+                restored_document = Document.from_json(serialized_json)
             assert restored_document is not document
             assert restored_document == document
             assert restored_document.to_dict() == serialized_dict

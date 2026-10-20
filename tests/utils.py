@@ -1261,27 +1261,22 @@ class TestUtils:
         self,
         llm: DocumentModelGroup | DocumentLLM,
         expected_n_calls_no_concurrency: int,
-        expected_n_calls_1_item_per_call: int,
         expected_n_calls_with_concurrency: int,
         func: Callable,
         func_kwargs: dict,
         original_container: list[Aspect] | list[_Concept],
         assigned_container: list[Aspect] | list[_Concept],
         assigned_instance_class: type[Aspect | _Concept],
-        compare_sequential_1_item_in_call: bool = False,
     ) -> None:
         """
-        Compares the efficacy of a provided function's execution under different concurrency and
-        execution settings. This method evaluates the time and state of the execution process
-        with and without concurrency, as well as in specific configurations, such as sequential
-        processing with only one item processed per call. It validates the expected number of
-        function calls and final states after execution.
+        Compares the efficacy of a provided function's execution with and without
+        concurrency. This method evaluates the time and state of the execution process
+        in both settings. It validates the expected number of function calls and final
+        states after execution.
 
         :param llm: The DocumentModelGroup or DocumentLLM instance involved in the testing process.
         :param expected_n_calls_no_concurrency: The expected number of LLM calls when
             concurrency is not utilized in execution.
-        :param expected_n_calls_1_item_per_call: The expected number of LLM calls during
-            sequential execution when the function processes one item per call.
         :param expected_n_calls_with_concurrency: The expected number of LLM calls when
             concurrency is enabled during execution.
         :param func: The callable function to be tested for different execution settings.
@@ -1293,9 +1288,6 @@ class TestUtils:
             `original_container` following function execution.
         :param assigned_instance_class: The expected type of instances that should be found
             within the `assigned_container`.
-        :param compare_sequential_1_item_in_call: A boolean flag indicating whether the
-            comparison should include processing with one item per call in the sequential
-            (non-concurrent) setup.
         :return: None
         """
 
@@ -1309,9 +1301,8 @@ class TestUtils:
                 for i in llm.get_usage()
             )
 
-        # Deep copy original kwargs to avoid state modification in comparison calls
-        func_kwargs_copy_1 = deepcopy(func_kwargs)
-        func_kwargs_copy_2 = deepcopy(func_kwargs)
+        # Deep copy original kwargs to avoid state modification in the comparison call
+        func_kwargs_copy = deepcopy(func_kwargs)
 
         time_no_concurrency_start = time.time()
         initial_n_calls = get_current_n_calls()
@@ -1333,48 +1324,10 @@ class TestUtils:
         time_no_concurrency_end = time.time()
         time_no_concurrency = time_no_concurrency_end - time_no_concurrency_start
 
-        if compare_sequential_1_item_in_call:
-            time_no_concurrency_1_item_per_call_start = time.time()
-            initial_n_calls = get_current_n_calls()
-            func_kwargs_copy_1["max_items_per_call"] = 1
-            func(
-                **func_kwargs_copy_1,
-                use_concurrency=False,
-            )
-            if (
-                get_current_n_calls() - initial_n_calls
-                != expected_n_calls_1_item_per_call
-            ):
-                raise AssertionError(
-                    f"Expected {expected_n_calls_1_item_per_call} calls, "
-                    f"but got {get_current_n_calls()} - {initial_n_calls} = "
-                    f"{get_current_n_calls() - initial_n_calls}"
-                )
-            time_no_concurrency_1_item_per_call_end = time.time()
-            time_no_concurrency_1_item_per_call = (
-                time_no_concurrency_1_item_per_call_end
-                - time_no_concurrency_1_item_per_call_start
-            )
-            # Normally, the below comparison should work, but it depends on the amount
-            # of the items to be processed. If e.g. the N of items is 1, then the time
-            # will be about equal.
-            try:
-                assert time_no_concurrency_1_item_per_call > time_no_concurrency
-            except AssertionError:
-                warnings.warn(
-                    "No concurrency time is same or slower than 1 item per call time",
-                    stacklevel=2,
-                )
-            logger.debug(
-                f"no concurrency time {time_no_concurrency}; N calls {expected_n_calls_no_concurrency}\n"
-                f"1 item per call time (no concurrency) {time_no_concurrency_1_item_per_call}; "
-                f"N calls {expected_n_calls_1_item_per_call}\n"
-            )
-
         time_concurrency_start = time.time()
         initial_n_calls = get_current_n_calls()
         func(
-            **func_kwargs_copy_2,
+            **func_kwargs_copy,
             use_concurrency=True,
         )
         if get_current_n_calls() - initial_n_calls != expected_n_calls_with_concurrency:

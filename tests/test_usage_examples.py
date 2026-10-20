@@ -133,7 +133,6 @@ class TestUsageExamples(BaseTest):
         Tests a usage example of the documentation or of the README that sends
         requests to the API of a model. The cassette of the test has the requests
         of that example only.
-        Note: Does not add to the tests costs calculation, as the code is executed in isolated modules.
         """
         _run_usage_example(example)
 
@@ -166,7 +165,6 @@ class TestUsageExamples(BaseTest):
     def test_docstring_examples(self):
         """
         Tests for examples in docstrings.
-        Note: Does not add to the tests costs calculation, as the code is executed in isolated modules.
         Note: One of the examples disables the logger, so the logger settings are restored after the test.
         """
         from dev.usage_examples.docstrings.aspects import def_aspect  # noqa: F401

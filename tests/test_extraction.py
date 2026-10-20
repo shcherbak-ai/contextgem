@@ -543,8 +543,6 @@ class TestExtraction(BaseTest):
             llm=llm,
             expected_n_calls_no_concurrency=(3 if llm.is_group else 2) * 3
             + 2,  # *3 due to 30 (1/3) paras per call, +2 due to sub-aspects
-            expected_n_calls_1_item_per_call=len(document.aspects) * 3
-            + 3,  # *3 due to 30 (1/3) paras per call, +3 due to sub-aspects
             expected_n_calls_with_concurrency=len(document.aspects) * 3
             + 3,  # *3 due to 30 (1/3) paras per call, +3 due to sub-aspects
             func=llm.extract_aspects_from_document,
@@ -555,7 +553,6 @@ class TestExtraction(BaseTest):
             original_container=document_aspects,
             assigned_container=document.aspects,
             assigned_instance_class=Aspect,
-            compare_sequential_1_item_in_call=False,
         )
         check_aspects = document.get_aspects_by_names(
             [
@@ -689,7 +686,6 @@ class TestExtraction(BaseTest):
         self.compare_with_concurrent_execution(
             llm=llm,
             expected_n_calls_no_concurrency=1,
-            expected_n_calls_1_item_per_call=1,
             expected_n_calls_with_concurrency=1,
             func=llm.extract_aspects_from_document,
             func_kwargs={
@@ -703,7 +699,6 @@ class TestExtraction(BaseTest):
         self.compare_with_concurrent_execution(
             llm=llm,
             expected_n_calls_no_concurrency=2,
-            expected_n_calls_1_item_per_call=7,
             expected_n_calls_with_concurrency=7,
             func=llm.extract_concepts_from_aspect,
             func_kwargs={
@@ -713,7 +708,6 @@ class TestExtraction(BaseTest):
             original_container=list(aspects[0].concepts),
             assigned_container=list(attached_aspect.concepts),
             assigned_instance_class=_Concept,
-            compare_sequential_1_item_in_call=False,
         )
 
         # Aspect-scoped concept references resolve to positions in the document,
@@ -1112,7 +1106,6 @@ class TestExtraction(BaseTest):
             llm=llm,
             expected_n_calls_no_concurrency=(5 if llm.is_group else 4),
             expected_n_calls_with_concurrency=len(document.concepts),
-            expected_n_calls_1_item_per_call=len(document.concepts),
             func=llm.extract_concepts_from_document,
             func_kwargs={
                 "document": document,
@@ -1261,7 +1254,6 @@ class TestExtraction(BaseTest):
             llm=llm,
             expected_n_calls_no_concurrency=(8 if llm.is_group else 7),
             expected_n_calls_with_concurrency=10,
-            expected_n_calls_1_item_per_call=10,
             func=llm.extract_all,
             func_kwargs={
                 "document": document,

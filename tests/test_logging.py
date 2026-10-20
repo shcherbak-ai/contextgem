@@ -80,42 +80,6 @@ class TestLogging(BaseTest):
         with pytest.warns(UserWarning, match="is using the `ReadOnly` qualifier"):
             TypeAdapter(_ReadOnlyItemOutsideCall)
 
-    def test_logger_disabled(self, monkeypatch, capsys):
-        """
-        Tests for disabling the logger.
-        """
-
-        # 1) Set environment variable to disable logger
-        monkeypatch.setenv(LOGGER_LEVEL_ENV_VAR_NAME, "OFF")
-        reload_logger_settings()
-
-        # 2) Attempt to log a message
-        logger.debug("This message should NOT appear.")
-
-        # 3) Capture output
-        captured = capsys.readouterr()
-
-        # 4) Assert that the message is indeed missing
-        assert "This message should NOT appear." not in captured.out
-
-    def test_logger_enabled(self, monkeypatch, capsys):
-        """
-        Tests for enabling the logger.
-        """
-
-        # 1) Set environment variable to enable logger
-        monkeypatch.setenv(LOGGER_LEVEL_ENV_VAR_NAME, "DEBUG")
-        reload_logger_settings()
-
-        # 2) Log a message
-        logger.debug("This message SHOULD appear.")
-
-        # 3) Capture output
-        captured = capsys.readouterr()
-
-        # 4) Assert that the message is in the output
-        assert "This message SHOULD appear." in captured.out
-
     @pytest.mark.parametrize(
         "env_level,should_debug,should_info,should_success,should_warning,should_error,should_critical",
         [
@@ -125,6 +89,8 @@ class TestLogging(BaseTest):
             ("WARNING", False, False, False, True, True, True),
             ("ERROR", False, False, False, False, True, True),
             ("CRITICAL", False, False, False, False, False, True),
+            # The logger is disabled
+            ("OFF", False, False, False, False, False, False),
         ],
     )
     def test_log_levels(
@@ -206,7 +172,6 @@ class TestLogging(BaseTest):
             ("OFF", "INFO"),
             # ... or after it was enabled
             ("INFO", "OFF"),
-            ("OFF", "OFF"),
         ],
     )
     def test_litellm_noise_filter_installed_at_any_level(
@@ -283,46 +248,15 @@ class TestLogging(BaseTest):
                 lg.filters[:] = filters
 
     @pytest.mark.parametrize("level", ["OFF", "INFO"])
-    def test_litellm_noise_filter_not_installed_when_disabled(self, monkeypatch, level):
-        """
-        Tests that the filter of the noisy logs of litellm is not installed if it
-        is disabled with its environment variable, whatever the level of
-        the logger is: the variable, and not the level, decides on the filter.
-        """
-        monkeypatch.setenv(_SUPPRESS_LITELLM_NOISE_ENV_VAR_NAME, "0")
-        loggers = [
-            logging.getLogger(name) for name in _LITELLM_NOISE_FILTER_LOGGER_NAMES
-        ]
-        filters_before_test = [list(lg.filters) for lg in loggers]
-        try:
-            # As when the package is imported: no filter is installed yet
-            for lg in loggers:
-                lg.filters[:] = [
-                    f
-                    for f in lg.filters
-                    if not isinstance(f, _SuppressLiteLLMNoiseFilter)
-                ]
-
-            monkeypatch.setenv(LOGGER_LEVEL_ENV_VAR_NAME, level)
-            reload_logger_settings()
-
-            for lg in loggers:
-                assert not any(
-                    isinstance(f, _SuppressLiteLLMNoiseFilter) for f in lg.filters
-                )
-        finally:
-            for lg, filters in zip(loggers, filters_before_test, strict=True):
-                lg.filters[:] = filters
-
-    @pytest.mark.parametrize("level", ["OFF", "INFO"])
     def test_litellm_noise_filter_follows_its_variable_on_reload(
         self, monkeypatch, level
     ):
         """
         Tests that the filter of the noisy logs of litellm follows its environment
         variable when the logger settings are reloaded, whatever the level of
-        the logger is: a filter that is installed is removed once the variable
-        disables it, and is installed again once the variable no longer does.
+        the logger is: the variable, and not the level, decides on the filter.
+        A filter that is installed is removed once the variable disables it, is
+        not installed while it does, and is installed again once it no longer does.
         The other filters of the same loggers are left as they are.
         """
         monkeypatch.setenv(LOGGER_LEVEL_ENV_VAR_NAME, level)

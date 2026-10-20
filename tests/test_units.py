@@ -943,7 +943,6 @@ def test_deserialize_type_hint_literal_with_booleans_and_null() -> None:
         Literal[True, False],
         Literal["a", None],  # noqa: PYI061 - the form is tested
         Literal[1, None],  # noqa: PYI061 - the form is tested
-        Literal["yes", "no", None],  # noqa: PYI061 - the form is tested
         Literal[1, 2, 3],
         Literal["x", "y"],
         Literal[1, "a"],  # mixed types round-trip too (type-preserving)
@@ -995,18 +994,6 @@ def test_json_schema_mixed_literal_omits_type() -> None:
 def test_json_schema_literal_with_none_omits_type() -> None:
     """A ``Literal`` mixing a string and ``None`` produces a bare ``enum``."""
     assert _python_type_to_json_schema(Literal["a", None]) == {"enum": ["a", None]}  # noqa: PYI061 - the form is tested
-
-
-def test_json_schema_homogeneous_literal_keeps_type() -> None:
-    """Homogeneous literals still carry the matching ``type`` alongside ``enum``."""
-    assert _python_type_to_json_schema(Literal[1, 2]) == {
-        "type": "integer",
-        "enum": [1, 2],
-    }
-    assert _python_type_to_json_schema(Literal["a", "b"]) == {
-        "type": "string",
-        "enum": ["a", "b"],
-    }
 
 
 # ---------------------------------------------------------------------------

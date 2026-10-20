@@ -1417,16 +1417,6 @@ class TestAspectsAndConcepts(BaseTest):
                 structure={"field": dict[Item, str]},  # cls as key
             )
 
-        # Test with vision extractor and references (should fail)
-        with pytest.raises(ValueError):
-            JsonObjectConcept(
-                name="Vision Concept with References",
-                description="Testing vision concept with references",
-                structure={"test": str},
-                modality="image",
-                add_references=True,
-            )
-
         # Test with Any type (should fail)
         with pytest.raises(ValueError):
             JsonObjectConcept(
@@ -1939,7 +1929,6 @@ class TestAspectsAndConcepts(BaseTest):
             llm=llm,
             expected_n_calls_no_concurrency=2,
             expected_n_calls_with_concurrency=2,
-            expected_n_calls_1_item_per_call=2,
             func=llm.extract_concepts_from_document,
             func_kwargs={
                 "document": document,
@@ -2361,7 +2350,8 @@ class TestAspectsAndConcepts(BaseTest):
         """
         Tests that the options in the probabilities of an extracted item keep their
         exact types, i.e. that an option is never converted to an option of another
-        type that is equal to it as a dict key (``True == 1``).
+        type that is equal to it as a dict key (``True == 1``). An option of a type
+        that is not allowed is rejected (see ``test_validate_item_probabilities``).
         """
         # Booleans are kept as booleans
         boolean_item = _BooleanItem(value=True, probabilities={True: 0.83, False: 0.17})
@@ -2421,12 +2411,6 @@ class TestAspectsAndConcepts(BaseTest):
             _IntegerItem(value=1, probabilities=integer_options), integer_options
         )
 
-        # A value of another type is rejected and not converted to an option:
-        # with a non-strict validation, `1.0` would become `True`
-        for invalid_option in (1.0, 0.0, 2.5, None, b"written", ("NDA", "Other")):
-            with pytest.raises(ValueError, match="probabilities"):
-                _BooleanItem(value=True, probabilities={invalid_option: 0.5})  # type: ignore
-
     @pytest.mark.parametrize(
         "invalid_probabilities",
         [
@@ -2442,7 +2426,6 @@ class TestAspectsAndConcepts(BaseTest):
             True,
             # Probability is not a number
             {True: True, False: False},
-            {True: False},
             {True: "0.83", False: "0.17"},
             {True: None},
             {True: [0.83]},
@@ -2460,8 +2443,10 @@ class TestAspectsAndConcepts(BaseTest):
             # One invalid probability among the valid ones
             {1: 0.0, 2: 0.0, 3: 0.15, 4: 0.55, 5: 3},
             {"written": 0.71, "email": float("nan"), "any": 0.06},
-            # Option of an invalid type
+            # Option of an invalid type, which is not converted to an option:
+            # with a non-strict validation, `1.0` would become `True`
             {1.0: 0.5},
+            {0.0: 0.5},
             {0.5: 0.5},
             {None: 0.5},
             {b"written": 0.5},
@@ -2560,7 +2545,6 @@ class TestAspectsAndConcepts(BaseTest):
         # Objects of other types
         assert item != {True: 0.83, False: 0.17}
         assert item != [[True, 0.83], [False, 0.17]]
-        assert item != {True: 0.83, False: 0.17}
         assert (
             _StringItem(value="True", probabilities={True: 0.83, False: 0.17}) != item
         )

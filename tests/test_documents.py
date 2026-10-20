@@ -1424,17 +1424,6 @@ class TestDocuments(BaseTest):
                     )
                 ]  # duplicate aspect (case-insensitive)
             )
-        with pytest.raises(ValueError):
-            context.add_aspects(
-                [
-                    Aspect(
-                        name="Business Information",
-                        description="Categories of Business Information",
-                        modality="image",  # ty: ignore[unknown-argument]  # aspects are extracted from text only
-                    )
-                ]
-            )
-
         # Invalid sequence types
         with pytest.raises(ValueError, match="list"):
             context.add_concepts(

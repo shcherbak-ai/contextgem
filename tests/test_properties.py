@@ -69,16 +69,9 @@ _WHITESPACE_CHARS = [
 
 @_PROPERTY_SETTINGS
 @given(text=st.text())
-def test_clean_control_characters_never_raises(text: str) -> None:
-    """It must accept any string input and return a string."""
-    assert isinstance(_clean_control_characters(text), str)
-    assert isinstance(_clean_control_characters(text, preserve_newlines=False), str)
-
-
-@_PROPERTY_SETTINGS
-@given(text=st.text())
 def test_clean_control_characters_idempotent(text: str) -> None:
-    """Running the function twice produces the same output as once."""
+    """Running the function twice produces the same output as once, for any
+    string, i.e. it never raises and returns a string."""
     once = _clean_control_characters(text)
     twice = _clean_control_characters(once)
     assert once == twice
@@ -222,17 +215,13 @@ def test_clean_text_for_llm_prompt_keeps_words_separated(
 @pytest.mark.parametrize(
     ("text", "with_linebreaks", "without_linebreaks"),
     [
-        # A tab is replaced with a space
-        ("Fee:\t5,000 EUR", "Fee: 5,000 EUR", "Fee: 5,000 EUR"),
+        # Each control character on its own between two words: see
+        # `test_clean_text_for_llm_prompt_handles_each_removed_char`
+        # Tabs are replaced with a space
         ("Fee:\t\t 5,000 EUR", "Fee: 5,000 EUR", "Fee: 5,000 EUR"),
         # A line break is kept, or replaced with a space
-        ("line one\nline two", "line one\nline two", "line one line two"),
         ("line one\r\nline two", "line one\nline two", "line one line two"),
         ("line one \n line two", "line one \n line two", "line one line two"),
-        # Other whitespace among the control characters is replaced with a space
-        ("page one\x0cpage two", "page one page two", "page one page two"),
-        ("line one\u2028line two", "line one line two", "line one line two"),
-        ("5\u202f000 EUR", "5 000 EUR", "5 000 EUR"),
         # Whitespace that does not separate two words on its own is removed with
         # the control characters, as before
         ("Fee: \t5,000 EUR", "Fee: 5,000 EUR", "Fee: 5,000 EUR"),
@@ -242,7 +231,6 @@ def test_clean_text_for_llm_prompt_keeps_words_separated(
         ("a\t\u200b\nb", "a\nb", "a b"),
         ("a\x00\tb", "a b", "a b"),
         # Control characters that are not whitespace are removed
-        ("zero\u200bwidth", "zerowidth", "zerowidth"),
         ("a \u200b b\x00c", "a bc", "a bc"),
     ],
 )
@@ -603,17 +591,9 @@ def test_sentence_position_from_prompt_id_only_for_sentences_of_the_paragraph(
 
 @_PROPERTY_SETTINGS
 @given(text=st.text())
-def test_split_text_into_paragraphs_never_raises(text: str) -> None:
-    """The function returns a list of strings for any string input."""
-    result = _split_text_into_paragraphs(text)
-    assert isinstance(result, list)
-    assert all(isinstance(p, str) for p in result)
-
-
-@_PROPERTY_SETTINGS
-@given(text=st.text())
 def test_split_text_into_paragraphs_outputs_are_stripped(text: str) -> None:
-    """Each paragraph in the output has no leading/trailing whitespace."""
+    """For any string, the function never raises, and each paragraph in the output
+    has no leading/trailing whitespace."""
     for para in _split_text_into_paragraphs(text):
         assert para == para.strip()
 
@@ -951,13 +931,6 @@ def test_type_hint_roundtrip(type_hint: Any) -> None:
     assert isinstance(serialized, str)
     restored = _deserialize_type_hint(serialized)
     assert restored == type_hint
-
-
-@_PROPERTY_SETTINGS
-@given(type_hint=_TYPE_HINTS)
-def test_type_hint_serialize_is_deterministic(type_hint: Any) -> None:
-    """Serialization is a pure function — the same input always yields the same output."""
-    assert _serialize_type_hint(type_hint) == _serialize_type_hint(type_hint)
 
 
 # ---------------------------------------------------------------------------
