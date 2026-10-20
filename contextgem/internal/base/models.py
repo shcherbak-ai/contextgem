@@ -1675,8 +1675,10 @@ class _GenericModelProcessor(_AbstractGenericModelProcessor):
         the prompt templates render it: the additional context is cleaned as
         the texts are, and is shown if anything is left of it, for a paragraph
         that has text to show, and, with the "sentences" reference depth, for
-        a sentence of such a paragraph that has text to show. The prompt then
-        tells the LLM what the additional context is.
+        a sentence of such a paragraph that has text to show, unless it is that
+        of the paragraph, e.g. inherited when the sentence was segmented, which
+        is shown once, with the paragraph. The prompt then tells the LLM what
+        the additional context is.
 
         :param paragraphs: The paragraphs that the prompt lists.
         :type paragraphs: list[_Paragraph]

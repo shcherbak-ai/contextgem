@@ -1551,6 +1551,27 @@ class TestExtraction(BaseTest):
             for sentence in paragraph.sentences
         )
         check_additional_context_in_prompt(prompt_kwargs_key="paragraphs")
+        # The prompt shows the context that a sentence shares with its paragraph
+        # once, as that of the paragraph
+        sentence_call_objs = [
+            c
+            for c in next(
+                i for i in model_group.get_usage() if i.role is None
+            ).usage.calls
+            if c.prompt_kwargs.get("reference_depth") == "sentences"
+        ]
+        assert sentence_call_objs
+        for call_obj in sentence_call_objs:
+            shown = [
+                context
+                for context in re.findall(
+                    r"<additional_context>\s*(.*?)\s*</additional_context>",
+                    call_obj.prompt,
+                    re.DOTALL,
+                )
+                if context
+            ]
+            assert len(shown) == len(call_obj.prompt_kwargs["paragraphs"])
 
         # Test serialization and cloning after LLM extraction
         self.check_instance_serialization_and_cloning(doc)

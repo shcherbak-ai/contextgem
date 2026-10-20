@@ -227,9 +227,9 @@ def _check_prompt_texts(
     Checks the texts of a prompt of an LLM for extraction from a document:
     the prompt has no control characters but line breaks, it shows the additional
     context of each paragraph that it lists, and of each sentence with
-    the "sentences" reference depth, cleaned as the texts are, if anything is left
-    of it, and it has the instructions on additional context exactly if it shows
-    some.
+    the "sentences" reference depth unless it is that of the paragraph, which is
+    shown once, cleaned as the texts are, if anything is left of it, and it has
+    the instructions on additional context exactly if it shows some.
 
     :param prompt: The prompt.
     :type prompt: str
@@ -267,7 +267,10 @@ def _check_prompt_texts(
             expected.extend(
                 clean(sentence.additional_context)
                 for sentence in paragraph.sentences
-                if clean(sentence.raw_text) and clean(sentence.additional_context)
+                if clean(sentence.raw_text)
+                and clean(sentence.additional_context)
+                and clean(sentence.additional_context)
+                != clean(paragraph.additional_context)
             )
     shown = [
         context for context in _RE_SHOWN_ADDITIONAL_CONTEXT.findall(prompt) if context

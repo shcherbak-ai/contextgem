@@ -458,7 +458,7 @@ DOCUMENT PARAGRAPHS:
                 {{ sent_text }}
                 </sentence_text>
                             {% set sent_context = _clean_text_for_llm_prompt(sent_item.additional_context, preserve_linebreaks=False, strip_text=True) if sent_item.additional_context else "" %}
-                            {% if sent_context %}
+                            {% if sent_context and sent_context != para_context %}
                 
                 <additional_context>
                 {{ sent_context }}

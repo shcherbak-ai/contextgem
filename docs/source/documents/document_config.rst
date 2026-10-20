@@ -103,7 +103,7 @@ The additional context:
 - should be a single-line string: it is cleaned before it is sent to a model, as the text of the paragraph is, i.e. control characters are removed, and whitespace, line breaks included, is collapsed to single spaces. A warning is logged if it has line breaks, as they are not kept. Additional context of which nothing is left is not sent;
 - is passed to the LLM together with the paragraph text in the prompts that list paragraphs, i.e. when aspects are extracted, or when concepts are extracted with references (``add_references=True``). It is not used when concepts are extracted from the document text as a whole;
 - is sent to a decision model together with the paragraph text when aspects are extracted, also with each sentence of the paragraph that the model is asked about, for an aspect with ``reference_depth="sentences"`` (see :ref:`decision-models-aspects-label`);
-- is inherited by the sentences segmented from the paragraph, and is passed to the LLM with each sentence when sentence-level references are used (``reference_depth="sentences"``);
+- is inherited by the sentences segmented from the paragraph. When sentence-level references are used (``reference_depth="sentences"``), the LLM gets it once, with the paragraph, as a decision model does: the additional context of a sentence is passed with the sentence only if it differs from that of its paragraph, e.g. for a paragraph that you create with its sentences;
 - is preserved when the document is serialized.
 
 
