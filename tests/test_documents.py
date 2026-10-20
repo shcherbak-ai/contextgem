@@ -2169,6 +2169,25 @@ class TestDocuments(BaseTest):
             ("Its first paragraph.", None),
         ]
 
+        # The numbered items of a list that Docling gives no numbers, e.g. of HTML,
+        # are numbered by their position in the list, as Docling's Markdown export
+        # numbers them
+        docling_document = DoclingDocument(name="steps")
+        steps = docling_document.add_list_group()
+        docling_document.add_list_item(
+            "Clone the repository.", enumerated=True, parent=steps
+        )
+        second_step = docling_document.add_list_item(
+            "Run the install script.", enumerated=True, parent=steps
+        )
+        nested = docling_document.add_list_group(parent=second_step)
+        docling_document.add_list_item("Check the log.", enumerated=True, parent=nested)
+        assert _texts_and_contexts(Document.from_docling(docling_document)) == [
+            ("1. Clone the repository.", "List item"),
+            ("2. Run the install script.", "List item"),
+            ("1. Check the log.", "List item, level 2"),
+        ]
+
     def test_from_docling_tables(self):
         """
         Tests that a table of a Docling document is converted into a paragraph

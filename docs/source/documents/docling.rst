@@ -52,7 +52,7 @@ Each piece of text in the body of the Docling document becomes a paragraph, in r
      - The text
      - The section only
    * - List item
-     - The text, after the number of a numbered item, e.g. ``2.1 Invoices are payable within 30 days.``
+     - The text, after the number of a numbered item, e.g. ``2.1 Invoices are payable within 30 days.``, or its position in its list where the file gives no number, e.g. in HTML
      - ``List item``, ``List item, level 2``
    * - Table
      - A paragraph with the headers of the columns, then a paragraph for each row, with each value after the header of its column, e.g. ``Service: Hosting; Monthly fee: 1,200 EUR``

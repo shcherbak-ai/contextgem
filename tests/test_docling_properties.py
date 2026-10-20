@@ -188,10 +188,12 @@ class _ListItem:
 @dataclass
 class _List:
     """
-    A list, bulleted or numbered.
+    A list, bulleted or numbered, whose numbered items have their numbers or, as
+    Docling gives the lists of some formats, e.g. HTML, none.
     """
 
     enumerated: bool
+    numbers_given: bool
     items: list[_ListItem]
 
 
@@ -542,6 +544,7 @@ def _lists(children: st.SearchStrategy[list[_Block]]) -> st.SearchStrategy[_List
     return st.builds(
         _List,
         enumerated=st.booleans(),
+        numbers_given=st.booleans(),
         items=st.lists(_list_items(children), min_size=1, max_size=3),
     )
 
@@ -738,10 +741,11 @@ class _Builder:
         elif isinstance(block, _List):
             group = document.add_list_group(parent=parent)
             for index, item in enumerate(block.items):
+                number = f"{index + 1}." if block.numbers_given else ""
                 list_item = document.add_list_item(
                     self._text(item.own) if item.own else "",
                     enumerated=block.enumerated,
-                    marker=f"{index + 1}." if block.enumerated else "-",
+                    marker=number if block.enumerated else "-",
                     prov=self._prov(item.page),
                     parent=group,
                 )
@@ -1225,6 +1229,9 @@ class _Expected:
         elif isinstance(block, _List):
             if list_level:
                 self.structures.add("nested list")
+            if block.enumerated and not block.numbers_given:
+                self.structures.add("numbered list without numbers")
+            # A numbered item without its number is given its position in its list
             for index, item in enumerate(block.items):
                 marker = f"{index + 1}." if block.enumerated else ""
                 self._list_item(item, list_level + 1, marker)

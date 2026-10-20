@@ -491,6 +491,9 @@ class _DoclingConverter:
             )
             for ref in (*item.captions, *item.footnotes)
         }
+        # The numbers of the items of each numbered list that Docling gives no
+        # numbers, by the reference of the list, worked out once for each list
+        self._list_numbers: dict[str, dict[str, str]] = {}
 
     def convert(self) -> None:
         """
@@ -818,7 +821,9 @@ class _DoclingConverter:
     def _convert_list_item(self, item: ListItem, list_level: int) -> None:
         """
         Adds a paragraph for a list item, and converts the items under it, e.g.
-        a nested list. The text of a numbered list item starts with its number.
+        a nested list. The text of a numbered list item starts with its number,
+        or with its position in its list where Docling gives it no number, e.g. in
+        an HTML or AsciiDoc file.
 
         :param item: The list item.
         :type item: ListItem
@@ -830,6 +835,8 @@ class _DoclingConverter:
         """
         text, sources, children = self._text_of(item)
         marker = item.marker.strip()
+        if item.enumerated and not marker:
+            marker = self._list_number(item)
         if text and item.enumerated and marker:
             text = f"{marker} {text}"
         level = max(list_level, 1)
@@ -842,6 +849,33 @@ class _DoclingConverter:
         )
         for child in children:
             self._convert_item(child, list_level)
+
+    def _list_number(self, item: ListItem) -> str:
+        """
+        Returns the number of a numbered list item that Docling gives no number:
+        its position among the items of its list, as Docling numbers it when it
+        exports the document as Markdown, if the list starts with a numbered item.
+
+        :param item: The list item.
+        :type item: ListItem
+        :return: e.g. "2.", or an empty string for an item that is not in a list
+            that starts with a numbered item.
+        :rtype: str
+        """
+        parent = item.parent.resolve(self._document) if item.parent else None
+        if not isinstance(parent, ListGroup):
+            return ""
+        if parent.self_ref not in self._list_numbers:
+            items = [
+                child for child in self._children(parent) if isinstance(child, ListItem)
+            ]
+            numbered = bool(items) and items[0].enumerated
+            self._list_numbers[parent.self_ref] = (
+                {child.self_ref: f"{i + 1}." for i, child in enumerate(items)}
+                if numbered
+                else {}
+            )
+        return self._list_numbers[parent.self_ref].get(item.self_ref, "")
 
     def _convert_code(self, item: CodeItem, list_level: int) -> None:
         """
