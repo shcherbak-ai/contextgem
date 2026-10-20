@@ -43,7 +43,7 @@ Measures the quality and the cost of extraction on evaluation cases with referen
 ## Rules
 
 - **`run_eval`, `decision_probabilities` and `judge` send live, paid requests.** Run them only when the maintainer asks for it. The other scripts send nothing.
-- **Keys come from the environment or the `.env` file of the repo** (`CONTEXTGEM_OPENAI_API_KEY`, `CONTEXTGEM_TYPESAFE_API_KEY`, `CONTEXTGEM_AZURE_AI_API_KEY` with `CONTEXTGEM_AZURE_AI_API_BASE`). Never print them. The host of a Microsoft Foundry resource is replaced in what is written.
+- **Keys come from the environment or the `.env` file of the repo** (`CONTEXTGEM_OPENAI_API_KEY`, `CONTEXTGEM_ANTHROPIC_API_KEY`, `CONTEXTGEM_TYPESAFE_API_KEY`, `CONTEXTGEM_AZURE_AI_API_KEY` with `CONTEXTGEM_AZURE_AI_API_BASE`). Never print them. The host of a Microsoft Foundry resource is replaced in what is written.
 - **A label is one experiment.** A run whose file exists is skipped, so results are never overwritten: record a change under a new label, and leave the baselines (`baseline_2026-10-11`, `baseline_2026-10-15`) as they are.
 - **Results are tracked artifacts.** Do not edit or delete the files under `results/`. `summary.*` and `thresholds.*` are generated: regenerate them, do not edit them. The scores of a run are rewritten only by `rescore`, and its judgment (`judgments/`) only by `judge`, when the judge, its questions or the reference answers of the case changed.
 - **The reference answers change only by a recorded review.** Do not change a `.gold.json` or `.neutral.json` file to make a result pass. Record a change with its reason in `cases/reference_review.md`, and run `check_scorer` after a change in a case, in its reference answers or in the scorer. After a change in the reference answers, score the recorded runs again with `rescore`, and regenerate the summaries.
@@ -117,9 +117,28 @@ uv run python -m dev.evals.docling_cases
 
 Each run records a short hash of every prompt template of the library, including the template of the default system message (`provenance`), which tells the runs of a changed prompt apart. The runs of `baseline_2026-10-11` were recorded before the system message template was hashed, so they have no hash of it.
 
+## The Models
+
+Every experiment and baseline runs the same models, each for a purpose, so that labels compare with one another:
+
+| Model | Purpose | Runs of each case | Recorded in |
+|-------|---------|-------------------|-------------|
+| `openai/gpt-6-luna` | The LLM of the tests, the documentation and the examples | 3 | Every label |
+| `anthropic/claude-haiku-5-5` | A second LLM, of another provider at the same price | 3 | Every label |
+| `typesafe/jev-latest`, `openai/gpt-6-luna` and `azure_ai/ms-decision-model` | The hosted decision models | 1 (2 in a baseline), and one pass of `decision_probabilities` | Every label |
+| `typesafe/jev-latest` | The judge (`judge.py`) | | Every label |
+| `openai/gpt-6.1-sol` | A top LLM | 1 | Baselines |
+| `openai/gpt-6-luna` with `--concurrency` | The extraction with concurrency | 3 | Baselines |
+
+- **The second LLM is of the same tier as the first**, not a stronger one: it tells whether the effect of a change holds for another model, and a change of a prompt shows at this tier. `openai/gpt-6.1-sol` already extracts nearly all the concepts of the cases (all 22 of `complex_dpa` and all 26 of `complex_mcu` in `baseline_2026-10-15`).
+- **The top LLM tells the limit of a model from a problem of a case** or of its reference answers. A run costs about 20 times one of `openai/gpt-6-luna`, so it is in the baselines only.
+- **Each model runs with its defaults**: the harness sets no temperature, reasoning effort or output limit.
+- **Local models are run when a question concerns them**, under a label of their own: `baseline_2026-10-11` is what is known of them.
+- **The second LLM was `openai/gpt-5.6-luna` until 2026-10-20**, in every label recorded until then: an older model of the same provider, which got fewer concepts than `openai/gpt-6-luna` at about twice the cost of a run. `anthropic/claude-haiku-5-5` has no baseline yet: compare its runs with the control recorded at the same time. The tests keep `openai/gpt-5.6-luna` as a second, distinct model (fallbacks, a model with a role), whose extraction they do not measure.
+
 ## Comparing a Change with the Baseline
 
-1. **Pick what the change concerns**, among the configurations of the current baseline (`baseline_2026-10-15`). For a prompt of the LLMs: the LLM runs of the three cases, e.g. `openai/gpt-6-luna` and `openai/gpt-5.6-luna`, at least 3 runs each (`openai/gpt-6.1-sol` costs 10 to 20 times as much). For a question of the decision models: one pass of `decision_probabilities` of each hosted decision model, and the threshold sweep; these models give nearly the same answers in each pass.
+1. **Pick what the change concerns**, among the models above. For a prompt of the LLMs: the two LLMs, 3 runs of each case each. For a question of the decision models: one pass of `decision_probabilities` of each hosted decision model, and the threshold sweep; these models give nearly the same answers in each pass.
 2. **Make the change.** It can be run from a copy of the code outside the repo (`git archive HEAD contextgem dev/__init__.py dev/evals`, with the changed template, and a launcher that puts the copy first on `sys.path`), so that the working tree stays as it is meanwhile.
 3. **Record the version with the change and the version without it at the same time**, each under a label of its own, and judge both. A hosted model can change under the same name, and the version of `litellm` moves: a baseline of another day is not a control.
 4. **Summarize both labels and compare their `summary.md` files**, then read the disagreements behind a difference (see The Reference Answers).

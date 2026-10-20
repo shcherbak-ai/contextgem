@@ -77,6 +77,7 @@ _DECISION_CONCEPT_TYPES = (BooleanConcept, LabelConcept, RatingConcept)
 # are read from the environment and from the `.env` file of the repo.
 _API_KEY_ENV_VARS = {
     "openai": "CONTEXTGEM_OPENAI_API_KEY",
+    "anthropic": "CONTEXTGEM_ANTHROPIC_API_KEY",
     "typesafe": "CONTEXTGEM_TYPESAFE_API_KEY",
     "azure_ai": "CONTEXTGEM_AZURE_AI_API_KEY",
 }
@@ -372,12 +373,18 @@ def create_model(
         :func:`scrub`): the host of a Microsoft Foundry resource and its name.
     :rtype: tuple[DocumentLLM | DocumentDecisionModel, list[str]]
     :raises ValueError: If the provider of a hosted model is not one that
-        the harness has the API key variable of, or if a variable is not set.
+        the harness has the API key variable of, if a variable is not set, or if
+        a hosted decision model is of a provider that the harness has no price of.
     """
     kwargs: dict[str, Any] = {"model": model}
     private_texts: list[str] = []
     provider = model.split("/", 1)[0]
     is_local = api_base is not None
+    if kind == "decision" and not is_local and provider not in _DECISION_INPUT_PRICES:
+        raise ValueError(
+            f"No price of decision models is known for the model `{model}`. "
+            f"Providers of decision models: {sorted(_DECISION_INPUT_PRICES)}."
+        )
     if is_local:
         kwargs["api_base"] = api_base
     else:
