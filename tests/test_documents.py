@@ -1321,6 +1321,34 @@ class TestDocuments(BaseTest):
         # Test instance serialization and cloning
         self.check_instance_serialization_and_cloning(paragraph)
 
+    def test_segmented_sentences_inherit_paragraph_data(self):
+        """
+        Tests that the sentences segmented from a paragraph inherit its additional
+        context, its page numbers and its custom data, each sentence with a copy of
+        the custom data of its own: a change to the nested data of one sentence does
+        not change the paragraph or the other sentences.
+        """
+        paragraph = Paragraph(
+            raw_text="Hosting is 1,200 EUR. Support is included.",
+            additional_context="Table row; Section: 2. Fees",
+            page_numbers=[2],
+            custom_data={"docling": {"self_ref": "#/tables/0", "row_index": 1}},
+        )
+        with patch.object(
+            documents_module, "_get_sat_model", return_value=_StubSaTModel()
+        ):
+            document = Document(paragraphs=[paragraph], pre_segment_sentences=True)
+        paragraph = document.paragraphs[0]
+        first_sentence, second_sentence = paragraph.sentences
+        for sentence in (first_sentence, second_sentence):
+            assert sentence.additional_context == "Table row; Section: 2. Fees"
+            assert sentence.page_numbers == [2]
+            assert sentence.custom_data == paragraph.custom_data
+
+        first_sentence.custom_data["docling"]["note"] = "Checked"
+        assert "note" not in paragraph.custom_data["docling"]
+        assert "note" not in second_sentence.custom_data["docling"]
+
     def test_page_numbers(self):
         """
         Tests the page numbers of paragraphs and sentences: their validation, their

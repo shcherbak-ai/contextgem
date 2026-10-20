@@ -662,14 +662,18 @@ class _Document(_AssignedInstancesProcessor):
                         f"Paragraph text: {paragraph.raw_text}\n"
                         f"Unmatched sentences: {unmatched_sentences}"
                     )
+                # Each sentence inherits the custom data, the additional context and
+                # the pages of its paragraph, with a copy of the custom data of its
+                # own, whose nested values, e.g. the Docling data of a paragraph,
+                # it does not share with the paragraph or the other sentences
                 paragraph.sentences = [
                     _publicize(
                         _Sentence,
                         raw_text=i,
-                        custom_data=paragraph.custom_data,
+                        custom_data=deepcopy(paragraph.custom_data),
                         additional_context=paragraph.additional_context,
                         page_numbers=paragraph.page_numbers,
-                    )  # inherit custom data, additional context and pages from paragraph
+                    )
                     for i in sent_group
                 ]
 
