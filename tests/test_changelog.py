@@ -131,14 +131,18 @@ class TestChangelog:
         Tests that the hook of `cz bump` stops a bump when the newest section of
         the changelog is the one of the version before.
         """
+        changelog = (
+            "# Changelog\n\n## [1.1.0] - 2026-10-17\n\n- B\n\n"
+            f"[1.1.0]: {_COMPARE}v1.0.0...v1.1.0\n"
+        )
         with pytest.raises(ValueError, match=r"## \[Unreleased\]"):
             date_release(
-                _CHANGELOG,
-                _CITATION,
-                "9.9.9",
-                "v9.9.9",
+                changelog,
+                "date-released: 2026-10-17\n",
+                "1.2.0",
+                "v1.2.0",
                 "2026-10-18",
-                released=contextgem.__version__,
+                released="1.1.0",
             )
 
     @pytest.mark.parametrize(
