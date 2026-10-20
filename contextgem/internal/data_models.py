@@ -89,17 +89,6 @@ class _ModelCall(BaseModel):
             raise ValueError("Response already received.")
         self.timestamp_received = int(time.time() * 1000)
 
-    def _get_time_spent(self):
-        """
-        Calculates the time spent on the model call in seconds.
-
-        :return: Time difference between `timestamp_received` and `timestamp_sent` in seconds,
-                 as a float limited to 2 decimal points, or None if `timestamp_received` is not set.
-        """
-        if self.timestamp_received is None:
-            return None  # Response not received yet
-        return round((self.timestamp_received - self.timestamp_sent) / 1000, 2)
-
 
 class _ModelUsage(_InstanceSerializer):
     """

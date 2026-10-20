@@ -13,7 +13,7 @@ from __future__ import annotations
 
 from functools import reduce
 from types import UnionType
-from typing import Any, Dict, List, Optional, Union, get_args, get_origin  # noqa: UP035
+from typing import Any, Dict, List, Union, get_args, get_origin  # noqa: UP035
 
 
 def _normalize_type_annotation(tp: Any) -> Any:
@@ -83,29 +83,9 @@ def _normalize_type_annotation(tp: Any) -> Any:
             _normalize_type_annotation(args[0]), _normalize_type_annotation(args[1])  # ty: ignore[invalid-type-form]
         ]
 
-    elif origin is Union or origin is Optional or isinstance(tp, UnionType):
-        if not args:
-            return Union if origin is Union else Optional
-
-        # Normalize all arguments
+    elif origin is Union or isinstance(tp, UnionType):
+        # `Optional[X]` is `Union[X, None]`, and a union has at least two arguments
         normalized_args = tuple(_normalize_type_annotation(arg) for arg in args)
-        if len(normalized_args) == 0:
-            raise ValueError(
-                f"Union type annotation must have at least one type argument, got {len(args)}: {tp}"
-            )
-
-        # Optional is just Union with NoneType, so standardize to Union
-        if origin is Optional:
-            if type(None) not in normalized_args:
-                normalized_args = normalized_args + (type(None),)
-            if len(normalized_args) == 1:
-                return normalized_args[0]
-            else:
-                return reduce(lambda a, b: a | b, normalized_args)
-
-        # Handle Union
-        if len(normalized_args) == 1:
-            return normalized_args[0]
         return reduce(lambda a, b: a | b, normalized_args)
 
     # For other types with origin/args, keep the general structure

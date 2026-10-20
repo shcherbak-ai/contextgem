@@ -2208,13 +2208,8 @@ class _DocumentLLM(_DocumentModel):
 
         # Templates with placeholders
         # Extraction
-        # Safe cast: _get_template with default params returns Template, not str
-        self._extract_aspect_items_prompt = cast(
-            Template, _get_template("extract_aspect_items")
-        )
-        self._extract_concept_items_prompt = cast(
-            Template, _get_template("extract_concept_items")
-        )
+        self._extract_aspect_items_prompt = _get_template("extract_aspect_items")
+        self._extract_concept_items_prompt = _get_template("extract_concept_items")
 
     def _set_capabilities(self) -> None:
         """
@@ -2253,12 +2248,9 @@ class _DocumentLLM(_DocumentModel):
         :return: The default system message.
         :rtype: str
         """
-        # _get_template returns a Template object when template_extension == "j2"
-        return _get_template(  # ty: ignore[unresolved-attribute]
-            "default_system_message",
-            template_type="system",
-            template_extension="j2",
-        ).render({"output_language": output_language or self.output_language})  # type: ignore[attr-defined]
+        return _get_template("default_system_message", template_type="system").render(
+            {"output_language": output_language or self.output_language}
+        )
 
 
 def _is_tool_exchange_message(message: _Message) -> bool:

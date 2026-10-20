@@ -60,16 +60,12 @@ class BaseTest(TestUtils):
     """
 
     # Default system messages
-    default_system_message_en = _get_template(  # ty: ignore[unresolved-attribute]
-        "default_system_message",
-        template_type="system",
-        template_extension="j2",
-    ).render({"output_language": "en"})  # type: ignore[attr-defined]
-    default_system_message_non_en = _get_template(  # ty: ignore[unresolved-attribute]
-        "default_system_message",
-        template_type="system",
-        template_extension="j2",
-    ).render({"output_language": "adapt"})  # type: ignore[attr-defined]
+    default_system_message_en = _get_template(
+        "default_system_message", template_type="system"
+    ).render({"output_language": "en"})
+    default_system_message_non_en = _get_template(
+        "default_system_message", template_type="system"
+    ).render({"output_language": "adapt"})
 
     # Documents
     # From raw texts

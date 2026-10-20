@@ -212,9 +212,6 @@ class _InvalidDecisionResponseError(ValueError):
     :vartype question_name: str
     :ivar reason: What is wrong with the answer
     :vartype reason: str
-    :ivar text_position: Position of the text that the question was asked on, among
-        the texts that the questions of the same call were asked on, if it is known
-    :vartype text_position: int | None
     :ivar location: Where the text that the question was asked on is, as a part of
         a message, e.g. " on paragraph 3 of 5 (index 2)". Empty if it is not known,
         or if the text is not a part of a larger one.
@@ -235,5 +232,4 @@ class _InvalidDecisionResponseError(ValueError):
         )
         self.question_name = question_name
         self.reason = reason
-        self.text_position: int | None = None
         self.location: str = ""

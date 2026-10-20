@@ -147,12 +147,10 @@ _RE_PROMPT_SENTENCE_ID = re.compile(f"P{_ID_POSITION_PATTERN}-S{_ID_POSITION_PAT
 def _get_template(
     template_name: str,
     template_type: Literal["prompt", "system"] = "prompt",
-    template_extension: Literal["j2", "txt"] = "j2",
-) -> Template | str:
+) -> Template:
     """
-    Retrieves a template based on the given parameters. The template is read from a specific file path determined
-    by the `template_type` and its content is either processed as a Jinja2 template or returned as plain text based
-    on the `template_extension`.
+    Retrieves a Jinja2 template based on the given parameters. The template is read from a specific file path
+    determined by the `template_type`.
 
     The template is read, validated and compiled once: the calls that follow with
     the same params return the same object. Compiling the templates of the built-in
@@ -174,24 +172,19 @@ def _get_template(
     :param template_type: The type of the template, which determines the folder it is retrieved from. It can
         be either "prompt" or "system". Defaults to "prompt".
     :type template_type: Literal["prompt", "system"]
-    :param template_extension: The file extension of the template, determining its format. Supported values
-        are "j2" for Jinja2 templates and "txt" for plain text. Defaults to "j2".
-    :type template_extension: Literal["j2", "txt"]
-    :return: The loaded template, either as a compiled Jinja2 `Template` object for "j2" extensions or a plain
-        string for "txt" extensions.
-    :rtype: Template | str
+    :return: The loaded template, as a compiled Jinja2 `Template` object.
+    :rtype: Template
     :raises NotImplementedError: If the `template_type` provided is unsupported.
-    :raises NotImplementedError: If the `template_extension` provided is unsupported.
     :raises RuntimeError: If the template file is not found in the package resources, is empty, or contains
-        only whitespace, or if the template validation fails (for "j2" extensions).
+        only whitespace, or if the template validation fails.
     """
 
     if template_type == "prompt":
         template_package = resources.files("contextgem.internal.prompts")
-        template_file = f"{template_name}.{template_extension}"
+        template_file = f"{template_name}.j2"
     elif template_type == "system":
         template_package = resources.files("contextgem.internal.system")
-        template_file = f"{template_name}.{template_extension}"
+        template_file = f"{template_name}.j2"
     else:
         raise NotImplementedError(f"Unknown template type: {template_type}")
 
@@ -207,22 +200,14 @@ def _get_template(
         raise RuntimeError(
             f"Template file '{template_file}' not found in {template_type} templates"
         ) from e
-    if template_extension == "j2":
-        # Validate template text
-        if not _are_prompt_template_brackets_balanced(template_text):
-            raise RuntimeError("Prompt template brackets are not balanced.")
-        if not _are_prompt_template_xml_tags_balanced(template_text):
-            raise RuntimeError("Prompt template XML tags are not balanced.")
-        if bool(re.search(r"(\r\n|\r|\n){3,}", template_text)):
-            raise RuntimeError("Too many newlines in template.")
-        template = _setup_jinja2_template(template_text)
-    elif template_extension == "txt":
-        template = template_text
-    else:
-        raise NotImplementedError(
-            f"Unsupported template extension: {template_extension}"
-        )
-    return template
+    # Validate template text
+    if not _are_prompt_template_brackets_balanced(template_text):
+        raise RuntimeError("Prompt template brackets are not balanced.")
+    if not _are_prompt_template_xml_tags_balanced(template_text):
+        raise RuntimeError("Prompt template XML tags are not balanced.")
+    if bool(re.search(r"(\r\n|\r|\n){3,}", template_text)):
+        raise RuntimeError("Too many newlines in template.")
+    return _setup_jinja2_template(template_text)
 
 
 def _setup_jinja2_template(template_text: str) -> Template:
@@ -635,13 +620,11 @@ def _run_sync(coro: Coroutine[Any, Any, T]) -> T:
         return asyncio.run(coro)
 
 
-def _warn_from_caller_code(
-    message: str, category: type[Warning] = ContextGemWarning
-) -> None:
+def _warn_from_caller_code(message: str) -> None:
     """
-    Issues a warning attributed to the code that called the framework, i.e. to
-    the first frame of the call stack outside the framework and Pydantic, e.g.
-    to the line that creates a model or assigns a value to its param.
+    Issues a ``ContextGemWarning`` attributed to the code that called the framework,
+    i.e. to the first frame of the call stack outside the framework and Pydantic,
+    e.g. to the line that creates a model or assigns a value to its param.
 
     A warning issued by a check that runs when an instance is validated is issued
     under frames of the framework and of Pydantic, whose number differs between
@@ -652,8 +635,6 @@ def _warn_from_caller_code(
 
     :param message: The message of the warning.
     :type message: str
-    :param category: The category of the warning. Defaults to ``ContextGemWarning``.
-    :type category: type[Warning]
     :return: None
     :rtype: None
     """
@@ -672,7 +653,7 @@ def _warn_from_caller_code(
         stacklevel += 1
     # The frames are released before the warning is issued (reference cycles)
     del current_frame, frame
-    warnings.warn(message, category, stacklevel=stacklevel)
+    warnings.warn(message, ContextGemWarning, stacklevel=stacklevel)
 
 
 def _model_call_result_is_valid(res: tuple[Any, _ModelUsage] | None) -> bool:

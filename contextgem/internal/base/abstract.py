@@ -90,14 +90,6 @@ class _AbstractGenericModelProcessor(
         """
 
     @abstractmethod
-    def _set_private_attrs(self) -> None:
-        """
-        Abstract method, to be implemented by subclasses.
-
-        Sets private attributes for the model group or single model, e.g. prompts, capabilities, etc.
-        """
-
-    @abstractmethod
     def get_usage(self, *args, **kwargs) -> list[_ModelUsageOutputContainer]:
         """
         Abstract method, to be implemented by subclasses.

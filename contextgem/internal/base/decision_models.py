@@ -2019,8 +2019,7 @@ class _DocumentDecisionModel(_DocumentModel):
                 )
                 answers_of_requests[position] = answers
             except _InvalidDecisionResponseError as e:
-                # The text that the questions of the request were asked on
-                e.text_position = unit_position
+                # Where the text that the questions of the request were asked on is
                 e.location = units[unit_position].location
                 response_errors.append(e)
                 stop_sending()

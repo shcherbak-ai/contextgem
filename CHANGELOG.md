@@ -6,6 +6,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 - **Refactor**: Code reorganization that doesn't change functionality but improves structure or maintainability
 
+## [Unreleased]
+
+### Removed
+
+- Removed the `trace()` method that `import contextgem` added to the `logging.Logger` class, i.e. to every logger of the process. ContextGem never logged with it. The `TRACE` level of `CONTEXTGEM_LOGGER_LEVEL` works as before.
+
 ## [1.1.0] - 2026-10-17
 
 ### Added
@@ -606,6 +612,7 @@ See the [migration guide](https://contextgem.shcherbak.ai/migration_v1/) for upd
 
 - Added DocxConverter for converting DOCX files into ContextGem Document objects
 
+[Unreleased]: https://github.com/shcherbak-ai/contextgem/compare/v1.1.0...HEAD
 [1.1.0]: https://github.com/shcherbak-ai/contextgem/compare/v1.0.0...v1.1.0
 [1.0.0]: https://github.com/shcherbak-ai/contextgem/compare/v0.27.0...v1.0.0
 [0.27.0]: https://github.com/shcherbak-ai/contextgem/compare/v0.26.0...v0.27.0

@@ -742,8 +742,7 @@ def _get_instructions_template(template_name: str) -> Template:
     :return: Template of the question instructions.
     :rtype: Template
     """
-    # Safe cast: _get_template with default params returns Template, not str
-    return cast(Template, _get_template(template_name))
+    return _get_template(template_name)
 
 
 def _render_instructions(template_name: str, **params: Any) -> str:

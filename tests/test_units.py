@@ -16,7 +16,6 @@ type-hint serialization/normalization.
 from __future__ import annotations
 
 import ast
-import inspect
 import re
 import warnings
 from dataclasses import dataclass
@@ -56,7 +55,6 @@ from contextgem.internal.typings.types_to_strings import (
     _raise_json_serializable_type_error,
     _serialize_type_hint,
 )
-from contextgem.internal.utils import _warn_from_caller_code
 from tests.conftest import (
     _FOUNDRY_API_BASE_ENV_VAR_NAME,
     _TETHERED_RECORDING_ALLOW,
@@ -1360,10 +1358,6 @@ def test_every_warning_of_the_package_has_its_category() -> None:
     the calling code, i.e. a filter by the module of the package misses it."""
     assert issubclass(ContextGemWarning, UserWarning)
     assert "ContextGemWarning" in contextgem.__all__
-    # The helper that attributes a warning to the calling code issues it with
-    # the category it is given, ContextGemWarning by default
-    helper_category = inspect.signature(_warn_from_caller_code).parameters["category"]
-    assert helper_category.default is ContextGemWarning
 
     calls = []
     for path in Path(contextgem.__file__).parent.rglob("*.py"):
@@ -1383,10 +1377,6 @@ def test_every_warning_of_the_package_has_its_category() -> None:
         category = (
             node.args[1] if len(node.args) > 1 else next(iter(keyword_categories), None)
         )
-        # The helper passes on the category it is given
-        allowed = {"ContextGemWarning"} | (
-            {"category"} if path.name == "utils.py" else set()
-        )
-        assert isinstance(category, ast.Name) and category.id in allowed, (
+        assert isinstance(category, ast.Name) and category.id == "ContextGemWarning", (
             f"{path.name}:{node.lineno}: a warning without the ContextGemWarning category"
         )

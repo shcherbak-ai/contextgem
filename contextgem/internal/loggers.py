@@ -26,18 +26,12 @@ class _LoggerProtocol(Protocol):
     Protocol defining the logger interface with custom methods.
 
     This Protocol is used purely for type checking to inform type checkers
-    (e.g. ty) about the custom .trace() and .success() methods that
-    are dynamically added to logging.Logger at runtime.
+    (e.g. ty) about the custom .success() method that is dynamically added
+    to logging.Logger at runtime.
     """
 
     propagate: bool
     handlers: list[logging.Handler]
-
-    def trace(self, message: str, *args, **kwargs) -> None:
-        """
-        Log with TRACE level (below DEBUG).
-        """
-        ...
 
     def debug(self, message: str, *args, **kwargs) -> None:
         """
@@ -106,16 +100,6 @@ logging.addLevelName(TRACE_LEVEL_NUM, "TRACE")
 logging.addLevelName(SUCCESS_LEVEL_NUM, "SUCCESS")
 
 
-def _trace(self, message, *args, **kwargs):
-    """
-    Logs a message with severity 'TRACE' on this logger.
-
-    This is a custom level below DEBUG.
-    """
-    if self.isEnabledFor(TRACE_LEVEL_NUM):
-        self._log(TRACE_LEVEL_NUM, message, args, **kwargs)
-
-
 def _success(self, message, *args, **kwargs):
     """
     Logs a message with severity 'SUCCESS' on this logger.
@@ -126,8 +110,7 @@ def _success(self, message, *args, **kwargs):
         self._log(SUCCESS_LEVEL_NUM, message, args, **kwargs)
 
 
-# Add custom methods to Logger class
-logging.Logger.trace = _trace  # type: ignore[attr-defined]  # ty: ignore[unresolved-attribute]
+# Add the custom method to the Logger class
 logging.Logger.success = _success  # type: ignore[attr-defined]  # ty: ignore[unresolved-attribute]
 
 # Create a namespaced logger for ContextGem

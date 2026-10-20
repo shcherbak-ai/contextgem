@@ -5092,16 +5092,6 @@ class _DocumentModelGroup(_GenericModelProcessor):
     # methods of the error return (see `_ApiKeyRedactionMixin`).
     model_config = ConfigDict(hide_input_in_errors=True)
 
-    def _set_private_attrs(self) -> None:
-        """
-        Initialize and configure private attributes for the model group.
-        The model group has no private attributes to set.
-
-        :return: None
-        :rtype: None
-        """
-        return
-
     @property
     def is_group(self) -> bool:
         """
