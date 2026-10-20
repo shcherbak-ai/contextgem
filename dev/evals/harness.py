@@ -9,6 +9,11 @@ An evaluation case is a document with a reference answer for everything that is
 extracted from it: the text (``cases/<case>.txt``), the extraction pipeline
 (``cases/<case>.py``), the reference answers (``cases/<case>.gold.json``), and
 the paragraphs that are not scored for an aspect (``cases/<case>.neutral.json``).
+
+The document of a case can also be created with ``Document.from_docling()`` from
+the Docling document of the case (``cases/<case>.docling.json``, written by
+``dev/evals/docling_cases.py``), whose paragraphs are those of the text, with
+the additional context that the structure of the case gives them.
 """
 
 from __future__ import annotations
@@ -49,6 +54,11 @@ SYSTEM_MESSAGE_DIR = REPO_DIR / "contextgem" / "internal" / "system"
 
 # Kind of the model that extracts a case
 ModelKind = Literal["llm", "decision"]
+
+# What the document of a case is created from: its text, one paragraph per line,
+# or its Docling document (`Document.from_docling()`), with the additional context
+# of the paragraphs, or without it
+CaseInput = Literal["text", "docling", "docling_without_context"]
 
 # The function that builds the extraction pipeline of each case
 _PIPELINE_BUILDERS: dict[str, Callable[[], ExtractionPipeline]] = {
@@ -187,8 +197,70 @@ def _add_neutral_paragraphs(case: str, gold: dict[str, Any]) -> None:
         )
 
 
+def table_cells(line: str) -> list[str]:
+    """
+    Returns the values of the cells of a table row of the text of a case, a line
+    that starts with "|", e.g. "| VOS1 | 1.20 |".
+
+    :param line: The line.
+    :type line: str
+    :return: The values of the cells, in order, without their whitespace.
+    :rtype: list[str]
+    """
+    return [cell.strip() for cell in line.strip().strip("|").split("|")]
+
+
+def _check_docling_paragraphs(
+    case: str, document: Document, gold: dict[str, Any]
+) -> None:
+    """
+    Checks that the paragraphs of a document created from the Docling document of
+    a case are those of the reference answers, position by position, as the scores
+    refer to the paragraphs by their positions: a paragraph has the text of its
+    reference paragraph, apart from whitespace, and a table row or header, a line of
+    the text that starts with "|", has the values of the cells of the line, in
+    order, each after the header of its column (e.g. "Range: VOS1; VCORE typ (V):
+    1.20"), as ``Document.from_docling()`` gives a table.
+
+    :param case: The name of the case.
+    :type case: str
+    :param document: The document created from the Docling document of the case.
+    :type document: Document
+    :param gold: The reference answers of the document of the case.
+    :type gold: dict[str, Any]
+    :return: None
+    :rtype: None
+    :raises ValueError: If a paragraph is not that of the reference answers at its
+        position, or if the numbers of paragraphs differ.
+    """
+    texts = [paragraph.raw_text for paragraph in document.paragraphs]
+    gold_texts = [paragraph["raw_text"] for paragraph in gold["paragraphs"]]
+    if len(texts) != len(gold_texts):
+        raise ValueError(
+            f"The Docling document of the case `{case}` gives {len(texts)} "
+            f"paragraphs, and its reference answers have {len(gold_texts)}."
+        )
+    for position, (text, gold_text) in enumerate(zip(texts, gold_texts, strict=True)):
+        if gold_text.startswith("|"):
+            start = 0
+            for value in filter(None, table_cells(gold_text)):
+                found = text.find(value, start)
+                if found < 0:
+                    break
+                start = found + len(value)
+            else:
+                continue
+        elif " ".join(text.split()) == " ".join(gold_text.split()):
+            continue
+        raise ValueError(
+            f"Paragraph {position} of the Docling document of the case `{case}` is "
+            f"not that of its reference answers: {text[:80]!r} for "
+            f"{gold_text[:80]!r}."
+        )
+
+
 def load_case(
-    case: str, for_decision_model: bool = False
+    case: str, for_decision_model: bool = False, case_input: CaseInput = "text"
 ) -> tuple[Document, dict[str, Any]]:
     """
     Builds the document of an evaluation case, with its extraction pipeline
@@ -203,6 +275,13 @@ def load_case(
         that a decision model extracts, without justifications and references.
         Defaults to False.
     :type for_decision_model: bool
+    :param case_input: What the document is created from: "text", the text of
+        the case, one paragraph per line (default); "docling", the Docling document
+        of the case, with ``Document.from_docling()``, i.e. with the additional
+        context of the paragraphs and the table rows with the headers of their
+        columns; or "docling_without_context", the same document without
+        the additional context of the paragraphs.
+    :type case_input: CaseInput
     :return: The document, and the reference answers of the document (the value of
         ``document`` of the gold file), for the same aspects and concepts.
     :rtype: tuple[Document, dict[str, Any]]
@@ -222,16 +301,28 @@ def load_case(
             aspect.concepts, gold_aspect["concepts"] = _keep_for_decision_model(
                 list(aspect.concepts), gold_aspect["concepts"]
             )
-    document = Document(raw_text=text, paragraph_segmentation_mode="newlines")
-    document.assign_pipeline(pipeline)
-    # The reference answers refer to the paragraphs by their positions
-    if [paragraph.raw_text for paragraph in document.paragraphs] != [
-        paragraph["raw_text"] for paragraph in gold["paragraphs"]
-    ]:
-        raise ValueError(
-            f"The paragraphs of the document of the case `{case}` differ from "
-            f"those of its reference answers."
+    if case_input == "text":
+        document = Document(raw_text=text, paragraph_segmentation_mode="newlines")
+        # The reference answers refer to the paragraphs by their positions
+        if [paragraph.raw_text for paragraph in document.paragraphs] != [
+            paragraph["raw_text"] for paragraph in gold["paragraphs"]
+        ]:
+            raise ValueError(
+                f"The paragraphs of the document of the case `{case}` differ from "
+                f"those of its reference answers."
+            )
+    else:
+        # docling-core is in the dev group
+        from docling_core.types.doc import DoclingDocument
+
+        document = Document.from_docling(
+            DoclingDocument.load_from_json(CASES_DIR / f"{case}.docling.json")
         )
+        _check_docling_paragraphs(case, document, gold)
+        if case_input == "docling_without_context":
+            for paragraph in document.paragraphs:
+                paragraph.additional_context = None
+    document.assign_pipeline(pipeline)
     _add_neutral_paragraphs(case, gold)
     return document, gold
 

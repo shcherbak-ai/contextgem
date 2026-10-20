@@ -1,0 +1,336 @@
+{
+  "judge": {
+    "model": "typesafe/jev-latest",
+    "questions": "a08ad6e4d950",
+    "litellm": "1.105.1"
+  },
+  "threshold": 0.5,
+  "reference": "ec11b5ee7e91",
+  "summary": {
+    "n_strings": 3,
+    "n_strings_correct": 3,
+    "n_justifications": 21,
+    "n_justifications_correct": 21,
+    "n_fields": 4,
+    "n_fields_correct": 4
+  },
+  "usage": {
+    "requests": 23,
+    "input_tokens": 11815,
+    "output_tokens": 460,
+    "cost_total": "0.00050"
+  },
+  "concepts": [
+    {
+      "context": "document",
+      "name": "NDA effective date",
+      "type": "DateConcept",
+      "justifications": [
+        {
+          "item": 0,
+          "probability": 0.97,
+          "verdict": true,
+          "decided_by": "judge"
+        }
+      ]
+    },
+    {
+      "context": "document",
+      "name": "NDA permitted purpose",
+      "type": "StringConcept",
+      "value": {
+        "verdict": true,
+        "decided_by": "exact"
+      },
+      "justifications": [
+        {
+          "item": 0,
+          "probability": 0.97,
+          "verdict": true,
+          "decided_by": "judge"
+        }
+      ]
+    },
+    {
+      "context": "document",
+      "name": "NDA disclosure window end",
+      "type": "DateConcept",
+      "justifications": [
+        {
+          "item": 0,
+          "probability": 0.96,
+          "verdict": true,
+          "decided_by": "judge"
+        }
+      ]
+    },
+    {
+      "context": "document",
+      "name": "NDA contractual forum",
+      "type": "StringConcept",
+      "value": {
+        "probability": 0.93,
+        "verdict": true,
+        "decided_by": "judge"
+      },
+      "justifications": [
+        {
+          "item": 0,
+          "probability": 0.91,
+          "verdict": true,
+          "decided_by": "judge"
+        }
+      ]
+    },
+    {
+      "context": "document",
+      "name": "NDA signatory entities",
+      "type": "JsonObjectConcept",
+      "justifications": [
+        {
+          "item": 0,
+          "probability": 0.93,
+          "verdict": true,
+          "decided_by": "judge"
+        },
+        {
+          "item": 1,
+          "probability": 0.94,
+          "verdict": true,
+          "decided_by": "judge"
+        }
+      ],
+      "fields": [
+        {
+          "object": "FjordSignal AS",
+          "field": "country",
+          "verdict": true,
+          "decided_by": "exact"
+        },
+        {
+          "object": "FjordSignal AS",
+          "field": "role",
+          "verdict": true,
+          "decided_by": "exact"
+        },
+        {
+          "object": "Talus Ventures AB",
+          "field": "country",
+          "verdict": true,
+          "decided_by": "exact"
+        },
+        {
+          "object": "Talus Ventures AB",
+          "field": "role",
+          "verdict": true,
+          "decided_by": "exact"
+        }
+      ]
+    },
+    {
+      "context": "aspect: NDA information protection",
+      "name": "Protected assets at the April snapshot",
+      "type": "LabelConcept",
+      "justifications": [
+        {
+          "item": 0,
+          "probability": 0.65,
+          "verdict": true,
+          "decided_by": "judge"
+        }
+      ]
+    },
+    {
+      "context": "aspect: NDA information protection",
+      "name": "ORACLE timely confirmation deadline",
+      "type": "DateConcept",
+      "justifications": [
+        {
+          "item": 0,
+          "probability": 0.95,
+          "verdict": true,
+          "decided_by": "judge"
+        }
+      ]
+    },
+    {
+      "context": "aspect: NDA information protection",
+      "name": "ORACLE protection timeline",
+      "type": "StringConcept",
+      "value": {
+        "probability": 0.64,
+        "verdict": true,
+        "decided_by": "judge"
+      },
+      "justifications": [
+        {
+          "item": 0,
+          "probability": 0.71,
+          "verdict": true,
+          "decided_by": "judge"
+        }
+      ]
+    },
+    {
+      "context": "aspect: NDA information protection",
+      "name": "Entire SHORE package excluded by prior possession",
+      "type": "BooleanConcept",
+      "justifications": [
+        {
+          "item": 0,
+          "probability": 0.97,
+          "verdict": true,
+          "decided_by": "judge"
+        }
+      ]
+    },
+    {
+      "context": "aspect: NDA information protection",
+      "name": "CEDAR end of protection",
+      "type": "DateConcept",
+      "justifications": [
+        {
+          "item": 0,
+          "probability": 0.95,
+          "verdict": true,
+          "decided_by": "judge"
+        }
+      ]
+    },
+    {
+      "context": "aspect: NDA recipient permissions",
+      "name": "People permitted LUMEN access at the September snapshot",
+      "type": "LabelConcept",
+      "justifications": [
+        {
+          "item": 0,
+          "probability": 0.94,
+          "verdict": true,
+          "decided_by": "judge"
+        }
+      ]
+    },
+    {
+      "context": "aspect: NDA recipient permissions",
+      "name": "Talus Research qualifying voting percentage",
+      "type": "NumericalConcept",
+      "justifications": [
+        {
+          "item": 0,
+          "probability": 0.98,
+          "verdict": true,
+          "decided_by": "judge"
+        }
+      ]
+    },
+    {
+      "context": "aspect: NDA recipient permissions",
+      "name": "Marek earliest authorised LUMEN access",
+      "type": "DateConcept",
+      "justifications": [
+        {
+          "item": 0,
+          "probability": 0.96,
+          "verdict": true,
+          "decided_by": "judge"
+        }
+      ]
+    },
+    {
+      "context": "aspect: NDA recipient permissions",
+      "name": "Executed competitor consent date for Pia",
+      "type": "DateConcept"
+    },
+    {
+      "context": "aspect: NDA compulsory disclosure Q-27",
+      "name": "Q-27 notice deadline date",
+      "type": "DateConcept",
+      "justifications": [
+        {
+          "item": 0,
+          "probability": 0.97,
+          "verdict": true,
+          "decided_by": "judge"
+        }
+      ]
+    },
+    {
+      "context": "aspect: NDA compulsory disclosure Q-27",
+      "name": "Q-27 notice lateness in minutes",
+      "type": "NumericalConcept",
+      "justifications": [
+        {
+          "item": 0,
+          "probability": 0.95,
+          "verdict": true,
+          "decided_by": "judge"
+        }
+      ]
+    },
+    {
+      "context": "aspect: NDA compulsory disclosure Q-27",
+      "name": "Q-27 permitted production units",
+      "type": "LabelConcept",
+      "justifications": [
+        {
+          "item": 0,
+          "probability": 0.97,
+          "verdict": true,
+          "decided_by": "judge"
+        }
+      ]
+    },
+    {
+      "context": "aspect: NDA exit obligations X-27",
+      "name": "WORK-1 deletion deadline",
+      "type": "DateConcept",
+      "justifications": [
+        {
+          "item": 0,
+          "probability": 0.93,
+          "verdict": true,
+          "decided_by": "judge"
+        }
+      ]
+    },
+    {
+      "context": "aspect: NDA exit obligations X-27",
+      "name": "BK-1 deletion deadline",
+      "type": "DateConcept",
+      "justifications": [
+        {
+          "item": 0,
+          "probability": 0.97,
+          "verdict": true,
+          "decided_by": "judge"
+        }
+      ]
+    },
+    {
+      "context": "aspect: NDA exit obligations X-27",
+      "name": "Artifacts permitted retention at the December snapshot",
+      "type": "LabelConcept",
+      "justifications": [
+        {
+          "item": 0,
+          "probability": 0.97,
+          "verdict": true,
+          "decided_by": "judge"
+        }
+      ]
+    },
+    {
+      "context": "aspect: NDA exit obligations X-27",
+      "name": "NOTE-1 model training permitted as residual knowledge",
+      "type": "BooleanConcept",
+      "justifications": [
+        {
+          "item": 0,
+          "probability": 0.97,
+          "verdict": true,
+          "decided_by": "judge"
+        }
+      ]
+    }
+  ]
+}

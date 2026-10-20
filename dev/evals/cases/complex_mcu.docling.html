@@ -1,0 +1,323 @@
+<!DOCTYPE html>
+<html><head><meta charset="utf-8"></head><body>
+<h1>TSV7H SERIES MICROCONTROLLERS - TECHNICAL DOCUMENTATION PACKAGE TDP-0457</h1>
+<p>Compiled by Tessaline Semiconductor Ltd. on 2 November 2026 for the design reviews DR-114 and DR-115 of Halyard Drives AS. The package reproduces the parts of each source document that the reviews refer to; omitted sections are not listed.</p>
+<p>Contents: Part I, datasheet DS-TSV7H revision 6 of 14 March 2026 (extract); Part II, errata sheet ES0457 revision 3 of 9 September 2026; Part III, product change notification PCN-2611 of 15 June 2026 and its amendment PCN-2611-A1 of 24 July 2026; Part IV, application note AN-7712 revision 2 of 5 May 2026 (extract); Part V, design review and purchasing records of Halyard Drives AS.</p>
+<p>Order of precedence: where two documents of this package differ on a parameter or on the status of an erratum, the later-dated document prevails for the silicon revisions it names. The datasheet applies to all silicon revisions except where the errata sheet or a PCN states otherwise. The application note is informative: it never overrides a value of the datasheet, of the errata sheet or of a PCN.</p>
+<p>Conventions: Ta is the ambient temperature and Tj the junction temperature. A date code YYWW denotes ISO week WW of the year 20YY. A &quot;min&quot; or &quot;max&quot; value is guaranteed over the full temperature range of the temperature grade unless a condition is given; a &quot;typ&quot; value is not guaranteed. A period of calendar days runs from the day after its start date, ends on its last day, and is not moved for weekends or holidays.</p>
+<h2>PART I - DATASHEET DS-TSV7H REVISION 6 (EXTRACT)</h2>
+<h3>1 DESCRIPTION AND ORDERING INFORMATION</h3>
+<p>1.1 The TSV7H series are 32-bit microcontrollers built around an RV32IMFC core with a single-precision floating-point unit, a 16 KB instruction cache and a 16 KB data cache. They embed up to 1024 KB of dual-bank flash memory with error-correcting code (ECC), 512 KB of SRAM, and an internal low-dropout regulator (LDO) whose output, VCORE, is set by one of four voltage-scaling ranges, VOS0 to VOS3.</p>
+<p>1.2 The peripherals include two 12-bit successive-approximation ADCs (ADC1 and ADC2) of up to 3.57 Msps, a 12-bit DAC, two CAN FD controllers (FDCAN1 and FDCAN2), four USARTs, three SPI interfaces with I2S and TI frame modes, two I2C interfaces with SMBus and PMBus support, a CORDIC co-processor for trigonometric functions, and an advanced-control timer (TIM1) with complementary PWM outputs, dead-time insertion and break inputs.</p>
+<p>1.3 A part number is TSV7H followed by a flash code, a package code and a temperature-grade code. Flash code 4 denotes 512 KB and 8 denotes 1024 KB. Package code Q denotes QFN-48 (7 × 7 mm, with an exposed pad) and L denotes LQFP-64 (10 × 10 mm). Temperature-grade code I denotes the industrial grade (Ta −40 to +85 °C, Tj max 105 °C), X the extended grade (Ta −40 to +105 °C, Tj max 125 °C) and A the high-temperature grade (Ta −40 to +125 °C, Tj max 140 °C).</p>
+<p>1.4 For example, TSV7H8LA is a 1024 KB device in LQFP-64 of the high-temperature grade, and TSV7H4LI a 512 KB device in LQFP-64 of the industrial grade.</p>
+<p>1.5 The third line of the top marking gives the revision code of the silicon, followed by a space and the date code, e.g. &quot;B 2611&quot;. The revision codes are listed in the device identification table of the errata sheet: the revision code on a marking is not necessarily the letter of the silicon revision.</p>
+<h3>2 ABSOLUTE MAXIMUM RATINGS</h3>
+<p>2.1 Stresses above the absolute maximum ratings can cause permanent damage. They are stress ratings only: functional operation is specified only under the operating conditions of Section 3, and exposure to absolute maximum conditions for extended periods can affect reliability.</p>
+<table>
+<caption>Table 2. Voltage, current and temperature ratings</caption>
+<thead><tr><th>Symbol</th><th>Parameter</th><th>Min</th><th>Max</th><th>Unit</th></tr></thead>
+<tbody>
+<tr><td>VDD − VSS</td><td>Main supply voltage, including VDDA</td><td>−0.3</td><td>4.0</td><td>V</td></tr>
+<tr><td>VIN</td><td>Input voltage on a five-volt-tolerant (FT) pin</td><td>VSS − 0.3</td><td>VDD + 4.0, and not above 5.5</td><td>V</td></tr>
+<tr><td>VIN</td><td>Input voltage on any other pin</td><td>VSS − 0.3</td><td>VDD + 0.3</td><td>V</td></tr>
+<tr><td>IINJ</td><td>Injected current on any pin</td><td>−5</td><td>+5</td><td>mA</td></tr>
+<tr><td>ΣIINJ</td><td>Total injected current, sum over all pins</td><td>−25</td><td>+25</td><td>mA</td></tr>
+<tr><td>TSTG</td><td>Storage temperature</td><td>−65</td><td>+150</td><td>°C</td></tr>
+<tr><td>TJ</td><td>Junction temperature, absolute</td><td>—</td><td>+150</td><td>°C</td></tr>
+</tbody></table>
+<p>2.2 Electrostatic discharge: human-body model (HBM, ANSI/ESDA/JEDEC JS-001) 2000 V, class 2, on all pins; charged-device model (CDM, ANSI/ESDA/JEDEC JS-002) 500 V, class C2a. Static latch-up (JESD78): class II, level A, at Ta = +125 °C.</p>
+<h3>3 OPERATING CONDITIONS</h3>
+<p>3.1 The device operates with VDD from 1.71 V to 3.6 V. VDDA, the supply of the ADCs and of the DAC, operates from 1.71 V to 3.6 V and must not exceed VDD by more than 0.3 V during power-up and power-down.</p>
+<p>3.2 The voltage-scaling range is selected in PWR_D3CR.VOS; it sets VCORE and the maximum SYSCLK frequency (Table 6). VOS0 is the overdrive range: it can be entered only from VOS1, only while the LDO supplies VCORE, and only while VDD is at least 1.95 V.</p>
+<table>
+<caption>Table 6. Maximum SYSCLK frequency</caption>
+<thead><tr><th>Range</th><th>VCORE typ (V)</th><th>VDD min (V)</th><th>fSYSCLK max at Ta up to 85 °C (MHz)</th><th>fSYSCLK max at Ta above 85 °C up to 105 °C (MHz)</th><th>fSYSCLK max at Ta above 105 °C up to 125 °C (MHz)</th></tr></thead>
+<tbody>
+<tr><td>VOS0</td><td>1.30</td><td>1.95</td><td>480</td><td>432</td><td>not permitted</td></tr>
+<tr><td>VOS1</td><td>1.20</td><td>1.71</td><td>400</td><td>400</td><td>360</td></tr>
+<tr><td>VOS2</td><td>1.10</td><td>1.71</td><td>280</td><td>280</td><td>280</td></tr>
+<tr><td>VOS3</td><td>1.00</td><td>1.71</td><td>170</td><td>170</td><td>170</td></tr>
+</tbody></table>
+<p>3.3 The columns for Ta above 85 °C apply only to a temperature grade rated for that ambient temperature. The column is chosen by the highest ambient temperature of the application, not by the junction temperature.</p>
+<p>3.4 HCLK, which clocks the AXI bus matrix and the flash interface, is SYSCLK divided by HPRE (1, 2, 4, 8, 16, 64, 128, 256 or 512). HCLK must not exceed 240 MHz in VOS0, 200 MHz in VOS1, 150 MHz in VOS2 and 85 MHz in VOS3. PCLK1 and PCLK2 are HCLK divided by PPRE1 and PPRE2 (1, 2, 4, 8 or 16) and must not exceed 120 MHz.</p>
+<h3>4 SUPPLY SUPERVISION</h3>
+<p>4.1 The power-on reset (POR) and the power-down reset (PDR) hold the device in reset while VDD is below their thresholds. The brown-out reset (BOR) adds a selectable threshold: BOR_LEV in the user option bytes selects level 1, 2 or 3, or level 0, which leaves only the POR and the PDR active.</p>
+<table>
+<caption>Table 8. Reset thresholds</caption>
+<thead><tr><th>BOR level</th><th>Rising threshold typ (V)</th><th>Falling threshold typ (V)</th><th>Falling threshold min (V)</th></tr></thead>
+<tbody>
+<tr><td>Level 0, POR and PDR only</td><td>1.68</td><td>1.64</td><td>1.60</td></tr>
+<tr><td>Level 1</td><td>2.10</td><td>2.00</td><td>1.95</td></tr>
+<tr><td>Level 2</td><td>2.41</td><td>2.31</td><td>2.26</td></tr>
+<tr><td>Level 3</td><td>2.72</td><td>2.62</td><td>2.56</td></tr>
+</tbody></table>
+<p>4.2 The device leaves reset when VDD rises above the rising threshold of the selected level, and enters reset when VDD falls below its falling threshold. Level 0 is the delivery state of the option bytes. A level whose rising threshold is above the supply voltage of the application holds the device in reset.</p>
+<h3>5 CLOCKS</h3>
+<p>5.1 Clock sources: a high-speed external crystal oscillator (HSE) of 4 to 48 MHz, or an external clock of up to 50 MHz in bypass mode; a 64 MHz internal RC oscillator (HSI), trimmed to ±1 % at Ta = 25 °C and within ±3.5 % from −40 to +125 °C; a 4 MHz low-power internal RC oscillator (CSI); and a 32.768 kHz low-speed external crystal oscillator (LSE) for the real-time clock.</p>
+<p>5.2 Three phase-locked loops, PLL1, PLL2 and PLL3, take their reference from HSI, CSI or HSE through a pre-divider DIVMx of 1 to 63. Each PLL has a voltage-controlled oscillator (VCO) and three output dividers, P, Q and R, each of 1 to 128. SYSCLK is taken from the P output of PLL1, from HSI, from CSI or from HSE. The P divider of PLL1 accepts only even values; the P dividers of PLL2 and PLL3 accept any value.</p>
+<p>5.3 The PLL input frequency fREF is the reference frequency divided by DIVMx. The VCO frequency fVCO is fREF multiplied by Nx, an integer of 4 to 512, and each output frequency is fVCO divided by its output divider.</p>
+<table>
+<caption>Table 10. PLL characteristics</caption>
+<thead><tr><th>Parameter</th><th>Condition</th><th>Min</th><th>Max</th><th>Unit</th></tr></thead>
+<tbody>
+<tr><td>fREF, PLL input frequency</td><td>PLLxRGE = 00</td><td>1</td><td>2</td><td>MHz</td></tr>
+<tr><td>fREF, PLL input frequency</td><td>PLLxRGE = 01</td><td>2</td><td>4</td><td>MHz</td></tr>
+<tr><td>fREF, PLL input frequency</td><td>PLLxRGE = 10</td><td>4</td><td>8</td><td>MHz</td></tr>
+<tr><td>fREF, PLL input frequency</td><td>PLLxRGE = 11</td><td>8</td><td>16</td><td>MHz</td></tr>
+<tr><td>fVCO, wide VCO range</td><td>PLLxVCOSEL = 0, fREF of 2 MHz or more</td><td>192</td><td>960</td><td>MHz</td></tr>
+<tr><td>fVCO, medium VCO range</td><td>PLLxVCOSEL = 1</td><td>150</td><td>420</td><td>MHz</td></tr>
+<tr><td>tLOCK, lock time</td><td>Integer mode</td><td>—</td><td>50</td><td>µs</td></tr>
+</tbody></table>
+<p>5.4 PLLxRGE in RCC_PLLCFGR must select the range that contains fREF. A setting whose range does not contain fREF is outside the specification, even if the PLL locks. Where fREF is exactly at the boundary of two ranges, either range may be selected.</p>
+<p>5.5 RCC_PLLCKSELR holds the source selection and DIVM1 to DIVM3; RCC_PLLCFGR holds PLLxRGE, PLLxVCOSEL and the output enables; RCC_PLL1DIVR holds N1, P1, Q1 and R1. A PLL must be disabled before any of its fields is changed.</p>
+<h3>6 EMBEDDED FLASH MEMORY</h3>
+<p>6.1 The number of wait states of a flash read, LATENCY in FLASH_ACR, must be set according to the HCLK frequency and the voltage-scaling range (Table 14). Fewer wait states than required cause read errors that the ECC does not correct; more wait states than required are permitted, at a cost in performance.</p>
+<table>
+<caption>Table 14. Flash wait states</caption>
+<thead><tr><th>LATENCY (wait states)</th><th>HCLK max in VOS0 (MHz)</th><th>HCLK max in VOS1 (MHz)</th><th>HCLK max in VOS2 (MHz)</th><th>HCLK max in VOS3 (MHz)</th></tr></thead>
+<tbody>
+<tr><td>0</td><td>70</td><td>70</td><td>55</td><td>45</td></tr>
+<tr><td>1</td><td>140</td><td>140</td><td>110</td><td>85</td></tr>
+<tr><td>2</td><td>210</td><td>185</td><td>150</td><td>—</td></tr>
+<tr><td>3</td><td>225</td><td>200</td><td>—</td><td>—</td></tr>
+<tr><td>4</td><td>240</td><td>—</td><td>—</td><td>—</td></tr>
+</tbody></table>
+<p>6.2 A flash sector is 8 KB. The flash is programmed by 256-bit flash words, each with its ECC, and erased by sector or by bank.</p>
+<table>
+<caption>Table 15. Flash endurance and data retention</caption>
+<thead><tr><th>Parameter</th><th>Condition</th><th>Min</th><th>Unit</th></tr></thead>
+<tbody>
+<tr><td>NEND, endurance</td><td>Per sector, Tj from −40 to +125 °C</td><td>10 000</td><td>cycles</td></tr>
+<tr><td>tRET, data retention</td><td>After 1 000 cycles, Ta = 85 °C</td><td>30</td><td>years</td></tr>
+<tr><td>tRET, data retention</td><td>After 1 000 cycles, Ta = 105 °C</td><td>20</td><td>years</td></tr>
+<tr><td>tRET, data retention</td><td>After 10 000 cycles, Ta = 55 °C</td><td>20</td><td>years</td></tr>
+<tr><td>tRET, data retention</td><td>After 10 000 cycles, Ta = 85 °C</td><td>10</td><td>years</td></tr>
+<tr><td>tRET, data retention</td><td>After 10 000 cycles, Ta = 105 °C</td><td>5</td><td>years</td></tr>
+</tbody></table>
+<h3>7 ANALOG-TO-DIGITAL CONVERTERS</h3>
+<p>7.1 The ADC kernel clock fADC is taken from the P output of PLL2 or from HCLK divided by 4. fADC must be from 1.5 to 50 MHz when VDDA is 2.4 V or more, and from 1.5 to 36 MHz when VDDA is below 2.4 V.</p>
+<p>7.2 A conversion takes the sampling time tSMPL plus 12.5 cycles of fADC, so that the sampling rate is fS = fADC / (tSMPL + 12.5). tSMPL is programmable to 1.5, 2.5, 8.5, 16.5, 32.5, 64.5, 387.5 or 810.5 cycles.</p>
+<table>
+<caption>Table 17. ADC accuracy</caption>
+<thead><tr><th>Parameter</th><th>Condition</th><th>Typ</th><th>Max</th><th>Unit</th></tr></thead>
+<tbody>
+<tr><td>INL, integral non-linearity</td><td>VDDA from 2.4 to 3.6 V</td><td>±1.5</td><td>±3</td><td>LSB</td></tr>
+<tr><td>INL, integral non-linearity</td><td>VDDA from 1.71 to 2.4 V</td><td>±2</td><td>±4</td><td>LSB</td></tr>
+<tr><td>DNL, differential non-linearity</td><td>VDDA from 1.71 to 3.6 V</td><td>±0.7</td><td>±1</td><td>LSB</td></tr>
+<tr><td>ENOB, effective number of bits</td><td>fS = 3.57 Msps, VDDA = 3.3 V, single-ended input</td><td>10.6</td><td>—</td><td>bits</td></tr>
+<tr><td>EO, offset error</td><td>After calibration</td><td>±1</td><td>±2.5</td><td>LSB</td></tr>
+</tbody></table>
+<p>7.3 The offset calibration (ADCALLIN = 0) and the linearity calibration (ADCALLIN = 1) must be run after each power-up and after each change of VDDA by more than 10 %. The accuracy of Table 17 applies only after both calibrations.</p>
+<p>7.4 The 12-bit DAC has one output buffer per channel, a settling time of 1.7 µs to ±1 LSB and an output range from 0.2 V to VDDA − 0.2 V with the buffer enabled.</p>
+<h3>8 THERMAL CHARACTERISTICS</h3>
+<p>8.1 The junction temperature is Tj = Ta + θJA × PD. The total power dissipation PD is PINT + PIO, where PINT = VDD × IDD is the internal power, with the highest VDD of the application, and PIO is the power dissipated in the I/O pins, which depends on the application and is computed for it.</p>
+<table>
+<caption>Table 19. Thermal resistance</caption>
+<thead><tr><th>Package</th><th>θJA on a 1s board (°C/W)</th><th>θJA on a 2s2p board (°C/W)</th><th>θJC (°C/W)</th><th>θJB (°C/W)</th></tr></thead>
+<tbody>
+<tr><td>QFN-48, exposed pad soldered</td><td>52</td><td>31</td><td>11</td><td>16</td></tr>
+<tr><td>LQFP-64</td><td>63</td><td>44</td><td>14</td><td>26</td></tr>
+</tbody></table>
+<p>8.2 The θJA values are for natural convection on JEDEC JESD51-3 (1s) and JESD51-7 (2s2p) test boards. Use the 1s value for a board without internal copper planes and the 2s2p value for a board with at least two internal planes. For a QFN-48 whose exposed pad is not soldered, add 14 °C/W to θJA.</p>
+<p>8.3 The junction temperature is calculated with the maximum IDD of Table 18 and the adders of Table 20; the typical values are for estimates of battery life only.</p>
+<p>8.4 Tj must not exceed the Tj max of the temperature grade of the device: 105 °C for grade I, 125 °C for grade X and 140 °C for grade A.</p>
+<h3>9 CURRENT CONSUMPTION</h3>
+<p>9.1 Table 18 gives IDD in Run mode, with code executed from flash with the caches enabled, all peripheral clocks disabled, HCLK = SYSCLK / 2 and the PLL running.</p>
+<table>
+<caption>Table 18. Run-mode supply current</caption>
+<thead><tr><th>Range</th><th>fSYSCLK (MHz)</th><th>IDD typ at Ta = 25 °C (mA)</th><th>IDD max at Tj = 125 °C (mA)</th></tr></thead>
+<tbody>
+<tr><td>VOS0</td><td>480</td><td>121</td><td>172</td></tr>
+<tr><td>VOS0</td><td>432</td><td>109</td><td>156</td></tr>
+<tr><td>VOS1</td><td>400</td><td>94</td><td>134</td></tr>
+<tr><td>VOS1</td><td>350</td><td>83</td><td>119</td></tr>
+<tr><td>VOS1</td><td>300</td><td>72</td><td>104</td></tr>
+<tr><td>VOS2</td><td>280</td><td>61</td><td>88</td></tr>
+<tr><td>VOS2</td><td>200</td><td>45</td><td>66</td></tr>
+<tr><td>VOS3</td><td>170</td><td>33</td><td>49</td></tr>
+</tbody></table>
+<table>
+<caption>Table 20. Peripheral current adders</caption>
+<thead><tr><th>Peripheral</th><th>Condition</th><th>IDD adder max (mA)</th></tr></thead>
+<tbody>
+<tr><td>ADC1 or ADC2</td><td>Each ADC converting, fADC = 50 MHz</td><td>4.6</td></tr>
+<tr><td>ADC1 or ADC2</td><td>Each ADC converting, fADC = 36 MHz</td><td>3.4</td></tr>
+<tr><td>FDCAN1 or FDCAN2</td><td>Each controller, data phase up to 5 Mbit/s</td><td>2.2</td></tr>
+<tr><td>USART1 to USART4</td><td>Each USART</td><td>0.6</td></tr>
+<tr><td>SPI1 to SPI3</td><td>Each SPI</td><td>0.9</td></tr>
+<tr><td>I2C1 or I2C2</td><td>Each I2C</td><td>0.4</td></tr>
+<tr><td>CORDIC</td><td>Continuous operation</td><td>1.8</td></tr>
+<tr><td>TIM1</td><td>PWM outputs active</td><td>1.5</td></tr>
+</tbody></table>
+<p>9.2 A peripheral whose kernel or bus clock is enabled counts as active, whether or not it carries traffic. The adders of the active peripherals are added to the value of Table 18.</p>
+<table>
+<caption>Table 21. Low-power mode supply current</caption>
+<thead><tr><th>Mode</th><th>Condition</th><th>IDD typ at Ta = 25 °C</th><th>IDD max at Tj = 125 °C</th></tr></thead>
+<tbody>
+<tr><td>Sleep</td><td>VOS1, 400 MHz, peripheral clocks disabled</td><td>38 mA</td><td>61 mA</td></tr>
+<tr><td>Stop</td><td>Flash in low-power mode, SRAM retained</td><td>210 µA</td><td>4.1 mA</td></tr>
+<tr><td>Standby</td><td>Backup SRAM and RTC off</td><td>2.8 µA</td><td>46 µA</td></tr>
+<tr><td>VBAT</td><td>RTC running from the LSE</td><td>1.1 µA</td><td>9 µA</td></tr>
+</tbody></table>
+<p>9.3 The wake-up time from Stop to the first instruction is 8 µs with the flash in low-power mode and 2.5 µs with the flash kept ready.</p>
+<h3>10 COMMUNICATION INTERFACES</h3>
+<p>10.1 Each USART supports oversampling by 16 (OVER8 = 0) and by 8 (OVER8 = 1). The baud rate is fCK / USARTDIV with oversampling by 16 and 2 × fCK / USARTDIV with oversampling by 8; it is at most fCK / 16 or fCK / 8 respectively, and never more than 12.5 Mbit/s.</p>
+<p>10.2 The receiver timeout, enabled with RTOEN, sets RTOF when no new character is received for the number of bit periods programmed in USART_RTOR.RTO after the last stop bit.</p>
+<p>10.3 The SPI interfaces run at up to 75 MHz as masters and 50 MHz as slaves. In TI mode the frame format follows the TI synchronous serial protocol, and the CRC is calculated over each frame.</p>
+<p>10.4 The I2C interfaces support standard mode, fast mode and fast-mode plus (up to 1 Mbit/s), with SMBus clock-low timeouts.</p>
+<p>10.5 FDCAN1 and FDCAN2 support CAN FD data-phase bit rates of up to 8 Mbit/s. Above 1 Mbit/s, the transmitter delay compensation (TDC) must be enabled, with its offset TDCO programmed in FDCAN_TDCR.</p>
+<h3>11 GPIO CHARACTERISTICS</h3>
+<table>
+<caption>Table 23. I/O static characteristics</caption>
+<thead><tr><th>Symbol</th><th>Parameter</th><th>Condition</th><th>Min</th><th>Max</th><th>Unit</th></tr></thead>
+<tbody>
+<tr><td>VIL</td><td>Input low level</td><td>VDD from 1.71 to 3.6 V</td><td>—</td><td>0.3 × VDD</td><td>V</td></tr>
+<tr><td>VIH</td><td>Input high level</td><td>VDD from 1.71 to 3.6 V</td><td>0.7 × VDD</td><td>—</td><td>V</td></tr>
+<tr><td>VOL</td><td>Output low level</td><td>IIO = 8 mA, VDD of 2.7 V or more</td><td>—</td><td>0.4</td><td>V</td></tr>
+<tr><td>VOH</td><td>Output high level</td><td>IIO = −8 mA, VDD of 2.7 V or more</td><td>VDD − 0.4</td><td>—</td><td>V</td></tr>
+<tr><td>IIO</td><td>Output current, any pin</td><td>—</td><td>−20</td><td>+20</td><td>mA</td></tr>
+</tbody></table>
+<p>11.1 The sum of the currents sourced by all I/O pins must not exceed 120 mA, and neither must the sum of the currents sunk.</p>
+<table>
+<caption>Table 24. Pin description (extract, port A)</caption>
+<thead><tr><th>Pin name</th><th>QFN-48 pin</th><th>LQFP-64 pin</th><th>I/O structure</th><th>Main alternate functions</th></tr></thead>
+<tbody>
+<tr><td>PA0</td><td>10</td><td>14</td><td>FT</td><td>ADC1_IN0, TIM2_CH1, USART2_CTS</td></tr>
+<tr><td>PA1</td><td>11</td><td>15</td><td>FT</td><td>ADC1_IN1, TIM2_CH2, USART2_RTS</td></tr>
+<tr><td>PA2</td><td>12</td><td>16</td><td>FT</td><td>ADC1_IN2, USART2_TX, TIM15_CH1</td></tr>
+<tr><td>PA3</td><td>13</td><td>17</td><td>FT</td><td>ADC1_IN3, USART2_RX, TIM15_CH2</td></tr>
+<tr><td>PA4</td><td>14</td><td>20</td><td>TT</td><td>DAC1_OUT1, SPI1_NSS, ADC2_IN4</td></tr>
+<tr><td>PA5</td><td>15</td><td>21</td><td>TT</td><td>DAC1_OUT2, SPI1_SCK, ADC2_IN5</td></tr>
+<tr><td>PA6</td><td>16</td><td>22</td><td>FT</td><td>SPI1_MISO, TIM1_BKIN, ADC2_IN6</td></tr>
+<tr><td>PA7</td><td>17</td><td>23</td><td>FT</td><td>SPI1_MOSI, TIM1_CH1N, ADC2_IN7</td></tr>
+<tr><td>PA8</td><td>29</td><td>41</td><td>FT</td><td>TIM1_CH1, MCO1, I2C1_SCL</td></tr>
+<tr><td>PA9</td><td>30</td><td>42</td><td>FT</td><td>TIM1_CH2, USART1_TX, FDCAN1_RX</td></tr>
+<tr><td>PA10</td><td>31</td><td>43</td><td>FT</td><td>TIM1_CH3, USART1_RX, FDCAN1_TX</td></tr>
+<tr><td>PA11</td><td>32</td><td>44</td><td>FT</td><td>TIM1_CH4, FDCAN2_RX, I2C1_SDA</td></tr>
+</tbody></table>
+<p>11.2 FT denotes a five-volt-tolerant I/O and TT a three-volt-tolerant I/O with an analog switch. An FT pin loses its five-volt tolerance while its analog function is selected.</p>
+<h3>12 DIRECT MEMORY ACCESS AND INTERRUPTS</h3>
+<p>12.1 Two general-purpose DMA controllers, GPDMA1 and GPDMA2, of eight channels each serve the peripherals, through a request multiplexer (DMAMUX) that routes any of 115 request lines to any channel. A master DMA (MDMA) of 16 channels moves data between the AXI memories with linked-list transfers.</p>
+<p>12.2 The platform-level interrupt controller (PLIC) handles 150 external interrupt sources with 16 priority levels, and the core-local interruptor (CLINT) provides the machine timer and the software interrupts. The interrupt latency is 12 cycles of SYSCLK from the request to the first instruction of the handler, with the caches enabled.</p>
+<h3>13 TIMERS AND WATCHDOGS</h3>
+<p>13.1 TIM1 is a 16-bit advanced-control timer with six complementary PWM outputs, a programmable dead time of up to 8 µs, two break inputs and an encoder interface. Its kernel clock is twice PCLK2 when PPRE2 is not 1.</p>
+<p>13.2 Four 32-bit general-purpose timers (TIM2 to TIM5) and four 16-bit timers (TIM12 to TIM15) provide input capture, output compare and one-pulse modes. Two basic timers, TIM6 and TIM7, trigger the DAC.</p>
+<p>13.3 The independent watchdog (IWDG) runs from a 32 kHz internal RC oscillator and cannot be stopped once started; the window watchdog (WWDG) runs from PCLK1.</p>
+<h3>14 REAL-TIME CLOCK AND BACKUP DOMAIN</h3>
+<p>14.1 The RTC keeps calendar time with sub-second resolution from the LSE, with two alarms, a periodic wake-up timer and 32 backup registers. The backup domain is supplied from VBAT when VDD is absent.</p>
+<p>14.2 VBAT operates from 1.2 V to 3.6 V. The 4 KB backup SRAM is retained in VBAT mode while its regulator is enabled.</p>
+<h3>15 DEBUG AND SECURITY</h3>
+<p>15.1 The debug port provides a two-wire serial debug interface and a four-wire JTAG interface, with eight hardware breakpoints and four watchpoints. Trace data are output through a 4-bit trace port or into a 4 KB embedded trace buffer.</p>
+<p>15.2 Readout protection has three levels: at level 0 there is no protection; at level 1 the flash cannot be read through the debug port; at level 2 the debug port is disabled permanently. A regression from level 1 to level 0 erases the user flash.</p>
+<p>15.3 Secure boot verifies the ECDSA P-256 signature of the first-stage firmware before executing it; the hash of the public key is programmed in one-time-programmable (OTP) words.</p>
+<h3>16 PACKAGE INFORMATION</h3>
+<p>16.1 QFN-48: body of 7.00 × 7.00 mm, height of 0.85 mm max, pitch of 0.50 mm and exposed pad of 5.60 × 5.60 mm. LQFP-64: body of 10.00 × 10.00 mm, height of 1.60 mm max and pitch of 0.50 mm.</p>
+<p>16.2 Both packages are rated at moisture sensitivity level 3 (MSL 3), with a peak reflow temperature of 260 °C, per IPC/JEDEC J-STD-020.</p>
+<p>16.3 The exposed pad of the QFN-48 is connected to VSS and is soldered to a ground area of the board for electrical and thermal performance.</p>
+<h3>17 REVISION HISTORY OF THE DATASHEET</h3>
+<table>
+<thead><tr><th>Date</th><th>Revision</th><th>Changes</th></tr></thead>
+<tbody>
+<tr><td>2 October 2025</td><td>4</td><td>Added temperature grade A.</td></tr>
+<tr><td>19 December 2025</td><td>5</td><td>Added VOS0 to Table 14 and θJB to Table 19.</td></tr>
+<tr><td>14 March 2026</td><td>6</td><td>Added the derating of VOS0 above Ta = 85 °C to Table 6; corrected the BOR level 3 thresholds of Table 8.</td></tr>
+</tbody></table>
+<h2>PART II - ERRATA SHEET ES0457 REVISION 3</h2>
+<p>II.1 This errata sheet applies to the TSV7H devices of silicon revisions A, B and C. It describes the device limitations known for each revision, and the corrections to datasheet DS-TSV7H revision 6 (documentation errata).</p>
+<table>
+<caption>Table E1. Device identification</caption>
+<thead><tr><th>Silicon revision</th><th>REV_ID in DBGMCU_IDC[31:16]</th><th>Revision code on the marking</th><th>Status</th></tr></thead>
+<tbody>
+<tr><td>A</td><td>0x1000</td><td>A</td><td>Engineering samples, not for production</td></tr>
+<tr><td>B</td><td>0x1001</td><td>B</td><td>Production, end of life under PCN-2611</td></tr>
+<tr><td>C</td><td>0x1003</td><td>Y</td><td>Production, from date code 2634</td></tr>
+</tbody></table>
+<p>II.2 The revision code &quot;C&quot; is not used on markings, to avoid confusion with the ceramic-package prefix of the test parts: a marking that shows &quot;C&quot; belongs to a test part, not to a production device.</p>
+<p>II.3 Each device limitation has an impact class: 1, no functional impact; 2, a function deviates from the specification and a simple workaround exists; 3, a function is degraded and the workaround has an impact on the application; 4, a function is unusable in some conditions until a workaround with system-level impact is applied; 5, no workaround exists.</p>
+<table>
+<caption>Table E2. Summary of device limitations</caption>
+<thead><tr><th>ID</th><th>Function</th><th>Limitation</th><th>Impact class</th><th>Revision A</th><th>Revision B</th><th>Revision C</th></tr></thead>
+<tbody>
+<tr><td>ES-01</td><td>Debug</td><td>A breakpoint is lost when the core enters WFI during a halt request</td><td>1</td><td>Present</td><td>Fixed</td><td>Fixed</td></tr>
+<tr><td>ES-02</td><td>PLL</td><td>PLL1 can lose lock below Tj = 0 °C with fVCO above 836 MHz</td><td>3</td><td>Present</td><td>Present</td><td>Fixed</td></tr>
+<tr><td>ES-03</td><td>Flash</td><td>SYSCLK limited to 360 MHz in VOS1 above Ta = 85 °C</td><td>3</td><td>Present</td><td>Present</td><td>Fixed</td></tr>
+<tr><td>ES-04</td><td>ADC</td><td>INL up to ±6 LSB above 2.0 Msps with VDDA below 2.0 V</td><td>3</td><td>Present</td><td>Present</td><td>Present</td></tr>
+<tr><td>ES-05</td><td>USART</td><td>Receiver timeout flag set one bit period early with OVER8 = 1</td><td>2</td><td>Present</td><td>Present</td><td>Present</td></tr>
+<tr><td>ES-06</td><td>I2C</td><td>SMBus clock-low timeout not detected in fast-mode plus</td><td>2</td><td>Present</td><td>Fixed</td><td>Fixed</td></tr>
+<tr><td>ES-07</td><td>SPI</td><td>CRC error flag not cleared at the end of a TI-mode frame</td><td>2</td><td>Present</td><td>Present</td><td>Fixed</td></tr>
+<tr><td>ES-08</td><td>FDCAN</td><td>Transmitter delay compensation offset cleared by the bus-off recovery</td><td>4</td><td>Not present</td><td>Not present</td><td>Present</td></tr>
+<tr><td>ES-09</td><td>Power</td><td>BOR level 3 falling threshold below the specification after operation at Tj above 125 °C</td><td>3</td><td>Not present</td><td>Present</td><td>Present</td></tr>
+</tbody></table>
+<p>ES-01 Debug: on revision A, a breakpoint that is set while a halt request is pending is lost if the core executes WFI before the halt takes effect. Workaround: set breakpoints while the core is halted. Fixed in revision B.</p>
+<p>ES-02 PLL: on revisions A and B, PLL1 can lose lock when Tj is below 0 °C and fVCO of PLL1 is above 836 MHz; SYSCLK then switches to HSI, and no clock-security interrupt is raised. Conditions: a PLL1 configuration with fVCO above 836 MHz, in an application whose junction temperature can fall below 0 °C. Workaround: keep fVCO of PLL1 at or below 836 MHz. PLL2 and PLL3 are not affected. Fixed in revision C.</p>
+<p>ES-03 Flash: on revisions A and B, the read margin of the flash is insufficient in VOS1 when SYSCLK is above 360 MHz and Ta is above 85 °C. Workaround: limit SYSCLK to 360 MHz in VOS1 when Ta can exceed 85 °C, or use VOS0 where Table 6 permits it. Fixed in revision C, for which Table 6 applies without change.</p>
+<p>ES-04 ADC: the INL of ADC1 and ADC2 can reach ±6 LSB when the sampling rate fS is above 2.0 Msps and VDDA is below 2.0 V. Conditions: both, on any channel; the DNL is not affected. Workaround: limit fS to 2.0 Msps while VDDA is below 2.0 V, or supply VDDA at 2.0 V or more. With the workaround, the INL of Table 17 applies; without it, the maximum INL is ±6 LSB. Present in all revisions.</p>
+<p>ES-05 USART: with OVER8 = 1 and the receiver timeout enabled (RTOEN = 1), RTOF is set one bit period before the programmed timeout. Workaround: program USART_RTOR.RTO with the wanted value plus one. With OVER8 = 0 the timeout is correct. Present in all revisions.</p>
+<p>ES-06 I2C: on revision A, the SMBus clock-low timeout is not detected in fast-mode plus. Workaround: use fast mode for SMBus traffic. Fixed in revision B.</p>
+<p>ES-07 SPI: on revisions A and B, the CRCERR flag is not cleared at the end of a TI-mode frame and reports a CRC error for the next frame. Workaround: clear CRCERR by software after each TI-mode frame, before the next frame starts. Fixed in revision C.</p>
+<p>ES-08 FDCAN: on revision C, the bus-off recovery sequence clears the transmitter delay compensation offset TDCO in FDCAN_TDCR, so that transmissions with a data phase above 1 Mbit/s then fail with bit errors. Conditions: TDC enabled, and a bus-off recovery, automatic or by software. Workaround: write FDCAN_TDCR again after each bus-off recovery, before INIT is cleared. Field reports of July 2026 showed that the failure stops all CAN FD traffic of the node until the workaround runs; this revision of the errata sheet therefore raises the impact class of ES-08 from 2 to 4.</p>
+<p>ES-09 Power: on revisions B and C, after a cumulative 1 000 hours of operation at a Tj above 125 °C, the falling threshold of BOR level 3 can be up to 90 mV below the minimum of Table 8. Conditions: BOR level 3 selected, and operation at a Tj above 125 °C, which only grade A devices permit. Workaround: select BOR level 2 and supervise VDD externally. Levels 1 and 2 are not affected. Earlier documents listed ES-09 as fixed in revision C; tests of production lots of revision C showed the drift as well.</p>
+<p>DC-1: Section 2.2 of the datasheet: on the QFN-48 package, the HBM rating of pins PB12 to PB15 is 1000 V (class 1C), not 2000 V. All other pins, and all the pins of the LQFP-64 package, are rated 2000 V.</p>
+<p>DC-2: Table 14 of the datasheet: in VOS1, the HCLK maximum for 2 wait states is 165 MHz, not 185 MHz. The other entries of Table 14 are correct.</p>
+<p>DC-3: Section 8.2 of the datasheet: for a QFN-48 whose exposed pad is not soldered, add 18 °C/W to θJA, not 14 °C/W.</p>
+<p>DC-4: Table 23 of the datasheet: VOL and VOH are specified with a VDD of 3.0 V or more, at IIO = 8 mA and IIO = −8 mA respectively, not with a VDD of 2.7 V or more.</p>
+<table>
+<caption>Table E3. Revision history of the errata sheet</caption>
+<thead><tr><th>Date</th><th>Revision</th><th>Changes</th></tr></thead>
+<tbody>
+<tr><td>3 March 2026</td><td>1</td><td>Initial release, for silicon revisions A and B.</td></tr>
+<tr><td>20 June 2026</td><td>2</td><td>Added silicon revision C and ES-08, of impact class 2; added DC-2.</td></tr>
+<tr><td>9 September 2026</td><td>3</td><td>Raised the impact class of ES-08 to 4; ES-09 is present in revision C; added DC-1, DC-3 and DC-4.</td></tr>
+</tbody></table>
+<h2>PART III - PRODUCT CHANGE NOTIFICATION PCN-2611 AND AMENDMENT PCN-2611-A1</h2>
+<p>III.1 PCN-2611, dated 15 June 2026: introduction of silicon revision C and end of life of silicon revision B, for all TSV7H part numbers.</p>
+<p>III.2 Description of the change: revision C is made on the same 40 nm process, with a revised flash sense amplifier, a revised PLL1 loop filter and a revised FDCAN transmitter delay compensation block. The packages, the pinout, the part numbers and the software interface are unchanged; REV_ID becomes 0x1003.</p>
+<p>III.3 Errata status: revision C fixes ES-02, ES-03, ES-07 and ES-09, and introduces ES-08 (FDCAN transmitter delay compensation, impact class 2). ES-04 and ES-05 remain.</p>
+<p>III.4 Characterization changes for revision C: the falling threshold of BOR level 2 becomes 2.28 V typical and 2.21 V minimum, and the flash data retention after 10 000 cycles at Ta = 85 °C becomes 15 years. All other values of the datasheet are unchanged.</p>
+<p>III.5 First shipments of revision C are from date code 2634. Shipments may mix revisions B and C until the last shipment of revision B.</p>
+<p>III.6 Last-time-buy (LTB) orders for revision B are accepted until 90 calendar days after the date of this PCN.</p>
+<p>III.7 The last shipments of revision B (last-time-ship, LTS) are made until 180 calendar days after the LTB date. LTB orders are non-cancellable and non-returnable.</p>
+<p>III.8 Qualification: revision C passed the qualification plan QP-7H-C, with HTOL of 1 000 h at Tj = 140 °C, 1 000 temperature cycles from −65 to +150 °C, and ESD and latch-up tests as in Section 2 of the datasheet.</p>
+<p>III.9 PCN-2611-A1, dated 24 July 2026, amends PCN-2611 as follows. For a customer that registered a revision B demand forecast with Tessaline by 31 July 2026, LTB orders are accepted until 30 calendar days after the LTB date of PCN-2611, and the LTS date stays the date that PCN-2611 sets. For other customers, PCN-2611 applies unchanged.</p>
+<p>III.10 The other terms of PCN-2611 are unchanged by PCN-2611-A1.</p>
+<h2>PART IV - APPLICATION NOTE AN-7712 REVISION 2 (EXTRACT)</h2>
+<p>IV.1 AN-7712 gives guidelines for the clock and thermal design of TSV7H applications. It is informative.</p>
+<p>IV.2 For a first thermal estimate on a typical four-layer board, a θJA of 38 °C/W can be assumed for the LQFP-64 package and of 26 °C/W for the QFN-48 package, with the typical IDD of the datasheet. A design is verified with the method of Section 8 of the datasheet.</p>
+<p>IV.3 With a 25 MHz crystal and DIVM1 = 5, the PLL1 input frequency is 5 MHz, which requires PLL1RGE = 10. N1 = 160 and P1 = 2 then give a SYSCLK of 400 MHz.</p>
+<p>IV.4 With HPRE = 2, a SYSCLK of 400 MHz gives an HCLK of 200 MHz, which needs 3 wait states in VOS1.</p>
+<p>IV.5 In laboratory tests of revision B and C devices at VDDA = 1.8 V and fS = 2.57 Msps, the INL stayed within ±5 LSB, inside the limit of ES-04.</p>
+<p>IV.6 A guard band of at least 10 °C between the computed Tj and the Tj max of the temperature grade is recommended.</p>
+<p>IV.7 For the HSE, use a crystal with a load capacitance of 6 to 12 pF and an ESR below 60 Ω at 25 MHz, and place its load capacitors within 5 mm of the OSC_IN and OSC_OUT pins.</p>
+<p>IV.8 Decoupling: place one 100 nF capacitor at each VDD pin and one 4.7 µF bulk capacitor; VDDA needs a 1 µF and a 10 nF capacitor in parallel, fed from VDD through a ferrite bead.</p>
+<p>IV.9 For CAN FD at 5 Mbit/s, keep each stub shorter than 0.3 m and terminate both ends of the bus with 120 Ω.</p>
+<h2>PART V - DESIGN REVIEW AND PURCHASING RECORDS OF HALYARD DRIVES AS</h2>
+<h3>DR-114 - SERVO DRIVE CONTROLLER HD-SC3 REVISION 3</h3>
+<p>DR-114.1 Board HD-SC3 revision 3 is a servo drive controller fitted with a TSV7H8LX. Prototype lot P1 (40 boards, built in April 2026) carries devices marked &quot;B 2611&quot;. Production lot P2, which is the subject of this review unless an entry says otherwise, carries devices marked &quot;Y 2636&quot;.</p>
+<p>DR-114.2 Supply: VDD and VDDA are supplied from one 1.8 V rail with a tolerance of ±3 %. BOR level 0 is selected. VCORE runs in the voltage-scaling range VOS1.</p>
+<p>DR-114.3 Environment: the board is mounted in a sealed drive enclosure without forced air flow, where the ambient temperature is from +5 °C to +95 °C. The board has four layers, two of which are internal ground and power planes.</p>
+<p>DR-114.4 Clock configuration: HSE crystal of 25 MHz; DIVM1 = 5; PLL1RGE = 01; PLL1VCOSEL = 0; N1 = 140; P1 = 2; SYSCLK from the P output of PLL1; HPRE = 2; PPRE1 = 2; PPRE2 = 2; FLASH_ACR.LATENCY = 2.</p>
+<p>DR-114.5 Peripherals: ADC1 and ADC2 convert continuously with fADC = 36 MHz from PLL2P and a sampling time of 2.5 cycles. FDCAN1 runs at 1 Mbit/s in the arbitration phase and 5 Mbit/s in the data phase, with transmitter delay compensation and automatic bus-off recovery. FDCAN2 is clocked for an expansion port but carries no traffic. USART1 is the service port, at 6 Mbit/s with OVER8 = 1 and the receiver timeout enabled. The CORDIC runs the field-oriented control loop continuously, and TIM1 drives the PWM outputs. No other peripheral is clocked.</p>
+<p>DR-114.6 The board team computed the power of the I/O pins, PIO, as 52 mW at the highest ambient temperature.</p>
+<p>DR-114.7 Halyard design rule HDR-7: the junction temperature computed with the method of the datasheet must be at least 20 °C below the Tj max of the temperature grade of the device. Design rule HDR-9: the firmware must implement the workaround of every erratum that is present in the silicon revision fitted and whose conditions the configuration of the board meets.</p>
+<p>DR-114.8 Firmware release candidate FW 2.3.0 implements the workarounds of ES-02 and ES-05, and of no other erratum.</p>
+<p>DR-114.9 On a prototype board of lot P1 at an ambient temperature of 95 °C, the on-chip temperature sensor read 104 °C after one hour at full load.</p>
+<p>DR-114.10 EMC: the conducted emissions of the drive passed EN 55011 class A, and its radiated immunity was tested at 10 V/m.</p>
+<p>DR-114.11 Mechanical: the board is fixed at six points, and passed the vibration test of IEC 60068-2-6 at 5 g from 10 to 500 Hz without damage.</p>
+<p>DR-114.12 The service port of USART1 is routed to an isolated connector, which passed the IEC 61000-4-2 test at ±8 kV contact discharge.</p>
+<h3>DR-115 - SENSOR HUB HD-SH1 REVISION 1</h3>
+<p>DR-115.1 Board HD-SH1 revision 1 is an outdoor sensor hub fitted with a TSV7H4QI. All the boards built carry devices marked &quot;B 2618&quot;.</p>
+<p>DR-115.2 Supply: VDD and VDDA are both 3.3 V, from a regulator with a tolerance of ±2 %. BOR level 3 is selected. VCORE runs in VOS0.</p>
+<p>DR-115.3 Environment: outdoor enclosure with natural convection, where the ambient temperature is from −25 °C to +70 °C. The board has two layers and no internal planes; the exposed pad of the device is soldered to a copper area with thermal vias.</p>
+<p>DR-115.4 Clock configuration: HSE crystal of 24 MHz; DIVM1 = 4; PLL1RGE = 10; PLL1VCOSEL = 0; N1 = 144; P1 = 2; SYSCLK from the P output of PLL1; HPRE = 2; FLASH_ACR.LATENCY = 3.</p>
+<p>DR-115.5 Peripherals: ADC1 converts with fADC = 50 MHz and a sampling time of 1.5 cycles; SPI2 reads the pressure sensor in TI mode; USART2 runs the modem link with OVER8 = 0; I2C1 polls a humidity sensor in fast-mode plus, without SMBus. No other peripheral is clocked.</p>
+<p>DR-115.6 The board team computed PIO as 38 mW at the highest ambient temperature.</p>
+<p>DR-115.7 The pressure sensor is read every 10 ms, and the modem link sends a report every 15 minutes.</p>
+<p>DR-115.8 The enclosure is rated IP67, and the board is conformally coated.</p>
+<h3>PURCHASING RECORDS</h3>
+<p>P-1 Halyard registered a revision B demand forecast of 40 000 units with Tessaline on form F-11 on 29 July 2026, and sent a revised forecast of 46 000 units on 5 August 2026.</p>
+<p>P-2 Purchase order PO-5521 for 12 000 TSV7H8LX devices of revision B was placed with Tessaline on 2 October 2026 as an LTB order.</p>
+<p>P-3 Purchase order PO-5530 for 8 000 TSV7H4QI devices was placed on 20 October 2026, without a revision requirement.</p>
+<p>P-4 Tessaline confirmed PO-5530 on 22 October 2026, for delivery from date code 2648.</p>
+<p></p>
+</body></html>

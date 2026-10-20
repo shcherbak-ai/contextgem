@@ -1,0 +1,351 @@
+[
+  {
+    "case": "complex_mcu",
+    "model": "azure_ai/ms-decision-model",
+    "mode": "decision_default",
+    "runs": 1,
+    "aspect_f1": [
+      0.6241804908751379
+    ],
+    "aspect_precision": [
+      0.5746412078344851
+    ],
+    "aspect_recall": [
+      0.7984667221120423
+    ],
+    "concepts_correct": [
+      9
+    ],
+    "n_concepts_scored": 11,
+    "closed_concepts_correct": [
+      9
+    ],
+    "n_closed_concepts": 11,
+    "reference_f1": [
+      null
+    ],
+    "requests": [
+      275
+    ],
+    "input_tokens": [
+      289995
+    ],
+    "cache_read_tokens": [
+      0
+    ],
+    "output_tokens": [
+      1903
+    ],
+    "cost_total": [
+      "0.01218"
+    ],
+    "seconds": [
+      94.0
+    ],
+    "retries": [
+      0
+    ],
+    "errors": [],
+    "warnings": 0
+  },
+  {
+    "case": "complex_mcu",
+    "model": "openai/gpt-5.6-luna",
+    "mode": "default",
+    "runs": 3,
+    "aspect_f1": [
+      0.9272210910894148,
+      0.9614903872743594,
+      0.9286487758945386
+    ],
+    "aspect_precision": [
+      0.907987036681618,
+      0.9547938670559387,
+      0.9025460643973968
+    ],
+    "aspect_recall": [
+      0.9533299213102169,
+      0.970955153221163,
+      0.9619879299682256
+    ],
+    "concepts_correct": [
+      24,
+      24,
+      24
+    ],
+    "n_concepts_scored": 26,
+    "closed_concepts_correct": [
+      10,
+      11,
+      10
+    ],
+    "n_closed_concepts": 11,
+    "reference_f1": [
+      0.6229894484522357,
+      0.6844569833458722,
+      0.662078418694672
+    ],
+    "requests": [
+      10,
+      10,
+      10
+    ],
+    "input_tokens": [
+      108312,
+      108061,
+      108771
+    ],
+    "cache_read_tokens": [
+      13670,
+      61684,
+      65286
+    ],
+    "output_tokens": [
+      9199,
+      10381,
+      8989
+    ],
+    "cost_total": [
+      "0.03497",
+      "0.02529",
+      "0.02297"
+    ],
+    "seconds": [
+      99.9,
+      102.0,
+      91.7
+    ],
+    "retries": [
+      0,
+      0,
+      0
+    ],
+    "errors": [],
+    "warnings": 0,
+    "judged": [
+      {
+        "n_strings": 1,
+        "n_strings_correct": 1,
+        "n_justifications": 25,
+        "n_justifications_correct": 22,
+        "n_fields": 12,
+        "n_fields_correct": 12
+      },
+      {
+        "n_strings": 1,
+        "n_strings_correct": 1,
+        "n_justifications": 26,
+        "n_justifications_correct": 21,
+        "n_fields": 12,
+        "n_fields_correct": 12
+      },
+      {
+        "n_strings": 1,
+        "n_strings_correct": 1,
+        "n_justifications": 25,
+        "n_justifications_correct": 23,
+        "n_fields": 12,
+        "n_fields_correct": 12
+      }
+    ]
+  },
+  {
+    "case": "complex_mcu",
+    "model": "openai/gpt-6-luna",
+    "mode": "decision_default",
+    "runs": 1,
+    "aspect_f1": [
+      0.6589144050174676
+    ],
+    "aspect_precision": [
+      0.746064912451467
+    ],
+    "aspect_recall": [
+      0.607899899771821
+    ],
+    "concepts_correct": [
+      9
+    ],
+    "n_concepts_scored": 11,
+    "closed_concepts_correct": [
+      9
+    ],
+    "n_closed_concepts": 11,
+    "reference_f1": [
+      null
+    ],
+    "requests": [
+      275
+    ],
+    "input_tokens": [
+      519668
+    ],
+    "cache_read_tokens": [
+      12207
+    ],
+    "output_tokens": [
+      0
+    ],
+    "cost_total": [
+      "0.05197"
+    ],
+    "seconds": [
+      81.5
+    ],
+    "retries": [
+      0
+    ],
+    "errors": [],
+    "warnings": 0
+  },
+  {
+    "case": "complex_mcu",
+    "model": "openai/gpt-6-luna",
+    "mode": "default",
+    "runs": 3,
+    "aspect_f1": [
+      0.9665024630541872,
+      0.9435475635475636,
+      0.9674025194606308
+    ],
+    "aspect_precision": [
+      0.9634024577572965,
+      0.9265823548432245,
+      0.9488483436853002
+    ],
+    "aspect_recall": [
+      0.974025974025974,
+      0.9650587507730365,
+      0.9913419913419913
+    ],
+    "concepts_correct": [
+      26,
+      25,
+      26
+    ],
+    "n_concepts_scored": 26,
+    "closed_concepts_correct": [
+      11,
+      10,
+      11
+    ],
+    "n_closed_concepts": 11,
+    "reference_f1": [
+      0.7482273458269096,
+      0.7280375493940565,
+      0.7523211573986678
+    ],
+    "requests": [
+      10,
+      10,
+      10
+    ],
+    "input_tokens": [
+      107077,
+      107387,
+      108528
+    ],
+    "cache_read_tokens": [
+      13670,
+      65286,
+      65286
+    ],
+    "output_tokens": [
+      13542,
+      14770,
+      14344
+    ],
+    "cost_total": [
+      "0.01858",
+      "0.01330",
+      "0.01323"
+    ],
+    "seconds": [
+      136.3,
+      149.5,
+      148.4
+    ],
+    "retries": [
+      0,
+      0,
+      0
+    ],
+    "errors": [],
+    "warnings": 0,
+    "judged": [
+      {
+        "n_strings": 1,
+        "n_strings_correct": 1,
+        "n_justifications": 26,
+        "n_justifications_correct": 26,
+        "n_fields": 12,
+        "n_fields_correct": 12
+      },
+      {
+        "n_strings": 1,
+        "n_strings_correct": 1,
+        "n_justifications": 26,
+        "n_justifications_correct": 24,
+        "n_fields": 12,
+        "n_fields_correct": 12
+      },
+      {
+        "n_strings": 1,
+        "n_strings_correct": 1,
+        "n_justifications": 26,
+        "n_justifications_correct": 25,
+        "n_fields": 12,
+        "n_fields_correct": 12
+      }
+    ]
+  },
+  {
+    "case": "complex_mcu",
+    "model": "typesafe/jev-latest",
+    "mode": "decision_default",
+    "runs": 1,
+    "aspect_f1": [
+      0.6830429852191661
+    ],
+    "aspect_precision": [
+      0.7684927908530393
+    ],
+    "aspect_recall": [
+      0.6551884076514618
+    ],
+    "concepts_correct": [
+      9
+    ],
+    "n_concepts_scored": 11,
+    "closed_concepts_correct": [
+      9
+    ],
+    "n_closed_concepts": 11,
+    "reference_f1": [
+      null
+    ],
+    "requests": [
+      275
+    ],
+    "input_tokens": [
+      346466
+    ],
+    "cache_read_tokens": [
+      0
+    ],
+    "output_tokens": [
+      33516
+    ],
+    "cost_total": [
+      "0.01455"
+    ],
+    "seconds": [
+      62.1
+    ],
+    "retries": [
+      0
+    ],
+    "errors": [],
+    "warnings": 0
+  }
+]

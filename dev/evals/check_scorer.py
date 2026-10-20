@@ -4,7 +4,10 @@
 """
 Checks the scorer of the evaluation harness on each case, with no request sent:
 a document with nothing extracted must score nothing, and a document filled with
-the reference answers of the case must score everything.
+the reference answers of the case must score everything. Each case is checked
+with its document created from its text, and from its Docling document, whose
+paragraphs must be those of the reference answers (see
+``dev/evals/docling_cases.py``, which writes it again after a change in a case).
 
 Run it from the root of the repo, after a change in the scorer, in a case or in
 its reference answers:
@@ -20,7 +23,7 @@ from datetime import date
 from typing import Any
 
 from contextgem import Document
-from dev.evals.harness import CASE_NAMES, load_case
+from dev.evals.harness import CASE_NAMES, CaseInput, load_case
 from dev.evals.scoring import score_document
 
 
@@ -55,18 +58,21 @@ def _fill_concept(
     concept.extracted_items = items
 
 
-def check_case(case: str) -> None:
+def check_case(case: str, case_input: CaseInput = "text") -> None:
     """
     Checks the scores of the document of a case with nothing extracted, and of
     the same document filled with the reference answers.
 
     :param case: The name of the case.
     :type case: str
+    :param case_input: What the document of the case is created from (see
+        :func:`~dev.evals.harness.load_case`). Defaults to "text".
+    :type case_input: CaseInput
     :return: None
     :rtype: None
     :raises AssertionError: If a score is not the expected one.
     """
-    document, gold = load_case(case)
+    document, gold = load_case(case, case_input=case_input)
     scores = score_document(document, gold)
     summary = scores["summary"]
     assert summary["aspect_f1"] == 0, summary
@@ -117,7 +123,8 @@ def check_case(case: str) -> None:
             for aspect_scores in scores["aspects"]
         ), scores["aspects"]
     print(
-        f"{case}: ok ({len(document.aspects)} aspects with {n_neutral} neutral "
+        f"{case} ({case_input}): ok ({len(document.aspects)} aspects with "
+        f"{n_neutral} neutral "
         f"paragraphs, {summary['n_concepts_scored']} concepts scored without "
         f"a judge, {summary['n_strings']} string concepts)"
     )
@@ -131,7 +138,8 @@ def main() -> None:
     :rtype: None
     """
     for case in CASE_NAMES:
-        check_case(case)
+        for case_input in ("text", "docling"):
+            check_case(case, case_input)
 
 
 if __name__ == "__main__":

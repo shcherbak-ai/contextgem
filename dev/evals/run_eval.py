@@ -19,6 +19,10 @@ Each run is written to ``results/<label>/runs/`` as a JSON file, and one line is
 printed for it, which starts with the name of the file. A run whose file exists is
 skipped. The library prints its logs as usual, at the level set with
 ``CONTEXTGEM_LOGGER_LEVEL``.
+
+``--input docling`` creates the document of the case from its Docling document,
+with ``Document.from_docling()``, instead of from its text (see
+``dev/evals/docling_cases.py``). Record such runs under a label of their own.
 """
 
 from __future__ import annotations
@@ -34,6 +38,7 @@ from typing import Any, get_args
 from dev.evals.harness import (
     CASE_NAMES,
     RESULTS_DIR,
+    CaseInput,
     ModelKind,
     create_model,
     get_model_slug,
@@ -128,6 +133,7 @@ def run_once(
     use_concurrency: bool,
     label: str,
     run: int,
+    case_input: CaseInput = "text",
 ) -> dict[str, Any]:
     """
     Extracts everything of a case with a model, once, and scores the result.
@@ -137,6 +143,9 @@ def run_once(
 
     :param case: The name of the case.
     :type case: str
+    :param case_input: What the document of the case is created from (see
+        :func:`~dev.evals.harness.load_case`). Defaults to "text".
+    :type case_input: CaseInput
     :param model: The model identifier.
     :type model: str
     :param kind: The kind of the model: "llm" or "decision".
@@ -153,7 +162,9 @@ def run_once(
         the usage, the retries for invalid data, the warnings, and the scores.
     :rtype: dict[str, Any]
     """
-    document, gold = load_case(case, for_decision_model=kind == "decision")
+    document, gold = load_case(
+        case, for_decision_model=kind == "decision", case_input=case_input
+    )
     extractor, private_texts = create_model(model, kind, api_base)
 
     error = None
@@ -180,6 +191,7 @@ def run_once(
         "model": model,
         "kind": kind,
         "mode": get_mode(kind, use_concurrency),
+        "input": case_input,
         "label": label,
         "run": run,
         "error": error,
@@ -234,6 +246,13 @@ def main() -> None:
     parser.add_argument(
         "--concurrency", action="store_true", help="extract with use_concurrency=True"
     )
+    parser.add_argument(
+        "--input",
+        default="text",
+        choices=get_args(CaseInput),
+        help="what the document is created from: the text of the case (default), "
+        "or its Docling document, with or without the additional context",
+    )
     args = parser.parse_args()
 
     runs_dir = RESULTS_DIR / args.label / "runs"
@@ -254,6 +273,7 @@ def main() -> None:
             use_concurrency=args.concurrency,
             label=args.label,
             run=run,
+            case_input=args.input,
         )
         write_json(path, record)
         summary = record["scores"]["summary"]

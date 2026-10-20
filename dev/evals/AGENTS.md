@@ -12,6 +12,9 @@ Measures the quality and the cost of extraction on evaluation cases with referen
 | `cases/<case>.neutral.json` | Paragraphs that are not scored for an aspect: section headings, and borderline and linked paragraphs with the reasons |
 | `cases/reference_review.md` | Record of the review of the reference answers: method, rulings and limits |
 | `cases/judge_checks.json` | Checks of the judge: candidate answers whose verdict is known |
+| `cases/<case>.docling.json` | Docling document of the case, from which `--input docling` creates its document with `Document.from_docling()` |
+| `cases/<case>.docling.html` | HTML rendering of the text of the case that Docling converted into it |
+| `docling_cases.py` | Writes the Docling documents of the cases and checks them (offline, no request) |
 | `harness.py` | Loads a case, creates the model, writes results |
 | `scoring.py` | Scores an extracted document against the reference answers |
 | `run_eval.py` | Extracts a case with a model and scores it (**live requests**) |
@@ -84,6 +87,11 @@ uv run python -m dev.evals.judge --label my_experiment
 
 # Self-check of the scorer (offline)
 uv run python -m dev.evals.check_scorer
+
+# The same extraction from the Docling document of the case (live), and
+# the Docling documents written again after a change in a case (offline)
+uv run python -m dev.evals.run_eval --case complex_mcu --model openai/gpt-6-luna --runs 3 --label my_experiment --input docling
+uv run python -m dev.evals.docling_cases
 ```
 
 `--concurrency` runs the extraction with `use_concurrency=True`. One line is printed per run, which starts with the name of its file. The library prints its logs as usual: set `CONTEXTGEM_LOGGER_LEVEL=WARNING` for a quiet run.
@@ -173,6 +181,45 @@ No wording is better across the models:
 The differences are not the variation between passes: with the current wording, three of the models give the same answers as in `baseline_2026-10-11`, and the other two differ in about 10 of 1,206 answers, i.e. by 0.003 or less in F1.
 
 Not tested: the questions of concepts (each case has six concepts that a decision model extracts, too few to compare wordings), and aspects extracted with sentences or with additional context. The recorded probabilities were not kept: the numbers above are the record.
+
+## Extraction from Docling Documents
+
+`--input` of `run_eval` and `decision_probabilities` says what the document of a case is created from: `text` (the default, as in every baseline), `docling`, or `docling_without_context`. The two Docling inputs create the document with `Document.from_docling()` from `cases/<case>.docling.json`, i.e. with the structure that Docling gives a file: the additional context of each paragraph (what it is, e.g. `Table row`, the headings of its section, the caption of its table) and each table row with the header of each column before its value. `docling_without_context` leaves out the additional context, to tell its effect from that of the table rows. A run and a pass of the probabilities record their input (`input`); those recorded before 2026-10-20 have none, and are of the text.
+
+`docling_cases.py` writes the Docling documents: it renders the text of each case as HTML (each heading of `.neutral.json` at the level of its section, the title of a table as its caption, the first row of a table as its header row), converts it with the docling-slim of the dev group, and writes the HTML and the Docling document. The HTML backend of Docling replaces some characters with ASCII ones, e.g. "—" with "-", which a PDF file of the same text keeps: the script sets a table cell that differs from the case only by them back to the text of the case, so that the Docling document differs from the text only in its structure. The paragraphs of a Docling document are those of the reference answers, position by position (a table row with the values of the cells of its line, in order): `load_case` checks it each time, and `check_scorer` checks each case with both inputs. After a change in the text of a case, write the Docling documents again.
+
+This measures what ContextGem makes of the structure of a document, not how well Docling reads a file: the HTML comes from the text, so Docling finds exactly its sections and tables.
+
+### Measured on 2026-10-20
+
+Three labels recorded at the same time, with `litellm` 1.105.1, before `Document.from_docling()` was released: `docling_2026-10-20_text` (the control), `docling_2026-10-20_docling`, and `docling_2026-10-20_without_context` (`complex_mcu` only, as the other cases have no tables). Each: `openai/gpt-6-luna` and `openai/gpt-5.6-luna`, 3 runs each; the three hosted decision models, 1 run and one pass of `decision_probabilities` each; the judge, which agreed with all 62 checks for each label. Cost: USD 1.35 for the three labels.
+
+**Decision models gain on every case.** Aspect F1 at the default threshold, one run each (the decision models give nearly the same answers in each pass):
+
+| Case | Model | Text | Docling | Without context |
+|------|-------|------|---------|-----------------|
+| `complex_nda` | `typesafe/jev-latest` | 0.822 | 0.894 | |
+| `complex_nda` | `openai/gpt-6-luna` | 0.892 | 0.932 | |
+| `complex_nda` | `azure_ai/ms-decision-model` | 0.779 | 0.830 | |
+| `complex_dpa` | `typesafe/jev-latest` | 0.793 | 0.845 | |
+| `complex_dpa` | `openai/gpt-6-luna` | 0.823 | 0.908 | |
+| `complex_dpa` | `azure_ai/ms-decision-model` | 0.763 | 0.776 | |
+| `complex_mcu` | `typesafe/jev-latest` | 0.623 | 0.685 | 0.683 |
+| `complex_mcu` | `openai/gpt-6-luna` | 0.633 | 0.749 | 0.659 |
+| `complex_mcu` | `azure_ai/ms-decision-model` | 0.555 | 0.706 | 0.624 |
+
+- The mean of the nine is 0.743 with the text and 0.814 with the Docling document. At the best threshold of each model (`thresholds.md`, mean of the cases), 0.794 to 0.848 (`azure_ai/ms-decision-model`), 0.787 to 0.873 (`openai/gpt-6-luna`) and 0.757 to 0.820 (`typesafe/jev-latest`): the probabilities tell the reference paragraphs from the others better, not only on the other side of the threshold.
+- The closed concepts: 55 of 69 correct, against 50 with the text.
+- On `complex_mcu`, the table rows with the headers of their columns account for the gain of `typesafe/jev-latest`; the additional context adds 0.08 to 0.09 for the two other models.
+- The requests have 17% to 32% more input tokens.
+
+**LLMs show no difference beyond the variation between runs**, at a cost in tokens:
+
+- Aspect F1 within 0.025 of the text in each case, and the reference F1 within 0.035, in both directions. The judged strings and justifications differ by one or two runs' worth.
+- On `complex_mcu`, `openai/gpt-6-luna` got 24.0 of 26 concepts (22 to 26) against 25.7 with the text: two runs gave no item for the computed junction temperature of DR-114 and the HDR-7 check that depends on it, while all the paragraphs of their aspect were extracted. Without the additional context it got 25.7, and both LLMs had their highest reference F1 there (0.743 and 0.657, against 0.716 and 0.616 with the text).
+- The input tokens: 5% to 12% more on the contracts, 40% more on `complex_mcu`, whose table rows repeat the caption of their table and the headings of their section in their additional context.
+
+So the additional context is worth its tokens for decision models, which judge each paragraph on its own; LLMs, which read the paragraphs of the whole document in order, do as well without it. Not settled: whether the prompts of LLMs should leave out the additional context of table rows, which a change of the library would decide. The limits: the structure is that of the text, so it is clean, where a converted PDF has the errors of Docling; three cases, one of them with tables; one run of each decision model.
 
 ## Adding a Case
 

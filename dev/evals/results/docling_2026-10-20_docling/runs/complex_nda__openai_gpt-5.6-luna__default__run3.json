@@ -1,0 +1,872 @@
+{
+  "case": "complex_nda",
+  "model": "openai/gpt-5.6-luna",
+  "kind": "llm",
+  "mode": "default",
+  "input": "docling",
+  "label": "docling_2026-10-20_docling",
+  "run": 3,
+  "error": null,
+  "seconds": 46.5,
+  "usage": {
+    "requests": 6,
+    "requests_without_response": 0,
+    "input_tokens": 53432,
+    "output_tokens": 4860,
+    "cache_read_tokens": 41787,
+    "cache_write_tokens": 11627,
+    "cost_total": "0.00958"
+  },
+  "retries_for_invalid_data": 0,
+  "responses_not_valid_json": 0,
+  "extraction_warnings": [],
+  "refusal_warnings": [],
+  "provenance": {
+    "litellm": "1.105.1",
+    "prompts": {
+      "decision_question_aspect.j2": "7b069363576f",
+      "decision_question_concept.j2": "603962caf35d",
+      "default_system_message.j2": "8bb691c5e36c",
+      "extract_aspect_items.j2": "a73d8b00c6cc",
+      "extract_concept_items.j2": "c95e046ad0d5"
+    }
+  },
+  "scores": {
+    "summary": {
+      "aspect_f1": 1.0,
+      "aspect_precision": 1.0,
+      "aspect_recall": 1.0,
+      "concept_accuracy": 1.0,
+      "n_concepts_scored": 18,
+      "n_concepts_correct": 18,
+      "string_exact": 0.6666666666666666,
+      "n_strings": 3,
+      "reference_f1": 0.8297313797313798,
+      "n_concepts_without_items": 0
+    },
+    "aspects": [
+      {
+        "name": "NDA information protection",
+        "n_predicted": 18,
+        "n_gold": 18,
+        "n_neutral_predicted": 1,
+        "predicted_paragraphs": [
+          5,
+          9,
+          10,
+          11,
+          12,
+          13,
+          14,
+          16,
+          17,
+          18,
+          19,
+          44,
+          45,
+          46,
+          47,
+          48,
+          49,
+          50,
+          51
+        ],
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0
+      },
+      {
+        "name": "NDA recipient permissions",
+        "n_predicted": 15,
+        "n_gold": 15,
+        "n_neutral_predicted": 1,
+        "predicted_paragraphs": [
+          4,
+          7,
+          21,
+          22,
+          23,
+          24,
+          25,
+          53,
+          54,
+          55,
+          56,
+          57,
+          58,
+          59,
+          60,
+          61
+        ],
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0
+      },
+      {
+        "name": "NDA compulsory disclosure Q-27",
+        "n_predicted": 9,
+        "n_gold": 9,
+        "n_neutral_predicted": 0,
+        "predicted_paragraphs": [
+          11,
+          12,
+          31,
+          32,
+          33,
+          34,
+          63,
+          64,
+          65
+        ],
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0
+      },
+      {
+        "name": "NDA exit obligations X-27",
+        "n_predicted": 14,
+        "n_gold": 14,
+        "n_neutral_predicted": 0,
+        "predicted_paragraphs": [
+          11,
+          12,
+          27,
+          28,
+          29,
+          36,
+          37,
+          38,
+          39,
+          67,
+          68,
+          69,
+          70,
+          71
+        ],
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0
+      }
+    ],
+    "concepts": [
+      {
+        "context": "document",
+        "name": "NDA effective date",
+        "type": "DateConcept",
+        "n_items": 1,
+        "n_gold_items": 1,
+        "predicted": [
+          "2027-02-01"
+        ],
+        "gold": [
+          "2027-02-01"
+        ],
+        "scoring": "exact",
+        "correct": true,
+        "predicted_references": [
+          4,
+          7
+        ],
+        "references": {
+          "precision": 1.0,
+          "recall": 1.0,
+          "f1": 1.0
+        },
+        "values": [
+          "2027-02-01"
+        ],
+        "justifications": [
+          "The agreement expressly defines the Effective Date as 1 February 2027, while the signing date is 29 January 2027 and effectiveness is deferred."
+        ]
+      },
+      {
+        "context": "document",
+        "name": "NDA permitted purpose",
+        "type": "StringConcept",
+        "n_items": 1,
+        "n_gold_items": 1,
+        "predicted": [
+          "evaluating a possible minority investment by talus ventures ab in fjordsignal as's marine sensor business under project glassfinch."
+        ],
+        "gold": [
+          "evaluating a possible minority investment by the recipient in the discloser's marine sensor business under project glassfinch."
+        ],
+        "scoring": "exact_or_accepted",
+        "correct": true,
+        "predicted_references": [
+          4
+        ],
+        "references": {
+          "precision": 1.0,
+          "recall": 1.0,
+          "f1": 1.0
+        },
+        "values": [
+          "Evaluating a possible minority investment by Talus Ventures AB in FjordSignal AS's marine sensor business under Project Glassfinch."
+        ],
+        "justifications": [
+          "The sole Permitted Purpose is the evaluation of a possible minority investment in the Discloser's marine sensor business under the named project."
+        ]
+      },
+      {
+        "context": "document",
+        "name": "NDA disclosure window end",
+        "type": "DateConcept",
+        "n_items": 1,
+        "n_gold_items": 1,
+        "predicted": [
+          "2027-11-30"
+        ],
+        "gold": [
+          "2027-11-30"
+        ],
+        "scoring": "exact",
+        "correct": true,
+        "predicted_references": [
+          5,
+          67
+        ],
+        "references": {
+          "precision": 1.0,
+          "recall": 1.0,
+          "f1": 1.0
+        },
+        "values": [
+          "2027-11-30"
+        ],
+        "justifications": [
+          "The executed termination notice delivered on 24 November 2027 closes the disclosure window effective 30 November 2027. The earlier return request does not itself terminate the window."
+        ]
+      },
+      {
+        "context": "document",
+        "name": "NDA contractual forum",
+        "type": "StringConcept",
+        "n_items": 1,
+        "n_gold_items": 1,
+        "predicted": [
+          "courts of oslo"
+        ],
+        "gold": [
+          "courts of oslo"
+        ],
+        "scoring": "exact_or_accepted",
+        "correct": true,
+        "predicted_references": [
+          6
+        ],
+        "references": {
+          "precision": 1.0,
+          "recall": 1.0,
+          "f1": 1.0
+        },
+        "values": [
+          "Courts of Oslo"
+        ],
+        "justifications": [
+          "The parties designate the courts of Oslo as their contractual forum."
+        ]
+      },
+      {
+        "context": "document",
+        "name": "NDA signatory entities",
+        "type": "JsonObjectConcept",
+        "n_items": 2,
+        "n_gold_items": 2,
+        "predicted": [
+          {
+            "country": "norway",
+            "name": "fjordsignal as",
+            "role": "discloser"
+          },
+          {
+            "country": "sweden",
+            "name": "talus ventures ab",
+            "role": "recipient"
+          }
+        ],
+        "gold": [
+          {
+            "country": "norway",
+            "name": "fjordsignal as",
+            "role": "discloser"
+          },
+          {
+            "country": "sweden",
+            "name": "talus ventures ab",
+            "role": "recipient"
+          }
+        ],
+        "scoring": "names_of_objects",
+        "correct": true,
+        "field_match_rate": 1.0,
+        "predicted_references": [
+          3
+        ],
+        "references": {
+          "precision": 1.0,
+          "recall": 1.0,
+          "f1": 1.0
+        },
+        "values": [
+          {
+            "name": "FjordSignal AS",
+            "country": "Norway",
+            "role": "Discloser"
+          },
+          {
+            "name": "Talus Ventures AB",
+            "country": "Sweden",
+            "role": "Recipient"
+          }
+        ],
+        "justifications": [
+          "FjordSignal AS is identified as a Norwegian-registered party acting as the Discloser.",
+          "Talus Ventures AB is identified as a Swedish-registered party acting as the Recipient."
+        ]
+      },
+      {
+        "context": "aspect: NDA information protection",
+        "name": "Protected assets at the April snapshot",
+        "type": "LabelConcept",
+        "n_items": 1,
+        "n_gold_items": 1,
+        "predicted": [
+          [
+            "basalt",
+            "cedar",
+            "lumen",
+            "shore"
+          ]
+        ],
+        "gold": [
+          [
+            "basalt",
+            "cedar",
+            "lumen",
+            "shore"
+          ]
+        ],
+        "scoring": "exact",
+        "correct": true,
+        "predicted_references": [
+          10,
+          13,
+          17,
+          47,
+          48,
+          49,
+          50,
+          51
+        ],
+        "references": {
+          "precision": 0.875,
+          "recall": 0.4375,
+          "f1": 0.5833333333333334
+        },
+        "values": [
+          [
+            "LUMEN",
+            "SHORE",
+            "CEDAR",
+            "BASALT"
+          ]
+        ],
+        "justifications": [
+          "LUMEN remains protected as a trade secret, SHORE remains protected because only an incorporated module was previously possessed, and CEDAR and BASALT have no effective exclusion by the snapshot. ORACLE lost provisional protection before acceptance, while MICA was independently developed before disclosure."
+        ]
+      },
+      {
+        "context": "aspect: NDA information protection",
+        "name": "ORACLE timely confirmation deadline",
+        "type": "DateConcept",
+        "n_items": 1,
+        "n_gold_items": 1,
+        "predicted": [
+          "2027-04-05"
+        ],
+        "gold": [
+          "2027-04-05"
+        ],
+        "scoring": "exact",
+        "correct": true,
+        "predicted_references": [
+          11,
+          44
+        ],
+        "references": {
+          "precision": 1.0,
+          "recall": 0.6666666666666666,
+          "f1": 0.8
+        },
+        "values": [
+          "2027-04-05"
+        ],
+        "justifications": [
+          "The five Business Days begin with the first eligible day after the 25 March disclosure. Excluding 26 and 29 March, the fifth Business Day is 5 April 2027, when the deadline expires at 17:00 UTC."
+        ]
+      },
+      {
+        "context": "aspect: NDA information protection",
+        "name": "ORACLE protection timeline",
+        "type": "StringConcept",
+        "n_items": 1,
+        "n_gold_items": 1,
+        "predicted": [
+          "protection was provisional from the oral disclosure on 25 march through the 5 april deadline, but the confirmation arrived late on 6 april because delivery, not sending, controls. provisional protection therefore ended at the deadline, creating a gap until the recipient's written acceptance on 8 april; protection resumed prospectively from acceptance only."
+        ],
+        "gold": [
+          "oracle is provisionally protected from the 25 march oral disclosure until 5 april 2027 at 17:00 utc. confirmation sent before that deadline arrived late on 6 april at 09:05, so protection lapses after the deadline. it resumes prospectively when the recipient expressly accepts on 8 april at 10:00 utc; the gap is not cured retroactively."
+        ],
+        "scoring": "exact_or_accepted",
+        "correct": false,
+        "predicted_references": [
+          10,
+          12,
+          44,
+          45
+        ],
+        "references": {
+          "precision": 1.0,
+          "recall": 0.8,
+          "f1": 0.888888888888889
+        },
+        "values": [
+          "Protection was provisional from the oral disclosure on 25 March through the 5 April deadline, but the confirmation arrived late on 6 April because delivery, not sending, controls. Provisional protection therefore ended at the deadline, creating a gap until the Recipient's written acceptance on 8 April; protection resumed prospectively from acceptance only."
+        ],
+        "justifications": [
+          "The oral rule provides continuous protection only for timely confirmation. The confirmation was sent on 5 April but delivered on 6 April, after the deadline, and acceptance on 8 April restored protection prospectively without covering the gap."
+        ]
+      },
+      {
+        "context": "aspect: NDA information protection",
+        "name": "Entire SHORE package excluded by prior possession",
+        "type": "BooleanConcept",
+        "n_items": 1,
+        "n_gold_items": 1,
+        "predicted": [
+          false
+        ],
+        "gold": [
+          false
+        ],
+        "scoring": "exact",
+        "correct": true,
+        "predicted_references": [
+          17,
+          47
+        ],
+        "references": {
+          "precision": 1.0,
+          "recall": 0.6666666666666666,
+          "f1": 0.8
+        },
+        "values": [
+          false
+        ],
+        "justifications": [
+          "Prior possession is established only for the smaller incorporated module, not for the new branching map, thresholds, or the complete disclosed package. The complete package therefore is not wholly excluded."
+        ]
+      },
+      {
+        "context": "aspect: NDA information protection",
+        "name": "CEDAR end of protection",
+        "type": "DateConcept",
+        "n_items": 1,
+        "n_gold_items": 1,
+        "predicted": [
+          "2027-06-15"
+        ],
+        "gold": [
+          "2027-06-15"
+        ],
+        "scoring": "exact",
+        "correct": true,
+        "predicted_references": [
+          14,
+          18,
+          48,
+          51
+        ],
+        "references": {
+          "precision": 1.0,
+          "recall": 0.6666666666666666,
+          "f1": 0.8
+        },
+        "values": [
+          "2027-06-15"
+        ],
+        "justifications": [
+          "The entire schedule was independently and lawfully released to the unrestricted public on 15 June 2027. That authorised release establishes the public-information exclusion for the complete schedule on that date, notwithstanding the later identical resend."
+        ]
+      },
+      {
+        "context": "aspect: NDA recipient permissions",
+        "name": "People permitted LUMEN access at the September snapshot",
+        "type": "LabelConcept",
+        "n_items": 1,
+        "n_gold_items": 1,
+        "predicted": [
+          [
+            "elin",
+            "marek",
+            "oskar"
+          ]
+        ],
+        "gold": [
+          [
+            "elin",
+            "marek",
+            "oskar"
+          ]
+        ],
+        "scoring": "exact",
+        "correct": true,
+        "predicted_references": [
+          21,
+          22,
+          23,
+          24,
+          53,
+          55,
+          56,
+          58,
+          59,
+          60
+        ],
+        "references": {
+          "precision": 1.0,
+          "recall": 0.7142857142857143,
+          "f1": 0.8333333333333333
+        },
+        "values": [
+          [
+            "Elin",
+            "Marek",
+            "Oskar"
+          ]
+        ],
+        "justifications": [
+          "Elin satisfies the employee, undertaking, security-check and named clean-room approval requirements. Marek qualifies through Talus Research's 52% voting control and has all permissions effective by 14 September; Oskar qualifies as a professional adviser through his enforceable duty of confidence, security check and clean-room approval."
+        ]
+      },
+      {
+        "context": "aspect: NDA recipient permissions",
+        "name": "Talus Research qualifying voting percentage",
+        "type": "NumericalConcept",
+        "n_items": 1,
+        "n_gold_items": 1,
+        "predicted": [
+          52.0
+        ],
+        "gold": [
+          52.0
+        ],
+        "scoring": "exact",
+        "correct": true,
+        "predicted_references": [
+          22,
+          53
+        ],
+        "references": {
+          "precision": 1.0,
+          "recall": 1.0,
+          "f1": 1.0
+        },
+        "values": [
+          52
+        ],
+        "justifications": [
+          "The countable votes comprise 48% held directly plus 4% subject to a presently effective irrevocable proxy. The revocable proxy, non-voting shares and other rights are excluded."
+        ]
+      },
+      {
+        "context": "aspect: NDA recipient permissions",
+        "name": "Marek earliest authorised LUMEN access",
+        "type": "DateConcept",
+        "n_items": 1,
+        "n_gold_items": 1,
+        "predicted": [
+          "2027-09-14"
+        ],
+        "gold": [
+          "2027-09-14"
+        ],
+        "scoring": "exact",
+        "correct": true,
+        "predicted_references": [
+          23,
+          53,
+          56
+        ],
+        "references": {
+          "precision": 1.0,
+          "recall": 0.6,
+          "f1": 0.7499999999999999
+        },
+        "values": [
+          "2027-09-14"
+        ],
+        "justifications": [
+          "Marek's undertaking and security check were effective by 10 September, but his named clean-room approval expressly became effective on 14 September. The required voting control was already operating by that date, so access could begin then."
+        ]
+      },
+      {
+        "context": "aspect: NDA recipient permissions",
+        "name": "Executed competitor consent date for Pia",
+        "type": "DateConcept",
+        "n_items": 0,
+        "n_gold_items": 0,
+        "predicted": [],
+        "gold": [],
+        "scoring": "exact",
+        "correct": true,
+        "predicted_references": [],
+        "values": [],
+        "justifications": []
+      },
+      {
+        "context": "aspect: NDA compulsory disclosure Q-27",
+        "name": "Q-27 notice deadline date",
+        "type": "DateConcept",
+        "n_items": 1,
+        "n_gold_items": 1,
+        "predicted": [
+          "2027-07-05"
+        ],
+        "gold": [
+          "2027-07-05"
+        ],
+        "scoring": "exact",
+        "correct": true,
+        "predicted_references": [
+          32,
+          63
+        ],
+        "references": {
+          "precision": 1.0,
+          "recall": 0.6666666666666666,
+          "f1": 0.8
+        },
+        "values": [
+          "2027-07-05"
+        ],
+        "justifications": [
+          "The notice prohibition was lifted at 11:20 on 5 July 2027, making the six-hour deadline 17:20 that day; this is earlier than the required production time."
+        ]
+      },
+      {
+        "context": "aspect: NDA compulsory disclosure Q-27",
+        "name": "Q-27 notice lateness in minutes",
+        "type": "NumericalConcept",
+        "n_items": 1,
+        "n_gold_items": 1,
+        "predicted": [
+          35.0
+        ],
+        "gold": [
+          35.0
+        ],
+        "scoring": "exact",
+        "correct": true,
+        "predicted_references": [
+          12,
+          32,
+          63,
+          65
+        ],
+        "references": {
+          "precision": 1.0,
+          "recall": 0.8,
+          "f1": 0.888888888888889
+        },
+        "values": [
+          35
+        ],
+        "justifications": [
+          "Because the notice was compelled, its actual arrival time controls. It arrived at 17:55, which was 35 whole minutes after the 17:20 deadline."
+        ]
+      },
+      {
+        "context": "aspect: NDA compulsory disclosure Q-27",
+        "name": "Q-27 permitted production units",
+        "type": "LabelConcept",
+        "n_items": 1,
+        "n_gold_items": 1,
+        "predicted": [
+          [
+            "p1",
+            "p3a"
+          ]
+        ],
+        "gold": [
+          [
+            "p1",
+            "p3a"
+          ]
+        ],
+        "scoring": "exact",
+        "correct": true,
+        "predicted_references": [
+          64,
+          65
+        ],
+        "references": {
+          "precision": 0.5,
+          "recall": 0.5,
+          "f1": 0.5
+        },
+        "values": [
+          [
+            "P1",
+            "P3A"
+          ]
+        ],
+        "justifications": [
+          "The final binding scope requires all of P1 and only the non-privileged subsection P3A. P2 and P4 were withdrawn, while P3B was conclusively treated as privileged and outside the production duty."
+        ]
+      },
+      {
+        "context": "aspect: NDA exit obligations X-27",
+        "name": "WORK-1 deletion deadline",
+        "type": "DateConcept",
+        "n_items": 1,
+        "n_gold_items": 1,
+        "predicted": [
+          "2027-12-08"
+        ],
+        "gold": [
+          "2027-12-08"
+        ],
+        "scoring": "exact",
+        "correct": true,
+        "predicted_references": [
+          11,
+          36,
+          37,
+          67,
+          68
+        ],
+        "references": {
+          "precision": 1.0,
+          "recall": 0.625,
+          "f1": 0.7692307692307693
+        },
+        "values": [
+          "2027-12-08"
+        ],
+        "justifications": [
+          "The valid return request arrived on 22 November 2027, earlier than the effective termination date. Counting ten Business Days after that trigger, excluding 25 and 26 November, gives 8 December 2027; the restored working copy remains subject to this original deadline."
+        ]
+      },
+      {
+        "context": "aspect: NDA exit obligations X-27",
+        "name": "BK-1 deletion deadline",
+        "type": "DateConcept",
+        "n_items": 1,
+        "n_gold_items": 1,
+        "predicted": [
+          "2027-12-30"
+        ],
+        "gold": [
+          "2027-12-30"
+        ],
+        "scoring": "exact",
+        "correct": true,
+        "predicted_references": [
+          36,
+          37,
+          67,
+          68
+        ],
+        "references": {
+          "precision": 1.0,
+          "recall": 0.6666666666666666,
+          "f1": 0.8
+        },
+        "values": [
+          "2027-12-30"
+        ],
+        "justifications": [
+          "BK-1 must be deleted at the earlier of its scheduled overwrite date and 45 calendar days after the Section 7.1 trigger. Its scheduled overwrite on 30 December 2027 occurs before the 45-day date, and no preservation order applies."
+        ]
+      },
+      {
+        "context": "aspect: NDA exit obligations X-27",
+        "name": "Artifacts permitted retention at the December snapshot",
+        "type": "LabelConcept",
+        "n_items": 1,
+        "n_gold_items": 1,
+        "predicted": [
+          [
+            "arch-1",
+            "bk-1",
+            "hold-1"
+          ]
+        ],
+        "gold": [
+          [
+            "arch-1",
+            "bk-1",
+            "hold-1"
+          ]
+        ],
+        "scoring": "exact",
+        "correct": true,
+        "predicted_references": [
+          37,
+          38,
+          68,
+          69,
+          71
+        ],
+        "references": {
+          "precision": 1.0,
+          "recall": 0.5555555555555556,
+          "f1": 0.7142857142857143
+        },
+        "values": [
+          [
+            "ARCH-1",
+            "BK-1",
+            "HOLD-1"
+          ]
+        ],
+        "justifications": [
+          "ARCH-1 qualifies as the permitted counsel-held archive, BK-1 qualifies as the immutable disaster-recovery backup until its applicable deadline, and HOLD-1 is covered by a binding preservation order. WORK-1 and NOTE-1 are not covered by a permitted retention exception."
+        ]
+      },
+      {
+        "context": "aspect: NDA exit obligations X-27",
+        "name": "NOTE-1 model training permitted as residual knowledge",
+        "type": "BooleanConcept",
+        "n_items": 1,
+        "n_gold_items": 1,
+        "predicted": [
+          false
+        ],
+        "gold": [
+          false
+        ],
+        "scoring": "exact",
+        "correct": true,
+        "predicted_references": [
+          27,
+          28,
+          70
+        ],
+        "references": {
+          "precision": 1.0,
+          "recall": 0.5,
+          "f1": 0.6666666666666666
+        },
+        "values": [
+          false
+        ],
+        "justifications": [
+          "Residual-knowledge permission excludes deliberately recorded notes, source material, and quantitative parameters, and training using Confidential Information is independently prohibited without a separate signed licence. NOTE-1 consists of deliberately recorded parameter values and reconstruction notes, with no such licence."
+        ]
+      }
+    ]
+  }
+}

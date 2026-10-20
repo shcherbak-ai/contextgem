@@ -29,11 +29,13 @@ import argparse
 import json
 import time
 import warnings
+from typing import get_args
 
 from contextgem import Document, DocumentDecisionModel
 from dev.evals.harness import (
     CASE_NAMES,
     RESULTS_DIR,
+    CaseInput,
     create_model,
     get_model_slug,
     get_provenance,
@@ -127,6 +129,13 @@ def main() -> None:
     parser.add_argument(
         "--label", required=True, help="name of the experiment, e.g. my_experiment"
     )
+    parser.add_argument(
+        "--input",
+        default="text",
+        choices=get_args(CaseInput),
+        help="what the document is created from: the text of the case (default), "
+        "or its Docling document, with or without the additional context",
+    )
     args = parser.parse_args()
 
     path = (
@@ -138,7 +147,9 @@ def main() -> None:
     if path.exists():
         print(f"exists, skipped: {path.name}", flush=True)
         return
-    document, gold = load_case(args.case, for_decision_model=True)
+    document, gold = load_case(
+        args.case, for_decision_model=True, case_input=args.input
+    )
     model, _ = create_model(args.model, "decision", args.api_base)
     if not isinstance(model, DocumentDecisionModel):
         raise TypeError("A decision model is expected.")
@@ -157,6 +168,7 @@ def main() -> None:
         {
             "case": args.case,
             "model": args.model,
+            "input": args.input,
             "aspects": [aspect.name for aspect in document.aspects],
             "probabilities": probabilities,
             "seconds": seconds,
