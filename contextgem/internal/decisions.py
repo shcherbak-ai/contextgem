@@ -408,6 +408,34 @@ def _get_sentence_text_for_aspects(
     return "\n\n".join(parts), len(parts) > 2
 
 
+def _is_whole_paragraph_sentence(paragraph: _Paragraph) -> bool:
+    """
+    Returns whether a paragraph has one sentence that is the paragraph as a whole:
+    the text of the sentence is that of the paragraph, and the sentence has no
+    additional context of its own, i.e. none, or that of the paragraph, as
+    a sentence segmented from the paragraph or made of the whole of a paragraph
+    converted from Docling has. A decision model would be asked about such
+    a sentence on what it was asked about on the paragraph, so the answers on
+    the paragraph are those on the sentence.
+
+    :param paragraph: The paragraph.
+    :type paragraph: _Paragraph
+    :return: Whether the only sentence of the paragraph is the paragraph as
+        a whole.
+    :rtype: bool
+    """
+    if len(paragraph.sentences) != 1:
+        return False
+    sentence = paragraph.sentences[0]
+    sentence_context = _clean_text_for_question(sentence.additional_context)
+    return _clean_text_for_question(sentence.raw_text) == _clean_text_for_question(
+        paragraph.raw_text
+    ) and sentence_context in (
+        "",
+        _clean_text_for_question(paragraph.additional_context),
+    )
+
+
 # Converting answers
 
 

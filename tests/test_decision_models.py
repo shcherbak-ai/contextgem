@@ -25,6 +25,7 @@ from unittest.mock import patch
 
 import pytest
 from aiolimiter import AsyncLimiter
+from docling_core.types.doc import DoclingDocument
 from litellm.types.decisions import (
     MAX_DECISION_QUESTIONS,
     OpenAIChoiceAnswer,
@@ -59,6 +60,7 @@ from contextgem.internal.decisions import (
     _get_decision_threshold,
     _get_paragraph_text_for_aspects,
     _get_sentence_text_for_aspects,
+    _is_whole_paragraph_sentence,
     _validate_answers,
 )
 from contextgem.internal.exceptions import (
@@ -7846,6 +7848,65 @@ class TestDecisionModels(BaseTest):
             assert len(decisions_stub.requests) == failed_position + 1
             assert not any(aspect._is_processed for aspect in document.aspects)
 
+    def test_decision_model_whole_paragraph_sentence(self):
+        """
+        Tests which paragraphs a decision model is not asked about the sentence
+        of, which takes the answers on the paragraph instead: those with one
+        sentence that is the paragraph as a whole, i.e. with the text of
+        the paragraph as the model is shown it, and with no additional context of
+        its own, as a table row converted from Docling has.
+        """
+        text = "Invoices are payable within 30 days."
+        assert _is_whole_paragraph_sentence(
+            Paragraph(raw_text=text, sentences=[Sentence(raw_text=text)])
+        )
+        # The texts are compared as the model is shown them
+        assert _is_whole_paragraph_sentence(
+            Paragraph(
+                raw_text=" Invoices are  payable\nwithin 30 days. ",
+                sentences=[Sentence(raw_text="Invoices are  payable\nwithin 30 days.")],
+            )
+        )
+        # The additional context of the paragraph, which a sentence segmented from
+        # the paragraph has
+        assert _is_whole_paragraph_sentence(
+            Paragraph(
+                raw_text=text,
+                sentences=[Sentence(raw_text=text, additional_context="Table row")],
+                additional_context="Table row",
+            )
+        )
+        # Additional context of its own, which the model is shown with
+        # the sentence
+        assert not _is_whole_paragraph_sentence(
+            Paragraph(
+                raw_text=text,
+                sentences=[Sentence(raw_text=text, additional_context="Footnote 2")],
+                additional_context="Table row",
+            )
+        )
+        assert not _is_whole_paragraph_sentence(
+            Paragraph(
+                raw_text=text,
+                sentences=[Sentence(raw_text=text, additional_context="Footnote 2")],
+            )
+        )
+        # A part of the paragraph
+        assert not _is_whole_paragraph_sentence(
+            Paragraph(
+                raw_text=f"{text} Late payments bear interest.",
+                sentences=[Sentence(raw_text=text)],
+            )
+        )
+        # Several sentences, or none
+        assert not _is_whole_paragraph_sentence(
+            Paragraph(
+                raw_text=f"{text} {text}",
+                sentences=[Sentence(raw_text=text), Sentence(raw_text=text)],
+            )
+        )
+        assert not _is_whole_paragraph_sentence(Paragraph(raw_text=text))
+
     def test_decision_model_aspect_sentence_questions_and_texts(self):
         """
         Tests the questions built for aspects to be asked on one sentence, for
@@ -8390,10 +8451,7 @@ class TestDecisionModels(BaseTest):
         decisions_stub.requests.clear()
         decisions_stub.outcomes[_DECISION_MODEL] = [
             _create_sentences_responder(
-                {
-                    "Termination": {3: 0.9, (3, 0): 0.8},
-                    "Governing law": {4: 0.9, (4, 0): 0.7},
-                }
+                {"Termination": {3: 0.9, (3, 0): 0.8}, "Governing law": {4: 0.9}}
             )
         ]
         with patch.object(litellm, "adecisions", new=decisions_stub):
@@ -8406,11 +8464,12 @@ class TestDecisionModels(BaseTest):
             decision_model.extract_aspects_from_document(
                 document, overwrite_existing=True
             )
+        # The only sentence of the last paragraph is the paragraph as a whole: it
+        # is not asked about, and has the answer on the paragraph
         assert [request["input"] for request in decisions_stub.requests] == [
             *_SENTENCES_PARAGRAPH_TEXTS_SENT,
             _SENTENCES_TEXTS_SENT[(3, 0)],
             _SENTENCES_TEXTS_SENT[(3, 1)],
-            _SENTENCES_TEXTS_SENT[(4, 0)],
         ]
         assert [item.value for item in termination.extracted_items] == [
             paragraphs[3].sentences[0].raw_text
@@ -8426,6 +8485,9 @@ class TestDecisionModels(BaseTest):
         assert [item.value for item in governing_law.extracted_items] == [
             paragraphs[4].sentences[0].raw_text
         ]
+        self.check_item_probabilities(
+            governing_law.extracted_items[0], {True: 0.9, False: 1 - 0.9}
+        )
         assert governing_law.reference_paragraphs == [paragraphs[4]]
         assert governing_law.reference_sentences == [paragraphs[4].sentences[0]]
         # Without overwriting, the references that an aspect has are kept, and
@@ -8447,6 +8509,123 @@ class TestDecisionModels(BaseTest):
             id(paragraphs[0].sentences[0]),
             id(paragraphs[3].sentences[0]),
         ]
+
+    def test_extract_sentence_depth_aspect_from_docling_document(self):
+        """
+        Tests the extraction of an aspect with sentences as the extracted items by
+        a decision model from a document converted from Docling, whose table rows
+        are one sentence each, their whole text. The SaT model segments only
+        the other paragraphs, when the aspect needs their sentences. A table row
+        that belongs to the aspect is an item as a whole, with its pages and
+        the probabilities of the paragraph, without a request for its sentence,
+        as is any paragraph whose one sentence is the paragraph as a whole. Each
+        sentence of the other paragraphs that belong to the aspect is asked about.
+        """
+        docling_document = DoclingDocument.load_from_json(
+            Path(__file__).parent
+            / "other_files"
+            / "docling"
+            / "service_agreement.pdf.json"
+        )
+        document = Document.from_docling(docling_document)
+        document.aspects = [
+            Aspect(
+                name="Fees",
+                description="The fees and their payment",
+                reference_depth="sentences",
+            )
+        ]
+        rows = [
+            paragraph
+            for paragraph in document.paragraphs
+            if (paragraph.additional_context or "").startswith("Table row")
+        ]
+        assert len(rows) == 3
+        assert all(len(row.sentences) == 1 for row in rows)
+
+        def respond(request: dict[str, Any]) -> OpenAIDecisionResponse:
+            """
+            Answers that a paragraph or a sentence on fees or invoices belongs to
+            the aspect, by the text that the model judges, i.e. without
+            the paragraph that a sentence is from.
+            """
+            judged = request["input"].split("\n\n", 1)[0].lower()
+            probability = 0.9 if "fee" in judged or "invoice" in judged else 0.1
+            return _create_decisions_response(
+                request["questions"],
+                {question["name"]: probability for question in request["questions"]},
+            )
+
+        texts_segmented: list[str] = []
+        split_into_sentences = documents_module._split_into_sentences
+
+        def record_split(model: Any, texts: list[str]) -> list[list[str]]:
+            """
+            Records the texts that the SaT model segments into sentences.
+            """
+            texts_segmented.extend(texts)
+            return split_into_sentences(model, texts)
+
+        decisions_stub = _DecisionsAPIStub({_DECISION_MODEL: [respond]})
+        with (
+            patch.object(litellm, "adecisions", new=decisions_stub),
+            patch.object(documents_module, "_split_into_sentences", new=record_split),
+        ):
+            _create_decision_model().extract_aspects_from_document(document)
+
+        # The SaT model segments the paragraphs that have no sentences, not
+        # the table rows
+        assert texts_segmented
+        assert not {row.raw_text for row in rows} & set(texts_segmented)
+        # One request for each paragraph, and one for each sentence of
+        # the paragraphs that belong to the aspect, but those whose one sentence
+        # is the paragraph as a whole
+        belonging = [
+            paragraph
+            for paragraph in document.paragraphs
+            if "fee" in paragraph.raw_text.lower()
+            or "invoice" in paragraph.raw_text.lower()
+        ]
+        asked = [
+            paragraph
+            for paragraph in belonging
+            if not (
+                len(paragraph.sentences) == 1
+                and paragraph.sentences[0].raw_text == paragraph.raw_text
+            )
+        ]
+        assert set(map(id, rows)) <= set(map(id, belonging)) - set(map(id, asked))
+        sentence_requests = [
+            request["input"]
+            for request in decisions_stub.requests
+            if request["input"].startswith("Sentence: ")
+        ]
+        assert len(decisions_stub.requests) == len(document.paragraphs) + len(
+            sentence_requests
+        )
+        assert len(sentence_requests) == sum(
+            len(paragraph.sentences) for paragraph in asked
+        )
+        assert not [
+            text
+            for text in sentence_requests
+            for row in rows
+            if text.startswith(f"Sentence: {row.raw_text}")
+        ]
+        # Each table row is an item as a whole, with the probabilities and
+        # the pages of its paragraph
+        (fees,) = document.aspects
+        items_of_rows = [
+            item
+            for item in fees.extracted_items
+            if item.reference_paragraphs[0] in rows
+        ]
+        assert [item.value for item in items_of_rows] == [row.raw_text for row in rows]
+        for item, row in zip(items_of_rows, rows, strict=True):
+            assert item.reference_sentences == row.sentences
+            assert item.reference_sentences[0] is row.sentences[0]
+            assert item.reference_page_numbers == row.page_numbers == [1]
+            self.check_item_probabilities(item, {True: 0.9, False: 1 - 0.9})
 
     def test_sentence_depth_aspects_decision_threshold(self):
         """

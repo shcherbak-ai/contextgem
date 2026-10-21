@@ -56,6 +56,7 @@ from contextgem.internal.decisions import (
     _get_paragraph_text_for_aspects,
     _get_sentence_text_for_aspects,
     _is_refused_answer,
+    _is_whole_paragraph_sentence,
     _validate_answers,
 )
 from contextgem.internal.decorators import _disable_direct_initialization
@@ -1449,6 +1450,13 @@ class _DocumentDecisionModel(_DocumentModel):
         show to a model. A paragraph that the model refused to answer on for
         an aspect does not belong to that aspect.
 
+        Nor is a request sent for a paragraph whose one sentence is the paragraph
+        as a whole (see ``_is_whole_paragraph_sentence``), e.g. a table row
+        converted from Docling: it would ask about the same text, and could be
+        answered otherwise than the paragraph was. The answers on the paragraph
+        to the questions of the aspects that it belongs to are taken as those on
+        the sentence.
+
         A refused answer on a sentence is returned with the other answers:
         the sentence is then not included in the aspect.
 
@@ -1520,6 +1528,17 @@ class _DocumentDecisionModel(_DocumentModel):
                 if converted_answer is not None and converted_answer[0]:
                     aspect_positions.append(position)
             if not aspect_positions:
+                continue
+            if _is_whole_paragraph_sentence(paragraph):
+                answers_of_sentences[paragraph_position].append(
+                    (
+                        paragraph.sentences[0],
+                        {
+                            name: answers[name]
+                            for name in map(_get_aspect_question_name, aspect_positions)
+                        },
+                    )
+                )
                 continue
             source_position = source_positions[id(paragraph)]
             for sentence_position, sentence in enumerate(paragraph.sentences):

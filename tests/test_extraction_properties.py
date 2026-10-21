@@ -71,6 +71,7 @@ from litellm.types.decisions import (
 
 from contextgem.internal.base import decision_models as decision_models_module
 from contextgem.internal.base import llms as llms_module
+from contextgem.internal.base.paras_and_sents import _Paragraph
 from contextgem.internal.exceptions import ModelAPIError, ModelExtractionError
 from contextgem.internal.loggers import logger
 from contextgem.internal.typings.types import (
@@ -2860,6 +2861,35 @@ def _get_answer_probability(answer: _AnswerSpec) -> Any:
     return _get_predicate_probability(answer)
 
 
+def _is_paragraph_one_whole_sentence(paragraph: _Paragraph) -> bool:
+    """
+    Returns whether a paragraph has one sentence that is the paragraph as a whole,
+    in what a decision model is shown: the same cleaned text, and no additional
+    context of its own, i.e. none or that of the paragraph once cleaned.
+
+    :param paragraph: Paragraph.
+    :type paragraph: _Paragraph
+    :return: Whether a decision model is not asked about the sentence of
+        the paragraph, which takes the answers on the paragraph instead.
+    :rtype: bool
+    """
+
+    def clean(text: str | None) -> str:
+        """
+        Cleans a text as the text of a request to a decision model is cleaned.
+        """
+        return _clean_text_for_llm_prompt(
+            text or "", preserve_linebreaks=False, strip_text=True
+        )
+
+    if len(paragraph.sentences) != 1:
+        return False
+    (sentence,) = paragraph.sentences
+    return clean(sentence.raw_text) == clean(paragraph.raw_text) and clean(
+        sentence.additional_context
+    ) in ("", clean(paragraph.additional_context))
+
+
 def _get_expected_decision_aspect_items(
     positions: list[int],
     reference_depth: str,
@@ -2877,7 +2907,9 @@ def _get_expected_decision_aspect_items(
     nor a probability within [0, 1], fails the call, as does the refusal to answer
     the question of an aspect on every paragraph. For the "sentences" reference
     depth, each sentence of a paragraph that belongs to some aspects is then asked
-    about for these aspects, where the same applies, except for the refusals.
+    about for these aspects, where the same applies, except for the refusals,
+    unless the paragraph is one sentence as a whole, which takes the answers on
+    the paragraph.
 
     :param positions: Positions of the aspects of the call in the document.
     :type positions: list[int]
@@ -2942,6 +2974,12 @@ def _get_expected_decision_aspect_items(
                 )
             continue
         if not belonging:
+            continue
+        if _is_paragraph_one_whole_sentence(document.paragraphs[paragraph_position]):
+            for position in belonging:
+                items[position].append(
+                    (paragraph_position, 0, probabilities[paragraph_position][position])
+                )
             continue
         sentence_count = len(document.paragraphs[paragraph_position].sentences)
         for sentence_position in range(sentence_count):
@@ -3954,7 +3992,9 @@ class TestExtractionProperties(BaseTest):
         a probability of "yes" of the decision threshold or more, and for
         an aspect with the "sentences" reference depth, each sentence of such
         a paragraph with such a probability, in the order of the document, with
-        the probabilities of the item. The decision threshold is the one of
+        the probabilities of the item. The one sentence of a paragraph that is
+        the paragraph as a whole is not asked about: it takes the answer on
+        the paragraph. The decision threshold is the one of
         the aspect, if it has one, or else the one of the model. A paragraph or
         a sentence that the model refused to answer on is left out, with
         a warning that names the aspect, unless the model refused to answer on
