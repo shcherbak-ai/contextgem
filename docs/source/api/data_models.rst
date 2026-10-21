@@ -1,5 +1,3 @@
-:og:description: ContextGem: Data Models API
-
 .. meta::
    :description: API reference of ModelPricing, the token prices of a model that its cost is calculated from.
 

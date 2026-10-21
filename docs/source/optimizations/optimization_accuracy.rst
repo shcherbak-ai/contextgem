@@ -1,5 +1,3 @@
-:og:description: ContextGem: Optimizing for Accuracy
-
 .. meta::
    :description: How to improve extraction accuracy: a capable model, larger segmentation models, examples, justifications, fewer paragraphs, aspects and concepts per call, and a fallback model.
 

@@ -1,5 +1,3 @@
-:og:description: ContextGem: Agentic Workflows
-
 .. meta::
    :description: How to use ContextGem in agentic workflows: extracting the metadata of documents at ingestion, extracting on demand in a tool that an agent calls, and deciding the next step of a workflow, or the tools of an agent, with a decision model.
 

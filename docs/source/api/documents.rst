@@ -1,5 +1,3 @@
-:og:description: ContextGem: Documents API
-
 .. meta::
    :description: API reference of Document, which holds the text, paragraphs and images of a document and the aspects and concepts to extract from it.
 

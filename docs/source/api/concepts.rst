@@ -1,5 +1,3 @@
-:og:description: ContextGem: Concepts API
-
 .. meta::
    :description: API reference of the concept classes: StringConcept, BooleanConcept, NumericalConcept, RatingConcept, JsonObjectConcept, DateConcept and LabelConcept.
 

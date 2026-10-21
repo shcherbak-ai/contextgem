@@ -1,5 +1,3 @@
-:og:description: ContextGem: Serialization
-
 .. meta::
    :description: How to save and load documents, pipelines and models as dictionaries, JSON strings or JSON files, and what happens to the API credentials of models.
 

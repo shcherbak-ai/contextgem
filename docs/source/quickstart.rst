@@ -1,5 +1,3 @@
-:og:description: ContextGem: Quickstart
-
 .. meta::
    :description: Complete, self-contained examples of extracting aspects and concepts from a document with ContextGem, with an LLM or a decision model, step by step.
 

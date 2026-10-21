@@ -1,5 +1,3 @@
-:og:description: ContextGem: Model groups API
-
 .. meta::
    :description: API reference of DocumentModelGroup, a group of LLMs and decision models with roles, each extracting the aspects and concepts of its role.
 

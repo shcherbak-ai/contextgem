@@ -1,5 +1,3 @@
-:og:description: ContextGem: Configuring LLM(s)
-
 .. meta::
    :description: How to configure a DocumentLLM: the model and its credentials, fallback LLMs, retries, output token limits, sampling parameters, reasoning effort, model groups, and cost and usage tracking.
 

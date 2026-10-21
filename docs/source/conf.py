@@ -62,12 +62,29 @@ def _write_children_only(translator, node):
     """
 
 
+def _share_meta_description(app, doctree):
+    """
+    Gives the page's meta description to the links to it on other sites
+    (og:description), for which sphinxext-opengraph would take the page's first
+    text. An `:og:description:` field of the page still comes first.
+    """
+
+    for meta in doctree.findall(nodes.meta):
+        if meta.get("name") == "description":
+            app.env.metadata[app.env.docname].setdefault(
+                "og:description", meta["content"]
+            )
+            return
+
+
 def setup(app):
     """
     Setup function for Sphinx documentation.
     """
 
     app.connect("autodoc-skip-member", skip_pydantic_internals)
+    # After Sphinx has read the page's fields into its metadata
+    app.connect("doctree-read", _share_meta_description, priority=600)
     # Sphinx renders the `*` and `/` separators of a signature as abbreviations,
     # which the Markdown builder of the llms.txt copies has no form for, and would
     # leave out: write their text instead
@@ -178,6 +195,9 @@ html_theme_options = {
 }
 html_link_suffix = "/"
 sitemap_url_scheme = "{link}"
+# The sitemap lists the pages a search should find: not the search page, the
+# indexes, or the source code pages of viewcode
+sitemap_excludes = ["search/", "genindex/", "py-modindex/", "_modules/*"]
 
 # Open Graph metadata
 ogp_site_url = site_url
@@ -192,17 +212,6 @@ ogp_custom_meta_tags = [
     '<meta property="og:image:height" content="640">',
     '<meta name="twitter:card" content="summary_large_image">',
 ]
-ogp_description = (
-    "ContextGem: Extract structured data and insights from documents "
-    "using LLMs and decision models"
-)
 ogp_description_length = 200
 ogp_type = "website"
 ogp_use_first_image = False
-html_meta = {
-    "description": ogp_description,
-    "robots": "index, follow",
-    "author": "Sergii Shcherbak, Shcherbak AI AS",
-    "dcterms.rightsHolder": "Shcherbak AI AS",
-    "dcterms.dateCopyrighted": "2025",
-}

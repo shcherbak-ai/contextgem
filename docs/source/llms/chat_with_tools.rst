@@ -1,5 +1,3 @@
-:og:description: ContextGem: Chat with Tools
-
 .. meta::
    :description: How to give an LLM Python functions to call as tools in chat: registering them, how their schemas are built from type hints and docstrings, and how tool errors are handled.
 

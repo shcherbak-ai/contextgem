@@ -1,5 +1,3 @@
-:og:description: ContextGem: LLM Extraction Methods
-
 .. meta::
    :description: The methods that extract aspects and concepts from a document or from its aspects with DocumentLLM, DocumentModelGroup and DocumentDecisionModel, and their parameters.
 

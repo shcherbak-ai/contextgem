@@ -1,5 +1,3 @@
-:og:description: ContextGem: Utility functions and classes
-
 .. meta::
    :description: API reference of the utility functions and classes: create_image, image_to_base64, reload_logger_settings, release_sat_model and JsonObjectClassStruct.
 

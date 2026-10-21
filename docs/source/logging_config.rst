@@ -1,5 +1,3 @@
-:og:description: ContextGem: Logging Configuration Guide
-
 .. meta::
    :description: How to set the level and the output of the ContextGem logger with environment variables, change them at runtime, read the log format, and filter its Python warnings.
 

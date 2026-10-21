@@ -1,5 +1,3 @@
-:og:description: ContextGem: Motivation
-
 .. meta::
    :description: Why ContextGem: the problems that extracting structured data from documents with LLMs involves, and how the framework solves them so that you describe only what to extract.
 

@@ -1,5 +1,3 @@
-:og:description: ContextGem: Converting Files with Docling
-
 .. meta::
    :description: How to create a Document from a file converted with Docling in one of the supported formats, e.g. PDF, DOCX, PPTX, XLSX or HTML, with the structure of the file in the additional context of the paragraphs and the pages of each paragraph.
 

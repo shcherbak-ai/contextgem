@@ -1,4 +1,4 @@
-:og:description: ContextGem: Extract structured data and insights from documents using LLMs and decision models
+:og:title: ContextGem: structured data extraction from documents using LLMs and decision models
 
 .. meta::
    :description: ContextGem is a free, open-source framework for extracting structured data and insights from documents using LLMs and decision models: start here for the guides, examples and API reference.

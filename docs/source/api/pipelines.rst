@@ -1,5 +1,3 @@
-:og:description: ContextGem: Pipelines API
-
 .. meta::
    :description: API reference of ExtractionPipeline, a reusable set of aspects and concepts to apply to documents.
 

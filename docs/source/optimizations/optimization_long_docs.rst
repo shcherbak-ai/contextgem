@@ -1,5 +1,3 @@
-:og:description: ContextGem: Dealing with Long Documents
-
 .. meta::
    :description: How to extract from long documents: segmentation into paragraphs and sentences instead of chunks, long-context models, limits per call, and concurrency.
 

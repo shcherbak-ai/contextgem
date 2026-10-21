@@ -1,0 +1,14 @@
+{#-
+  The theme's page. The home page is titled with its `:og:title:` field alone,
+  which names ContextGem and says what it is: the theme would title it with its
+  heading and add " — ContextGem <version> Documentation".
+-#}
+{%- extends "!layout.html" %}
+
+{%- block htmltitle %}
+  {%- if pagename == root_doc and meta and meta.get("og:title") %}
+    <title>{{ meta["og:title"]|e }}</title>
+  {%- else %}
+    {{- super() }}
+  {%- endif %}
+{%- endblock %}

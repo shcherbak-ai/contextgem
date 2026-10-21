@@ -1,5 +1,3 @@
-:og:description: ContextGem: Aspects API
-
 .. meta::
    :description: API reference of Aspect, a section or topic of a document to extract, with its sub-aspects, concepts and extracted items.
 

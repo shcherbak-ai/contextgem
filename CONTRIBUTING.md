@@ -689,8 +689,10 @@ You can access the live documentation at: <https://contextgem.shcherbak.ai>
 
 Under `docs/`:
 
-- `source/` - Contains the source `.rst` files. Each page starts with a `.. meta::` block whose `:description:` says in one sentence what the page covers: it is the page's line in `llms.txt`, the index of the documentation for LLMs and coding agents that the build writes to the root of the site, next to a Markdown copy of each page
+- `source/` - Contains the source `.rst` files. Each page starts with a `.. meta::` block whose `:description:` says in one sentence what the page covers: it is the page's line in `llms.txt`, the index of the documentation for LLMs and coding agents that the build writes to the root of the site, next to a Markdown copy of each page. It is also the page's description in search results and in a link to it on other sites
 - `source/_static/` - Static assets like images
+- `source/_templates/layout.html` - Titles the home page with the `:og:title:` field of `index.rst` alone, which names ContextGem and says what it is
+- `source/robots.txt` - Points search engines to the sitemap that the build writes, which leaves out the search page, the indexes and the source code pages (`sitemap_excludes`)
 - `source/conf.py` - Sphinx configuration
 - `build/` - Generated documentation (not committed to version control)
 
