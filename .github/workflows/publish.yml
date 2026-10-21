@@ -72,13 +72,25 @@ jobs:
       - name: Build sdist and wheel
         run: uv build
 
+      # Uploaded before the check below installs anything, so that nothing that
+      # it runs can change the files that are published
+      - name: Upload artifacts
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9  # v7.0.2
+        with:
+          name: dist
+          path: dist/*
+
       # Install the built wheel into a fresh environment and use it there:
       # catches what the source tree hides, e.g. a prompt template missing
-      # from the wheel.
+      # from the wheel. Its dependencies are the versions of uv.lock, which the
+      # tests ran on, checked by their hashes: none is resolved afresh.
       - name: Verify wheel install
         run: |
+          uv export --locked --no-default-groups --no-emit-project --output-file /tmp/requirements.txt
           uv venv /tmp/wheel-verify
-          uv pip install --python /tmp/wheel-verify/bin/python dist/contextgem-*.whl
+          uv pip install --python /tmp/wheel-verify/bin/python --require-hashes -r /tmp/requirements.txt
+          uv pip install --python /tmp/wheel-verify/bin/python --no-deps dist/contextgem-*.whl
+          uv pip check --python /tmp/wheel-verify/bin/python
           cd /tmp
           /tmp/wheel-verify/bin/python -c "
           import contextgem
@@ -87,12 +99,6 @@ jobs:
           _get_template('default_system_message', template_type='system')
           print('contextgem', contextgem.__version__)
           "
-
-      - name: Upload artifacts
-        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9  # v7.0.2
-        with:
-          name: dist
-          path: dist/*
 
   publish:
     needs: [build]

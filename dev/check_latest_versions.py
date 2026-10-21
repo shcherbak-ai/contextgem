@@ -95,22 +95,47 @@ _PILLOW_BELOW_13 = (
     "pillow is capped below 13 with them (EXCEPTIONS)"
 )
 
+_MARKDOWNLINT_CLI2_0_24 = (
+    "markdown-it and smol-toml, which markdownlint-cli2 0.23.3 pins: fixed in "
+    "markdownlint-cli2 0.24.0, uploaded on 2026-10-21, which the cooldown keeps out "
+    "until 2026-10-28; at worst a slow lint of a Markdown file"
+)
+
 # The advisories of locked versions that the check accepts, by their IDs at
 # osv.dev, with the reasons: a vulnerability that no version that the ranges
 # admit fixes. A report of a malicious package (MAL-) is never accepted
 ACCEPTED_ADVISORIES: dict[str, str] = {
-    advisory: _PILLOW_BELOW_13
-    for advisory in (
-        "GHSA-462x-pgg6-55fp",
-        "GHSA-58r4-6rv3-gfh8",
-        "GHSA-65qm-jvmh-6pqg",
-        "GHSA-8g5g-8vmr-9782",
-        "GHSA-c6hw-5grf-ff96",
-        "GHSA-p4wg-p73j-c528",
-        "GHSA-pchr-8j38-3x4p",
-        "GHSA-q45j-58j2-45rg",
-        "GHSA-vx6w-vv9f-6gvg",
-    )
+    **{
+        advisory: _PILLOW_BELOW_13
+        for advisory in (
+            "GHSA-462x-pgg6-55fp",
+            "GHSA-58r4-6rv3-gfh8",
+            "GHSA-65qm-jvmh-6pqg",
+            "GHSA-8g5g-8vmr-9782",
+            "GHSA-c6hw-5grf-ff96",
+            "GHSA-p4wg-p73j-c528",
+            "GHSA-pchr-8j38-3x4p",
+            "GHSA-q45j-58j2-45rg",
+            "GHSA-vx6w-vv9f-6gvg",
+        )
+    },
+    **{
+        advisory: _MARKDOWNLINT_CLI2_0_24
+        for advisory in (
+            "GHSA-gfr2-rv44-r23c",
+            "GHSA-r4xh-jqrq-34v2",
+            "GHSA-r7fv-28h4-cvq7",
+            "GHSA-vfgh-jcmw-g37q",
+        )
+    },
+    "GHSA-238p-pmpm-9mq7": (
+        "katex 0.16, which markdownlint's math parser allows (^0.16): fixed in 0.18 "
+        "only; markdownlint parses math and renders none"
+    ),
+    "GHSA-vfj7-8cjw-p6xm": (
+        "braces 3.0.3 of micromatch, of markdownlint-cli2: no release fixes it; a "
+        "stack overflow on a deeply nested glob, and the globs are the project's own"
+    ),
 }
 
 # The batch query of osv.dev, for the advisories of many versions at once

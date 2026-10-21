@@ -53,6 +53,7 @@ Development Dependencies:
 - interrogate: Python docstring coverage checker
 - licenseal: License compatibility checker for the dependencies (used for the license audit in LICENSES.md)
 - pre-commit: Pre-commit hooks
+- pre-commit-hooks: Checks of whitespace, the ends of files, YAML and TOML (run by the pre-commit hooks)
 - ty: Static type checker for Python
 - pytest: Testing framework
 - pytest-cov: Coverage plugin for pytest
@@ -74,6 +75,7 @@ Development Dependencies:
 Development Tools (npm, package.json):
 - @playwright/mcp: Browser automation server that gives AI coding assistants a browser (used to look at the README preview)
 - github-markdown-css: GitHub's Markdown styles (used by the README preview)
+- markdownlint-cli2: Markdown linter (run by the pre-commit hooks)
 
 Test Data:
 - tests/other_files/docling/docling_tests/: test documents of Docling (https://github.com/docling-project/docling), copied from its tests/data at tag v2.140.0, under the MIT License (the LICENSE file in that folder). amt_handbook_sample.pdf is a page of a handbook of the US Federal Aviation Administration, a work of the US government in the public domain. keynote_2013.key, numbers_2013.numbers and pages_2013.pages are test documents of Apache Tika (https://tika.apache.org), under the Apache License 2.0, which Docling took from it. gas_disposition.ebc and its layout are cut from the samples of ebcdic-parser (https://github.com/larandvit/ebcdic-parser), under the MIT License (the LICENSE-ebcdic-parser file in that folder), as Docling holds them; the layout is renamed gas_disposition.ebc.layout.json. legacy_sample.dclx is made by ContextGem from the Docling document of legacy_sample.doc

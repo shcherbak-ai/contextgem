@@ -446,7 +446,9 @@ def docling_fixtures(
         write: Write the Docling documents and the outputs instead of checking them
         outputs: Only write the outputs of ContextGem from the committed Docling
             documents, without Docling: after a change of the converter
-        docling_version: "locked" (uv.lock, default), "latest" or X.Y.Z
+        docling_version: "locked" (uv.lock, default), "latest" (the newest from
+            before the cooldown of pyproject.toml, `[tool.uv] exclude-newer`) or
+            X.Y.Z
 
     Example:
         uv run fab docling-fixtures

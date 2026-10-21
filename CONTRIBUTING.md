@@ -67,7 +67,7 @@ When using AI assistants (Claude Code, Cursor, etc.) to contribute:
     # uv run pre-commit install --hook-type commit-msg
     ```
 
-    The development tools that `package.json` lists need [Node.js](https://nodejs.org/): the stylesheet of the README preview and the browser of AI coding assistants. None of them is part of the package.
+    The development tools that `package.json` lists need [Node.js](https://nodejs.org/) 22 or later: the Markdown linter of the pre-commit hooks, the stylesheet of the README preview and the browser of AI coding assistants. None of them is part of the package, and none runs a script when it is installed (`ignore-scripts` in `.npmrc`).
 
 ### 🛠️ Available Fabric Commands
 
@@ -189,7 +189,7 @@ contextgem/
     - **Bandit**: security issues in the Python code
     - **Interrogate**: docstring coverage, which must stay at 100%: every module, class and function has a docstring
     - **Deptry**: the declared dependencies against the imported ones (unused, missing, transitive)
-    - **markdownlint-cli2**: Markdown style
+    - **markdownlint-cli2**: Markdown style, with the version of `package-lock.json` (`npm ci` installs it)
     - **add-file-headers**: adds the license header (two SPDX lines) to a Python file that has none, except a usage example
     - **docs-page-description**: each page of the documentation starts with a meta description (see [Documentation Structure](#-documentation-structure))
     - **update-readme**: regenerates `README.md` from its template (see [Updating README.md](#-updating-readmemd))
@@ -200,7 +200,7 @@ contextgem/
     - **claude hooks tests**: the tests of the Claude Code hook in `.claude/hooks/` and of the settings that start it, with `node --test`
     - the checks of YAML and TOML files, trailing whitespace and the ends of files. The last two skip the files whose bytes go into the requests recorded in the VCR cassettes (the package, the tests, the usage examples and the evaluation cases) and the signed contributor agreements.
 
-    The hooks run the tools through `uv run`, at the versions locked in `uv.lock`, and CI runs the same hooks (`uv run pre-commit run --all-files`), so a check that passes locally passes in CI. CI skips latest-versions, whose result depends on the day rather than on the commit. CI also checks the license compatibility of the dependencies, with licenseal.
+    The hooks run the tools through `uv run`, at the versions locked in `uv.lock`, and markdownlint-cli2 at the version of `package-lock.json`: none is a repository that pre-commit installs, which would resolve its dependencies afresh, past the cooldown of the lockfiles. CI runs the same hooks (`uv run pre-commit run --all-files`), so a check that passes locally passes in CI. CI skips latest-versions, whose result depends on the day rather than on the commit. CI also checks the license compatibility of the dependencies, with licenseal.
 
     - **If a hook modifies files** (e.g. Ruff formatting, the README): review the changes, add the modified files to the staging area, and commit again.
     - **If a hook reports a problem** (e.g. a Bandit finding or a type error): fix it, add the fixed files to the staging area, and commit again.

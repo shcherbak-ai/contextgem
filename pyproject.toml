@@ -140,6 +140,7 @@ dev = [
     "hypothesis (>=6.122.0,<7.0.0)",
     "interrogate (>=1.7.0,<2.0.0)",
     "pre-commit (>=4.1.0,<5.0.0)",
+    "pre-commit-hooks (>=6.0.0,<7.0.0)", # the hooks for whitespace, the ends of files, YAML and TOML, from uv.lock rather than installed by pre-commit
     "ty (>=0.0.88,<1.0.0)",
     "pytest (>=9.1.1,<10.0.0)",
     "pytest-cov (>=7.1.0,<8.0.0)",
@@ -279,4 +280,5 @@ ignore-init-module = true
 ignore-nested-classes = true
 ignore-overloaded-functions = true
 fail-under = 100
-exclude = [".venv", "docs", "dev/usage_examples", "code_sample.py"]
+# node_modules: KaTeX, of markdownlint-cli2, carries Python scripts of its own
+exclude = [".venv", "node_modules", "docs", "dev/usage_examples", "code_sample.py"]

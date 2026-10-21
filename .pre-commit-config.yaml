@@ -2,20 +2,39 @@
 # commit-msg stage, where the package build and the README update would repeat.
 default_stages: [pre-commit]
 
+# Every hook runs a tool of uv.lock or of package-lock.json, none a repository
+# that pre-commit installs: it would resolve the dependencies of the repository
+# afresh, past the cooldown of the lockfiles and their advisory check.
 repos:
-  - repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: 3e8a8703264a2f4a69428a0aa4dcb512790b2c8c  # v6.0.0
+  # The hooks of pre-commit-hooks, from its package
+  - repo: local
     hooks:
       # Not on what goes into the requests that the VCR cassettes match byte
       # for byte (the prompt templates of the package, the test documents, the
       # usage examples, the evaluation cases), nor on the signed contributor
       # agreements, which are kept verbatim.
       - id: trailing-whitespace
+        name: trim trailing whitespace
+        entry: uv run trailing-whitespace-fixer
+        language: system
+        types: [text]
         exclude: ^(contextgem|tests|dev/usage_examples|dev/evals|\.github/contributors)/
       - id: end-of-file-fixer
+        name: fix end of files
+        entry: uv run end-of-file-fixer
+        language: system
+        types: [text]
         exclude: ^(contextgem|tests|dev/usage_examples|dev/evals|\.github/contributors)/
       - id: check-yaml
+        name: check yaml
+        entry: uv run check-yaml
+        language: system
+        types: [yaml]
       - id: check-toml
+        name: check toml
+        entry: uv run check-toml
+        language: system
+        types: [toml]
 
   # These run from the project environment: uv.lock is their only version pin.
   - repo: local
@@ -127,10 +146,15 @@ repos:
         language: system
         stages: [commit-msg]
 
-  - repo: https://github.com/DavidAnson/markdownlint-cli2
-    rev: 916ad0aaa108c64d294101002066f530ea170b10  # v0.23.3
+  # The Node of the development tools, with markdownlint-cli2 installed from
+  # package-lock.json (npm ci)
+  - repo: local
     hooks:
       - id: markdownlint-cli2
+        name: markdownlint-cli2
+        entry: node node_modules/markdownlint-cli2/markdownlint-cli2-bin.mjs
+        language: system
+        types: [markdown]
 
   # The tests of the Claude Code hook that keeps the agents' browser files in
   # one folder, and of the settings that start it, with Node's own runner: the

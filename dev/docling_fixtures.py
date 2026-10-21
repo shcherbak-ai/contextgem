@@ -48,7 +48,9 @@ The models of Docling are downloaded from Hugging Face on the first run, about
 docling-parse stops the conversions now and then: they run again, up to
 ``WINDOWS_ATTEMPTS`` times. The workflow
 ``.github/workflows/docling-fixtures.yml`` runs the check when ``uv.lock`` or the
-converter changes, and weekly with the latest Docling.
+converter changes, and weekly with the latest Docling, the newest from before the
+cooldown of ``pyproject.toml`` (``[tool.uv] exclude-newer``), which applies to
+everything that the environment of full Docling installs.
 
 Example:
     uv run fab docling-fixtures
@@ -354,6 +356,9 @@ def _setup(docling_version: str, scratch: Path) -> Path:
         f"PyTorch...",
         flush=True,
     )
+    # From the checkout, whose cooldown (`[tool.uv] exclude-newer` of
+    # pyproject.toml) uv applies to the packages that it resolves here, the
+    # latest Docling too: uv reads it from the folder that it runs in
     subprocess.run(  # nosec B603 - uv with arguments of its own, no shell
         [
             *(uv, "pip", "install", "--quiet", "--python", str(python)),
@@ -361,6 +366,7 @@ def _setup(docling_version: str, scratch: Path) -> Path:
             *("--torch-backend", "cpu"),
             *("--editable", str(ROOT), requirement, other_formats),
         ],
+        cwd=ROOT,
         check=True,
     )
     return python
@@ -581,7 +587,10 @@ def main() -> int:
     parser.add_argument(
         "--docling-version",
         default="locked",
-        help="the version of Docling: 'locked' (uv.lock, default), 'latest' or X.Y.Z",
+        help=(
+            "the version of Docling: 'locked' (uv.lock, default), 'latest' (the "
+            "newest from before the cooldown of pyproject.toml) or X.Y.Z"
+        ),
     )
     parser.add_argument("--inner", action="store_true", help=argparse.SUPPRESS)
     args = parser.parse_args()
@@ -607,7 +616,7 @@ def main() -> int:
             "(https://ffmpeg.org/download.html) and put it on the PATH."
         )
     attempts = WINDOWS_ATTEMPTS if os.name == "nt" else 1
-    # Outside the checkout, so that no configuration of the project applies. A file
+    # The environment is outside the checkout, apart from the project's own. A file
     # of the environment can still be open on Windows when the folder is removed.
     with tempfile.TemporaryDirectory(
         prefix="contextgem-docling-", ignore_cleanup_errors=True
