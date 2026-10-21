@@ -29,138 +29,14 @@ Or using pip:
 
    pip install -U "contextgem[docling]"
 
-The ``docling`` extra installs Docling and PyTorch, on which Docling runs its models, e.g. those that find the layout and the tables of a PDF file. On Linux, PyTorch comes with the CUDA libraries of NVIDIA by default; for a CPU-only PyTorch, see the `installation guide of Docling <https://docling-project.github.io/docling/installation/>`_. The extra does not install on an Intel Mac (see :doc:`../installation`).
+The ``docling`` extra installs Docling and PyTorch, on which Docling runs its models, e.g. those that find the layout and the tables of a PDF file. On Linux, PyTorch comes with the CUDA libraries of NVIDIA by default; for a CPU-only PyTorch, see the `installation guide of Docling <https://docling-project.github.io/docling/getting_started/installation/>`_. The extra does not install on an Intel Mac (see :doc:`../installation`). Some formats need more than the extra, e.g. LibreOffice for DOC, PPT, XLS and RTF files (see the :ref:`supported formats <docling-formats-label>`).
 
 .. tip::
    A Docling document converted elsewhere, e.g. by a Docling Serve instance, or saved by Docling as JSON and loaded with ``DoclingDocument.load_from_json()``, needs only the document model of Docling, not Docling itself: ``uv add contextgem docling-core``.
 
 
-.. _docling-formats-label:
-
-📄 Supported Formats
----------------------
-
-``from_docling()`` supports the files in these formats. Its tests convert files in each of them with Docling, and check the paragraphs and the images of the document made of each. Some formats need more than the ``docling`` extra:
-
-.. list-table::
-   :header-rows: 1
-   :widths: 40 25 35
-
-   * - Format
-     - Extensions
-     - Needs
-   * - PDF, also scanned, which Docling reads with OCR
-     - ``.pdf``
-     -
-   * - Images, e.g. scans, which Docling reads with OCR
-     - ``.png``, ``.tiff``
-     -
-   * - Word
-     - ``.docx``, ``.doc``
-     - LibreOffice, for DOC
-   * - PowerPoint
-     - ``.pptx``, ``.ppt``
-     - LibreOffice, for PPT
-   * - Excel
-     - ``.xlsx``, ``.xls``
-     - LibreOffice, for XLS
-   * - Rich Text Format
-     - ``.rtf``
-     - LibreOffice
-   * - OpenDocument text, spreadsheet and presentation
-     - ``.odt``, ``.ods``, ``.odp``
-     - ``docling-slim[format-opendocument]``
-   * - Apple Pages, Numbers and Keynote
-     - ``.pages``, ``.numbers``, ``.key``
-     -
-   * - HTML, and web pages saved in one file (MHTML)
-     - ``.html``, ``.mhtml``
-     -
-   * - Markdown
-     - ``.md``
-     -
-   * - AsciiDoc
-     - ``.asciidoc``
-     -
-   * - LaTeX
-     - ``.tex``
-     -
-   * - CSV
-     - ``.csv``
-     -
-   * - WebVTT subtitles
-     - ``.vtt``
-     -
-   * - EPUB
-     - ``.epub``
-     -
-   * - Email
-     - ``.eml``, ``.msg``
-     -
-   * - Box Notes
-     - ``.boxnote``
-     -
-   * - JATS XML articles
-     - ``.nxml``
-     -
-   * - USPTO XML patents
-     - ``.xml``
-     -
-   * - XBRL reports
-     - ``.xbrl``
-     - ``docling-slim[format-xml-xbrl]``, and the taxonomy of the report
-   * - DocLang, the markup of Docling, as XML and as an archive
-     - ``.dclg``, ``.dclx``
-     -
-   * - Google Books packages (METS GBS)
-     - ``.tar.gz``
-     -
-   * - EBCDIC records of mainframes
-     - ``.ebc``
-     - The layout of the records
-   * - AFP print streams
-     - ``.afp``
-     -
-   * - Audio, which Docling transcribes
-     - ``.mp3``
-     - ``docling[asr]`` and ffmpeg
-   * - Video, whose speech Docling transcribes and whose frames it samples
-     - ``.mp4``
-     - ``docling[asr]`` and ffmpeg
-   * - Docling JSON, which Docling saves its documents in
-     - ``.json``
-     -
-
-Docling also takes other extensions of these formats, e.g. ``.adoc`` for AsciiDoc, ``.markdown`` for Markdown, ``.jpg`` for images, ``.wav`` for audio and ``.mov`` for video. What the formats in the last column need:
-
-* **LibreOffice**: Docling converts a DOC, XLS, PPT or RTF file into DOCX, XLSX or PPTX with `LibreOffice <https://www.libreoffice.org>`_, and then converts that. It finds LibreOffice on the ``PATH``, or in its folder on macOS. The installer for Windows does not add it to the ``PATH``: add its ``program`` folder, e.g. ``C:\Program Files\LibreOffice\program``, or set ``DOCLING_LIBREOFFICE_CMD`` to its ``soffice.exe``. On Debian or Ubuntu: ``sudo apt-get install libreoffice-writer libreoffice-calc libreoffice-impress``.
-* **XBRL**: ``uv add "docling-slim[format-xml-xbrl]"`` installs Arelle, with which Docling reads a report. It reads the report with its taxonomy, from a folder that holds the schema and the linkbases that the report refers to, and only when it is allowed to read local files:
-
-  .. code-block:: python
-
-     from pathlib import Path
-
-     from docling.datamodel.backend_options import XBRLBackendOptions
-     from docling.datamodel.base_models import InputFormat
-     from docling.document_converter import DocumentConverter, XBRLFormatOption
-
-     converter = DocumentConverter(
-         format_options={
-             InputFormat.XML_XBRL: XBRLFormatOption(
-                 backend_options=XBRLBackendOptions(
-                     taxonomy=Path("taxonomy"), enable_local_fetch=True
-                 )
-             )
-         }
-     )
-
-  The facts of a report are key-value pairs, e.g. ``TotalFees: value: 5850; period: 2026-07-01 - 2026-09-30; currency: EUR; decimals: 0``, and its text blocks are text and tables.
-* **EBCDIC**: Docling decodes the records with their layout, the ``layout_file`` of ``EbcdicBackendOptions``, which it takes as the ``backend_options`` of ``EbcdicFormatOption``. The records are the rows of a table.
-* **Audio and video**: Docling transcribes the speech with Whisper, which ``uv add "docling[asr]"`` installs, and needs `ffmpeg <https://ffmpeg.org>`_ on the ``PATH``. It uses the tiny model of Whisper by default, and a larger one hears better, e.g. ``asr_model_specs.WHISPER_SMALL`` as the ``asr_options`` of ``AsrPipelineOptions`` for audio, or of ``VideoPipelineOptions`` for video.
-
-
-🚀 From a File to Cited Facts
-------------------------------
+🚀 Quick Start
+--------------
 
 Convert the file with Docling, create the document with ``from_docling()``, and extract from it as from any other document. Below, an LLM extracts a concept and an aspect from a `two-page service agreement <https://github.com/shcherbak-ai/contextgem/blob/main/tests/other_files/docling/service_agreement.pdf>`_:
 
@@ -169,6 +45,8 @@ Convert the file with Docling, create the document with ``from_docling()``, and 
    :caption: Extracting from a PDF file converted with Docling
 
 Each fee comes from a row of the table, which the LLM gets with the header of each column, and the termination clauses from section 3. ``reference_page_numbers`` gives the pages that an aspect or an extracted item was found on (see :ref:`docling-pages-label`).
+
+The other arguments of ``from_docling()`` are passed to the document, e.g. ``aspects``, ``concepts``, ``sat_model_id`` or ``pre_segment_sentences`` (see :doc:`document_config`). Its paragraphs and images are made from the Docling document, and its ``raw_text`` is the text of its paragraphs.
 
 
 🧱 What the Document Is Made Of
@@ -218,15 +96,15 @@ Where the file has them, the additional context also gives:
 * **the speaker** of a cue, in a subtitle file, e.g. WebVTT: ``Speaker: Ann Berg``;
 * **the title**, in a file with several titles, as the top level of the section, e.g. ``List item; Slide 2; Section: Results`` for a list item on a slide titled Results. Each slide of a presentation can have a title, and Docling makes a title of the heading of each chapter of an EPUB file and of each top-level heading (``#``) of a Markdown file. A file with one title has it in no section, as it would be in the context of every paragraph.
 
-**Left out:** page headers and footers, comments, the speaker notes of a presentation, hidden slides and sheets, and the text that Docling finds inside pictures.
-
-**Sentences.** A paragraph that is not running text, i.e. a title or a heading, a table header or row, a form field or a key-value pair, code, a formula, a checkbox or an entry of a list of references, is one sentence from the start: its whole text. A SaT model, which is made for running text, would split e.g. a table row within the text of a cell. The other paragraphs are split into sentences by a SaT model when sentences are needed, e.g. for an aspect with ``reference_depth="sentences"``, as in any document (see :ref:`sat-models-offline`). A reference sentence of a table row is thus the whole row, with its pages.
-
 .. literalinclude:: ../../../dev/usage_examples/docs/documents/docling_conversion.py
    :language: python
    :caption: The paragraphs of a document created from a file converted with Docling
 
 The additional context is sent to the models together with the paragraph, in the requests that list paragraphs: to an LLM, for aspects and for concepts with references (``add_references=True``), and to a decision model, which reads each paragraph on its own, for aspects (see :ref:`paragraph-additional-context`). A concept without references, which is how a decision model extracts concepts, is extracted from the text of the paragraphs only, and its items have no pages.
+
+**Left out:** page headers and footers, comments, the speaker notes of a presentation, hidden slides and sheets, and the text that Docling finds inside pictures.
+
+**Sentences.** A paragraph that is not running text, i.e. a title or a heading, a table header or row, a form field or a key-value pair, code, a formula, a checkbox or an entry of a list of references, is one sentence from the start: its whole text. A SaT model, which is made for running text, would split e.g. a table row within the text of a cell. The other paragraphs are split into sentences by a SaT model when sentences are needed, e.g. for an aspect with ``reference_depth="sentences"``, as in any document (see :ref:`sat-models-offline`). A reference sentence of a table row is thus the whole row, with its pages.
 
 .. note::
    **Headings of a PDF file have no levels.** Docling detects the headings of a PDF file, but not their levels: each heading is at level 1, and the section of a paragraph is the heading before it. The headings of DOCX and HTML files keep their levels relative to each other, e.g. in HTML, Docling makes ``<h1>`` the title and ``<h2>`` a heading of level 1.
@@ -386,7 +264,125 @@ The images of the pages of a PDF file, scanned or not, are not attached: with ``
    A concept with the ``"image"`` or ``"multimodal"`` modality is extracted from all the images of the document in one request by default, and many providers accept only a limited number of images in a request. For a file with many pictures, pass ``max_images_to_analyze_per_call`` to the extraction method, below the limit of your provider, to send the images in parts, one request per part (see :doc:`../optimizations/optimization_long_docs`). Each request then sees only the images of its part.
 
 
-⚙️ Other Settings of the Document
-----------------------------------
+.. _docling-formats-label:
 
-The other arguments of ``from_docling()`` are passed to the document, e.g. ``aspects``, ``concepts``, ``sat_model_id`` or ``pre_segment_sentences`` (see :doc:`document_config`). Its paragraphs and images are made from the Docling document, and its ``raw_text`` is the text of its paragraphs.
+📄 Supported Formats
+---------------------
+
+``from_docling()`` supports the files in these formats. Its tests convert files in each of them with Docling, and check the paragraphs and the images of the document made of each. Some formats need more than the ``docling`` extra:
+
+.. list-table::
+   :header-rows: 1
+   :widths: 40 25 35
+
+   * - Format
+     - Extensions
+     - Needs
+   * - PDF, also scanned, which Docling reads with OCR
+     - ``.pdf``
+     -
+   * - Images, e.g. scans, which Docling reads with OCR
+     - ``.png``, ``.tiff``
+     -
+   * - Word
+     - ``.docx``, ``.doc``
+     - LibreOffice, for DOC
+   * - PowerPoint
+     - ``.pptx``, ``.ppt``
+     - LibreOffice, for PPT
+   * - Excel
+     - ``.xlsx``, ``.xls``
+     - LibreOffice, for XLS
+   * - Rich Text Format
+     - ``.rtf``
+     - LibreOffice
+   * - OpenDocument text, spreadsheet and presentation
+     - ``.odt``, ``.ods``, ``.odp``
+     - ``docling-slim[format-opendocument]``
+   * - Apple Pages, Numbers and Keynote
+     - ``.pages``, ``.numbers``, ``.key``
+     -
+   * - HTML, and web pages saved in one file (MHTML)
+     - ``.html``, ``.mhtml``
+     -
+   * - Markdown
+     - ``.md``
+     -
+   * - AsciiDoc
+     - ``.asciidoc``
+     -
+   * - LaTeX
+     - ``.tex``
+     -
+   * - CSV
+     - ``.csv``
+     -
+   * - WebVTT subtitles
+     - ``.vtt``
+     -
+   * - EPUB
+     - ``.epub``
+     -
+   * - Email
+     - ``.eml``, ``.msg``
+     -
+   * - Box Notes
+     - ``.boxnote``
+     -
+   * - JATS XML articles
+     - ``.nxml``
+     -
+   * - USPTO XML patents
+     - ``.xml``
+     -
+   * - XBRL reports
+     - ``.xbrl``
+     - ``docling-slim[format-xml-xbrl]``, and the taxonomy of the report
+   * - DocLang, the markup of Docling, as XML and as an archive
+     - ``.dclg``, ``.dclx``
+     -
+   * - Google Books packages (METS GBS)
+     - ``.tar.gz``
+     -
+   * - EBCDIC records of mainframes
+     - ``.ebc``
+     - The layout of the records
+   * - AFP print streams
+     - ``.afp``
+     -
+   * - Audio, which Docling transcribes
+     - ``.mp3``
+     - ``docling[asr]`` and ffmpeg
+   * - Video, whose speech Docling transcribes and whose frames it samples
+     - ``.mp4``
+     - ``docling[asr]`` and ffmpeg
+   * - Docling JSON, which Docling saves its documents in
+     - ``.json``
+     -
+
+Docling also takes other extensions of these formats, e.g. ``.adoc`` for AsciiDoc, ``.markdown`` for Markdown, ``.jpg`` for images, ``.wav`` for audio and ``.mov`` for video. What the formats in the last column need:
+
+* **LibreOffice**: Docling converts a DOC, XLS, PPT or RTF file into DOCX, XLSX or PPTX with `LibreOffice <https://www.libreoffice.org>`_, and then converts that. It finds LibreOffice on the ``PATH``, or in its folder on macOS. The installer for Windows does not add it to the ``PATH``: add its ``program`` folder, e.g. ``C:\Program Files\LibreOffice\program``, or set ``DOCLING_LIBREOFFICE_CMD`` to its ``soffice.exe``. On Debian or Ubuntu: ``sudo apt-get install libreoffice-writer libreoffice-calc libreoffice-impress``.
+* **XBRL**: ``uv add "docling-slim[format-xml-xbrl]"`` installs Arelle, with which Docling reads a report. It reads the report with its taxonomy, from a folder that holds the schema and the linkbases that the report refers to, and only when it is allowed to read local files:
+
+  .. code-block:: python
+
+     from pathlib import Path
+
+     from docling.datamodel.backend_options import XBRLBackendOptions
+     from docling.datamodel.base_models import InputFormat
+     from docling.document_converter import DocumentConverter, XBRLFormatOption
+
+     converter = DocumentConverter(
+         format_options={
+             InputFormat.XML_XBRL: XBRLFormatOption(
+                 backend_options=XBRLBackendOptions(
+                     taxonomy=Path("taxonomy"), enable_local_fetch=True
+                 )
+             )
+         }
+     )
+
+  The facts of a report are key-value pairs, e.g. ``TotalFees: value: 5850; period: 2026-07-01 - 2026-09-30; currency: EUR; decimals: 0``, and its text blocks are text and tables.
+* **EBCDIC**: Docling decodes the records with their layout, the ``layout_file`` of ``EbcdicBackendOptions``, which it takes as the ``backend_options`` of ``EbcdicFormatOption``. The records are the rows of a table.
+* **Audio and video**: Docling transcribes the speech with Whisper, which ``uv add "docling[asr]"`` installs, and needs `ffmpeg <https://ffmpeg.org>`_ on the ``PATH``. It uses the tiny model of Whisper by default, and a larger one hears better, e.g. ``asr_model_specs.WHISPER_SMALL`` as the ``asr_options`` of ``AsrPipelineOptions`` for audio, or of ``VideoPipelineOptions`` for video.
