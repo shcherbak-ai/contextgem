@@ -1,0 +1,57 @@
+name: Links
+
+# Asks the other sites for the pages that the README, the package description,
+# the changelog, the documentation and the package link to, and fails on a page
+# that is not there (404 or 410) or a host that does not exist
+# (dev/check_links.py --external). Their answers change without a commit, so the
+# check runs weekly, not on each push, where a site that is down would fail an
+# unrelated change. A site that refuses the request, limits the rate or does not
+# answer is reported without failing, and the check waits at most 8 minutes for
+# all the answers, so that a site that hangs cannot hold the job. No other
+# workflow waits for this one. The links to the documentation site and to
+# the repository are checked offline on each push, after the build of the
+# documentation (docs.yml). A schedule runs on the default branch only.
+
+on:
+  schedule:
+    # Mondays
+    - cron: "41 5 * * 1"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+# One run at a time: a run started by hand while another runs waits for it
+concurrency:
+  group: links
+  cancel-in-progress: false
+
+env:
+  UV_VERSION: "0.13.1"
+
+jobs:
+  external:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      # Without the token in .git/config, where checkout leaves it for the later
+      # steps: the check pushes nothing
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@1c37ad07a6a961277cf70c0d37d6f313000f5884  # v10.3.0
+        with:
+          version: ${{ env.UV_VERSION }}
+          enable-cache: true
+
+      - name: Set up Python from .python-version
+        run: uv python install
+
+      - name: Install dependencies
+        run: uv sync --locked
+
+      - name: Check the links to other sites
+        run: uv run python dev/check_links.py --external

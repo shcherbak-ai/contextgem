@@ -82,6 +82,7 @@ uv run fab docs            # Build documentation
 uv run fab docs-live       # Start live documentation server
 uv run fab readme          # Regenerate README.md from template
 uv run fab readme-preview  # Serve README.md as GitHub renders it
+uv run fab links           # Check the links of the README, the documentation and the package
 uv run fab social-preview  # Render social/github-social-preview.png from its SVG
 uv run fab costs           # Report what the recorded requests of the tests and evals cost
 uv run fab install-check   # Check that the dependencies install on each platform and Python
@@ -286,7 +287,7 @@ By submitting issues or feature requests to this project, you acknowledge that t
 
 ### 🏗️ Current Test Structure
 
-Tests are split across the feature/integration test modules, two files for pure helpers and the tests of the changelog:
+Tests are split across the feature/integration test modules, two files for pure helpers, the tests of the changelog and those of the link check:
 
 - **`tests/test_<area>.py`** (one `Test<Area>` class per module) — feature and integration tests, including all LLM-backed extraction tests that replay through VCR cassettes. Most contributions belong here, in the module of the relevant feature area:
 
@@ -312,6 +313,7 @@ Tests are split across the feature/integration test modules, two files for pure 
   All these test classes inherit from `BaseTest` in **`tests/base.py`**, which creates the test objects (documents, LLMs, images, etc.) once and shares them across the test classes. A test must leave the shared objects unchanged: a test that changes a document works on its copy (`document = self.document.clone()`). The usage and cost recorded by the shared LLMs are reset before each test. The tests do not depend on the order in which they are run.
 - **`tests/test_properties.py`** and **`tests/test_units.py`** — property-based and example-based tests of pure utility helpers (see [below](#-tests-for-pure-helpers-property-based-and-example-based)).
 - **`tests/test_changelog.py`** — checks that each version in `CHANGELOG.md` has its compare link, and that `CITATION.cff` gives the version of the package and the release date of that version in the changelog.
+- **`tests/test_check_links.py`** — tests the link check (see [Checking the Links](#-checking-the-links)) on a small build and working tree of their own, and with stand-ins for the other sites, so they need neither a build of the documentation nor the network.
 
 ### 📚 Tests of the Usage Examples
 
@@ -678,6 +680,15 @@ uv run python -m http.server 9000 --bind 127.0.0.1 --directory docs/build/dirhtm
 ```
 
 Use `127.0.0.1` rather than `localhost`: on Windows, a request to `localhost` tries IPv6 first and waits two seconds for the refusal of a server that listens on IPv4 only.
+
+### 🔗 Checking the Links
+
+`uv run fab links` checks the links of the README, `PYPI.md`, the changelog, this guide, the documentation and the package (`dev/check_links.py`), in two parts:
+
+- **The links to the documentation site and to the repository**, offline. The site describes the released version, so a page or a heading that is new on `dev` gives 404 there until the release. The check builds the documentation into `docs/build/links` instead, and a link to the site must lead to a page of that build, and its anchor to an element of the page. A link to a file on `main` must lead to a file of the working tree, and its anchor to a heading, by GitHub's rules. A relative link of a Markdown file must lead to a file. The links of the releases from 1.0 are checked the same way, as they stay on PyPI and in the installed copies: keep each page, anchor and file that one of them links to. CI runs this part after the build of the documentation, on each push and pull request.
+- **The links to other sites**, online. A link fails when its site answers that the page is not there (404 or 410), or when its host does not exist. A site that refuses a script, limits the rate or does not answer is listed without failing the check, and the check waits at most 8 minutes for all the answers, so that a site that hangs cannot hold it. Only public hosts are asked: a link, or a redirect, to a host that resolves to an address of a local network, of the machine or of a cloud's metadata service, or a redirect to another scheme than http and https, is listed as not checked and is not followed, so that the check, run on a contributor's branch, sends nothing into your network. It reads the status of each answer, never its body. CI runs this part weekly (`.github/workflows/links.yml`), as the answers of other sites change without a commit. Run it before a release. A link that leads nowhere on purpose, e.g. a placeholder, goes in `IGNORED` in the script, with the reason.
+
+`uv run fab links --offline` runs the first part only. Neither part sends a request to a model.
 
 ### 🌐 Live Documentation
 

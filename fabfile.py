@@ -318,12 +318,12 @@ def lint(c: Context) -> None:
 # =============================================================================
 
 
-def _clear_docs_build(docs_dir: str) -> None:
+def _clear_docs_build(docs_dir: str, folder: str = "dirhtml") -> None:
     """
     Remove the previous build, so that no file of a removed page or of an earlier
     configuration is served with the new one.
     """
-    shutil.rmtree(os.path.join(docs_dir, "build", "dirhtml"), ignore_errors=True)
+    shutil.rmtree(os.path.join(docs_dir, "build", folder), ignore_errors=True)
 
 
 @task
@@ -364,6 +364,43 @@ def docs_live(c: Context, port: int = 9000) -> None:
         # Unbuffered: the output of the command is piped here, so the messages of
         # sphinx-autobuild (the server URL among them) would stay in its buffer
         c.run(cmd, env={"PYTHONUNBUFFERED": "1"})
+
+
+@task
+def links(c: Context, offline: bool = False) -> None:
+    """
+    Check the links of the README, the package description, the changelog, the
+    documentation and the package (dev/check_links.py).
+
+    Builds the documentation strictly, into a folder of its own (docs/build/links),
+    which a running docs-live leaves alone, and checks the links to the
+    documentation site and the repository against the build and the working
+    tree, those of the releases from 1.0 too, offline. Then asks the other sites
+    for the pages that the files link to. CI runs the first check on each push,
+    and the second weekly. Run both before a release. Sends no request to a model.
+
+    Args:
+        offline: Leave out the links to other sites
+
+    Example:
+        uv run fab links
+        uv run fab links --offline
+    """
+    docs_dir = os.path.join(os.getcwd(), "docs")
+    _clear_docs_build(docs_dir, "links")
+    with c.cd(docs_dir):
+        c.run("uv run sphinx-build -b dirhtml source build/links -E -W")
+    print()
+    commands = ["uv run python dev/check_links.py --build docs/build/links"]
+    if not offline:
+        commands.append("uv run python dev/check_links.py --external")
+    failed = False
+    for command in commands:
+        result = c.run(command, warn=True)
+        failed = failed or result is None or result.failed
+        print()
+    if failed:
+        raise Exit(code=1)
 
 
 # =============================================================================

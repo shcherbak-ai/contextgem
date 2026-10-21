@@ -25,8 +25,14 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
+      # With the history and the tags: the check of the links reads the links of
+      # the releases from their tags. Without the token in .git/config, where
+      # checkout leaves it for the later steps, which push nothing
       - name: Checkout
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
+        with:
+          fetch-depth: 0
+          persist-credentials: false
 
       - name: Install uv
         uses: astral-sh/setup-uv@1c37ad07a6a961277cf70c0d37d6f313000f5884  # v10.3.0
@@ -44,6 +50,13 @@ jobs:
         run: |
           cd docs
           uv run sphinx-build -b dirhtml source _build/dirhtml -v -E -W
+
+      # The links to the documentation site and to the repository, against the
+      # build and the working tree, which the release publishes, and those of the
+      # releases (dev/check_links.py). Offline: the links to other sites are
+      # checked weekly (links.yml)
+      - name: Check the links to the documentation and the repository
+        run: uv run python dev/check_links.py --build docs/_build/dirhtml
 
       - name: Create .nojekyll file
         run: touch docs/_build/dirhtml/.nojekyll
