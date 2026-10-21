@@ -1514,6 +1514,48 @@ class TestDocuments(BaseTest):
         self.llm_extractor.extract_all(document)
         assert document.sentences
 
+    def test_sentence_segmentation_of_paragraphs_without_sentences(self):
+        """
+        Tests that the sentences of the paragraphs that have none are segmented
+        when an aspect requires sentences, while other paragraphs have their
+        sentences, as the table rows of a document converted from Docling do:
+        these keep them, and are not passed to the SaT model.
+        """
+        row_text = "Service: Hosting; Monthly fee: 1,200 EUR; Billing: In advance"
+        row = Paragraph(raw_text=row_text, sentences=[Sentence(raw_text=row_text)])
+        prose = Paragraph(
+            raw_text=(
+                "2.2 Invoices are payable within 30 days of the invoice date. "
+                "Late payments bear interest of 8% per year."
+            )
+        )
+        document = Document(paragraphs=[row, prose])
+        assert not document._requires_sentence_segmentation()
+        document.aspects = [
+            Aspect(name="Fees", description="Fees", reference_depth="sentences")
+        ]
+        assert document._requires_sentence_segmentation()
+
+        texts_segmented: list[str] = []
+        split_into_sentences = documents_module._split_into_sentences
+
+        def record_split(model: Any, texts: list[str]) -> list[list[str]]:
+            """
+            Records the texts that the SaT model segments into sentences.
+            """
+            texts_segmented.extend(texts)
+            return split_into_sentences(model, texts)
+
+        with patch.object(documents_module, "_split_into_sentences", new=record_split):
+            document._segment_sents()
+        assert texts_segmented == [prose.raw_text]
+        assert [sentence.raw_text for sentence in row.sentences] == [row_text]
+        assert [sentence.raw_text for sentence in prose.sentences] == [
+            "2.2 Invoices are payable within 30 days of the invoice date.",
+            "Late payments bear interest of 8% per year.",
+        ]
+        assert not document._requires_sentence_segmentation()
+
     def test_init_paragraph(self):
         """
         Tests for constructing a Paragraph instance and attaching it to a Document instance.

@@ -22,6 +22,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 - Upgraded pinned dependency version: `litellm==1.105.2`. Versions remain pinned to maintain stability and avoid occasional breaking changes and API inconsistencies observed in previous unpinned releases. `openai` remains pinned to `2.54.0`, the latest version supported by `litellm`.
 - The prompts of LLMs with sentence-level references (`reference_depth="sentences"`) now give the additional context that a sentence shares with its paragraph once, with the paragraph, as the requests to decision models already did. A sentence segmented from a paragraph inherits its additional context, which the prompts gave again under each sentence: for documents created from four files converted with Docling, whose paragraphs all have additional context, the prompts were 7% to 19% longer, and more for a longer document. The additional context of a sentence that differs from that of its paragraph is still given with the sentence.
+- Splitting the paragraphs of a document into sentences now runs the SaT model only on the paragraphs that have no sentences. Previously it ran on all of them, and the sentences of the paragraphs that had sentences, e.g. given with them, were not used.
 
 ### Removed
 
@@ -30,6 +31,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ### Fixed
 
+- An extraction with sentence-level references (`reference_depth="sentences"`) now splits into sentences the paragraphs that have none in a document whose other paragraphs have sentences, e.g. a document created with some paragraphs given with their sentences. Previously, such a document was taken as split, and the paragraphs without sentences gave no items and no references to an aspect or a concept with sentence-level references. `pre_segment_sentences=True` split them already.
 - Each sentence segmented from a paragraph now gets a copy of the custom data of the paragraph of its own. Previously, the values nested in the custom data, e.g. a dict, were shared by the paragraph and all its sentences, so that a change to them on one sentence changed them on the paragraph and on the other sentences, until the document was serialized and loaded again.
 - The items extracted for an aspect now get a copy of the custom data of their reference paragraph or sentence of their own, as the sentences of a paragraph do (above). Previously, the values nested in the custom data were shared by the item and its reference, so that a change to them on one changed them on the other.
 - `extract_all()` with `raise_exception_on_extraction_error=False` now extracts the concepts of the other aspects and of the document when the extraction of an aspect fails, and leaves out the concepts of that aspect, with a warning that names them. Previously, it raised `ValueError` (the aspect "is not yet processed"), and the concepts of the document were not extracted. `extract_concepts_from_aspect()` called on an aspect that is not extracted still raises `ValueError`.

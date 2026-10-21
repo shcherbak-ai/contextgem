@@ -159,7 +159,7 @@ Paragraphs and sentences can also hold the numbers of the pages that they are on
 🔌 Using SaT Models Without Network Access
 -------------------------------------------
 
-A SaT model splits the text of a document into sentences, and into paragraphs with ``paragraph_segmentation_mode="sat"``. Sentences are segmented when they are needed: when an aspect or a concept is extracted with references to sentences (``reference_depth="sentences"``), or when the document is created with ``pre_segment_sentences=True``. A document whose paragraphs are split on newlines (the default) and that needs no sentences uses no SaT model.
+A SaT model splits the text of a document into sentences, and into paragraphs with ``paragraph_segmentation_mode="sat"``. Sentences are segmented when they are needed: when an aspect or a concept is extracted with references to sentences (``reference_depth="sentences"``), or when the document is created with ``pre_segment_sentences=True``. Only the paragraphs without sentences are segmented: a paragraph created with its sentences keeps them. A document whose paragraphs are split on newlines (the default) and that needs no sentences uses no SaT model.
 
 A model given by its ID, e.g. the default ``"sat-3l-sm"``, is downloaded from Hugging Face the first time it is used, together with its tokenizer: several hundred megabytes in all. ``huggingface_hub`` keeps the files in its cache (``~/.cache/huggingface``, or the folder set in the ``HF_HOME`` environment variable), and reads them from there afterwards. Where Hugging Face cannot be reached when the application runs, e.g. in a container or on a server without internet access, prepare the model in one of these ways:
 

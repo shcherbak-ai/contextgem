@@ -630,10 +630,13 @@ class _Document(_AssignedInstancesProcessor):
 
     def _split_paragraphs_into_sents(self) -> list[list[str]]:
         """
-        Splits the texts of the paragraphs into sentences with the SaT model,
-        without assigning them (see ``_assign_segmented_sents()``).
+        Splits the texts of the paragraphs that have no sentences into sentences
+        with the SaT model, without assigning them (see
+        ``_assign_segmented_sents()``). The paragraphs that have sentences, e.g.
+        the table rows of a document converted from Docling, are not split.
 
-        :return: The texts of the sentences of each paragraph.
+        :return: The texts of the sentences of each paragraph, none for
+            a paragraph that has sentences.
         :rtype: list[list[str]]
         :raises Exception: If the SaT model fails to process the paragraphs
         """
@@ -642,16 +645,25 @@ class _Document(_AssignedInstancesProcessor):
             logger.info(
                 "Some paragraphs already have sentences. These will be used `as is`."
             )
+        positions = [
+            position
+            for position, paragraph in enumerate(self.paragraphs)
+            if not paragraph.sentences
+        ]
         try:
-            return _split_into_sentences(
+            split_sents = _split_into_sentences(
                 _get_sat_model(self.sat_model_id),
-                [p.raw_text for p in self.paragraphs],
+                [self.paragraphs[position].raw_text for position in positions],
             )
         except Exception as e:
             logger.error(
                 f"Error splitting paragraphs into sentences using SaT model: {e}"
             )
             raise
+        split_sents_for_paras: list[list[str]] = [[] for _ in self.paragraphs]
+        for position, sent_group in zip(positions, split_sents, strict=True):
+            split_sents_for_paras[position] = sent_group
+        return split_sents_for_paras
 
     def _assign_segmented_sents(self, split_sents_for_paras: list[list[str]]) -> None:
         """
@@ -681,19 +693,8 @@ class _Document(_AssignedInstancesProcessor):
                         f"Unmatched sentences: {unmatched_sentences}"
                     )
                 # Each sentence inherits the custom data, the additional context and
-                # the pages of its paragraph, with a copy of the custom data of its
-                # own, whose nested values, e.g. the Docling data of a paragraph,
-                # it does not share with the paragraph or the other sentences
-                paragraph.sentences = [
-                    _publicize(
-                        _Sentence,
-                        raw_text=i,
-                        custom_data=deepcopy(paragraph.custom_data),
-                        additional_context=paragraph.additional_context,
-                        page_numbers=paragraph.page_numbers,
-                    )
-                    for i in sent_group
-                ]
+                # the pages of its paragraph
+                paragraph.sentences = [paragraph._make_sentence(i) for i in sent_group]
 
     def _relink_references(self) -> None:
         """
@@ -762,15 +763,18 @@ class _Document(_AssignedInstancesProcessor):
     def _requires_sentence_segmentation(self) -> bool:
         """
         Check if any aspect, sub-aspect, or concept attached to the document requires
-        sentence-level segmentation.
+        sentence-level segmentation, i.e. requires sentences while some paragraphs
+        have none. Some paragraphs can have sentences while others do not, e.g.
+        the table rows of a document converted from Docling, which are one sentence
+        each, or the paragraphs given with their sentences.
 
         :return: True if any aspect, sub-aspect, or concept requires sentence-level segmentation,
             False otherwise
         :rtype: bool
         """
 
-        # Sentences are already segmented
-        if self.sentences:
+        # Each paragraph has its sentences, segmented or given
+        if self.paragraphs and all(i.sentences for i in self.paragraphs):
             return False
 
         def _check_aspect_requires_sentences(aspect: _Aspect) -> bool:

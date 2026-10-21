@@ -7,6 +7,7 @@ Module providing base classes for document paragraphs and sentences.
 
 from __future__ import annotations
 
+from copy import deepcopy
 from typing import Any, Self
 
 from pydantic import Field, field_validator, model_validator
@@ -14,6 +15,7 @@ from pydantic import Field, field_validator, model_validator
 from contextgem.internal.base.instances import _InstanceBase
 from contextgem.internal.decorators import _disable_direct_initialization
 from contextgem.internal.loggers import logger
+from contextgem.internal.registry import _publicize
 from contextgem.internal.typings.types import NonEmptyStr, PageNumber
 from contextgem.internal.utils import _contains_linebreaks
 
@@ -141,3 +143,25 @@ class _Paragraph(_ParasAndSentsBase):
             raise ValueError("Not all sentences were matched in paragraph text.")
 
         return self
+
+    def _make_sentence(self, raw_text: str) -> _Sentence:
+        """
+        Returns a sentence of the paragraph, not yet assigned to it, e.g. one
+        segmented from its text. The sentence inherits the additional context and
+        the pages of the paragraph, with a copy of its custom data, whose nested
+        values, e.g. the Docling data of a paragraph, the sentence does not share
+        with the paragraph or with its other sentences.
+
+        :param raw_text: The text of the sentence, found in the text of
+            the paragraph.
+        :type raw_text: str
+        :return: The sentence.
+        :rtype: _Sentence
+        """
+        return _publicize(
+            _Sentence,
+            raw_text=raw_text,
+            custom_data=deepcopy(self.custom_data),
+            additional_context=self.additional_context,
+            page_numbers=self.page_numbers,
+        )
