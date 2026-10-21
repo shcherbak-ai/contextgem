@@ -146,13 +146,16 @@ _MISSING_IMAGE_REASONS = {
         "the images of the pictures of a PDF file with "
         "`generate_picture_images=True` in its PDF pipeline options, and reads "
         "those of an HTML or Markdown file with `fetch_images=True` in the options "
-        "of its backend."
+        "of its backend, with `enable_local_fetch=True` for images in local files "
+        "or `enable_remote_fetch=True` for images at URLs."
     ),
     "file": (
-        "as their images are in local files, which docling-core reads only after "
-        "`docling_document.load_local_images()`, for a Docling document from "
-        "a trusted source, e.g. one saved by Docling with "
-        "`image_mode=ImageRefMode.REFERENCED`."
+        "as their images are in local files, which docling-core reads only for "
+        "a Docling document from a trusted source: load it with "
+        "`DoclingDocument.load_from_json(path, allow_local_images=True)`, or call "
+        "`docling_document.load_local_images()` with `base_dir` set to the folder "
+        "that the paths are relative to, e.g. that of the JSON file saved by "
+        "Docling with `image_mode=ImageRefMode.REFERENCED`."
     ),
     "url": "as their images are at URLs, which are not fetched.",
     "data": "as their image data cannot be read, e.g. that of an SVG image.",
