@@ -1,0 +1,130 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 832 318" width="832" height="318" role="img" aria-labelledby="title desc" font-family="ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Consolas, 'Liberation Mono', 'DejaVu Sans Mono', monospace" font-size="13">
+  <title id="title">ContextGem - a decision model decides each paragraph and answers each concept, with probabilities</title>
+  <desc id="desc">What the decision model quick start example extracts from its service agreement. For the aspect "Termination", the decision model decides for each paragraph whether it is one, with the probability of a yes: "Service Agreement" 0.26, "Either party may terminate this Agreement for any reason by giving 30 days' written notice to the other party." 0.99, "This Agreement is governed by the laws of the State of New York." 0.03. Only the second is above the decision threshold of 0.5, and it comes back as the aspect's paragraph. The two concepts are answered from the whole document in one request: "Termination for convenience", a yes/no question, is True with a probability of 0.98, above the threshold; "Notice form" is "Written" with a probability of 1.00, and 0.00 for each of its other labels, "Email", "Any form" and "Not specified".</desc>
+
+  <!-- The run, played once: each paragraph is scored, one after the
+       other, and the one above the threshold is marked and comes back as
+       the aspect; then the whole document is asked the two concepts in one
+       request, and their answers come back, the probabilities growing to
+       their values. The drawing as it stands is where the run ends: each
+       part fades or grows in from a hidden first frame, the traces along
+       the routes show only while they play, and without motion it is all
+       there -->
+  <style>
+    .in { animation: show 0.35s ease-out backwards; }
+    @keyframes show { from { opacity: 0; } }
+    .grow { transform-box: fill-box; transform-origin: left center; animation: grow 0.5s cubic-bezier(0.2, 0.7, 0.2, 1) backwards; }
+    @keyframes grow { from { transform: scaleX(0); } }
+    .rise { transform-box: fill-box; transform-origin: center top; animation: rise 0.4s cubic-bezier(0.2, 0.7, 0.2, 1) backwards; }
+    @keyframes rise { from { transform: scaleY(0); } }
+    .light { animation: light 0.4s ease-out backwards; }
+    @keyframes light { from { fill: #6b7280; } }
+    .trace { opacity: 0; stroke-dasharray: 1; animation: trace 0.6s ease-in-out; }
+    @keyframes trace {
+      0% { opacity: 1; stroke-dashoffset: 1; }
+      60% { opacity: 1; stroke-dashoffset: 0; }
+      100% { opacity: 0; stroke-dashoffset: 0; }
+    }
+    .lit { opacity: 0; animation: lit 0.8s ease-out; }
+    @keyframes lit { 0%, 100% { opacity: 0; } 30% { opacity: 1; } }
+    @media (prefers-reduced-motion: reduce) { * { animation: none !important; } }
+  </style>
+
+  <!-- A ground of its own, so that the picture reads the same in the light
+       and the dark theme: a window, with the call on its tab -->
+  <path d="M0.5 28.5H831.5V317.5H0.5Z" fill="#111113" stroke="#2c2c30"/>
+  <path d="M0.5 29V0.5H152.5V29" fill="#111113" stroke="#2c2c30"/>
+  <path d="M1 28.5H152" stroke="#111113"/>
+  <text x="16" y="18.5" font-size="11" fill="#9ca3af">extract_all(doc)</text>
+
+  <!-- The columns: the document, the question that the aspect asks of each
+       of its paragraphs, and what comes back -->
+  <g font-size="10.5" letter-spacing="1.4" fill="#6b7280">
+    <text x="28" y="62">THE DOCUMENT</text>
+    <text x="316" y="62">TERMINATION?</text>
+    <text x="456" y="62">YOU GET</text>
+  </g>
+
+  <!-- The document of the example: a sheet, a paragraph to a line -->
+  <path d="M28.5 78.5H286.5L300.5 92.5V174.5H28.5Z" fill="none" stroke="#ffffff" stroke-opacity="0.2"/>
+  <path d="M286.5 78.5V92.5H300.5" fill="none" stroke="#ffffff" stroke-opacity="0.2"/>
+  <g font-size="12" fill="#6b7280">
+    <text x="48" y="106">Service Agreement</text>
+    <text x="48" y="154">This Agreement is governed by…</text>
+  </g>
+
+  <!-- What the aspect takes: the paragraph that the decision model said
+       yes to, marked by a bar at its side, lit from the grey of the others -->
+  <text class="light" style="animation-delay: 1.2s" x="48" y="130" font-size="12" fill="#e5e7eb">Either party may terminate this…</text>
+  <rect class="rise" style="animation-delay: 1.2s" x="38" y="118" width="2" height="16" fill="#38bdf8"/>
+
+  <!-- A yes/no question for each paragraph: the probability of a yes, on a
+       track with the decision threshold (0.5 by default) through all three.
+       The paragraphs below it are scored and left; only the one above it is
+       in blue, as what is extracted -->
+  <g fill="#ffffff" fill-opacity="0.12">
+    <rect x="316" y="100" width="60" height="3"/>
+    <rect x="316" y="124" width="60" height="3"/>
+    <rect x="316" y="148" width="60" height="3"/>
+  </g>
+  <path d="M346.5 92V158" stroke="#ffffff" stroke-opacity="0.5"/>
+  <text x="346.5" y="173" font-size="10" fill="#6b7280" text-anchor="middle">threshold</text>
+  <rect class="grow" style="animation-delay: 0.3s" x="316" y="100" width="15.6" height="3" fill="#6b7280"/>
+  <rect class="grow" style="animation-delay: 0.55s" x="316" y="124" width="59.4" height="3" fill="#38bdf8"/>
+  <rect class="grow" style="animation-delay: 0.8s" x="316" y="148" width="1.8" height="3" fill="#6b7280"/>
+  <g font-size="11" fill="#9ca3af">
+    <text class="in" style="animation-delay: 0.65s" x="384" y="106">0.26</text>
+    <text class="in" style="animation-delay: 0.9s" x="384" y="130">0.99</text>
+    <text class="in" style="animation-delay: 1.15s" x="384" y="154">0.03</text>
+  </g>
+
+  <!-- The routes: from the paragraph said yes to the aspect, and from the
+       whole document to the two concepts, asked in one request. A route
+       shows when its trace has run along it -->
+  <g fill="none" stroke="#ffffff" stroke-opacity="0.2">
+    <path class="in" style="animation-delay: 1.65s" d="M418 125.5H448"/>
+    <path class="in" style="animation-delay: 2.35s" d="M164.5 175V213.5H448"/>
+    <path class="in" style="animation-delay: 2.55s" d="M424.5 213.5V273.5H448"/>
+  </g>
+  <text class="in" style="animation-delay: 2s" x="176" y="206" font-size="10.5" fill="#6b7280">the whole document, in one request</text>
+  <g fill="none" stroke="#38bdf8" stroke-width="1.5">
+    <path class="trace" pathLength="1" style="animation-delay: 1.4s" d="M418 125.5H448"/>
+    <path class="lit" style="animation-delay: 1.9s" stroke-width="1" d="M28.5 78.5H286.5L300.5 92.5V174.5H28.5Z"/>
+    <path class="trace" pathLength="1" style="animation-delay: 2.1s" d="M164.5 175V213.5H448"/>
+    <path class="trace" pathLength="1" style="animation-delay: 2.3s" d="M164.5 175V213.5H424.5V273.5H448"/>
+  </g>
+
+  <!-- The aspect: the paragraph back, as it is written in the document -->
+  <g class="in" style="animation-delay: 1.75s">
+    <text x="456" y="106"><tspan font-size="10.5" letter-spacing="1.4" fill="#6b7280">ASPECT</tspan><tspan dx="12" fill="#f3f4f6">Termination</tspan><tspan dx="12" font-size="11" fill="#6b7280">the paragraph decided yes</tspan></text>
+    <rect x="456" y="117" width="2" height="34" fill="#38bdf8"/>
+    <g font-size="12" fill="#d1d5db">
+      <text x="470" y="129">Either party may terminate this Agreement for</text>
+      <text x="470" y="147">any reason by giving 30 days' written notice…</text>
+    </g>
+  </g>
+
+  <!-- The concepts: for each, the answer that the decision model gave, with
+       its probability. The threshold decides a yes/no question; of the
+       labels of a single-label (multi_class) concept, the most probable is
+       taken, whatever its probability, and the others are there with
+       theirs. Each bar comes with its answer, and grows past the mark set
+       before it -->
+  <g class="in" style="animation-delay: 2.55s">
+    <text x="456" y="196"><tspan font-size="10.5" letter-spacing="1.4" fill="#6b7280">CONCEPT</tspan><tspan dx="12" fill="#f3f4f6">Termination for convenience</tspan><tspan dx="12" font-size="11" fill="#6b7280">yes/no</tspan></text>
+    <text x="456" y="218" fill="#f3f4f6">True</text>
+    <rect x="540" y="212" width="100" height="3" fill="#ffffff" fill-opacity="0.12"/>
+    <path d="M590.5 207V220" stroke="#ffffff" stroke-opacity="0.5"/>
+  </g>
+  <rect class="grow" style="animation-delay: 2.65s" x="540" y="212" width="98" height="3" fill="#38bdf8"/>
+  <text class="in" style="animation-delay: 3.15s" x="652" y="218" fill="#9ca3af">0.98</text>
+
+  <g class="in" style="animation-delay: 2.75s">
+    <text x="456" y="256"><tspan font-size="10.5" letter-spacing="1.4" fill="#6b7280">CONCEPT</tspan><tspan dx="12" fill="#f3f4f6">Notice form</tspan><tspan dx="12" font-size="11" fill="#6b7280">one of your labels</tspan></text>
+    <text x="456" y="278" fill="#f3f4f6">"Written"</text>
+    <rect x="540" y="272" width="100" height="3" fill="#ffffff" fill-opacity="0.12"/>
+  </g>
+  <rect class="grow" style="animation-delay: 2.85s" x="540" y="272" width="100" height="3" fill="#38bdf8"/>
+  <text class="in" style="animation-delay: 3.35s" x="652" y="278" fill="#9ca3af">1.00</text>
+  <text class="in" style="animation-delay: 3.45s" x="456" y="298" font-size="11" fill="#6b7280">Email 0.00 · Any form 0.00 · Not specified 0.00</text>
+</svg>

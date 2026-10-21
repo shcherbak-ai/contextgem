@@ -169,7 +169,7 @@ anomalies = doc.get_concept_by_name("Anomalies").extracted_items
 </p>
 <!-- markdownlint-enable MD033 -->
 
-### Decide with a decision model
+### Extract with a decision model
 
 A decision model answers closed questions (yes/no, one of your labels, a level of a scale) with the probability of each possible answer. Below, it extracts an aspect from a contract, the **termination** clauses, by deciding for each paragraph whether it is one, and answers two questions about the contract, concepts, in one request.
 
@@ -238,6 +238,13 @@ notice_form = doc.get_concept_by_name("Notice form").extracted_items[0]
 # .probabilities: {"Written": 1.0, "Email": 0.0, "Any form": 0.0, "Not specified": 0.0}
 
 ```
+
+<!-- markdownlint-disable MD033 -->
+<p align="center">
+  <img src="docs/source/_static/contextgem_readme_decision_model.svg" alt="What the example above extracts from its contract. For the aspect Termination, the decision model gives each paragraph the probability of a yes: 0.26 for the title, 0.99 for the paragraph on termination for any reason with 30 days' written notice, and 0.03 for the paragraph on governing law. Only the second is above the decision threshold of 0.5, and it comes back as the aspect's paragraph. The two concepts are answered from the whole document in one request: Termination for convenience is True with a probability of 0.98, and Notice form is Written with a probability of 1.00, and 0.00 for each of its other labels." width="832"><br>
+  <sup>What the example above extracts: a yes or no for each paragraph, and an answer for each concept, each with its probability.</sup>
+</p>
+<!-- markdownlint-enable MD033 -->
 
 ### Start from a file with Docling
 
