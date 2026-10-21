@@ -78,6 +78,23 @@ ContextGem is a free, open-source framework that makes it radically easier to ex
 
             Create Documents
 
+    .. grid-item-card:: 📑 Files Converted with Docling
+        :link: documents/docling
+        :link-type: doc
+        :class-card: sd-border-0 sd-shadow-sm sd-card-hover
+
+        Learn how to extract from PDF, DOCX, PPTX, XLSX, HTML and scanned files converted with Docling, with the structure of each file and the pages that the extracted items refer to.
+
+        +++
+        .. button-ref:: documents/docling
+            :ref-type: doc
+            :click-parent:
+            :color: primary
+            :outline:
+            :expand:
+
+            Convert Files
+
     .. grid-item-card:: 📋 Extracting Aspects
         :link: aspects/aspects
         :link-type: doc

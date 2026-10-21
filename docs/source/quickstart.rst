@@ -14,7 +14,7 @@ Below are complete, self-contained examples showing how to extract data from a d
 
 ContextGem follows a simple extraction process:
 
-1. Create a :class:`~contextgem.public.documents.Document` instance with your content
+1. Create a :class:`~contextgem.public.documents.Document` instance with your content, or, for a PDF, DOCX or other file converted with Docling, with :meth:`~contextgem.public.documents.Document.from_docling` (see :doc:`documents/docling`)
 2. Define :class:`~contextgem.public.aspects.Aspect` instances for sections of interest
 3. Define concept instances (:class:`~contextgem.public.concepts.StringConcept`, :class:`~contextgem.public.concepts.BooleanConcept`, :class:`~contextgem.public.concepts.NumericalConcept`, :class:`~contextgem.public.concepts.DateConcept`, :class:`~contextgem.public.concepts.JsonObjectConcept`, :class:`~contextgem.public.concepts.RatingConcept`, :class:`~contextgem.public.concepts.LabelConcept`) for specific data points to extract, and attach them to :class:`~contextgem.public.aspects.Aspect` (for aspect context) or :class:`~contextgem.public.documents.Document` (for document context).
 4. Use :class:`~contextgem.public.llms.DocumentLLM`, :class:`~contextgem.public.decision_models.DocumentDecisionModel` (for the aspects and concepts that a decision model extracts, see :doc:`decision_models/decision_models`) or :class:`~contextgem.public.models.DocumentModelGroup` to perform the extraction
@@ -115,6 +115,24 @@ ContextGem follows a simple extraction process:
 
 .. seealso::
    A decision model also extracts the concepts of an aspect, from the paragraphs extracted for it, and works together with LLMs in a model group: see :doc:`decision_models/decision_models`.
+
+
+📄 Extraction from a File Converted with Docling
+-------------------------------------------------
+
+.. tip::
+   `Docling <https://github.com/docling-project/docling>`_ converts PDF, DOCX, PPTX, XLSX, HTML, scanned images and other files, and :meth:`~contextgem.public.documents.Document.from_docling` creates a document from the result, whose paragraphs keep their place in the structure of the file and the pages they are on. Common use cases include:
+
+   * Extracting the values of the tables of a PDF file, e.g. the fees of a contract
+   * Citing the page of each extracted item, e.g. for a reviewer to check it in the file
+   * Extracting from presentations and spreadsheets, with the slide or the sheet of each paragraph
+   * Extracting from scanned files, which Docling reads with OCR
+
+.. literalinclude:: ../../dev/usage_examples/readme/quickstart_docling.py
+   :language: python
+
+.. seealso::
+   Installing Docling with the ``docling`` extra, what each part of a file becomes, and the pictures of a file: see :doc:`documents/docling`.
 
 
 💬 Lightweight LLM Chat Interface

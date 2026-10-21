@@ -22,6 +22,7 @@ README_FOOTER = ""
 USAGE_EXAMPLES_MAPPING = {
     "dev/usage_examples/readme/quickstart_llm.py": "{{QUICKSTART_LLM}}",
     "dev/usage_examples/readme/quickstart_decision_model.py": "{{QUICKSTART_DECISION_MODEL}}",
+    "dev/usage_examples/readme/quickstart_docling.py": "{{QUICKSTART_DOCLING}}",
 }
 
 

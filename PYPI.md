@@ -8,7 +8,7 @@ Describe, don't prompt. ContextGem is a free, open-source framework that does th
 uv add contextgem
 ```
 
-Or, with pip: `pip install -U contextgem`.
+Or, with pip: `pip install -U contextgem`. To convert PDF, DOCX and other files with [Docling](https://github.com/docling-project/docling): `uv add "contextgem[docling]"`.
 
 - Generates the prompts from your descriptions of what to extract: there are no prompts to write.
 - Returns typed, validated values: text, numbers, dates, booleans, labels, ratings and JSON objects.

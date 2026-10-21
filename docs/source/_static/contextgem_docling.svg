@@ -1,0 +1,154 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 832 362" width="832" height="362" role="img" aria-labelledby="title desc" font-family="ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Consolas, 'Liberation Mono', 'DejaVu Sans Mono', monospace" font-size="13">
+  <title id="title">ContextGem - a file converted with Docling: each extracted item is cited by its page</title>
+  <desc id="desc">What the Docling quick start example extracts from a two-page service agreement in PDF, converted with Docling. From the table of fees on page 1, the concept Fees gives three JSON objects, one for each row of the table: Hosting, 1200.0 EUR a month; Monitoring, 300.0; Support, 450.0; each cited on page 1. From section 3 on page 2, the aspect Termination gives back the heading "3. Term and Termination" and clauses 3.1 and 3.2, cited on page 2.</desc>
+
+  <!-- The run, played once: the rows of the table light up one by one and
+       each gives its item, then section 3 is marked and comes back. The
+       drawing as it stands is where the run ends: each part fades or grows
+       in from a hidden first frame, the traces along the routes show only
+       while they play, and without motion it is all there -->
+  <style>
+    .in { animation: show 0.35s ease-out backwards; }
+    @keyframes show { from { opacity: 0; } }
+    .grow { transform-box: fill-box; transform-origin: left center; animation: grow 0.5s cubic-bezier(0.2, 0.7, 0.2, 1) backwards; }
+    @keyframes grow { from { transform: scaleX(0); } }
+    .rise { transform-box: fill-box; transform-origin: center top; animation: rise 0.4s cubic-bezier(0.2, 0.7, 0.2, 1) backwards; }
+    @keyframes rise { from { transform: scaleY(0); } }
+    .light { animation: light 0.4s ease-out backwards; }
+    @keyframes light { from { fill: #6b7280; } }
+    .trace { opacity: 0; stroke-dasharray: 1; animation: trace 0.6s ease-in-out; }
+    @keyframes trace {
+      0% { opacity: 1; stroke-dashoffset: 1; }
+      60% { opacity: 1; stroke-dashoffset: 0; }
+      100% { opacity: 0; stroke-dashoffset: 0; }
+    }
+    @media (prefers-reduced-motion: reduce) { * { animation: none !important; } }
+  </style>
+
+  <!-- A ground of its own, so that the picture reads the same in the light
+       and the dark theme: a window, with what it shows on its tab -->
+  <path d="M0.5 28.5H831.5V361.5H0.5Z" fill="#111113" stroke="#2c2c30"/>
+  <path d="M0.5 29V0.5H171.5V29" fill="#111113" stroke="#2c2c30"/>
+  <path d="M1 28.5H171" stroke="#111113"/>
+  <text x="16" y="18.5" font-size="11" fill="#9ca3af">service_agreement.pdf</text>
+
+  <!-- The columns -->
+  <g font-size="10.5" letter-spacing="1.4" fill="#6b7280">
+    <text x="28" y="62">THE FILE, CONVERTED WITH DOCLING</text>
+    <text x="392" y="62">YOU GET</text>
+  </g>
+
+  <!-- Page 1: section 2, with the table of fees. A clause is drawn as its
+       number and a bar for each line -->
+  <path d="M28.5 223.5V78.5H305.5L317.5 90.5V223.5" fill="none" stroke="#ffffff" stroke-opacity="0.2"/>
+  <path d="M305.5 78.5V90.5H317.5" fill="none" stroke="#ffffff" stroke-opacity="0.2"/>
+  <path d="M28.5 223.5H317.5" stroke="#ffffff" stroke-opacity="0.2" stroke-dasharray="3 3"/>
+  <g>
+    <text x="44" y="102" font-size="10" fill="#9ca3af">2. Fees and Payment</text>
+    <text x="44" y="115" font-size="8.5" fill="#6b7280">2.1</text>
+    <rect x="64" y="112" width="210" height="3" fill="#ffffff" fill-opacity="0.14"/>
+    <text x="44" y="133" font-size="8.5" font-style="italic" fill="#6b7280">Table 1: Monthly fees</text>
+  </g>
+  <!-- The table: a header row and three rows -->
+  <rect x="44" y="140" width="258" height="15" fill="#ffffff" fill-opacity="0.06"/>
+  <path d="M44.5 140.5H301.5V199.5H44.5ZM44 155.5H302M44 170.5H302M44 185.5H302M122.5 140V200M216.5 140V200" fill="none" stroke="#ffffff" stroke-opacity="0.2"/>
+  <g font-size="8.5">
+    <text x="50" y="150.5" fill="#9ca3af">Service</text>
+    <text x="128" y="150.5" fill="#9ca3af">Monthly fee</text>
+    <text x="222" y="150.5" fill="#9ca3af">Billing</text>
+  </g>
+  <!-- What the concept takes: each row, lit from the grey of the page -->
+  <rect class="in" style="animation-delay: 0.3s" x="45" y="156" width="256" height="14" fill="#38bdf8" fill-opacity="0.14"/>
+  <g font-size="8.5" fill="#e5e7eb">
+    <text class="light" style="animation-delay: 0.3s" x="50" y="165.5">Hosting</text>
+    <text class="light" style="animation-delay: 0.3s" x="128" y="165.5">1,200 EUR</text>
+    <text class="light" style="animation-delay: 0.3s" x="222" y="165.5">In advance</text>
+  </g>
+  <rect class="in" style="animation-delay: 0.75s" x="45" y="171" width="256" height="14" fill="#38bdf8" fill-opacity="0.14"/>
+  <g font-size="8.5" fill="#e5e7eb">
+    <text class="light" style="animation-delay: 0.75s" x="50" y="180.5">Monitoring</text>
+    <text class="light" style="animation-delay: 0.75s" x="128" y="180.5">300 EUR</text>
+    <text class="light" style="animation-delay: 0.75s" x="222" y="180.5">In advance</text>
+  </g>
+  <rect class="in" style="animation-delay: 1.2s" x="45" y="186" width="256" height="14" fill="#38bdf8" fill-opacity="0.14"/>
+  <g font-size="8.5" fill="#e5e7eb">
+    <text class="light" style="animation-delay: 1.2s" x="50" y="195.5">Support</text>
+    <text class="light" style="animation-delay: 1.2s" x="128" y="195.5">450 EUR</text>
+    <text class="light" style="animation-delay: 1.2s" x="222" y="195.5">In arrears</text>
+  </g>
+  <g>
+    <text x="44" y="209" font-size="8.5" fill="#6b7280">2.2</text>
+    <rect x="64" y="206" width="238" height="3" fill="#ffffff" fill-opacity="0.14"/>
+  </g>
+  <text x="304" y="98" font-size="9.5" fill="#6b7280" text-anchor="end">page 1</text>
+
+  <!-- Page 2: section 3. What the aspect takes, its heading and clauses
+       3.1 and 3.2, is marked by a bar at its side -->
+  <path d="M28.5 345.5V234.5H305.5L317.5 246.5V345.5" fill="none" stroke="#ffffff" stroke-opacity="0.2"/>
+  <path d="M305.5 234.5V246.5H317.5" fill="none" stroke="#ffffff" stroke-opacity="0.2"/>
+  <path d="M28.5 345.5H317.5" stroke="#ffffff" stroke-opacity="0.2" stroke-dasharray="3 3"/>
+  <text class="light" style="animation-delay: 1.75s" x="44" y="258" font-size="10" fill="#e5e7eb">3. Term and Termination</text>
+  <g>
+    <text x="44" y="271" font-size="8.5" fill="#6b7280">3.1</text>
+    <rect x="64" y="268" width="214" height="3" fill="#ffffff" fill-opacity="0.14"/>
+    <rect x="44" y="278" width="150" height="3" fill="#ffffff" fill-opacity="0.14"/>
+    <text x="44" y="297" font-size="8.5" fill="#6b7280">3.2</text>
+    <rect x="64" y="294" width="214" height="3" fill="#ffffff" fill-opacity="0.14"/>
+    <rect x="44" y="304" width="96" height="3" fill="#ffffff" fill-opacity="0.14"/>
+    <text x="44" y="323" font-size="8.5" fill="#6b7280">3.3</text>
+    <rect x="64" y="320" width="190" height="3" fill="#ffffff" fill-opacity="0.14"/>
+  </g>
+  <rect class="rise" style="animation-delay: 1.75s" x="36" y="247" width="2" height="62" fill="#38bdf8"/>
+  <text x="304" y="254" font-size="9.5" fill="#6b7280" text-anchor="end">page 2</text>
+
+  <!-- The routes from each marked part of the pages to what it gives. A
+       route shows when its trace has run along it -->
+  <g fill="none" stroke="#ffffff" stroke-opacity="0.2">
+    <path class="in" style="animation-delay: 0.85s" d="M326 162.5H346.5V127.5H384"/>
+    <path class="in" style="animation-delay: 1.3s" d="M326 177.5H358.5V151.5H384"/>
+    <path class="in" style="animation-delay: 1.75s" d="M326 192.5H370.5V175.5H384"/>
+    <path class="in" style="animation-delay: 2.3s" d="M326 278.5H358.5V299.5H384"/>
+  </g>
+  <g fill="none" stroke="#38bdf8" stroke-width="1.5">
+    <path class="trace" pathLength="1" style="animation-delay: 0.6s" d="M326 162.5H346.5V127.5H384"/>
+    <path class="trace" pathLength="1" style="animation-delay: 1.05s" d="M326 177.5H358.5V151.5H384"/>
+    <path class="trace" pathLength="1" style="animation-delay: 1.5s" d="M326 192.5H370.5V175.5H384"/>
+    <path class="trace" pathLength="1" style="animation-delay: 2.05s" d="M326 278.5H358.5V299.5H384"/>
+  </g>
+
+  <!-- The concept: a JSON object for each row, each cited by its page -->
+  <g class="in" style="animation-delay: 0.95s">
+    <text x="392" y="102"><tspan font-size="10.5" letter-spacing="1.4" fill="#6b7280">CONCEPT</tspan><tspan dx="12" fill="#f3f4f6">Fees</tspan><tspan dx="12" font-size="11" fill="#6b7280">a JSON object for each row</tspan></text>
+  </g>
+  <g class="in" style="animation-delay: 1s">
+    <text x="392" y="132" font-size="11.5" fill="#f3f4f6">{"service": "Hosting", "monthly_fee_eur": 1200.0, …}</text>
+    <rect x="770.5" y="120.5" width="40" height="16" rx="3" fill="#38bdf8" fill-opacity="0.1" stroke="#38bdf8" stroke-opacity="0.5"/>
+    <text x="790.5" y="132" font-size="10.5" fill="#7dd3fc" text-anchor="middle">p. 1</text>
+  </g>
+  <g class="in" style="animation-delay: 1.45s">
+    <text x="392" y="156" font-size="11.5" fill="#f3f4f6">{"service": "Monitoring", "monthly_fee_eur": 300.0, …}</text>
+    <rect x="770.5" y="144.5" width="40" height="16" rx="3" fill="#38bdf8" fill-opacity="0.1" stroke="#38bdf8" stroke-opacity="0.5"/>
+    <text x="790.5" y="156" font-size="10.5" fill="#7dd3fc" text-anchor="middle">p. 1</text>
+  </g>
+  <g class="in" style="animation-delay: 1.9s">
+    <text x="392" y="180" font-size="11.5" fill="#f3f4f6">{"service": "Support", "monthly_fee_eur": 450.0, …}</text>
+    <rect x="770.5" y="168.5" width="40" height="16" rx="3" fill="#38bdf8" fill-opacity="0.1" stroke="#38bdf8" stroke-opacity="0.5"/>
+    <text x="790.5" y="180" font-size="10.5" fill="#7dd3fc" text-anchor="middle">p. 1</text>
+  </g>
+
+  <!-- The aspect: the paragraphs back, as they are written, each cited by
+       its page -->
+  <g class="in" style="animation-delay: 2.45s">
+    <text x="392" y="258"><tspan font-size="10.5" letter-spacing="1.4" fill="#6b7280">ASPECT</tspan><tspan dx="12" fill="#f3f4f6">Termination</tspan><tspan dx="12" font-size="11" fill="#6b7280">the document's own text</tspan></text>
+    <rect x="392" y="271" width="2" height="58" fill="#38bdf8"/>
+    <text x="406" y="284" font-size="11.5" fill="#d1d5db">3. Term and Termination</text>
+    <rect x="770.5" y="272.5" width="40" height="16" rx="3" fill="#38bdf8" fill-opacity="0.1" stroke="#38bdf8" stroke-opacity="0.5"/>
+    <text x="790.5" y="284" font-size="10.5" fill="#7dd3fc" text-anchor="middle">p. 2</text>
+    <text x="406" y="304" font-size="11.5" fill="#d1d5db">3.1 This Agreement has an initial term of…</text>
+    <rect x="770.5" y="292.5" width="40" height="16" rx="3" fill="#38bdf8" fill-opacity="0.1" stroke="#38bdf8" stroke-opacity="0.5"/>
+    <text x="790.5" y="304" font-size="10.5" fill="#7dd3fc" text-anchor="middle">p. 2</text>
+    <text x="406" y="324" font-size="11.5" fill="#d1d5db">3.2 Either party may terminate this…</text>
+    <rect x="770.5" y="312.5" width="40" height="16" rx="3" fill="#38bdf8" fill-opacity="0.1" stroke="#38bdf8" stroke-opacity="0.5"/>
+    <text x="790.5" y="324" font-size="10.5" fill="#7dd3fc" text-anchor="middle">p. 2</text>
+  </g>
+</svg>

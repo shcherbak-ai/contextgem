@@ -280,14 +280,14 @@ interactions:
   response:
     body:
       string: !!binary |
-        H4sIAAAAAAAA/3VSTW/iMBC98ysin0NVmkDa3nZXe+oFabWHiqDIOJPErbGNPWl3hfjvHZuPBLW9
-        GDFv3subN7OfJAmTNXtMmOg4iq1V09/8ff6U/2mW/e7vr+ahyPBnvrl/ftrtlnLD0sAwmxcQeGbd
-        CEM8QGn0ERYOOEJQnRUPd3lBbx6BralBBVprcbqYql7zE6MzUoAnaEV/k2Qf3+BN1/CPyrfpubIF
-        73kLVDs3UdEZFSqMey89co0sHUBhNIKOdlf7knosma9kXbLHkv24LVlaMssdbx23HdU9AauSLWdZ
-        hJaz/PQ7L9n6sB5LO2h6z8NIuldqBHCtDfIQSRxqfUIOlzEaqaXvKkrKU2xkzaOxLKIHetcxlv5q
-        UmYdBY0VmleIsvk8WxwF2bCCAb4vTiCSFTWiLe6y9AvFqgbkUvlRtExw0UE9cIc9RKR6dxLhylF2
-        6eB9Lc2IOhkl8NnwV18/piN1O6jMi2/1B0AIsHSAlXVQS3GdytDmIFzxd22XVUTHzIN7oxOtUIIL
-        66qh4b063hnz/z3CtqKdtuCsk/HYwkVMDpMP81jh7WMDAAA=
+        H4sIAAAAAAAA/3VSwW7bMAy95ysMnZ0hbuKk7W0YtluLATvGgcFIjK1VkVRJXtcW+fdRShw7bXYR
+        JD4+6vGR75MsY1Kw+4zxFgLfWzX9vv0BXfO2/fU8e7zh39TLq3x8KvjDXfNWlCyPDLP9jTz0rC/c
+        EA+DNPoIc4cQMFYtVnc35WK5ur1NwN4IVJHW2DBdTlWn4cRojeToCVrTM8ve0xm1aYF/KTzL+8ge
+        vYcGKdYnUdAZFSMMvJc+gA4sH0BudECd5K4rTcXjkWUVZVtqo5aiIqxiX2cVy3vMgoPGgW0J9hFf
+        V+xnMaeMLF4W/aWs2CZyDpXejD91uOs8xGZ1p9QIAK1NgGhWandzQg7nBndSS9/W5KEnQ0m0D8ay
+        hB7o3CTDugsPmHU0glAH84Sp7KKcL48F2TCcAZ6XJzCQFDWmrYr8SsVaYACp/Mh0xoG3KAbuMKGE
+        1C9OBrxQND9nQCekGVEnIwc+C772+9EdqZtrAj6WHwDO0dJm1tahkPzSlCHNYVzv/6WdJ5EEM4/u
+        D+1uHSS6OC2BO+jUcQGZf/UB9zWNtEFnnUxbGBdicpj8AxZExJ58AwAA
     headers:
       access-control-expose-headers:
       - X-Request-ID
@@ -310,7 +310,7 @@ interactions:
       openai-organization:
       - DUMMY
       openai-processing-ms:
-      - '2422'
+      - '1054'
       openai-project:
       - DUMMY
       openai-version:
@@ -336,9 +336,9 @@ interactions:
       x-ratelimit-remaining-tokens:
       - DUMMY
       x-ratelimit-reset-requests:
-      - 12ms
+      - 6ms
       x-ratelimit-reset-tokens:
-      - 164ms
+      - 32ms
       x-request-id:
       - DUMMY
     status:
@@ -579,10 +579,10 @@ interactions:
       tags.\n</output_constraints>\n\n<answer_format>\nANSWER FORMAT (MANDATORY):\n[\n    {\n        \"concept_id\":
       str,\n        \"extracted_items\": [\n            {\n                \"value\":
       ...,\n                \"reference_paragraph_ids\": [\n                    str,\n                    ...\n                ]\n            },\n            ...\n        ],\n    },\n    ...\n]\n</answer_format>\n\n<concepts>\nCONCEPTS:\n<concept
-      id=\"C0\">\n    <concept_id>C0</concept_id>\n    \n    <concept_name>Monthly
-      hosting fee</concept_name>\n\n    <concept_description>\n    The monthly fee
-      for hosting, in EUR\n    </concept_description>\n\n    <amount_of_extracted_items>This
-      concept may have zero, one, or multiple extracted items.</amount_of_extracted_items>\n\n    <extracted_item_type>float
+      id=\"C0\">\n    <concept_id>C0</concept_id>\n    \n    <concept_name>Fees</concept_name>\n\n    <concept_description>\n    The
+      monthly fee of each service\n    </concept_description>\n\n    <expected_structure>\n    {\n  \"service\":
+      str,\n  \"monthly_fee_eur\": float,\n  \"billing\": str\n}\n    </expected_structure>\n\n    <amount_of_extracted_items>This
+      concept may have zero, one, or multiple extracted items.</amount_of_extracted_items>\n\n    <extracted_item_type>dict
       (must be exactly as specified)</extracted_item_type>\n</concept>\n\n</concepts>\n\n<document_paragraphs>\nDOCUMENT
       PARAGRAPHS:\n    <paragraph id=\"P0\">\n        <paragraph_id>P0</paragraph_id>\n        \n        <paragraph_text>\n        SERVICE
       AGREEMENT\n        </paragraph_text>\n        \n        <additional_context>\n        Heading,
@@ -675,7 +675,7 @@ interactions:
       connection:
       - keep-alive
       content-length:
-      - '29598'
+      - '29715'
       content-type:
       - application/json
       cookie:
@@ -709,15 +709,16 @@ interactions:
   response:
     body:
       string: !!binary |
-        H4sIAAAAAAAA/3VTy27bMBC8+ysEnuVAdpVY7jUIUPTSXoI+LEPYUGuJLUUqJJWkDfzvXVJPo8mF
-        IHd2h8uZ5esqipgo2ceI8Rocb1q5voPn6y/39/zH3ePPz38/Zem3x6RqQHxPXd2w2Ffoh1/I3Vh1
-        xTXVoRNa9TA3CA4962a336Y7WrMANLpE6cuq1q1v1rJTMFTUWnC0BB3oGEWvYfW9qRJfKJzEY6RB
-        a6FCio1JFDRa+ggDa4V1oByLZ5Br5VCFdg+5InK/RFHuAY6tK0SZE5iz2yRn8QjiizPA6RmFcNhY
-        n3HosYmhT3wC2aGHN9skuUriJWbwhAbplqIFA5WBtqbbBjL2dZ+z45h+7jfhTPvj8gVE01nwyqlO
-        ygUASmkHXvmg3XFAzpNaJ6GErQsyxJI7pIB1umUBPdN6DOp3F4Ky1pCfrnD6Nwba6yzNekI2O72A
-        twPoqBW5iO+TwbVLxqJEB0LahYOMA69J6al28+FmF1+AxbMhH+aMNN1lUwZ0pdAzlqwWIvzf81sN
-        9AIJVS1Y3qWfAe7nhxpvDZaCX+oypxn03+W9tMmM0DCzaJ7oLxROoPGGlXiCTvYDzewfS8NYkKsV
-        mtaIMNV+Jlbn1T/IDN5gzAMAAA==
+        H4sIAAAAAAAA/71UXYvbMBB8z68wenYOJ5fPvpaW9qBQaHuFxkEo8iZWq0hGWvvuOO6/d+WP2Gnv
+        IC2lL8LemR1mJY0eR1HEVMZeRUzmAuWx0OM3u7eimu407m6+zb2sZl/v8urLbfn55jZHFocOu/sO
+        EruuK2mpD1BZ08DSgUAIqpPlejqfLZardQ0cbQY6tB0KHC/GujSi7citkuAJ2tBvFD3Wa/BmMrin
+        chJ3lSN4Lw5AtY5ERWd1qDDhvfIoTOOzBaU1CKa2u0kNiYclitIASCiQqywlMGWvk5TFHQj36ISk
+        MbhCOPrA2DTYSaEhVkKXEOBBNdQ9uIqGaqTfWY/KHE76HelI3nL9wPcAHEoXyJNpklwlv/B2Suu6
+        P4i9N5HIKmGCeE97ioeuHOzBAVF4IZw4OFHkNGc7Bvu4Ttm2o/eNfz7XB2sUWnfhaNf/YbJJ8o9G
+        +1QWhXV4yVyz+QVzOUqF838/12Q4V/NR/9P3dnjdSaf0IsTMlFoPAGGMRRFiWgdtO+pcdNHaK6N8
+        zsmnpyhTXDzagtXoE63bOqrlWfpY4Sj8yNH+gFp2vlquGkHWPws9PFkuWhTJi+6BRTKfxc9I8gxQ
+        KO0HeWdSyJxy2YteL5bxGcjvHKW2Z9ABrU4MUWbK9lgyGuzC76afM9DsEJ3uQOVF+R6Q4bUh44WD
+        TMnzjelpDsLj+hLtdBq14e7GclTgwollsBelbp9p/+Dp6eJ0rAdwBYUU20sxehr9BJDMhYH6BQAA
     headers:
       access-control-expose-headers:
       - X-Request-ID
@@ -740,7 +741,7 @@ interactions:
       openai-organization:
       - DUMMY
       openai-processing-ms:
-      - '2247'
+      - '2069'
       openai-project:
       - DUMMY
       openai-version:
@@ -764,9 +765,9 @@ interactions:
       x-ratelimit-remaining-tokens:
       - DUMMY
       x-ratelimit-reset-requests:
-      - 12ms
+      - 6ms
       x-ratelimit-reset-tokens:
-      - 215ms
+      - 43ms
       x-request-id:
       - DUMMY
     status:

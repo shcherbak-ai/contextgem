@@ -65,7 +65,6 @@ _EXAMPLES_WITH_REQUESTS = [
     "docs.decision_models.decision_model_concepts",
     "docs.decision_models.decision_model_group",
     "docs.decision_models.decision_model_usage_and_cost",
-    "docs.documents.docling_cited_pages",
     "docs.llm_config.chat_with_tools",
     "docs.llm_config.chat_with_tools_simple",
     "docs.llms.llm_extraction_methods.extract_all",
@@ -81,6 +80,7 @@ _EXAMPLES_WITH_REQUESTS = [
     "docs.serialization.serialization",
     "readme.llm_chat",
     "readme.quickstart_decision_model",
+    "readme.quickstart_docling",
     "readme.quickstart_llm",
 ]
 
@@ -114,8 +114,8 @@ _EXAMPLES_WITHOUT_REQUESTS = [
 # models of Docling, which run on PyTorch and are not in the tests: these examples
 # are run with a stand-in for its converter.
 _EXAMPLES_WITH_DOCLING = [
-    "docs.documents.docling_cited_pages",
     "docs.documents.docling_conversion",
+    "readme.quickstart_docling",
 ]
 
 

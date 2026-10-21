@@ -94,7 +94,8 @@ ContextGem works with two kinds of models. You describe what to extract in the s
 ## Quick start
 
 ```bash
-uv add contextgem  # or: pip install -U contextgem
+uv add contextgem             # or: pip install -U contextgem
+uv add "contextgem[docling]"  # with Docling, to convert PDF, DOCX and other files
 ```
 
 ### Extract with an LLM
@@ -120,7 +121,22 @@ A decision model answers closed questions (yes/no, one of your labels, a level o
 {{QUICKSTART_DECISION_MODEL}}
 ```
 
-More examples: [aspects](https://contextgem.shcherbak.ai/quickstart/#aspect-extraction-from-document), [sub-aspects](https://contextgem.shcherbak.ai/quickstart/#extracting-aspect-with-sub-aspects), [concepts of an aspect](https://contextgem.shcherbak.ai/quickstart/#concept-extraction-from-aspect), [concepts from images](https://contextgem.shcherbak.ai/quickstart/#concept-extraction-from-document-vision), [aspects containing concepts](https://contextgem.shcherbak.ai/advanced_usage/#extracting-aspects-containing-concepts), [aspects with a decision model](https://contextgem.shcherbak.ai/decision_models/decision_models/#extracting-aspects), [a decision model and an LLM in one model group](https://contextgem.shcherbak.ai/decision_models/decision_models/#using-a-decision-model-in-a-model-group), [multi-model pipelines](https://contextgem.shcherbak.ai/advanced_usage/#using-a-multi-llm-pipeline-to-extract-data-from-several-documents) and a [chat interface with tool calling](https://contextgem.shcherbak.ai/quickstart/#lightweight-llm-chat-interface).
+### Start from a file with Docling
+
+Your documents are files. [Docling](https://github.com/docling-project/docling) converts PDF, DOCX, PPTX, XLSX, HTML, scanned images and more, and [`Document.from_docling()`](https://contextgem.shcherbak.ai/documents/docling/) makes a document of the result, in which each paragraph keeps its place in the structure of the file, e.g. the column headers of its table row, and the pages it is on. Below, an LLM extracts a concept and an aspect from a [two-page service agreement](tests/other_files/docling/service_agreement.pdf), and each item is cited by its page.
+
+```python
+{{QUICKSTART_DOCLING}}
+```
+
+<!-- markdownlint-disable MD033 -->
+<p align="center">
+  <img src="docs/source/_static/contextgem_docling.svg" alt="What the example above extracts from its PDF file, converted with Docling. From the table of fees on page 1, the concept Fees gives three JSON objects, one for each row of the table, e.g. the service Hosting with a monthly fee of 1200.0 EUR, each cited on page 1. From section 3 on page 2, the aspect Termination gives back the heading and clauses 3.1 and 3.2, cited on page 2." width="832"><br>
+  <sup>What the example above extracts: each fee from its row of the table, and the termination clauses, each cited by its page.</sup>
+</p>
+<!-- markdownlint-enable MD033 -->
+
+More examples: [aspects](https://contextgem.shcherbak.ai/quickstart/#aspect-extraction-from-document), [sub-aspects](https://contextgem.shcherbak.ai/quickstart/#extracting-aspect-with-sub-aspects), [concepts of an aspect](https://contextgem.shcherbak.ai/quickstart/#concept-extraction-from-aspect), [concepts from images](https://contextgem.shcherbak.ai/quickstart/#concept-extraction-from-document-vision), [aspects containing concepts](https://contextgem.shcherbak.ai/advanced_usage/#extracting-aspects-containing-concepts), [aspects with a decision model](https://contextgem.shcherbak.ai/decision_models/decision_models/#extracting-aspects), [a decision model and an LLM in one model group](https://contextgem.shcherbak.ai/decision_models/decision_models/#using-a-decision-model-in-a-model-group), [multi-model pipelines](https://contextgem.shcherbak.ai/advanced_usage/#using-a-multi-llm-pipeline-to-extract-data-from-several-documents), [the paragraphs of a file converted with Docling](https://contextgem.shcherbak.ai/documents/docling/#what-the-document-is-made-of) and a [chat interface with tool calling](https://contextgem.shcherbak.ai/quickstart/#lightweight-llm-chat-interface).
 
 <!-- markdownlint-disable MD033 -->
 <p align="center"><img src="assets/contextgem-separator.svg" alt="" width="456" height="26"></p>
@@ -135,7 +151,7 @@ More examples: [aspects](https://contextgem.shcherbak.ai/quickstart/#aspect-extr
 </p>
 <!-- markdownlint-enable MD033 -->
 
-1. **Wrap your content in a [Document](https://contextgem.shcherbak.ai/documents/document_config/)**: text, images, or both, or a PDF, DOCX or other file [converted with Docling](https://contextgem.shcherbak.ai/documents/docling/), with its structure and the page of each paragraph.
+1. **Wrap your content in a [Document](https://contextgem.shcherbak.ai/documents/document_config/).** Pass text, images or both, or **start from a file**: [Docling](https://github.com/docling-project/docling) converts PDF, DOCX, PPTX, XLSX, HTML and scanned files, and [`Document.from_docling()`](https://contextgem.shcherbak.ai/documents/docling/) keeps the structure of the file and the pages of each paragraph, which give the pages of the items that refer to it.
 2. **Say what to extract.** [Aspects](https://contextgem.shcherbak.ai/aspects/aspects/) pull out the parts of the document on a topic, as paragraphs or sentences. [Concepts](https://contextgem.shcherbak.ai/concepts/supported_concepts/) extract typed values from the whole document or from an aspect, with optional references and justifications. Keep a set of both as a reusable [extraction pipeline](https://contextgem.shcherbak.ai/pipelines/extraction_pipelines/).
 3. **Run a model.** One call to an [LLM](https://contextgem.shcherbak.ai/llms/llm_extraction_methods/), a [decision model](https://contextgem.shcherbak.ai/decision_models/decision_models/) or a [model group](https://contextgem.shcherbak.ai/llms/llm_config/#model-groups) of both extracts everything. A group sends each aspect and concept to the model of its role, e.g. the closed questions to a decision model and the rest to an LLM, and each model can have fallbacks.
 
@@ -152,7 +168,7 @@ An agent plans and works across documents and steps. ContextGem reads one docume
 </p>
 <!-- markdownlint-enable MD033 -->
 
-- **At ingestion**: extract the metadata of each new document once, so that agents find documents by their type, parties or dates.
+- **At ingestion**: convert each new file with [Docling](https://contextgem.shcherbak.ai/documents/docling/) and extract its metadata once, so that agents find documents by their type, parties or dates.
 - **In a tool**: an agent calls an extraction and gets the values with the sentences they came from, without the document in its context. The tool is a Python function, for ContextGem's own chat, an agent framework or an MCP server.
 - **At a decision point**: a decision model answers a closed question with the probability of each answer, so that the workflow branches on a value that you defined and knows how sure the model is of it. Before the turn of an agent with many tools, it can also pick the groups of tools that the request needs.
 

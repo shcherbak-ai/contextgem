@@ -1,0 +1,127 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 832 416" width="832" height="416" role="img" aria-labelledby="title desc" font-family="ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Consolas, 'Liberation Mono', 'DejaVu Sans Mono', monospace" font-size="13">
+  <title id="title">ContextGem - the paragraphs that Document.from_docling() makes of a page, each with its additional context</title>
+  <desc id="desc">The heading, clause 2.1 and the table of section 2, on page 1 of the service agreement, and the paragraphs that from_docling() makes of them. The heading "2. Fees and Payment" has the additional context "Heading, level 1". Clause 2.1 has "Section: 2. Fees and Payment". The caption "Table 1: Monthly fees" has "Table caption; Section: 2. Fees and Payment". The table becomes a paragraph with its column headers, "Service; Monthly fee; Billing", with "Table header" and the caption and the section in its context, then a paragraph for each row, with each value after the header of its column, e.g. "Service: Hosting; Monthly fee: 1,200 EUR; Billing: In advance", with "Table row" and the caption and the section in its context. The page footer, "Service Agreement - page 1 of 2", is left out.</desc>
+
+  <!-- The run, played once: each part of the page is read in its order and
+       gives its paragraph, with its additional context. The drawing as it
+       stands is where the run ends: each part fades in from a hidden first
+       frame, the traces show only while they play, and without motion it is
+       all there -->
+  <style>
+    .in { animation: show 0.35s ease-out backwards; }
+    @keyframes show { from { opacity: 0; } }
+    .grow { transform-box: fill-box; transform-origin: left center; animation: grow 0.5s cubic-bezier(0.2, 0.7, 0.2, 1) backwards; }
+    @keyframes grow { from { transform: scaleX(0); } }
+    .rise { transform-box: fill-box; transform-origin: center top; animation: rise 0.4s cubic-bezier(0.2, 0.7, 0.2, 1) backwards; }
+    @keyframes rise { from { transform: scaleY(0); } }
+    .light { animation: light 0.4s ease-out backwards; }
+    @keyframes light { from { fill: #6b7280; } }
+    .trace { opacity: 0; stroke-dasharray: 1; animation: trace 0.6s ease-in-out; }
+    @keyframes trace {
+      0% { opacity: 1; stroke-dashoffset: 1; }
+      60% { opacity: 1; stroke-dashoffset: 0; }
+      100% { opacity: 0; stroke-dashoffset: 0; }
+    }
+    @media (prefers-reduced-motion: reduce) { * { animation: none !important; } }
+  </style>
+
+  <!-- A ground of its own, so that the picture reads the same in the light
+       and the dark theme: a window, with what it shows on its tab -->
+  <path d="M0.5 28.5H831.5V415.5H0.5Z" fill="#111113" stroke="#2c2c30"/>
+  <path d="M0.5 29V0.5H184.5V29" fill="#111113" stroke="#2c2c30"/>
+  <path d="M1 28.5H184" stroke="#111113"/>
+  <text x="16" y="18.5" font-size="11" fill="#9ca3af">Document.from_docling()</text>
+
+  <!-- The columns -->
+  <g font-size="10.5" letter-spacing="1.4" fill="#6b7280">
+    <text x="28" y="62">THE FILE, PAGE 1</text>
+    <text x="324" y="62">PARAGRAPHS</text>
+  </g>
+  <text x="416" y="62" font-size="11" fill="#6b7280">the text, and its <tspan fill="#7dd3fc">additional context</tspan></text>
+
+  <!-- Page 1, drawn in the order Docling reads it, each part on the line
+       of its paragraph; the page goes on, down to its footer -->
+  <path d="M28.5 346V78.5H271.5L283.5 90.5V346" fill="none" stroke="#ffffff" stroke-opacity="0.2"/>
+  <path d="M271.5 78.5V90.5H283.5" fill="none" stroke="#ffffff" stroke-opacity="0.2"/>
+  <path d="M28.5 346V401.5H283.5V346" fill="none" stroke="#ffffff" stroke-opacity="0.2" stroke-dasharray="3 3"/>
+  <text x="44" y="104" font-size="11" fill="#d1d5db">2. Fees and Payment</text>
+  <text x="44" y="134" font-size="8.5" fill="#6b7280">2.1</text>
+  <rect x="64" y="130" width="200" height="3" fill="#ffffff" fill-opacity="0.14"/>
+  <rect x="44" y="140" width="120" height="3" fill="#ffffff" fill-opacity="0.14"/>
+  <text x="44" y="175" font-size="9.5" font-style="italic" fill="#9ca3af">Table 1: Monthly fees</text>
+  <!-- The table: a header row and three rows -->
+  <rect x="44" y="190" width="224" height="36" fill="#ffffff" fill-opacity="0.06"/>
+  <path d="M44.5 190.5H267.5V333.5H44.5ZM44 226.5H268M44 262.5H268M44 298.5H268M116.5 190V334M192.5 190V334" fill="none" stroke="#ffffff" stroke-opacity="0.2"/>
+  <g font-size="9.5">
+    <text x="51" y="211.5" fill="#9ca3af">Service</text>
+    <text x="123" y="211.5" fill="#9ca3af">Monthly fee</text>
+    <text x="199" y="211.5" fill="#9ca3af">Billing</text>
+    <text x="51" y="247.5" fill="#d1d5db">Hosting</text>
+    <text x="123" y="247.5" fill="#d1d5db">1,200 EUR</text>
+    <text x="199" y="247.5" fill="#d1d5db">In advance</text>
+    <text x="51" y="283.5" fill="#d1d5db">Monitoring</text>
+    <text x="123" y="283.5" fill="#d1d5db">300 EUR</text>
+    <text x="199" y="283.5" fill="#d1d5db">In advance</text>
+    <text x="51" y="319.5" fill="#d1d5db">Support</text>
+    <text x="123" y="319.5" fill="#d1d5db">450 EUR</text>
+    <text x="199" y="319.5" fill="#d1d5db">In arrears</text>
+  </g>
+  <!-- The footer of the page: furniture, which is not converted -->
+  <text x="156" y="378" font-size="9" fill="#6b7280" text-anchor="middle">Service Agreement - page 1 of 2</text>
+
+  <!-- The routes: each part of the page to its paragraph. A route shows
+       when its trace has run along it -->
+  <g fill="none" stroke="#ffffff" stroke-opacity="0.2">
+    <path class="in" style="animation-delay: 0.6s" d="M292 100.5H314"/>
+    <path class="in" style="animation-delay: 0.82s" d="M292 136.5H314"/>
+    <path class="in" style="animation-delay: 1.04s" d="M292 172.5H314"/>
+    <path class="in" style="animation-delay: 1.26s" d="M292 208.5H314"/>
+    <path class="in" style="animation-delay: 1.48s" d="M292 244.5H314"/>
+    <path class="in" style="animation-delay: 1.7s" d="M292 280.5H314"/>
+    <path class="in" style="animation-delay: 1.92s" d="M292 316.5H314"/>
+  </g>
+  <g fill="none" stroke="#38bdf8" stroke-width="1.5">
+    <path class="trace" pathLength="1" style="animation-delay: 0.3s" d="M292 100.5H314"/>
+    <path class="trace" pathLength="1" style="animation-delay: 0.52s" d="M292 136.5H314"/>
+    <path class="trace" pathLength="1" style="animation-delay: 0.74s" d="M292 172.5H314"/>
+    <path class="trace" pathLength="1" style="animation-delay: 0.96s" d="M292 208.5H314"/>
+    <path class="trace" pathLength="1" style="animation-delay: 1.18s" d="M292 244.5H314"/>
+    <path class="trace" pathLength="1" style="animation-delay: 1.4s" d="M292 280.5H314"/>
+    <path class="trace" pathLength="1" style="animation-delay: 1.62s" d="M292 316.5H314"/>
+  </g>
+
+  <!-- The paragraphs: the text, and under it the additional context, which
+       the models get with it -->
+  <g class="in" style="animation-delay: 0.65s">
+    <text x="324" y="104" font-size="12" fill="#f3f4f6">2. Fees and Payment</text>
+    <text x="324" y="119" font-size="10" fill="#7dd3fc">Heading, level 1</text>
+  </g>
+  <g class="in" style="animation-delay: 0.87s">
+    <text x="324" y="140" font-size="12" fill="#f3f4f6">2.1 The Customer shall pay the monthly fees in Table 1…</text>
+    <text x="324" y="155" font-size="10" fill="#7dd3fc">Section: 2. Fees and Payment</text>
+  </g>
+  <g class="in" style="animation-delay: 1.09s">
+    <text x="324" y="176" font-size="12" fill="#f3f4f6">Table 1: Monthly fees</text>
+    <text x="324" y="191" font-size="10" fill="#7dd3fc">Table caption; Section: 2. Fees and Payment</text>
+  </g>
+  <g class="in" style="animation-delay: 1.31s">
+    <text x="324" y="212" font-size="12" fill="#f3f4f6">Service; Monthly fee; Billing</text>
+    <text x="324" y="227" font-size="10" fill="#7dd3fc">Table header; Table caption: Table 1: Monthly fees; Section: 2. Fees and Payment</text>
+  </g>
+  <g class="in" style="animation-delay: 1.53s">
+    <text x="324" y="248" font-size="12" fill="#f3f4f6">Service: Hosting; Monthly fee: 1,200 EUR; Billing: In advance</text>
+    <text x="324" y="263" font-size="10" fill="#7dd3fc">Table row; Table caption: Table 1: Monthly fees; Section: 2. Fees and Payment</text>
+  </g>
+  <g class="in" style="animation-delay: 1.75s">
+    <text x="324" y="284" font-size="12" fill="#f3f4f6">Service: Monitoring; Monthly fee: 300 EUR; Billing: In advance</text>
+    <text x="324" y="299" font-size="10" fill="#7dd3fc">Table row; Table caption: Table 1: Monthly fees; Section: 2. Fees and Payment</text>
+  </g>
+  <g class="in" style="animation-delay: 1.97s">
+    <text x="324" y="320" font-size="12" fill="#f3f4f6">Service: Support; Monthly fee: 450 EUR; Billing: In arrears</text>
+    <text x="324" y="335" font-size="10" fill="#7dd3fc">Table row; Table caption: Table 1: Monthly fees; Section: 2. Fees and Payment</text>
+  </g>
+  <g class="in" style="animation-delay: 2.22s">
+    <path d="M292 374.5H314" fill="none" stroke="#ffffff" stroke-opacity="0.12" stroke-dasharray="2 3"/>
+    <text x="324" y="378" font-size="11" fill="#6b7280">page footer: left out</text>
+  </g>
+</svg>

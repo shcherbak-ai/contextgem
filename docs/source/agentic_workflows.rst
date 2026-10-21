@@ -52,6 +52,7 @@ When a document enters your system, e.g. a knowledge base that agents search, ex
 
 **Key points:**
 
+* **Start from the files.** Convert each new file with Docling, e.g. a PDF or DOCX file, and create its document with :meth:`~contextgem.public.documents.Document.from_docling`: its paragraphs keep the structure of the file, and a value extracted with references has the pages it was found on, for a record that cites them (see :doc:`documents/docling`)
 * **Define the fields once**, as an :class:`~contextgem.public.pipelines.ExtractionPipeline`. ``assign_pipeline()`` gives each document a copy of its aspects and concepts, so one pipeline serves all the documents. The pipeline is serialized with ``to_json()``, e.g. to keep the definition of the metadata next to the records made with it (see :doc:`pipelines/extraction_pipelines`)
 * **Send each field to the model that suits it.** In a :class:`~contextgem.public.models.DocumentModelGroup`, a decision model answers the closed questions (a type, a yes/no flag) fast and at a low cost per document, and an LLM extracts the open values. Store the probabilities with the values, so that a search can leave out the uncertain ones, or a person can check them (see :doc:`decision_models/decision_models`)
 * **Keep the processed document.** ``document.to_json()`` holds every extracted item with its references and justifications, and ``Document.from_json()`` restores it later, e.g. in a tool that returns the sources of a value, without extracting again (see :doc:`serialization`)
