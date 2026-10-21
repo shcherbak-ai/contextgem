@@ -555,6 +555,56 @@ def _texts_and_contexts(document: Document) -> list[tuple[str, str | None]]:
     return [(p.raw_text, p.additional_context) for p in document.paragraphs]
 
 
+def _docling_formats_extensions() -> set[str]:
+    """
+    Returns the extensions that the table of the supported formats in the
+    documentation of `Document.from_docling()` (`docs/source/documents/docling.rst`)
+    lists.
+
+    :return: The extensions, e.g. `.docx` and `.tar.gz`.
+    :rtype: set[str]
+    """
+    page = (
+        Path(__file__).parents[1] / "docs" / "source" / "documents" / "docling.rst"
+    ).read_text(encoding="utf-8")
+    section = page.split(".. _docling-formats-label:", 1)[1]
+    table_lines = section.split(".. list-table::", 1)[1].splitlines()[1:]
+    # The table ends at the first line that is not indented
+    end = next(
+        index
+        for index, line in enumerate(table_lines)
+        if line and not line.startswith(" ")
+    )
+    return set(re.findall(r"``(\.[a-z0-9][a-z0-9.]*)``", "\n".join(table_lines[:end])))
+
+
+# The name that the README gives the format of an extension, where it is not the
+# extension in capitals (`.docx` is DOCX)
+_README_FORMAT_NAMES = {
+    ".png": "Images",
+    ".tiff": "Images",
+    ".pages": "Pages",
+    ".numbers": "Numbers",
+    ".key": "Keynote",
+    ".md": "Markdown",
+    ".asciidoc": "AsciiDoc",
+    ".tex": "LaTeX",
+    ".vtt": "WebVTT",
+    ".eml": "Email",
+    ".msg": "Email",
+    ".boxnote": "Box Notes",
+    ".nxml": "JATS XML",
+    ".xml": "USPTO XML",
+    ".dclg": "DocLang",
+    ".dclx": "DocLang",
+    ".tar.gz": "METS GBS",
+    ".ebc": "EBCDIC",
+    ".mp3": "Audio",
+    ".mp4": "Video",
+    ".json": "Docling JSON",
+}
+
+
 class _StubSaTModel:
     """
     Stands in for a SaT model: splits a text into paragraphs at blank lines,
@@ -3772,21 +3822,38 @@ class TestDocuments(BaseTest):
         supported when the tests cover it, and each format that they cover is
         listed.
         """
-        page = (
-            Path(__file__).parents[1] / "docs" / "source" / "documents" / "docling.rst"
-        ).read_text(encoding="utf-8")
-        section = page.split(".. _docling-formats-label:", 1)[1]
-        table_lines = section.split(".. list-table::", 1)[1].splitlines()[1:]
-        # The table ends at the first line that is not indented
-        end = next(
-            index
-            for index, line in enumerate(table_lines)
-            if line and not line.startswith(" ")
-        )
         extensions = {
             "." + extension.rsplit(".", 1)[-1]
-            for extension in re.findall(
-                r"``(\.[a-z0-9][a-z0-9.]*)``", "\n".join(table_lines[:end])
-            )
+            for extension in _docling_formats_extensions()
         }
         assert extensions == {*SOURCE_SUFFIXES, ".json"}
+
+    def test_from_docling_readme_formats(self):
+        """
+        Tests that the table of formats under the Docling quick start of the README
+        (`dev/readme.template.md`) names each format of the table of the supported
+        formats in the documentation, by its name in `_README_FORMAT_NAMES` or by
+        its extension in capitals, and no other, and that the icon of each of its
+        cells exists: a format that becomes supported is shown in the README too.
+        """
+        root = Path(__file__).parents[1]
+        template = (root / "dev" / "readme.template.md").read_text(encoding="utf-8")
+        section = template.split("### Start from a file with Docling", 1)[1]
+        table = section.split("<table", 1)[1].split("</table>", 1)[0]
+        cells = re.findall(
+            r'<img src="(assets/icons/format-[a-z-]+\.svg)"[^>]*><br><sub>(.+?)</sub>',
+            table,
+        )
+        assert len(cells) == table.count("<td")
+        for icon, _ in cells:
+            assert (root / icon).is_file(), icon
+        names = {
+            name.strip()
+            for _, label in cells
+            for name in re.split(r",|<br>", label)
+            if name.strip()
+        }
+        assert names == {
+            _README_FORMAT_NAMES.get(extension, extension[1:].upper())
+            for extension in _docling_formats_extensions()
+        }

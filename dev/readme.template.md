@@ -135,27 +135,39 @@ Your documents are files. [Docling](https://github.com/docling-project/docling) 
 <!-- markdownlint-disable MD033 -->
 <table align="center">
 <tr>
-<td align="center"><img src="assets/icons/format-pdf.svg" alt="" width="32" height="32"><br>PDF</td>
-<td align="center"><img src="assets/icons/format-docx.svg" alt="" width="32" height="32"><br>DOCX</td>
-<td align="center"><img src="assets/icons/format-pptx.svg" alt="" width="32" height="32"><br>PPTX</td>
-<td align="center"><img src="assets/icons/format-xlsx.svg" alt="" width="32" height="32"><br>XLSX</td>
+<td align="center" valign="top"><img src="assets/icons/format-pdf.svg" alt="" width="32" height="32"><br><sub>PDF</sub></td>
+<td align="center" valign="top"><img src="assets/icons/format-docx.svg" alt="" width="32" height="32"><br><sub>DOCX, DOC, RTF,<br>ODT, Pages</sub></td>
+<td align="center" valign="top"><img src="assets/icons/format-pptx.svg" alt="" width="32" height="32"><br><sub>PPTX, PPT,<br>ODP, Keynote</sub></td>
+<td align="center" valign="top"><img src="assets/icons/format-xlsx.svg" alt="" width="32" height="32"><br><sub>XLSX, XLS,<br>ODS, Numbers</sub></td>
+<td align="center" valign="top"><img src="assets/icons/format-csv.svg" alt="" width="32" height="32"><br><sub>CSV</sub></td>
+<td align="center" valign="top"><img src="assets/icons/format-epub.svg" alt="" width="32" height="32"><br><sub>EPUB</sub></td>
+<td align="center" valign="top"><img src="assets/icons/format-email.svg" alt="" width="32" height="32"><br><sub>Email</sub></td>
+<td align="center" valign="top"><img src="assets/icons/format-box-notes.svg" alt="" width="32" height="32"><br><sub>Box Notes</sub></td>
 </tr>
 <tr>
-<td align="center"><img src="assets/icons/format-html.svg" alt="" width="32" height="32"><br>HTML</td>
-<td align="center"><img src="assets/icons/format-markdown.svg" alt="" width="32" height="32"><br>Markdown</td>
-<td align="center"><img src="assets/icons/format-email.svg" alt="" width="32" height="32"><br>Email</td>
-<td align="center"><img src="assets/icons/format-epub.svg" alt="" width="32" height="32"><br>EPUB</td>
+<td align="center" valign="top"><img src="assets/icons/format-image.svg" alt="" width="32" height="32"><br><sub>Images</sub></td>
+<td align="center" valign="top"><img src="assets/icons/format-audio.svg" alt="" width="32" height="32"><br><sub>Audio</sub></td>
+<td align="center" valign="top"><img src="assets/icons/format-video.svg" alt="" width="32" height="32"><br><sub>Video</sub></td>
+<td align="center" valign="top"><img src="assets/icons/format-webvtt.svg" alt="" width="32" height="32"><br><sub>WebVTT</sub></td>
+<td align="center" valign="top"><img src="assets/icons/format-html.svg" alt="" width="32" height="32"><br><sub>HTML, MHTML</sub></td>
+<td align="center" valign="top"><img src="assets/icons/format-markdown.svg" alt="" width="32" height="32"><br><sub>Markdown</sub></td>
+<td align="center" valign="top"><img src="assets/icons/format-asciidoc.svg" alt="" width="32" height="32"><br><sub>AsciiDoc</sub></td>
+<td align="center" valign="top"><img src="assets/icons/format-latex.svg" alt="" width="32" height="32"><br><sub>LaTeX</sub></td>
 </tr>
 <tr>
-<td align="center"><img src="assets/icons/format-image.svg" alt="" width="32" height="32"><br>Images</td>
-<td align="center"><img src="assets/icons/format-audio.svg" alt="" width="32" height="32"><br>Audio</td>
-<td align="center"><img src="assets/icons/format-video.svg" alt="" width="32" height="32"><br>Video</td>
-<td align="center"><img src="assets/icons/format-xbrl.svg" alt="" width="32" height="32"><br>XBRL</td>
+<td align="center" valign="top"><img src="assets/icons/format-xbrl.svg" alt="" width="32" height="32"><br><sub>XBRL</sub></td>
+<td align="center" valign="top"><img src="assets/icons/format-jats.svg" alt="" width="32" height="32"><br><sub>JATS XML</sub></td>
+<td align="center" valign="top"><img src="assets/icons/format-uspto.svg" alt="" width="32" height="32"><br><sub>USPTO XML</sub></td>
+<td align="center" valign="top"><img src="assets/icons/format-doclang.svg" alt="" width="32" height="32"><br><sub>DocLang</sub></td>
+<td align="center" valign="top"><img src="assets/icons/format-docling-json.svg" alt="" width="32" height="32"><br><sub>Docling JSON</sub></td>
+<td align="center" valign="top"><img src="assets/icons/format-mets-gbs.svg" alt="" width="32" height="32"><br><sub>METS GBS</sub></td>
+<td align="center" valign="top"><img src="assets/icons/format-ebcdic.svg" alt="" width="32" height="32"><br><sub>EBCDIC</sub></td>
+<td align="center" valign="top"><img src="assets/icons/format-afp.svg" alt="" width="32" height="32"><br><sub>AFP</sub></td>
 </tr>
 </table>
 <!-- markdownlint-enable MD033 -->
 
-An image, e.g. a scan, gives the text that Docling reads with OCR and the image itself, so that a model can read both, and a video its transcript and its frames. ContextGem also supports scanned PDF files, DOC, PPT, XLS and RTF files, which Docling converts with LibreOffice, OpenDocument (ODT, ODS, ODP), Apple Pages, Numbers and Keynote, MHTML, AsciiDoc, LaTeX, CSV, WebVTT, Box Notes, JATS and USPTO XML, DocLang, Google Books packages (METS GBS), EBCDIC and AFP files, and Docling JSON. Its tests convert files in each of these formats, and the [supported formats](https://contextgem.shcherbak.ai/documents/docling/#supported-formats) give their extensions and what some of them need.
+Its tests convert files in each of these formats. The [supported formats](https://contextgem.shcherbak.ai/documents/docling/#supported-formats) give their extensions, and what some of them need, e.g. LibreOffice for DOC, PPT, XLS and RTF.
 
 Below, an LLM extracts a concept and an aspect from a [two-page service agreement](tests/other_files/docling/service_agreement.pdf), and each item is cited by its page.
 
@@ -170,7 +182,36 @@ Below, an LLM extracts a concept and an aspect from a [two-page service agreemen
 </p>
 <!-- markdownlint-enable MD033 -->
 
-More examples: [aspects](https://contextgem.shcherbak.ai/quickstart/#aspect-extraction-from-document), [sub-aspects](https://contextgem.shcherbak.ai/quickstart/#extracting-aspect-with-sub-aspects), [concepts of an aspect](https://contextgem.shcherbak.ai/quickstart/#concept-extraction-from-aspect), [concepts from images](https://contextgem.shcherbak.ai/quickstart/#concept-extraction-from-document-vision), [aspects containing concepts](https://contextgem.shcherbak.ai/advanced_usage/#extracting-aspects-containing-concepts), [aspects with a decision model](https://contextgem.shcherbak.ai/decision_models/decision_models/#extracting-aspects), [a decision model and an LLM in one model group](https://contextgem.shcherbak.ai/decision_models/decision_models/#using-a-decision-model-in-a-model-group), [multi-model pipelines](https://contextgem.shcherbak.ai/advanced_usage/#using-a-multi-llm-pipeline-to-extract-data-from-several-documents), [the paragraphs of a file converted with Docling](https://contextgem.shcherbak.ai/documents/docling/#what-the-document-is-made-of) and a [chat interface with tool calling](https://contextgem.shcherbak.ai/quickstart/#lightweight-llm-chat-interface).
+### More examples
+
+<!-- markdownlint-disable MD033 -->
+<table>
+<tr>
+<th align="left" valign="middle" width="29%"><img src="assets/icons/documents.svg" alt="" width="32" height="32" align="absmiddle">&nbsp;&nbsp;&nbsp; Documents</th>
+<td valign="middle"><a href="https://contextgem.shcherbak.ai/quickstart/#concept-extraction-from-document-vision">Images</a>&nbsp;· <a href="https://contextgem.shcherbak.ai/documents/docling/#what-the-document-is-made-of">Files&nbsp;from&nbsp;Docling</a>&nbsp;· <a href="https://contextgem.shcherbak.ai/documents/document_config/#providing-additional-context-for-paragraphs">Paragraph&nbsp;context</a>&nbsp;· <a href="https://contextgem.shcherbak.ai/serialization/#example-usage">Saving&nbsp;and&nbsp;loading</a></td>
+</tr>
+<tr>
+<th align="left" valign="middle" width="29%"><img src="assets/icons/nested-context.svg" alt="" width="32" height="32" align="absmiddle">&nbsp;&nbsp;&nbsp; Aspects and concepts</th>
+<td valign="middle"><a href="https://contextgem.shcherbak.ai/quickstart/#aspect-extraction-from-document">Aspects</a>&nbsp;· <a href="https://contextgem.shcherbak.ai/quickstart/#extracting-aspect-with-sub-aspects">Sub-aspects</a>&nbsp;· <a href="https://contextgem.shcherbak.ai/quickstart/#concept-extraction-from-document-text">Concepts&nbsp;of&nbsp;a&nbsp;document</a>&nbsp;· <a href="https://contextgem.shcherbak.ai/quickstart/#concept-extraction-from-aspect">Concepts&nbsp;of&nbsp;an&nbsp;aspect</a>&nbsp;· <a href="https://contextgem.shcherbak.ai/advanced_usage/#extracting-aspects-containing-concepts">Aspects&nbsp;with&nbsp;concepts</a>&nbsp;· <a href="https://contextgem.shcherbak.ai/concepts/json_object_concept/#defining-structure">JSON&nbsp;objects</a>&nbsp;· <a href="https://contextgem.shcherbak.ai/concepts/label_concept/#multi-class-vs-multi-label-classification">Classification</a>&nbsp;· <a href="https://contextgem.shcherbak.ai/concepts/string_concept/#references-and-justifications-for-extraction">References</a>&nbsp;· <a href="https://contextgem.shcherbak.ai/aspects/aspects/#justifications-for-extraction">Justifications</a>&nbsp;· <a href="https://contextgem.shcherbak.ai/pipelines/extraction_pipelines/#simple-pipeline-creation">Reusable&nbsp;pipelines</a></td>
+</tr>
+<tr>
+<th align="left" valign="middle" width="29%"><img src="assets/icons/llm.svg" alt="" width="32" height="32" align="absmiddle">&nbsp;&nbsp;&nbsp; LLMs</th>
+<td valign="middle"><a href="https://contextgem.shcherbak.ai/llms/supported_llms/#cloud-based-llms">Cloud&nbsp;models</a>&nbsp;· <a href="https://contextgem.shcherbak.ai/llms/supported_llms/#local-llms">Local&nbsp;models</a>&nbsp;· <a href="https://contextgem.shcherbak.ai/llms/llm_extraction_methods/">Extraction&nbsp;methods</a>&nbsp;· <a href="https://contextgem.shcherbak.ai/llms/llm_config/#setting-the-reasoning-effort">Reasoning&nbsp;effort</a>&nbsp;· <a href="https://contextgem.shcherbak.ai/llms/llm_config/#configuring-fallback-llms">Fallbacks</a>&nbsp;· <a href="https://contextgem.shcherbak.ai/llms/llm_config/#accessing-usage-and-cost-statistics">Usage&nbsp;and&nbsp;cost</a>&nbsp;· <a href="https://contextgem.shcherbak.ai/quickstart/#lightweight-llm-chat-interface">Chat</a>&nbsp;· <a href="https://contextgem.shcherbak.ai/quickstart/#chat-with-tools">Chat&nbsp;with&nbsp;tools</a></td>
+</tr>
+<tr>
+<th align="left" valign="middle" width="29%"><img src="assets/icons/decision-model.svg" alt="" width="32" height="32" align="absmiddle">&nbsp;&nbsp;&nbsp; Decision models</th>
+<td valign="middle"><a href="https://contextgem.shcherbak.ai/decision_models/decision_models/#supported-providers-and-models">Cloud&nbsp;models</a>&nbsp;· <a href="https://contextgem.shcherbak.ai/decision_models/decision_models/#local-decision-models">Local&nbsp;models</a>&nbsp;· <a href="https://contextgem.shcherbak.ai/decision_models/decision_models/#quick-start">Concepts</a>&nbsp;· <a href="https://contextgem.shcherbak.ai/decision_models/decision_models/#extracting-aspects">Aspects</a>&nbsp;· <a href="https://contextgem.shcherbak.ai/decision_models/decision_models/#decision-threshold">Decision&nbsp;threshold</a>&nbsp;· <a href="https://contextgem.shcherbak.ai/decision_models/decision_models/#fallback-chains">Fallbacks</a>&nbsp;· <a href="https://contextgem.shcherbak.ai/decision_models/decision_models/#usage-and-cost">Usage&nbsp;and&nbsp;cost</a></td>
+</tr>
+<tr>
+<th align="left" valign="middle" width="29%"><img src="assets/icons/routing.svg" alt="" width="32" height="32" align="absmiddle">&nbsp;&nbsp;&nbsp; Model groups</th>
+<td valign="middle"><a href="https://contextgem.shcherbak.ai/llms/llm_config/#model-groups">LLMs&nbsp;with&nbsp;roles</a>&nbsp;· <a href="https://contextgem.shcherbak.ai/decision_models/decision_models/#using-a-decision-model-in-a-model-group">LLM&nbsp;and&nbsp;decision&nbsp;model</a>&nbsp;· <a href="https://contextgem.shcherbak.ai/advanced_usage/#using-a-multi-llm-pipeline-to-extract-data-from-several-documents">Several&nbsp;documents</a></td>
+</tr>
+<tr>
+<th align="left" valign="middle" width="29%"><img src="assets/icons/agentic-workflows.svg" alt="" width="32" height="32" align="absmiddle">&nbsp;&nbsp;&nbsp; Agentic workflows</th>
+<td valign="middle"><a href="https://contextgem.shcherbak.ai/agentic_workflows/#at-ingestion-metadata-for-every-document">Metadata&nbsp;at&nbsp;ingestion</a>&nbsp;· <a href="https://contextgem.shcherbak.ai/agentic_workflows/#in-a-tool-extraction-on-demand">Extraction&nbsp;in&nbsp;a&nbsp;tool</a>&nbsp;· <a href="https://contextgem.shcherbak.ai/agentic_workflows/#serving-the-tool-over-mcp">A&nbsp;tool&nbsp;over&nbsp;MCP</a>&nbsp;· <a href="https://contextgem.shcherbak.ai/agentic_workflows/#at-a-decision-point-choosing-the-next-step">A&nbsp;decision&nbsp;point</a>&nbsp;· <a href="https://contextgem.shcherbak.ai/agentic_workflows/#choosing-the-tools-of-an-agent">Choosing&nbsp;the&nbsp;tools</a></td>
+</tr>
+</table>
+<!-- markdownlint-enable MD033 -->
 
 <!-- markdownlint-disable MD033 -->
 <p align="center"><img src="assets/contextgem-separator.svg" alt="" width="456" height="26"></p>
@@ -223,9 +264,20 @@ Besides tests that replay recorded responses of real models, [Hypothesis](https:
 Full documentation: **[contextgem.shcherbak.ai](https://contextgem.shcherbak.ai)**
 
 <!-- markdownlint-disable MD033 -->
-| <img src="assets/icons/get-started.svg" alt="" width="32" height="32"><br>Get started | <img src="assets/icons/nested-context.svg" alt="" width="32" height="32"><br>Define what to extract | <img src="assets/icons/models.svg" alt="" width="32" height="32"><br>Run models | <img src="assets/icons/optimize.svg" alt="" width="32" height="32"><br>Optimize |
-|:------------|:-----------------------|:-----------|:---------|
-| [Installation](https://contextgem.shcherbak.ai/installation/)<br>[Quickstart](https://contextgem.shcherbak.ai/quickstart/)<br>[Advanced usage](https://contextgem.shcherbak.ai/advanced_usage/)<br>[How it works](https://contextgem.shcherbak.ai/how_it_works/)<br>[Migrating to v1.0](https://contextgem.shcherbak.ai/migration_v1/) | [Documents](https://contextgem.shcherbak.ai/documents/document_config/)<br>[Files converted with Docling](https://contextgem.shcherbak.ai/documents/docling/)<br>[Aspects](https://contextgem.shcherbak.ai/aspects/aspects/)<br>[Concepts](https://contextgem.shcherbak.ai/concepts/supported_concepts/)<br>[Extraction pipelines](https://contextgem.shcherbak.ai/pipelines/extraction_pipelines/)<br>[Serialization](https://contextgem.shcherbak.ai/serialization/) | [Supported LLMs](https://contextgem.shcherbak.ai/llms/supported_llms/)<br>[LLM configuration](https://contextgem.shcherbak.ai/llms/llm_config/)<br>[Extraction methods](https://contextgem.shcherbak.ai/llms/llm_extraction_methods/)<br>[Decision models](https://contextgem.shcherbak.ai/decision_models/decision_models/)<br>[Chat with tools](https://contextgem.shcherbak.ai/llms/chat_with_tools/)<br>[Agentic workflows](https://contextgem.shcherbak.ai/agentic_workflows/) | [Accuracy](https://contextgem.shcherbak.ai/optimizations/optimization_accuracy/)<br>[Speed](https://contextgem.shcherbak.ai/optimizations/optimization_speed/)<br>[Cost](https://contextgem.shcherbak.ai/optimizations/optimization_cost/)<br>[Long documents](https://contextgem.shcherbak.ai/optimizations/optimization_long_docs/)<br>[Choosing the right LLM(s)](https://contextgem.shcherbak.ai/optimizations/optimization_choosing_llm/) |
+<table>
+<tr>
+<th align="left" valign="top"><img src="assets/icons/get-started.svg" alt="" width="32" height="32"><br>Get started</th>
+<th align="left" valign="top"><img src="assets/icons/nested-context.svg" alt="" width="32" height="32"><br>Define what to extract</th>
+<th align="left" valign="top"><img src="assets/icons/models.svg" alt="" width="32" height="32"><br>Run models</th>
+<th align="left" valign="top"><img src="assets/icons/optimize.svg" alt="" width="32" height="32"><br>Optimize</th>
+</tr>
+<tr>
+<td valign="top"><a href="https://contextgem.shcherbak.ai/installation/">Installation</a><br><a href="https://contextgem.shcherbak.ai/quickstart/">Quickstart</a><br><a href="https://contextgem.shcherbak.ai/advanced_usage/">Advanced usage</a><br><a href="https://contextgem.shcherbak.ai/how_it_works/">How it works</a><br><a href="https://contextgem.shcherbak.ai/migration_v1/">Migrating to v1.0</a></td>
+<td valign="top"><a href="https://contextgem.shcherbak.ai/documents/document_config/">Documents</a><br><a href="https://contextgem.shcherbak.ai/documents/docling/">Files converted with Docling</a><br><a href="https://contextgem.shcherbak.ai/aspects/aspects/">Aspects</a><br><a href="https://contextgem.shcherbak.ai/concepts/supported_concepts/">Concepts</a><br><a href="https://contextgem.shcherbak.ai/pipelines/extraction_pipelines/">Extraction pipelines</a><br><a href="https://contextgem.shcherbak.ai/serialization/">Serialization</a></td>
+<td valign="top"><a href="https://contextgem.shcherbak.ai/llms/supported_llms/">Supported LLMs</a><br><a href="https://contextgem.shcherbak.ai/llms/llm_config/">LLM configuration</a><br><a href="https://contextgem.shcherbak.ai/llms/llm_extraction_methods/">Extraction methods</a><br><a href="https://contextgem.shcherbak.ai/decision_models/decision_models/">Decision models</a><br><a href="https://contextgem.shcherbak.ai/llms/chat_with_tools/">Chat with tools</a><br><a href="https://contextgem.shcherbak.ai/agentic_workflows/">Agentic workflows</a></td>
+<td valign="top"><a href="https://contextgem.shcherbak.ai/optimizations/optimization_accuracy/">Accuracy</a><br><a href="https://contextgem.shcherbak.ai/optimizations/optimization_speed/">Speed</a><br><a href="https://contextgem.shcherbak.ai/optimizations/optimization_cost/">Cost</a><br><a href="https://contextgem.shcherbak.ai/optimizations/optimization_long_docs/">Long documents</a><br><a href="https://contextgem.shcherbak.ai/optimizations/optimization_choosing_llm/">Choosing the right LLM(s)</a></td>
+</tr>
+</table>
 <!-- markdownlint-enable MD033 -->
 
 For LLMs and coding agents, [llms.txt](https://contextgem.shcherbak.ai/llms.txt) indexes the documentation, with a Markdown copy of each page.
