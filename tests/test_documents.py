@@ -373,6 +373,25 @@ _DOCLING_UNCONVERTED_FILES = [
     if path.suffix in SOURCE_SUFFIXES - TEST_CONVERTED_SUFFIXES
 ]
 
+# The Docling labels of the items whose paragraphs are not running text, which
+# `from_docling()` gives one sentence each, their whole text: headings, table
+# headers and rows, key-value pairs and form fields, code, formulas, checkboxes,
+# references and form headings. The SaT model segments the other paragraphs.
+_DOCLING_ONE_SENTENCE_LABELS = {
+    "title",
+    "section_header",
+    "table",
+    "key_value_region",
+    "form",
+    "field_item",
+    "code",
+    "formula",
+    "checkbox_selected",
+    "checkbox_unselected",
+    "reference",
+    "field_heading",
+}
+
 # The paragraphs that each fixture file written for ContextGem must give, which show
 # how its format is converted: (text, additional context, page numbers)
 _DOCLING_FILE_PARAGRAPHS = {
@@ -3931,6 +3950,59 @@ class TestDocuments(BaseTest):
             "If the new output is right, write the outputs with "
             "`uv run fab docling-fixtures --outputs`"
         )
+
+    @pytest.mark.filterwarnings("ignore:Provenance bbox coordinate:UserWarning")
+    @pytest.mark.parametrize(
+        "file_name", [*_DOCLING_CONVERTED_FILES, *_DOCLING_UNCONVERTED_FILES]
+    )
+    def test_from_docling_fixture_sentences(self, file_name: str):
+        """
+        Tests the sentences of the paragraphs that ContextGem makes of the committed
+        Docling document of each file of `tests/other_files/docling/`.
+
+        A paragraph that is not running text, e.g. a table row, a heading or code,
+        is one sentence from the start, its whole text: the SaT model, which is
+        made for running text, splits e.g. a table row within the text of a cell.
+        The SaT model segments each other paragraph into sentences that are in
+        its text, in order, and leave out nothing of it but whitespace. Each
+        sentence has the additional context and the pages of its paragraph, and
+        a copy of its custom data.
+        """
+        path = _DOCLING_FILES_DIR / file_name
+        docling_document = DoclingDocument.load_from_json(
+            path.with_name(f"{path.name}.json")
+        )
+        document = Document.from_docling(docling_document)
+        for paragraph in document.paragraphs:
+            whole = (
+                paragraph.custom_data["docling"]["label"]
+                in _DOCLING_ONE_SENTENCE_LABELS
+            )
+            assert [sentence.raw_text for sentence in paragraph.sentences] == (
+                [paragraph.raw_text] if whole else []
+            ), paragraph.raw_text
+
+        document = Document.from_docling(docling_document, pre_segment_sentences=True)
+        for paragraph in document.paragraphs:
+            sentences = [sentence.raw_text for sentence in paragraph.sentences]
+            assert sentences, paragraph.raw_text
+            if paragraph.custom_data["docling"]["label"] in (
+                _DOCLING_ONE_SENTENCE_LABELS
+            ):
+                assert sentences == [paragraph.raw_text]
+            start = 0
+            for sentence in sentences:
+                found = paragraph.raw_text.find(sentence, start)
+                assert found >= 0, (paragraph.raw_text, sentence)
+                start = found + len(sentence)
+            assert re.sub(r"\s", "", "".join(sentences)) == re.sub(
+                r"\s", "", paragraph.raw_text
+            )
+            for sentence in paragraph.sentences:
+                assert sentence.additional_context == paragraph.additional_context
+                assert sentence.page_numbers == paragraph.page_numbers
+                assert sentence.custom_data == paragraph.custom_data
+                assert sentence.custom_data is not paragraph.custom_data
 
     def test_from_docling_fixture_files(self):
         """

@@ -135,6 +135,20 @@ _TEXT_KINDS = {
     DocItemLabel.CHECKBOX_UNSELECTED: "Checkbox, unchecked",
 }
 
+# The Docling labels of the texts that are not running text, each of which is
+# one sentence (see `_add_paragraph()`): code, a formula, a checkbox, an entry of
+# a list of references, the heading of a form
+_ONE_SENTENCE_LABELS = frozenset(
+    {
+        DocItemLabel.CODE,
+        DocItemLabel.FORMULA,
+        DocItemLabel.CHECKBOX_SELECTED,
+        DocItemLabel.CHECKBOX_UNSELECTED,
+        DocItemLabel.REFERENCE,
+        DocItemLabel.FIELD_HEADING,
+    }
+)
+
 # The states of checkboxes, by their Docling label, as the text of a form field or
 # of a table cell gives them
 _CHECKBOX_VALUES = {
@@ -647,6 +661,8 @@ class _PendingParagraph(NamedTuple):
     headings: list[tuple[int, str]]
     page_numbers: list[int]
     custom_data: dict[str, Any]
+    # Whether the paragraph is one sentence, its whole text
+    one_sentence: bool
 
 
 class _DoclingConverter:
@@ -718,6 +734,10 @@ class _DoclingConverter:
         The images of the pages of an image file are attached first (see
         ``_add_page_images()``), and then those of the pictures in the body.
 
+        A paragraph that is not running text, e.g. a table row, has its whole text
+        as its one sentence (see ``_add_paragraph()``), with the additional
+        context, the pages and the custom data of the paragraph.
+
         :return: None
         :rtype: None
         """
@@ -732,15 +752,16 @@ class _DoclingConverter:
             ]
             if path:
                 context.append("Section: " + " > ".join(path))
-            self.paragraphs.append(
-                _publicize(
-                    _Paragraph,
-                    raw_text=pending.text,
-                    additional_context=_clean("; ".join(context)) or None,
-                    page_numbers=pending.page_numbers,
-                    custom_data=pending.custom_data,
-                )
+            paragraph = _publicize(
+                _Paragraph,
+                raw_text=pending.text,
+                additional_context=_clean("; ".join(context)) or None,
+                page_numbers=pending.page_numbers,
+                custom_data=pending.custom_data,
             )
+            if pending.one_sentence:
+                paragraph.sentences = [paragraph._make_sentence(paragraph.raw_text)]
+            self.paragraphs.append(paragraph)
 
     def _add_page_images(self) -> None:
         """
@@ -895,10 +916,19 @@ class _DoclingConverter:
         source: NodeItem,
         provenance: list[dict[str, Any]],
         tracks: Sequence[dict[str, Any]] = (),
+        *,
+        one_sentence: bool = False,
         **docling_data: Any,
     ) -> bool:
         """
         Adds a paragraph, unless its text is empty.
+
+        A paragraph that is not running text, e.g. a heading, a table row, a form
+        field or code, is one sentence, its whole text: the SaT model, which
+        segments the sentences of the other paragraphs when sentences are needed,
+        e.g. for an aspect with the "sentences" reference depth, is made for
+        running text, and splits e.g. a table row within the text of a cell. A
+        reference sentence of such a paragraph is then the paragraph as a whole.
 
         :param text: The text of the paragraph.
         :type text: str
@@ -911,6 +941,9 @@ class _DoclingConverter:
         :param tracks: The tracks that the paragraph is from, e.g. the cue of
             a subtitle file, whose speakers the additional context gives.
         :type tracks: Sequence[dict[str, Any]]
+        :param one_sentence: Whether the paragraph is one sentence, as one that is
+            not running text is. Defaults to False.
+        :type one_sentence: bool
         :param docling_data: Other data to keep in the custom data of the paragraph,
             e.g. the index of a table row.
         :type docling_data: Any
@@ -948,6 +981,7 @@ class _DoclingConverter:
                         **docling_data,
                     }
                 },
+                one_sentence=one_sentence,
             )
         )
         return True
@@ -970,6 +1004,7 @@ class _DoclingConverter:
             item,
             _provenance_of_items(sources),
             _tracks_of_items(sources),
+            one_sentence=item.label in _ONE_SENTENCE_LABELS,
         )
         return children
 
@@ -1084,6 +1119,7 @@ class _DoclingConverter:
             item,
             _provenance_of_items(sources),
             _tracks_of_items(sources),
+            one_sentence=True,
         )
         if added:
             self._headings.append((level, _clean(text)))
@@ -1237,7 +1273,11 @@ class _DoclingConverter:
             if label and (i == 0 or label != labels[i - 1])
         ]
         self._add_paragraph(
-            "; ".join(header), "Table header" + in_caption, table, provenance
+            "; ".join(header),
+            "Table header" + in_caption,
+            table,
+            provenance,
+            one_sentence=True,
         )
         for index, row in list(enumerate(grid))[header_count:]:
             self._add_paragraph(
@@ -1245,6 +1285,7 @@ class _DoclingConverter:
                 "Table row" + in_caption,
                 table,
                 provenance,
+                one_sentence=True,
                 row_index=index,
             )
         self._add_attached_texts(table.footnotes, "Table footnote")
@@ -1458,6 +1499,7 @@ class _DoclingConverter:
             field,
             _provenance_of_items(sources),
             _tracks_of_items(sources),
+            one_sentence=True,
         )
 
     def _field_value(self, item: TextItem, sources: list[NodeItem]) -> str:
@@ -1527,6 +1569,7 @@ class _DoclingConverter:
                 # of the region
                 _provenance(part.prov for part in (cell, *parts))
                 or _provenance_of_items([item]),
+                one_sentence=True,
             )
         self._add_attached_texts(item.footnotes, f"{name} footnote")
 

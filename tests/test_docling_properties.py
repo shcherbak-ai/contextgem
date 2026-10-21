@@ -116,6 +116,26 @@ _TEXT_KINDS = {
     DocItemLabel.CHECKBOX_SELECTED: "Checkbox, checked",
     DocItemLabel.CHECKBOX_UNSELECTED: "Checkbox, unchecked",
 }
+# The labels of the items whose paragraphs are not running text, each of which is
+# one sentence, its whole text: headings, table headers and rows, key-value pairs
+# and form fields, code, formulas, checkboxes, references and form headings
+_ONE_SENTENCE_LABELS = frozenset(
+    label.value
+    for label in (
+        DocItemLabel.TITLE,
+        DocItemLabel.SECTION_HEADER,
+        DocItemLabel.TABLE,
+        DocItemLabel.KEY_VALUE_REGION,
+        DocItemLabel.FORM,
+        DocItemLabel.FIELD_ITEM,
+        DocItemLabel.CODE,
+        DocItemLabel.FORMULA,
+        DocItemLabel.CHECKBOX_SELECTED,
+        DocItemLabel.CHECKBOX_UNSELECTED,
+        DocItemLabel.REFERENCE,
+        DocItemLabel.FIELD_HEADING,
+    )
+)
 # The states of checkboxes, as the text of a table cell gives them
 _CHECKBOX_STATES = {
     DocItemLabel.CHECKBOX_SELECTED: "checked",
@@ -1791,9 +1811,13 @@ class _Expected:
         :param blocks: The items of the body, after the Docling document is built.
         :type blocks: list[_Block]
         """
-        # The text, the additional context, the page numbers and the Docling data
-        # of each paragraph
-        self.paragraphs: list[tuple[str, str | None, list[int], dict[str, Any]]] = []
+        # The text, the additional context, the page numbers, the Docling data and
+        # the texts of the sentences of each paragraph: its whole text for one that
+        # is not running text, and none for the others, which the SaT model
+        # segments when sentences are needed
+        self.paragraphs: list[
+            tuple[str, str | None, list[int], dict[str, Any], list[str]]
+        ] = []
         # The base64 data and the Docling data of each image
         self.images: list[tuple[str, dict[str, Any]]] = []
         self.pictures_without_images = 0
@@ -1815,7 +1839,10 @@ class _Expected:
             if path:
                 context = [*context, "Section: " + " > ".join(path)]
             pages = sorted({entry["page_no"] for entry in docling["prov"]})
-            self.paragraphs.append((text, "; ".join(context) or None, pages, docling))
+            sentences = [text] if docling["label"] in _ONE_SENTENCE_LABELS else []
+            self.paragraphs.append(
+                (text, "; ".join(context) or None, pages, docling, sentences)
+            )
 
     def _paragraph(
         self,
@@ -2704,9 +2731,11 @@ class TestDoclingProperties(BaseTest):
         """
         Tests that a document created from a Docling document has the paragraphs
         and the images that the structure of the Docling document gives: each
-        paragraph with its text, its additional context, its page numbers and its
-        Docling data, in order, and the image of each picture of the body that has
-        one, once, with its Docling data.
+        paragraph with its text, its additional context, its page numbers, its
+        Docling data and its sentences, in order, and the image of each picture of
+        the body that has one, once, with its Docling data. A paragraph that is not
+        running text, e.g. a table row, is one sentence, which has the additional
+        context and the pages of the paragraph and a copy of its custom data.
         """
         docling_document = _Builder().build(blocks)
         expected = _Expected(blocks)
@@ -2727,9 +2756,16 @@ class TestDoclingProperties(BaseTest):
                 paragraph.additional_context,
                 paragraph.page_numbers,
                 _docling_data(paragraph.custom_data),
+                [sentence.raw_text for sentence in paragraph.sentences],
             )
             for paragraph in document.paragraphs
         ] == expected.paragraphs
+        for paragraph in document.paragraphs:
+            for sentence in paragraph.sentences:
+                assert sentence.additional_context == paragraph.additional_context
+                assert sentence.page_numbers == paragraph.page_numbers
+                assert sentence.custom_data == paragraph.custom_data
+                assert sentence.custom_data is not paragraph.custom_data
         assert [
             (image.base64_data, image.custom_data["docling"])
             for image in document.images

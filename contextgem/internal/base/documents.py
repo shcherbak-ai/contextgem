@@ -458,6 +458,13 @@ class _Document(_AssignedInstancesProcessor):
         ``List item; Section: 3. Fees > 3.1 Invoices``. It is sent to the models
         together with the paragraph (see :ref:`paragraph-additional-context`).
 
+        A paragraph that is not running text, i.e. the title, a heading, a table
+        header or row, a form field or a key-value pair, code, a formula,
+        a checkbox or an entry of a list of references, is one sentence: its whole
+        text. The other paragraphs are split into sentences with the SaT model of
+        the document when sentences are needed, e.g. for an aspect with
+        ``reference_depth="sentences"``.
+
         The ``page_numbers`` of each paragraph are the numbers of the pages that its
         text is on, and its sentences have them too. The ``reference_page_numbers``
         of an aspect or of an extracted item are then the pages of its references,

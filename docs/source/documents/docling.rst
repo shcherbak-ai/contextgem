@@ -220,6 +220,8 @@ Where the file has them, the additional context also gives:
 
 **Left out:** page headers and footers, comments, the speaker notes of a presentation, hidden slides and sheets, and the text that Docling finds inside pictures.
 
+**Sentences.** A paragraph that is not running text, i.e. a title or a heading, a table header or row, a form field or a key-value pair, code, a formula, a checkbox or an entry of a list of references, is one sentence from the start: its whole text. A SaT model, which is made for running text, would split e.g. a table row within the text of a cell. The other paragraphs are split into sentences by a SaT model when sentences are needed, e.g. for an aspect with ``reference_depth="sentences"``, as in any document (see :ref:`sat-models-offline`). A reference sentence of a table row is thus the whole row, with its pages.
+
 .. literalinclude:: ../../../dev/usage_examples/docs/documents/docling_conversion.py
    :language: python
    :caption: The paragraphs of a document created from a file converted with Docling
