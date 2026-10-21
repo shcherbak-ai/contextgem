@@ -176,6 +176,13 @@ include = [
 [tool.hatch.build.targets.wheel]
 include = ["/contextgem"]
 
+[tool.uv]
+# A release enters uv.lock only a week after its upload, when a compromised one
+# has been found and removed (litellm 1.107.0, 2026-10-21: in two hours). Until
+# every version of uv.lock is a week old, a fixed date: the upload of its newest
+# file. From 2026-10-28, "7 days" (the latest-versions hook says when)
+exclude-newer = "2026-10-21T00:06:00Z"
+
 [tool.ruff]
 line-length = 88
 target-version = "py311"
