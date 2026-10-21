@@ -248,7 +248,7 @@ notice_form = doc.get_concept_by_name("Notice form").extracted_items[0]
 
 ### Start from a file with Docling
 
-Your documents are files. [Docling](https://github.com/docling-project/docling) converts files in [many formats](https://docling-project.github.io/docling/usage/supported_formats/), and [`Document.from_docling()`](https://contextgem.shcherbak.ai/documents/docling/) makes a document of the result, in which each paragraph keeps its place in the structure of the file, e.g. the column headers of its table row, and the pages it is on.
+Your documents are files. [Docling](https://github.com/docling-project/docling) converts them, and [`Document.from_docling()`](https://contextgem.shcherbak.ai/documents/docling/) makes a document of the result, in which each paragraph keeps its place in the structure of the file, e.g. the column headers of its table row, and the pages it is on. ContextGem supports files in these formats:
 
 <!-- markdownlint-disable MD033 -->
 <table align="center">
@@ -261,11 +261,19 @@ Your documents are files. [Docling](https://github.com/docling-project/docling) 
 <tr>
 <td align="center"><img src="assets/icons/format-html.svg" alt="" width="32" height="32"><br>HTML</td>
 <td align="center"><img src="assets/icons/format-markdown.svg" alt="" width="32" height="32"><br>Markdown</td>
-<td align="center"><img src="assets/icons/format-image.svg" alt="" width="32" height="32"><br>Images</td>
 <td align="center"><img src="assets/icons/format-email.svg" alt="" width="32" height="32"><br>Email</td>
+<td align="center"><img src="assets/icons/format-epub.svg" alt="" width="32" height="32"><br>EPUB</td>
+</tr>
+<tr>
+<td align="center"><img src="assets/icons/format-image.svg" alt="" width="32" height="32"><br>Images</td>
+<td align="center"><img src="assets/icons/format-audio.svg" alt="" width="32" height="32"><br>Audio</td>
+<td align="center"><img src="assets/icons/format-video.svg" alt="" width="32" height="32"><br>Video</td>
+<td align="center"><img src="assets/icons/format-xbrl.svg" alt="" width="32" height="32"><br>XBRL</td>
 </tr>
 </table>
 <!-- markdownlint-enable MD033 -->
+
+An image, e.g. a scan, gives the text that Docling reads with OCR and the image itself, so that a model can read both, and a video its transcript and its frames. ContextGem also supports scanned PDF files, DOC, PPT, XLS and RTF files, which Docling converts with LibreOffice, OpenDocument (ODT, ODS, ODP), Apple Pages, Numbers and Keynote, MHTML, AsciiDoc, LaTeX, CSV, WebVTT, Box Notes, JATS and USPTO XML, DocLang, Google Books packages (METS GBS), EBCDIC and AFP files, and Docling JSON. Its tests convert files in each of these formats, and the [supported formats](https://contextgem.shcherbak.ai/documents/docling/#supported-formats) give their extensions and what some of them need.
 
 Below, an LLM extracts a concept and an aspect from a [two-page service agreement](tests/other_files/docling/service_agreement.pdf), and each item is cited by its page.
 
@@ -277,7 +285,7 @@ from docling.document_converter import DocumentConverter
 from contextgem import Aspect, Document, DocumentLLM, JsonObjectConcept
 
 
-# Convert the file with Docling: PDF, DOCX, PPTX, XLSX, HTML, images and more
+# Convert the file with Docling, e.g. PDF, DOCX, PPTX, XLSX or HTML
 result = DocumentConverter().convert("service_agreement.pdf")
 # The paragraphs keep their place in the structure of the file and their pages
 doc = Document.from_docling(result.document)
@@ -343,7 +351,7 @@ More examples: [aspects](https://contextgem.shcherbak.ai/quickstart/#aspect-extr
 </p>
 <!-- markdownlint-enable MD033 -->
 
-1. **Wrap your content in a [Document](https://contextgem.shcherbak.ai/documents/document_config/).** Pass text, images or both, or **start from a file**: [Docling](https://github.com/docling-project/docling) converts PDF, DOCX, PPTX, XLSX, HTML and scanned files, and [`Document.from_docling()`](https://contextgem.shcherbak.ai/documents/docling/) keeps the structure of the file and the pages of each paragraph, which give the pages of the items that refer to it.
+1. **Wrap your content in a [Document](https://contextgem.shcherbak.ai/documents/document_config/).** Pass text, images or both, or **start from a file**: [Docling](https://github.com/docling-project/docling) converts files in the [supported formats](https://contextgem.shcherbak.ai/documents/docling/#supported-formats), e.g. PDF, DOCX, PPTX, XLSX and HTML, and [`Document.from_docling()`](https://contextgem.shcherbak.ai/documents/docling/) keeps the structure of the file and the pages of each paragraph, which give the pages of the items that refer to it.
 2. **Say what to extract.** [Aspects](https://contextgem.shcherbak.ai/aspects/aspects/) pull out the parts of the document on a topic, as paragraphs or sentences. [Concepts](https://contextgem.shcherbak.ai/concepts/supported_concepts/) extract typed values from the whole document or from an aspect, with optional references and justifications. Keep a set of both as a reusable [extraction pipeline](https://contextgem.shcherbak.ai/pipelines/extraction_pipelines/).
 3. **Run a model.** One call to an [LLM](https://contextgem.shcherbak.ai/llms/llm_extraction_methods/), a [decision model](https://contextgem.shcherbak.ai/decision_models/decision_models/) or a [model group](https://contextgem.shcherbak.ai/llms/llm_config/#model-groups) of both extracts everything. A group sends each aspect and concept to the model of its role, e.g. the closed questions to a decision model and the rest to an LLM, and each model can have fallbacks.
 

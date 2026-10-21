@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<link:linkbase xmlns:link="http://www.xbrl.org/2003/linkbase" xmlns:xlink="http://www.w3.org/1999/xlink">
+  <link:calculationLink xlink:type="extended" xlink:role="http://www.xbrl.org/2003/role/link">
+    <link:loc xlink:type="locator" xlink:href="eh-2026.xsd#eh_TotalFees" xlink:label="TotalFees"/>
+    <link:loc xlink:type="locator" xlink:href="eh-2026.xsd#eh_HostingFees" xlink:label="HostingFees"/>
+    <link:loc xlink:type="locator" xlink:href="eh-2026.xsd#eh_MonitoringFees" xlink:label="MonitoringFees"/>
+    <link:loc xlink:type="locator" xlink:href="eh-2026.xsd#eh_SupportFees" xlink:label="SupportFees"/>
+    <link:calculationArc xlink:type="arc" xlink:arcrole="http://www.xbrl.org/2003/arcrole/summation-item" xlink:from="TotalFees" xlink:to="HostingFees" weight="1.0" order="1"/>
+    <link:calculationArc xlink:type="arc" xlink:arcrole="http://www.xbrl.org/2003/arcrole/summation-item" xlink:from="TotalFees" xlink:to="MonitoringFees" weight="1.0" order="2"/>
+    <link:calculationArc xlink:type="arc" xlink:arcrole="http://www.xbrl.org/2003/arcrole/summation-item" xlink:from="TotalFees" xlink:to="SupportFees" weight="1.0" order="3"/>
+  </link:calculationLink>
+</link:linkbase>

@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xbrli:xbrl xmlns:xbrli="http://www.xbrl.org/2003/instance"
+  xmlns:link="http://www.xbrl.org/2003/linkbase"
+  xmlns:xlink="http://www.w3.org/1999/xlink"
+  xmlns:iso4217="http://www.xbrl.org/2003/iso4217"
+  xmlns:eh="https://example.com/xbrl/2026">
+  <link:schemaRef xlink:type="simple" xlink:href="eh-2026.xsd"/>
+  <xbrli:context id="Q3">
+    <xbrli:entity><xbrli:identifier scheme="https://example.com/entity">EXAMPLE-HOSTING</xbrli:identifier></xbrli:entity>
+    <xbrli:period><xbrli:startDate>2026-07-01</xbrli:startDate><xbrli:endDate>2026-09-30</xbrli:endDate></xbrli:period>
+  </xbrli:context>
+  <xbrli:unit id="EUR"><xbrli:measure>iso4217:EUR</xbrli:measure></xbrli:unit>
+  <eh:DocumentType contextRef="Q3">Quarterly fee report</eh:DocumentType>
+  <eh:EntityRegistrantName contextRef="Q3">Example Hosting AS</eh:EntityRegistrantName>
+  <eh:DocumentPeriodEndDate contextRef="Q3">2026-09-30</eh:DocumentPeriodEndDate>
+  <eh:FeesPolicyTextBlock contextRef="Q3">&lt;p&gt;The fees are those of the service agreement: a monthly fee for each service, billed in advance, but for support, which is billed in arrears.&lt;/p&gt;&lt;table&gt;&lt;tr&gt;&lt;th&gt;Service&lt;/th&gt;&lt;th&gt;Monthly fee&lt;/th&gt;&lt;th&gt;Billing&lt;/th&gt;&lt;/tr&gt;&lt;tr&gt;&lt;td&gt;Hosting&lt;/td&gt;&lt;td&gt;1,200 EUR&lt;/td&gt;&lt;td&gt;In advance&lt;/td&gt;&lt;/tr&gt;&lt;tr&gt;&lt;td&gt;Monitoring&lt;/td&gt;&lt;td&gt;300 EUR&lt;/td&gt;&lt;td&gt;In advance&lt;/td&gt;&lt;/tr&gt;&lt;tr&gt;&lt;td&gt;Support&lt;/td&gt;&lt;td&gt;450 EUR&lt;/td&gt;&lt;td&gt;In arrears&lt;/td&gt;&lt;/tr&gt;&lt;/table&gt;</eh:FeesPolicyTextBlock>
+  <eh:HostingFees contextRef="Q3" unitRef="EUR" decimals="0">3600</eh:HostingFees>
+  <eh:MonitoringFees contextRef="Q3" unitRef="EUR" decimals="0">900</eh:MonitoringFees>
+  <eh:SupportFees contextRef="Q3" unitRef="EUR" decimals="0">1350</eh:SupportFees>
+  <eh:TotalFees contextRef="Q3" unitRef="EUR" decimals="0">5850</eh:TotalFees>
+</xbrli:xbrl>

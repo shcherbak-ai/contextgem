@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<link:linkbase xmlns:link="http://www.xbrl.org/2003/linkbase" xmlns:xlink="http://www.w3.org/1999/xlink">
+  <link:presentationLink xlink:type="extended" xlink:role="http://www.xbrl.org/2003/role/link">
+    <link:loc xlink:type="locator" xlink:href="eh-2026.xsd#eh_FeesAbstract" xlink:label="FeesAbstract"/>
+    <link:loc xlink:type="locator" xlink:href="eh-2026.xsd#eh_HostingFees" xlink:label="HostingFees"/>
+    <link:loc xlink:type="locator" xlink:href="eh-2026.xsd#eh_MonitoringFees" xlink:label="MonitoringFees"/>
+    <link:loc xlink:type="locator" xlink:href="eh-2026.xsd#eh_SupportFees" xlink:label="SupportFees"/>
+    <link:loc xlink:type="locator" xlink:href="eh-2026.xsd#eh_TotalFees" xlink:label="TotalFees"/>
+    <link:presentationArc xlink:type="arc" xlink:arcrole="http://www.xbrl.org/2003/arcrole/parent-child" xlink:from="FeesAbstract" xlink:to="HostingFees" order="1"/>
+    <link:presentationArc xlink:type="arc" xlink:arcrole="http://www.xbrl.org/2003/arcrole/parent-child" xlink:from="FeesAbstract" xlink:to="MonitoringFees" order="2"/>
+    <link:presentationArc xlink:type="arc" xlink:arcrole="http://www.xbrl.org/2003/arcrole/parent-child" xlink:from="FeesAbstract" xlink:to="SupportFees" order="3"/>
+    <link:presentationArc xlink:type="arc" xlink:arcrole="http://www.xbrl.org/2003/arcrole/parent-child" xlink:from="FeesAbstract" xlink:to="TotalFees" order="4"/>
+  </link:presentationLink>
+</link:linkbase>

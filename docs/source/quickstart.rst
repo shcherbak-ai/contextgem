@@ -121,12 +121,12 @@ ContextGem follows a simple extraction process:
 -------------------------------------------------
 
 .. tip::
-   `Docling <https://github.com/docling-project/docling>`_ converts PDF, DOCX, PPTX, XLSX, HTML, scanned images and other files, and :meth:`~contextgem.public.documents.Document.from_docling` creates a document from the result, whose paragraphs keep their place in the structure of the file and the pages they are on. Common use cases include:
+   `Docling <https://github.com/docling-project/docling>`_ converts files in many formats, e.g. PDF, DOCX, PPTX, XLSX and HTML (see the :ref:`supported formats <docling-formats-label>`), and :meth:`~contextgem.public.documents.Document.from_docling` creates a document from the result, whose paragraphs keep their place in the structure of the file and the pages they are on. Common use cases include:
 
    * Extracting the values of the tables of a PDF file, e.g. the fees of a contract
    * Citing the page of each extracted item, e.g. for a reviewer to check it in the file
    * Extracting from presentations and spreadsheets, with the slide or the sheet of each paragraph
-   * Extracting from scanned files, which Docling reads with OCR
+   * Extracting from legacy Office files, e.g. DOC, which Docling converts with LibreOffice
 
 .. literalinclude:: ../../dev/usage_examples/readme/quickstart_docling.py
    :language: python

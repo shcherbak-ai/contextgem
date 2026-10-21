@@ -5,10 +5,14 @@ name: Docling fixtures
 # them as from the committed Docling documents (dev/docling_fixtures.py). The
 # tests convert the fixtures in the formats that need no models themselves, with
 # the torch-free docling-slim of the dev group. A PDF file needs the models of
-# Docling, which only this workflow runs, and an email or OpenDocument file
-# packages that the dev group does not have. It runs when the version of Docling can
-# change (uv.lock) or the converter does, and weekly with the latest Docling, to
-# find its changes before an upgrade.
+# Docling, which only this workflow runs (and their OCR, for a scanned one), as
+# do an image file and a Google Books package; an audio or a video file the speech
+# recognition of Docling (Whisper) and ffmpeg; an email, OpenDocument file or XBRL
+# report packages that the dev group does not have; and a legacy Office (DOC, XLS,
+# PPT) or RTF file LibreOffice. This workflow installs LibreOffice and ffmpeg, and
+# the script the rest. It runs when the version of Docling can change (uv.lock) or
+# the converter does, and weekly with the latest Docling, to find its changes
+# before an upgrade.
 
 on:
   push:
@@ -65,11 +69,24 @@ jobs:
       - name: Install dependencies
         run: uv sync --locked
 
-      # The layout and table models of Docling, about 0.5 GB
+      # LibreOffice, with which Docling converts the legacy Office and RTF files
+      # (DOC, XLS, PPT, RTF) into DOCX, XLSX and PPTX: Writer, Calc and Impress,
+      # without the packages that they only recommend; and ffmpeg, with which
+      # Whisper reads the audio and video files, and Docling the frames of a video
+      - name: Install LibreOffice and ffmpeg
+        run: >-
+          sudo apt-get update &&
+          sudo apt-get install -y --no-install-recommends
+          libreoffice-writer libreoffice-calc libreoffice-impress ffmpeg
+
+      # The layout, table and OCR models of Docling, about 0.5 GB, and the small
+      # model of Whisper, about 0.5 GB
       - name: Cache the models of Docling
         uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9  # v6.1.0
         with:
-          path: ~/.cache/huggingface
+          path: |
+            ~/.cache/huggingface
+            ~/.cache/whisper
           key: docling-models-${{ runner.os }}-${{ hashFiles('uv.lock') }}
           restore-keys: |
             docling-models-${{ runner.os }}-

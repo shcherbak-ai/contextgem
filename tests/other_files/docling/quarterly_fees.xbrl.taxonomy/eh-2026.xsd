@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema"
+  xmlns:xbrli="http://www.xbrl.org/2003/instance"
+  xmlns:link="http://www.xbrl.org/2003/linkbase"
+  xmlns:xlink="http://www.w3.org/1999/xlink"
+  xmlns:eh="https://example.com/xbrl/2026" targetNamespace="https://example.com/xbrl/2026" elementFormDefault="qualified">
+  <xs:annotation><xs:appinfo>
+    <link:linkbaseRef xlink:type="simple" xlink:href="eh-2026_pre.xml"
+      xlink:role="http://www.xbrl.org/2003/role/presentationLinkbaseRef"
+      xlink:arcrole="http://www.w3.org/1999/xlink/properties/linkbase"/>
+    <link:linkbaseRef xlink:type="simple" xlink:href="eh-2026_cal.xml"
+      xlink:role="http://www.xbrl.org/2003/role/calculationLinkbaseRef"
+      xlink:arcrole="http://www.w3.org/1999/xlink/properties/linkbase"/>
+  </xs:appinfo></xs:annotation>
+  <xs:import namespace="http://www.xbrl.org/2003/instance"
+    schemaLocation="http://www.xbrl.org/2003/xbrl-instance-2003-12-31.xsd"/>
+  <xs:complexType name="textBlockItemType">
+    <xs:simpleContent><xs:restriction base="xbrli:stringItemType"/></xs:simpleContent>
+  </xs:complexType>
+  <xs:element id="eh_DocumentType" name="DocumentType" type="xbrli:stringItemType" substitutionGroup="xbrli:item" xbrli:periodType="duration" nillable="true"/>
+  <xs:element id="eh_EntityRegistrantName" name="EntityRegistrantName" type="xbrli:stringItemType" substitutionGroup="xbrli:item" xbrli:periodType="duration" nillable="true"/>
+  <xs:element id="eh_DocumentPeriodEndDate" name="DocumentPeriodEndDate" type="xbrli:dateItemType" substitutionGroup="xbrli:item" xbrli:periodType="duration" nillable="true"/>
+  <xs:element id="eh_FeesPolicyTextBlock" name="FeesPolicyTextBlock" type="eh:textBlockItemType" substitutionGroup="xbrli:item" xbrli:periodType="duration" nillable="true"/>
+  <xs:element id="eh_FeesAbstract" name="FeesAbstract" type="xbrli:stringItemType" substitutionGroup="xbrli:item" xbrli:periodType="duration" abstract="true" nillable="true"/>
+  <xs:element id="eh_HostingFees" name="HostingFees" type="xbrli:monetaryItemType" substitutionGroup="xbrli:item" xbrli:periodType="duration" xbrli:balance="credit" nillable="true"/>
+  <xs:element id="eh_MonitoringFees" name="MonitoringFees" type="xbrli:monetaryItemType" substitutionGroup="xbrli:item" xbrli:periodType="duration" xbrli:balance="credit" nillable="true"/>
+  <xs:element id="eh_SupportFees" name="SupportFees" type="xbrli:monetaryItemType" substitutionGroup="xbrli:item" xbrli:periodType="duration" xbrli:balance="credit" nillable="true"/>
+  <xs:element id="eh_TotalFees" name="TotalFees" type="xbrli:monetaryItemType" substitutionGroup="xbrli:item" xbrli:periodType="duration" xbrli:balance="credit" nillable="true"/>
+</xs:schema>

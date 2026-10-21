@@ -10,7 +10,6 @@ from __future__ import annotations
 import ast
 import asyncio
 import base64
-import functools
 import importlib.metadata
 import io
 import os
@@ -37,6 +36,7 @@ from docling_core.types.doc import (
     CoordOrigin,
     DocItemLabel,
     DoclingDocument,
+    DocumentOrigin,
     FormItem,
     GraphCell,
     GraphCellLabel,
@@ -84,8 +84,14 @@ from dev.docling_fixtures import (
     SOURCE_SUFFIXES,
     TEST_CONVERTED_SUFFIXES,
     contextgem_output,
+    conversion_input,
+    converter_key,
+    format_options,
+    layout_path,
     output_path,
     read_output,
+    source_files,
+    taxonomy_path,
 )
 from tests.base import BaseTest
 from tests.utils import capture_logs, get_test_document_text
@@ -192,13 +198,20 @@ def _docling_image(color: str, size: int = 4) -> ImageRef:
     return ImageRef.from_pil(PILImage.new("RGB", (size, size), color), dpi=72)
 
 
-@functools.cache
-def _docling_converter() -> DocumentConverter:
-    """
-    Returns the converter of Docling, created once for the tests: the torch-free
-    docling-slim of the dev group, which converts the formats that need no models,
-    e.g. DOCX, XLSX, PPTX, HTML and Markdown files (`TEST_CONVERTED_SUFFIXES`).
+# The converters of Docling for the tests, by what they depend on (`converter_key()`)
+_DOCLING_CONVERTERS: dict[tuple[bool, Path | None, Path | None], DocumentConverter] = {}
 
+
+def _docling_converter(path: Path) -> DocumentConverter:
+    """
+    Returns the converter of Docling for a fixture file, created once for the files
+    that need the same options (`converter_key()`): the torch-free docling-slim of
+    the dev group, which converts the formats that need no models, e.g. DOCX, XLSX,
+    PPTX, HTML and Markdown files (`TEST_CONVERTED_SUFFIXES`), with the options of
+    `uv run fab docling-fixtures`, e.g. the layout of the records of an EBCDIC file.
+
+    :param path: The fixture file.
+    :type path: Path
     :return: The converter.
     :rtype: DocumentConverter
     """
@@ -206,7 +219,12 @@ def _docling_converter() -> DocumentConverter:
     # with docling-core only, as `uv run fab docling-floor` runs them
     from docling.document_converter import DocumentConverter
 
-    return DocumentConverter()
+    key = converter_key(path)
+    if key not in _DOCLING_CONVERTERS:
+        _DOCLING_CONVERTERS[key] = DocumentConverter(
+            format_options=format_options(path)
+        )
+    return _DOCLING_CONVERTERS[key]
 
 
 def _check_docling_text_kept(
@@ -336,16 +354,16 @@ def _check_docling_text_kept(
 # docling-slim of the dev group converts, and the others, e.g. PDF files, which
 # they read the committed Docling documents of: the files written for ContextGem
 # and the test documents of Docling, by their paths in `tests/other_files/docling/`
-_DOCLING_CONVERTED_FILES = sorted(
+_DOCLING_CONVERTED_FILES = [
     path.relative_to(_DOCLING_FILES_DIR).as_posix()
-    for path in _DOCLING_FILES_DIR.rglob("*")
+    for path in source_files()
     if path.suffix in TEST_CONVERTED_SUFFIXES
-)
-_DOCLING_UNCONVERTED_FILES = sorted(
+]
+_DOCLING_UNCONVERTED_FILES = [
     path.relative_to(_DOCLING_FILES_DIR).as_posix()
-    for path in _DOCLING_FILES_DIR.rglob("*")
+    for path in source_files()
     if path.suffix in SOURCE_SUFFIXES - TEST_CONVERTED_SUFFIXES
-)
+]
 
 # The paragraphs that each fixture file written for ContextGem must give, which show
 # how its format is converted: (text, additional context, page numbers)
@@ -2799,6 +2817,93 @@ class TestDocuments(BaseTest):
             for message in logs
         )
 
+    def test_from_docling_image_file_pages(self):
+        """
+        Tests that the image of each page of a Docling document made of an image
+        file, e.g. a scan, is attached to the document before its pictures, with
+        the reference and the box of its page, once for pages that repeat each
+        other; that the pages without images are logged with what keeps them; and
+        that the pages of a PDF file are not attached, though its Docling document
+        has their images, which crop its pictures.
+        """
+
+        def scan(file_name: str, page_images: bool = True) -> DoclingDocument:
+            """
+            Returns a Docling document of three pages, as Docling converts a file:
+            with the MIME type of a PDF file for an image file too, and the name of
+            the file. The third page repeats the first.
+            """
+            docling_document = DoclingDocument(
+                name=Path(file_name).stem,
+                origin=DocumentOrigin(
+                    filename=file_name, mimetype="application/pdf", binary_hash=1
+                ),
+            )
+            for page_no, color in ((1, "red"), (2, "green"), (3, "red")):
+                docling_document.add_page(
+                    page_no=page_no,
+                    size=Size(width=595, height=842),
+                    image=_docling_image(color) if page_images else None,
+                )
+                docling_document.add_text(
+                    DocItemLabel.TEXT, f"Clause {page_no}", prov=_docling_prov(page_no)
+                )
+            docling_document.add_picture(
+                image=_docling_image("blue"), prov=_docling_prov(2)
+            )
+            return docling_document
+
+        # The extension is not case sensitive
+        document = Document.from_docling(scan("contract.TIFF"))
+        assert [
+            image.custom_data["docling"]["self_ref"] for image in document.images
+        ] == [
+            "#/pages/1",
+            "#/pages/2",
+            "#/pictures/0",
+        ]
+        assert document.images[0].custom_data == {
+            "docling": {
+                "self_ref": "#/pages/1",
+                "label": "page",
+                "prov": [
+                    {
+                        "page_no": 1,
+                        "bbox": {
+                            "l": 0.0,
+                            "t": 842.0,
+                            "r": 595.0,
+                            "b": 0.0,
+                            "coord_origin": "BOTTOMLEFT",
+                        },
+                    }
+                ],
+            }
+        }
+        assert [paragraph.page_numbers for paragraph in document.paragraphs] == [
+            [1],
+            [2],
+            [3],
+        ]
+
+        with capture_logs() as logs:
+            document = Document.from_docling(scan("contract.png", page_images=False))
+        assert [image.custom_data["docling"]["label"] for image in document.images] == [
+            "picture"
+        ]
+        assert any(
+            "3 page(s) of the image file of the Docling document are not attached"
+            in message
+            and "generate_page_images=True" in message
+            for message in logs
+        )
+
+        # The images of the pages of a PDF file are not attached
+        document = Document.from_docling(scan("contract.pdf"))
+        assert [image.custom_data["docling"]["label"] for image in document.images] == [
+            "picture"
+        ]
+
     def test_from_docling_picture_image_sources(self, tmp_path: Path):
         """
         Tests that a picture whose image is not in the Docling document, or cannot
@@ -3532,7 +3637,8 @@ class TestDocuments(BaseTest):
         `uv run fab docling-fixtures --write`.
         """
         path = _DOCLING_FILES_DIR / file_name
-        converted = _docling_converter().convert(path).document
+        with conversion_input(path) as source:
+            converted = _docling_converter(path).convert(source).document
         document = Document.from_docling(converted)
         committed = Document.from_docling(
             DoclingDocument.load_from_json(path.with_name(f"{path.name}.json"))
@@ -3562,9 +3668,11 @@ class TestDocuments(BaseTest):
         Tests documents created from the Docling documents of the files of
         `tests/other_files/docling/` that the tests do not convert, which full
         Docling converted them into, those written for ContextGem and test
-        documents of Docling (`docling_tests/`): a PDF file needs the models of
-        Docling, and an email (EML, MSG) or OpenDocument file (ODT, ODS, ODP)
-        packages that the dev group does not have.
+        documents of Docling (`docling_tests/`): a PDF file or a Google Books
+        package (METS GBS) needs the models of Docling, and a scanned PDF file its
+        OCR too; an email (EML, MSG), OpenDocument file (ODT, ODS, ODP) or XBRL
+        report packages that the dev group does not have; and a legacy Office file
+        (DOC, XLS, PPT) or an RTF file LibreOffice, which Docling converts it with.
         """
         path = _DOCLING_FILES_DIR / file_name
         docling_document = DoclingDocument.load_from_json(
@@ -3575,9 +3683,27 @@ class TestDocuments(BaseTest):
         _check_docling_text_kept(docling_document, document)
         for paragraph in document.paragraphs:
             assert "\n" not in (paragraph.additional_context or "")
-            # Each paragraph of a PDF file is on a page
-            if path.suffix == ".pdf":
+            # Each paragraph of a file with pages read with OCR, or of a PDF file,
+            # is on a page
+            if path.suffix in {".pdf", ".png", ".tiff", ".gz"}:
                 assert paragraph.page_numbers
+            # Each segment of a transcript has its times
+            if path.suffix in {".mp3", ".mp4"}:
+                assert paragraph.page_numbers == []
+                assert paragraph.custom_data["docling"]["source"]
+        # The image of each page of an image file is attached, before the pictures
+        if path.suffix in {".png", ".tiff"}:
+            labels = [
+                image.custom_data["docling"]["label"] for image in document.images
+            ]
+            assert labels[: len(docling_document.pages)] == ["page"] * len(
+                docling_document.pages
+            )
+        # The frames of a video are attached, each with its time
+        if path.suffix == ".mp4":
+            assert document.images
+            for image in document.images:
+                assert image.custom_data["docling"]["source"][0]["start_time"] >= 0
 
     @pytest.mark.filterwarnings("ignore:Provenance bbox coordinate:UserWarning")
     @pytest.mark.parametrize(
@@ -3606,27 +3732,61 @@ class TestDocuments(BaseTest):
         Tests that each file of `tests/other_files/docling/` is a fixture file in
         a format of `SOURCE_SUFFIXES`, which the tests above and
         `uv run fab docling-fixtures` take, its Docling document
-        (`<file name>.json`) or its output (`<file name>.contextgem.jsonl`), or
-        a known other file, and that each fixture file has its Docling document and
-        its output. A file in another format would be left out of the tests without
-        notice.
+        (`<file name>.json`), its output (`<file name>.contextgem.jsonl`), what
+        Docling reads it with (the layout of an EBCDIC file, the taxonomy of an XBRL
+        report), or a known other file, and that each fixture file has its Docling
+        document, its output and what it is read with. A file in another format
+        would be left out of the tests without notice.
         """
-        # The license of the test documents of Docling
-        other_files = {"docling_tests/LICENSE"}
+        # The licenses of the test documents of Docling and of the EBCDIC sample
+        # that Docling took from ebcdic-parser
+        other_files = {"docling_tests/LICENSE", "docling_tests/LICENSE-ebcdic-parser"}
         files = {
             path.relative_to(_DOCLING_FILES_DIR).as_posix()
             for path in _DOCLING_FILES_DIR.rglob("*")
             if path.is_file()
         }
-        sources = {name for name in files if Path(name).suffix in SOURCE_SUFFIXES}
-        assert sources == {*_DOCLING_CONVERTED_FILES, *_DOCLING_UNCONVERTED_FILES}
+        sources = {*_DOCLING_CONVERTED_FILES, *_DOCLING_UNCONVERTED_FILES}
+        companions = set()
+        for name in sources:
+            path = _DOCLING_FILES_DIR / name
+            companions |= {path.with_name(f"{path.name}.json"), output_path(path)}
+            if path.suffix == ".ebc":
+                companions.add(layout_path(path))
+            if path.suffix == ".xbrl":
+                assert any(taxonomy_path(path).glob("*.xsd")), name
+                companions |= set(taxonomy_path(path).iterdir())
         companions = {
-            path.relative_to(_DOCLING_FILES_DIR).as_posix()
-            for name in sources
-            for path in (
-                (_DOCLING_FILES_DIR / name).with_name(f"{Path(name).name}.json"),
-                output_path(_DOCLING_FILES_DIR / name),
+            path.relative_to(_DOCLING_FILES_DIR).as_posix() for path in companions
+        }
+        assert not companions - files, "Missing companions of fixture files"
+        assert files - sources - companions == other_files, "Unknown files"
+
+    def test_from_docling_supported_formats(self):
+        """
+        Tests that the table of the supported formats in the documentation of
+        `Document.from_docling()` (`docs/source/documents/docling.rst`) lists the
+        extensions of the fixture files (`SOURCE_SUFFIXES`, by their last suffix,
+        e.g. `.gz` for `.tar.gz`), and Docling JSON (`.json`), which the tests load
+        the Docling document of each fixture file from, and no other: a format is
+        supported when the tests cover it, and each format that they cover is
+        listed.
+        """
+        page = (
+            Path(__file__).parents[1] / "docs" / "source" / "documents" / "docling.rst"
+        ).read_text(encoding="utf-8")
+        section = page.split(".. _docling-formats-label:", 1)[1]
+        table_lines = section.split(".. list-table::", 1)[1].splitlines()[1:]
+        # The table ends at the first line that is not indented
+        end = next(
+            index
+            for index, line in enumerate(table_lines)
+            if line and not line.startswith(" ")
+        )
+        extensions = {
+            "." + extension.rsplit(".", 1)[-1]
+            for extension in re.findall(
+                r"``(\.[a-z0-9][a-z0-9.]*)``", "\n".join(table_lines[:end])
             )
         }
-        assert not companions - files, "Missing Docling documents or outputs"
-        assert files - sources - companions == other_files, "Unknown files"
+        assert extensions == {*SOURCE_SUFFIXES, ".json"}

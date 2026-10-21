@@ -423,9 +423,11 @@ class _Document(_AssignedInstancesProcessor):
         Creates a document from a file converted with Docling.
 
         `Docling <https://github.com/docling-project/docling>`_ converts files such as
-        PDF, DOCX, PPTX, XLSX, HTML and scanned images into a ``DoclingDocument``,
-        which holds the text, the tables and the pictures of the file, with their
-        structure and their place on the page. This method makes a paragraph of each
+        PDF, DOCX, PPTX, XLSX and HTML into a ``DoclingDocument``, which holds the
+        text, the tables and the pictures of the file, with their structure and
+        their place on the page. The supported formats, and what some of them need,
+        e.g. LibreOffice for DOC, XLS, PPT and RTF files, are listed in
+        :ref:`docling-formats-label`. This method makes a paragraph of each
         piece of text in the body of the Docling document, in reading order:
 
         - The title, the headings, the paragraphs, the list items, the captions,
@@ -438,6 +440,14 @@ class _Document(_AssignedInstancesProcessor):
         - The pictures are attached as images, if the Docling document has image
           data for them. For a PDF file, convert it with
           ``generate_picture_images=True`` in the PDF pipeline options of Docling.
+        - For an image file, e.g. a scan, whose text Docling reads with OCR, the
+          image of each page is attached too, before the pictures, so that a model
+          can read the image itself, e.g. for a concept of the ``"multimodal"``
+          modality. Convert it with ``generate_page_images=True`` in the pipeline
+          options of the image format of Docling.
+        - The transcript of an audio or a video file is a paragraph for each of its
+          segments, and the frames that Docling samples from a video are attached
+          as images.
 
         The additional context of each paragraph says what the paragraph is, e.g.
         ``List item`` or ``Table row``, and gives the headings of its section, e.g.
@@ -458,7 +468,10 @@ class _Document(_AssignedInstancesProcessor):
         item, the number of its page (``page_no``) and its bounding box on the page
         (``bbox``). A paragraph made from a table row also has the index of the row
         in the table (``row_index``). The provenance is empty for the formats
-        without pages, e.g. DOCX and HTML.
+        without pages, e.g. DOCX and HTML. A segment of a transcript, a cue of
+        a subtitle file, or a frame of a video holds its start and end time in
+        seconds (``source``), and the image of a page its reference
+        (``"#/pages/1"``) and the label ``"page"``.
 
         Page headers and footers, comments, the speaker notes of a presentation,
         hidden slides and sheets, and the text found inside pictures are not

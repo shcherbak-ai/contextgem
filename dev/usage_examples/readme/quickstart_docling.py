@@ -5,7 +5,7 @@ from docling.document_converter import DocumentConverter
 from contextgem import Aspect, Document, DocumentLLM, JsonObjectConcept
 
 
-# Convert the file with Docling: PDF, DOCX, PPTX, XLSX, HTML, images and more
+# Convert the file with Docling, e.g. PDF, DOCX, PPTX, XLSX or HTML
 result = DocumentConverter().convert("service_agreement.pdf")
 # The paragraphs keep their place in the structure of the file and their pages
 doc = Document.from_docling(result.document)

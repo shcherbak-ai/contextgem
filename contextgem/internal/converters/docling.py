@@ -105,11 +105,13 @@ from docling_core.types.doc import (  # noqa: E402 - imported once its version i
     FormItem,
     GraphLinkLabel,
     GroupItem,
+    ImageRef,
     InlineGroup,
     KeyValueItem,
     ListGroup,
     ListItem,
     NodeItem,
+    PageItem,
     PictureItem,
     ProvenanceItem,
     RefItem,
@@ -160,6 +162,21 @@ _MISSING_IMAGE_REASONS = {
     "url": "as their images are at URLs, which are not fetched.",
     "data": "as their image data cannot be read, e.g. that of an SVG image.",
 }
+
+# The extensions of the image files that Docling converts (its "image" input
+# format), by which a Docling document is known to be made of an image file:
+# Docling gives such a document the MIME type of a PDF file, and keeps the name of
+# the file
+_IMAGE_FILE_SUFFIXES = frozenset(
+    {".jpg", ".jpeg", ".png", ".tif", ".tiff", ".bmp", ".webp", ".gif"}
+)
+
+# Why the pages of an image file are not attached as images, for the log of the
+# conversion
+_MISSING_PAGE_IMAGES_REASON = (
+    "as the Docling document has no images of its pages. Docling keeps them with "
+    "`generate_page_images=True` in the pipeline options of its image format."
+)
 
 # The parts of an inline text are joined with a space, except before closing
 # punctuation and after an opening bracket
@@ -474,33 +491,105 @@ def _image_data(
     image_ref = picture.image
     if image_ref is not None and not isinstance(image_ref.uri, Path):
         header, _, data = str(image_ref.uri).partition(",")
-        if header.startswith("data:"):
-            if not data:
-                # Docling fails to read a data URI without data
-                return None
-            if header.endswith(";base64"):
-                # The type that the data URI gives is not relied on, as a model
-                # provider can refuse an image whose data is of another type. Data
-                # that is not valid base64, or an image of another type, is read
-                # with Pillow below.
-                try:
-                    mime_type = _image_type(base64.b64decode(data, validate=True))
-                except ValueError:
-                    mime_type = None
-                if mime_type is not None:
-                    return mime_type, data
+        if header.startswith("data:") and not data:
+            # Docling fails to read a data URI without data
+            return None
+    embedded = _embedded_image_data(image_ref)
+    if embedded is not None:
+        return embedded
     try:
         image = picture.get_image(document)
-        if image is None:
-            return None
-        if image.mode not in ("1", "L", "LA", "P", "RGB", "RGBA"):
-            image = image.convert("RGBA" if "A" in image.getbands() else "RGB")
-        buffer = io.BytesIO()
-        image.save(buffer, format="PNG")
+        return None if image is None else _png_data(image)
     except (OSError, ValueError, PILImage.DecompressionBombError) as e:
         logger.debug(f"Image of the picture {picture.self_ref} not read: {e}")
         return None
+
+
+def _page_image_data(page: PageItem) -> tuple[str, str] | None:
+    """
+    Returns the image data of a page, which the Docling document of a file in
+    a format with pages has if it was converted with ``generate_page_images=True``.
+
+    An image embedded in the Docling document is taken as it is, with the type that
+    its data has, if it is of a type that a ContextGem document holds, else
+    converted to PNG, as the image of a picture is (see ``_image_data()``).
+
+    :param page: The page.
+    :type page: PageItem
+    :return: The MIME type and the base64-encoded data of the image, or None if the
+        page has no image data that can be read.
+    :rtype: tuple[str, str] | None
+    """
+    if page.image is None:
+        return None
+    embedded = _embedded_image_data(page.image)
+    if embedded is not None:
+        return embedded
+    try:
+        image = page.image.pil_image
+        return None if image is None else _png_data(image)
+    except (OSError, ValueError, PILImage.DecompressionBombError) as e:
+        logger.debug(f"Image of page {page.page_no} not read: {e}")
+        return None
+
+
+def _embedded_image_data(image_ref: ImageRef | None) -> tuple[str, str] | None:
+    """
+    Returns the data of an image embedded in a Docling document as a data URI, as
+    it is, if it is of a type that a ContextGem document holds. The type that the
+    data URI gives is not relied on, as a model provider can refuse an image whose
+    data is of another type.
+
+    :param image_ref: The reference of the image, if any.
+    :type image_ref: ImageRef | None
+    :return: The MIME type and the base64-encoded data of the image, or None if it
+        is not embedded, its data is not valid base64, or it is of another type,
+        which Pillow converts.
+    :rtype: tuple[str, str] | None
+    """
+    if image_ref is None or isinstance(image_ref.uri, Path):
+        return None
+    header, _, data = str(image_ref.uri).partition(",")
+    if not (header.startswith("data:") and header.endswith(";base64") and data):
+        return None
+    try:
+        mime_type = _image_type(base64.b64decode(data, validate=True))
+    except ValueError:
+        return None
+    return None if mime_type is None else (mime_type, data)
+
+
+def _png_data(image: PILImage.Image) -> tuple[str, str]:
+    """
+    Encodes an image as PNG, in a mode that PNG holds.
+
+    :param image: The image.
+    :type image: PILImage.Image
+    :return: "image/png" and the base64-encoded data of the image.
+    :rtype: tuple[str, str]
+    """
+    if image.mode not in ("1", "L", "LA", "P", "RGB", "RGBA"):
+        image = image.convert("RGBA" if "A" in image.getbands() else "RGB")
+    buffer = io.BytesIO()
+    image.save(buffer, format="PNG")
     return "image/png", base64.b64encode(buffer.getvalue()).decode("ascii")
+
+
+def _is_image_file(document: DoclingDocument) -> bool:
+    """
+    Returns whether a Docling document is made of an image file, e.g. a scan, by
+    the extension of the name of the file that it keeps.
+
+    :param document: The Docling document.
+    :type document: DoclingDocument
+    :return: True for a document made of an image file.
+    :rtype: bool
+    """
+    origin = document.origin
+    return (
+        origin is not None
+        and Path(origin.filename).suffix.lower() in _IMAGE_FILE_SUFFIXES
+    )
 
 
 def _missing_image_source(picture: PictureItem) -> str:
@@ -558,6 +647,8 @@ class _DoclingConverter:
         # The number of pictures that are not attached as images, by where their
         # image is (see `_missing_image_source()`)
         self.pictures_without_images: Counter[str] = Counter()
+        # The number of pages of an image file whose image is not attached
+        self.pages_without_images = 0
         # The headings of the current section, from the top, as (level, text) pairs,
         # a title at level 0
         self._headings: list[tuple[int, str]] = []
@@ -603,9 +694,14 @@ class _DoclingConverter:
         a document with one title is not: it would be in the additional context of
         all the other paragraphs.
 
+        The images of the pages of an image file are attached first (see
+        ``_add_page_images()``), and then those of the pictures in the body.
+
         :return: None
         :rtype: None
         """
+        if _is_image_file(self._document):
+            self._add_page_images()
         self._convert_children(self._document.body, list_level=0)
         titles_in_sections = self._titles > 1
         for pending in self._pending:
@@ -622,6 +718,55 @@ class _DoclingConverter:
                     additional_context=_clean("; ".join(context)) or None,
                     page_numbers=pending.page_numbers,
                     custom_data=pending.custom_data,
+                )
+            )
+
+    def _add_page_images(self) -> None:
+        """
+        Adds the image of each page of a Docling document made of an image file,
+        e.g. a scan: the image itself, whose text Docling reads with OCR into the
+        paragraphs, so that a model can read the image too, e.g. for a concept of
+        the "multimodal" modality. A page without image data is counted, for the
+        log of the conversion, and a page whose image repeats an earlier one, e.g.
+        a blank page, is attached once.
+
+        :return: None
+        :rtype: None
+        """
+        for page_no in sorted(self._document.pages):
+            page = self._document.pages[page_no]
+            image_data = _page_image_data(page)
+            if image_data is None:
+                self.pages_without_images += 1
+                continue
+            mime_type, base64_data = image_data
+            if any(image.base64_data == base64_data for image in self.images):
+                logger.debug(f"Page {page_no} repeats an earlier page")
+                continue
+            self.images.append(
+                _publicize(
+                    _Image,
+                    mime_type=mime_type,
+                    base64_data=base64_data,
+                    custom_data={
+                        "docling": {
+                            "self_ref": f"#/pages/{page_no}",
+                            "label": "page",
+                            # The whole page
+                            "prov": [
+                                {
+                                    "page_no": page_no,
+                                    "bbox": {
+                                        "l": 0.0,
+                                        "t": page.size.height,
+                                        "r": page.size.width,
+                                        "b": 0.0,
+                                        "coord_origin": "BOTTOMLEFT",
+                                    },
+                                }
+                            ],
+                        }
+                    },
                 )
             )
 
@@ -1116,6 +1261,8 @@ class _DoclingConverter:
             logger.debug(f"Picture {picture.self_ref} repeats an earlier picture")
         else:
             mime_type, base64_data = image_data
+            # The time of a frame of a video
+            tracks = _tracks_of_items([picture])
             self.images.append(
                 _publicize(
                     _Image,
@@ -1126,6 +1273,7 @@ class _DoclingConverter:
                             "self_ref": picture.self_ref,
                             "label": _label_of(picture),
                             "prov": _provenance_of_items([picture]),
+                            **({"source": tracks} if tracks else {}),
                         }
                     },
                 )
@@ -1272,6 +1420,12 @@ def _convert_docling_document(
                 f"the Docling document are not attached to the document as images, "
                 f"{reason}"
             )
+    if converter.pages_without_images:
+        logger.info(
+            f"{converter.pages_without_images} page(s) of the image file of the "
+            f"Docling document are not attached to the document as images, "
+            f"{_MISSING_PAGE_IMAGES_REASON}"
+        )
     if not converter.paragraphs and not converter.images:
         raise ValueError(
             "The body of the Docling document has no text or images to create "

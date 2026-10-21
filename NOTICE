@@ -22,7 +22,7 @@ THIRD-PARTY COMPONENTS
 
 This software includes the following third-party components:
 
-Core Dependencies:
+Core Dependencies (installed with ContextGem):
 - aiolimiter: Rate limiting for asynchronous operations
 - colorlog: Colored logging formatter
 - docstring-parser: Docstring parsing for auto-generating tool schemas
@@ -38,9 +38,9 @@ Core Dependencies:
 - tenacity: Retry library for Python
 - wtpsplit-lite: Lightweight version of wtpsplit that only retains accelerated ONNX inference of SaT models with minimal dependencies
 
-Optional Dependencies (extras):
-- docling: Document conversion toolkit that converts PDF, DOCX, PPTX, XLSX, HTML and other files (the "docling" extra), used to create documents from the converted files
-- docling-core: Document model of Docling (the "docling" extra), which Document.from_docling() maps; also a development dependency, for the tests and the documentation of the extra
+Docling Extra Dependencies (installed only with the "docling" extra, contextgem[docling], for Document.from_docling()):
+- docling: Document conversion toolkit that converts PDF, DOCX, PPTX, XLSX, HTML and other files, used to create documents from the converted files
+- docling-core: Document model of Docling, which Document.from_docling() maps; also a development dependency, for the tests and the documentation of the extra
 
 Development Dependencies:
 - bandit: Python security linter
@@ -76,7 +76,7 @@ Development Tools (npm, package.json):
 - github-markdown-css: GitHub's Markdown styles (used by the README preview)
 
 Test Data:
-- tests/other_files/docling/docling_tests/: test documents of Docling (https://github.com/docling-project/docling), copied from its tests/data at tag v2.140.0, under the MIT License of Docling (Copyright The Docling Contributors; the LICENSE file in that folder). amt_handbook_sample.pdf is a page of a handbook of the US Federal Aviation Administration, a work of the US government in the public domain
+- tests/other_files/docling/docling_tests/: test documents of Docling (https://github.com/docling-project/docling), copied from its tests/data at tag v2.140.0, under the MIT License (the LICENSE file in that folder). amt_handbook_sample.pdf is a page of a handbook of the US Federal Aviation Administration, a work of the US government in the public domain. keynote_2013.key, numbers_2013.numbers and pages_2013.pages are test documents of Apache Tika (https://tika.apache.org), under the Apache License 2.0, which Docling took from it. gas_disposition.ebc and its layout are cut from the samples of ebcdic-parser (https://github.com/larandvit/ebcdic-parser), under the MIT License (the LICENSE-ebcdic-parser file in that folder), as Docling holds them; the layout is renamed gas_disposition.ebc.layout.json. legacy_sample.dclx is made by ContextGem from the Docling document of legacy_sample.doc
 
 Each of these components may have their own licenses. Users should refer to the
 respective project repositories for detailed license information.
