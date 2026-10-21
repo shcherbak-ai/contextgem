@@ -14,6 +14,7 @@ import asyncio
 import contextvars
 import functools
 import os
+import platform
 from collections.abc import Callable
 from concurrent.futures import ThreadPoolExecutor
 from typing import Any
@@ -337,6 +338,22 @@ def _warm_token_encodings():
             "The tests that rely on token counting may fail. "
             "See the Windows note in CONTRIBUTING.md (Running Tests)."
         )
+
+
+@pytest.fixture(scope="session", autouse=True)
+def _warm_platform_details():
+    """
+    Reads the details of the platform once before the tests start, so that
+    the code under test reads them from the cache of the process.
+
+    Outside Windows, e.g. on Linux, Python runs the external program ``uname -p``
+    for the processor, the first time that ``platform.processor()``,
+    ``platform.platform()`` or the processor of ``platform.uname()`` is asked
+    for, e.g. by the import of Docling's ``DocumentConverter``. During a test,
+    tethered refuses an external program (``external_subprocess_policy="block"``,
+    see `_tethered_network_guard`), and the test would fail on Linux only.
+    """
+    platform.platform()
 
 
 @pytest.fixture(autouse=True)
