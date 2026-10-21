@@ -248,7 +248,26 @@ notice_form = doc.get_concept_by_name("Notice form").extracted_items[0]
 
 ### Start from a file with Docling
 
-Your documents are files. [Docling](https://github.com/docling-project/docling) converts PDF, DOCX, PPTX, XLSX, HTML, scanned images and more, and [`Document.from_docling()`](https://contextgem.shcherbak.ai/documents/docling/) makes a document of the result, in which each paragraph keeps its place in the structure of the file, e.g. the column headers of its table row, and the pages it is on. Below, an LLM extracts a concept and an aspect from a [two-page service agreement](tests/other_files/docling/service_agreement.pdf), and each item is cited by its page.
+Your documents are files. [Docling](https://github.com/docling-project/docling) converts files in [many formats](https://docling-project.github.io/docling/usage/supported_formats/), and [`Document.from_docling()`](https://contextgem.shcherbak.ai/documents/docling/) makes a document of the result, in which each paragraph keeps its place in the structure of the file, e.g. the column headers of its table row, and the pages it is on.
+
+<!-- markdownlint-disable MD033 -->
+<table align="center">
+<tr>
+<td align="center"><img src="assets/icons/format-pdf.svg" alt="" width="32" height="32"><br>PDF</td>
+<td align="center"><img src="assets/icons/format-docx.svg" alt="" width="32" height="32"><br>DOCX</td>
+<td align="center"><img src="assets/icons/format-pptx.svg" alt="" width="32" height="32"><br>PPTX</td>
+<td align="center"><img src="assets/icons/format-xlsx.svg" alt="" width="32" height="32"><br>XLSX</td>
+</tr>
+<tr>
+<td align="center"><img src="assets/icons/format-html.svg" alt="" width="32" height="32"><br>HTML</td>
+<td align="center"><img src="assets/icons/format-markdown.svg" alt="" width="32" height="32"><br>Markdown</td>
+<td align="center"><img src="assets/icons/format-image.svg" alt="" width="32" height="32"><br>Images</td>
+<td align="center"><img src="assets/icons/format-email.svg" alt="" width="32" height="32"><br>Email</td>
+</tr>
+</table>
+<!-- markdownlint-enable MD033 -->
+
+Below, an LLM extracts a concept and an aspect from a [two-page service agreement](tests/other_files/docling/service_agreement.pdf), and each item is cited by its page.
 
 ```python
 import os
