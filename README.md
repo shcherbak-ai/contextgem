@@ -49,14 +49,14 @@ Reliable extraction from documents usually means writing prompts, designing vali
 <!-- markdownlint-disable MD033 -->
 <table>
 <tr>
-<td width="33%" valign="top"><img src="assets/icons/prompts.svg" alt="" width="32" height="32"><br><strong>No prompts to write</strong><br>Prompts are generated from your descriptions of what to extract.</td>
-<td width="33%" valign="top"><img src="assets/icons/typed-output.svg" alt="" width="32" height="32"><br><strong>Typed, validated output</strong><br>Text, numbers, dates, booleans, labels, ratings and JSON objects.</td>
-<td width="34%" valign="top"><img src="assets/icons/source.svg" alt="" width="32" height="32"><br><strong>Every fact traced to its source</strong><br>Items map back to their paragraphs or sentences, with the reasoning on request.</td>
+<td width="33%" valign="top"><div align="center"><img src="assets/icons/prompts.svg" alt="" width="32" height="32"><br><strong>No prompts to write</strong></div><br>Prompts are generated from your descriptions of what to extract.</td>
+<td width="33%" valign="top"><div align="center"><img src="assets/icons/typed-output.svg" alt="" width="32" height="32"><br><strong>Typed, validated output</strong></div><br>Text, numbers, dates, booleans, labels, ratings and JSON objects.</td>
+<td width="34%" valign="top"><div align="center"><img src="assets/icons/source.svg" alt="" width="32" height="32"><br><strong>Every fact traced to its source</strong></div><br>Items map back to their paragraphs or sentences, with the reasoning on request.</td>
 </tr>
 <tr>
-<td valign="top"><img src="assets/icons/nested-context.svg" alt="" width="32" height="32"><br><strong>Nested context</strong><br>Aspects, sub-aspects and concepts focus the model on the text that matters.</td>
-<td valign="top"><img src="assets/icons/routing.svg" alt="" width="32" height="32"><br><strong>The right model for each question</strong><br>An LLM where it takes reasoning, a decision model where a fast, low-cost answer is enough.</td>
-<td valign="top"><img src="assets/icons/decision-model.svg" alt="" width="32" height="32"><br><strong>Answers with probabilities</strong><br>A decision model gives the probability of each possible answer, and you set the threshold.</td>
+<td valign="top"><div align="center"><img src="assets/icons/nested-context.svg" alt="" width="32" height="32"><br><strong>Nested context</strong></div><br>Aspects, sub-aspects and concepts focus the model on the text that matters.</td>
+<td valign="top"><div align="center"><img src="assets/icons/routing.svg" alt="" width="32" height="32"><br><strong>The right model for each question</strong></div><br>An LLM where it takes reasoning, a decision model where a fast, low-cost answer is enough.</td>
+<td valign="top"><div align="center"><img src="assets/icons/decision-model.svg" alt="" width="32" height="32"><br><strong>Answers with probabilities</strong></div><br>A decision model gives the probability of each possible answer, and you set the threshold.</td>
 </tr>
 </table>
 <!-- markdownlint-enable MD033 -->
@@ -432,10 +432,10 @@ Full documentation: **[contextgem.shcherbak.ai](https://contextgem.shcherbak.ai)
 <!-- markdownlint-disable MD033 -->
 <table>
 <tr>
-<th align="left" valign="top"><img src="assets/icons/get-started.svg" alt="" width="32" height="32"><br>Get started</th>
-<th align="left" valign="top"><img src="assets/icons/nested-context.svg" alt="" width="32" height="32"><br>Define what to extract</th>
-<th align="left" valign="top"><img src="assets/icons/models.svg" alt="" width="32" height="32"><br>Run models</th>
-<th align="left" valign="top"><img src="assets/icons/optimize.svg" alt="" width="32" height="32"><br>Optimize</th>
+<th align="center" valign="top"><img src="assets/icons/get-started.svg" alt="" width="32" height="32"><br>Get started</th>
+<th align="center" valign="top"><img src="assets/icons/nested-context.svg" alt="" width="32" height="32"><br>Define what to extract</th>
+<th align="center" valign="top"><img src="assets/icons/models.svg" alt="" width="32" height="32"><br>Run models</th>
+<th align="center" valign="top"><img src="assets/icons/optimize.svg" alt="" width="32" height="32"><br>Optimize</th>
 </tr>
 <tr>
 <td valign="top"><a href="https://contextgem.shcherbak.ai/installation/">Installation</a><br><a href="https://contextgem.shcherbak.ai/quickstart/">Quickstart</a><br><a href="https://contextgem.shcherbak.ai/advanced_usage/">Advanced usage</a><br><a href="https://contextgem.shcherbak.ai/how_it_works/">How it works</a><br><a href="https://contextgem.shcherbak.ai/migration_v1/">Migrating to v1.0</a></td>
