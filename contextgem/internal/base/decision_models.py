@@ -21,6 +21,7 @@ import asyncio
 import importlib
 import json
 from collections.abc import Sequence
+from copy import deepcopy
 from dataclasses import dataclass
 from typing import Any, cast
 
@@ -1834,7 +1835,9 @@ class _DocumentDecisionModel(_DocumentModel):
                         )
                         extracted_item = _StringItem(
                             value=sentence.raw_text,
-                            custom_data=sentence.custom_data,  # inherit custom data from sentence object
+                            # A copy of the custom data of the sentence, whose nested
+                            # values the item does not share
+                            custom_data=deepcopy(sentence.custom_data),
                             probabilities=item_probabilities,
                         )
                         extracted_item.reference_paragraphs = [paragraph]
@@ -1845,7 +1848,9 @@ class _DocumentDecisionModel(_DocumentModel):
                 probabilities: ItemProbabilities = answer_probabilities
                 extracted_item = _StringItem(
                     value=paragraph.raw_text,
-                    custom_data=paragraph.custom_data,  # inherit custom data from paragraph object
+                    # A copy of the custom data of the paragraph, whose nested values
+                    # the item does not share
+                    custom_data=deepcopy(paragraph.custom_data),
                     probabilities=probabilities,
                 )
                 extracted_item.reference_paragraphs = [paragraph]

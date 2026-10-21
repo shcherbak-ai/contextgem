@@ -106,7 +106,7 @@ dependencies = [
     "jinja2 (>=3.1.5,<4.0.0)",
     "litellm==1.105.2", # pin version due to occasional instability between patches and minor versions
     "openai==2.54.0", # pinned to the version tested with litellm (openai 1.100.0 once broke importing litellm 1.75.8)
-    "pillow (>=11.3.0,<14.0.0)",
+    "pillow (>=11.3.0,<13.0.0)",
     "pydantic (>=2.10.6,<3.0.0)",
     "python-ulid (>=3.0.0,<5.0.0)",
     "tenacity (>=9.1.2,<10.0.0)", # required by litellm for retry logic
@@ -116,7 +116,7 @@ dependencies = [
 
 [project.optional-dependencies]
 docling = [
-    "docling (>=2.112.0,<3.0.0)", # converts files into the Docling documents of Document.from_docling()
+    "docling (>=2.141.0,<3.0.0)", # converts files into the Docling documents of Document.from_docling()
     "docling-core (>=2.103.0,<3.0.0)", # the Docling document model, which Document.from_docling() maps
 ]
 
@@ -135,7 +135,7 @@ dev = [
     "coverage (>=7.6.12,<8.0.0)",
     "deptry (>=0.23.0,<1.0.0)",
     "docling-core (>=2.103.0,<3.0.0)", # the docling extra, for its tests and docs: same range
-    "docling-slim[convert-core,format-office,format-web] (>=2.130.0,<3.0.0)", # Docling without torch: converts the fixtures in the tests whose formats need no models, e.g. DOCX, PPTX, XLSX, HTML and Markdown (2.130.0 is the first whose converter imports with these extras)
+    "docling-slim[convert-core,format-office,format-web] (>=2.141.0,<3.0.0)", # Docling without torch: converts the fixtures in the tests whose formats need no models, e.g. DOCX, PPTX, XLSX, HTML and Markdown (the lower bound of Docling in the docling extra)
     "fabric (>=3.2.0,<4.0.0)",
     "hypothesis (>=6.122.0,<7.0.0)",
     "interrogate (>=1.7.0,<2.0.0)",

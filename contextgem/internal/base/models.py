@@ -17,6 +17,7 @@ import asyncio
 import threading
 import warnings
 from collections.abc import Sequence
+from copy import deepcopy
 from decimal import ROUND_HALF_UP, Decimal
 from typing import TYPE_CHECKING, Any, Literal, Self, cast
 
@@ -394,7 +395,9 @@ class _GenericModelProcessor(_AbstractGenericModelProcessor):
         :type max_images_to_analyze_per_call: int, optional
         :param raise_exception_on_extraction_error: Whether to raise an exception if the extraction fails
             due to invalid data returned by a model or an error in the model API. If False, a warning will
-            be issued instead, and no extracted items will be returned. Defaults to True.
+            be issued instead, and no extracted items will be returned. The concepts of
+            an aspect that could not be extracted are then not extracted either, with
+            a warning, and the other concepts are. Defaults to True.
         :type raise_exception_on_extraction_error: bool, optional
         :return: The document with extracted aspects and concepts.
         :rtype: _Document
@@ -459,7 +462,9 @@ class _GenericModelProcessor(_AbstractGenericModelProcessor):
         :type max_images_to_analyze_per_call: int, optional
         :param raise_exception_on_extraction_error: Whether to raise an exception if the extraction fails
             due to invalid data returned by a model or an error in the model API. If False, a warning will
-            be issued instead, and no extracted items will be returned. Defaults to True.
+            be issued instead, and no extracted items will be returned. The concepts of
+            an aspect that could not be extracted are then not extracted either, with
+            a warning, and the other concepts are. Defaults to True.
         :type raise_exception_on_extraction_error: bool, optional
         :return: The document with extracted aspects and concepts.
         :rtype: _Document
@@ -505,9 +510,19 @@ class _GenericModelProcessor(_AbstractGenericModelProcessor):
             "max_paragraphs_to_analyze_per_call": max_paragraphs_to_analyze_per_call,
             "raise_exception_on_extraction_error": raise_exception_on_extraction_error,
         }
-        aspect_kwargs_list = [
-            {**extract_concepts_kwargs, "aspect": i} for i in document.aspects
-        ]
+        # An aspect that is not processed could not be extracted, which is reported
+        # as `raise_exception_on_extraction_error` is False: its concepts, and those
+        # of its sub-aspects, have no paragraphs to be extracted from
+        aspect_kwargs_list = []
+        for aspect in document.aspects:
+            if aspect._is_processed:
+                aspect_kwargs_list.append({**extract_concepts_kwargs, "aspect": aspect})
+            elif aspect.concepts or aspect.aspects:
+                logger.warning(
+                    f"Concepts of aspect `{aspect.name}` and of its sub-aspects are "
+                    f"not extracted, as the aspect could not be extracted. Concepts "
+                    f"of the aspect: {[concept.name for concept in aspect.concepts]}"
+                )
 
         aspect_cals_and_kwargs = [
             (self.extract_concepts_from_aspect_async, i) for i in aspect_kwargs_list
@@ -2711,8 +2726,9 @@ class _GenericModelProcessor(_AbstractGenericModelProcessor):
                                     extracted_reference_ids.add(ref_sent.unique_id)
                                     extracted_item_kwargs = {
                                         "value": ref_sent.raw_text,
-                                        "custom_data": ref_sent.custom_data,
-                                        # inherit custom data from sentence object
+                                        # A copy of the custom data of the sentence,
+                                        # whose nested values the item does not share
+                                        "custom_data": deepcopy(ref_sent.custom_data),
                                     }
                                     if add_justifications:
                                         extracted_item_kwargs["justification"] = (
@@ -2741,7 +2757,9 @@ class _GenericModelProcessor(_AbstractGenericModelProcessor):
                                 extracted_item = _StringItem(
                                     value=ref_para.raw_text,
                                     justification=para_dict["justification"],
-                                    custom_data=ref_para.custom_data,  # inherit custom data from paragraph object
+                                    # A copy of the custom data of the paragraph, whose
+                                    # nested values the item does not share
+                                    custom_data=deepcopy(ref_para.custom_data),
                                 )
                                 extracted_item.reference_paragraphs = [ref_para]
                                 # Safe cast: "extracted_items" key always contains a list
@@ -2775,7 +2793,9 @@ class _GenericModelProcessor(_AbstractGenericModelProcessor):
                             extracted_reference_ids.add(ref_para.unique_id)
                             extracted_item = _StringItem(
                                 value=ref_para.raw_text,
-                                custom_data=ref_para.custom_data,  # inherit custom data from paragraph object
+                                # A copy of the custom data of the paragraph, whose
+                                # nested values the item does not share
+                                custom_data=deepcopy(ref_para.custom_data),
                             )
                             extracted_item.reference_paragraphs = [ref_para]
                             # Safe cast: "extracted_items" key always contains a list

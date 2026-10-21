@@ -276,12 +276,12 @@ def _convert(write: bool) -> int:
     :param write: Whether to write the Docling documents, instead of checking
         the committed ones.
     :type write: bool
-    :returns: 0 when nothing differs, else 1.
+    :returns: 0 when every file is converted and nothing differs, else 1.
     :rtype: int
     """
     import importlib.metadata
 
-    from docling.datamodel.base_models import InputFormat
+    from docling.datamodel.base_models import ConversionStatus, InputFormat
     from docling.datamodel.pipeline_options import PdfPipelineOptions
     from docling.document_converter import DocumentConverter, PdfFormatOption
     from docling_core.types.doc import DoclingDocument
@@ -296,8 +296,20 @@ def _convert(write: bool) -> int:
         }
     )
     differences = 0
+    failures = 0
     for source in _source_files():
-        converted = converter.convert(source).document
+        result = converter.convert(source)
+        # A file that Docling converts in part, e.g. without a page that it failed
+        # on, is neither written nor compared as if it were whole
+        if result.status != ConversionStatus.SUCCESS:
+            errors = "; ".join(error.error_message for error in result.errors)
+            print(
+                f"! {source.relative_to(FIXTURES_DIR).as_posix()}: "
+                f"{result.status.value}: {errors}"
+            )
+            failures += 1
+            continue
+        converted = result.document
         committed_path = source.with_name(f"{source.name}.json")
         if write:
             converted.save_as_json(committed_path)
@@ -340,7 +352,9 @@ def _convert(write: bool) -> int:
             f"`uv run fab docling-fixtures --write` and commit them; otherwise, adapt "
             f"the converter."
         )
-    return 1 if differences else 0
+    if failures:
+        print(f"{failures} file(s) not converted in full.")
+    return 1 if differences or failures else 0
 
 
 def main() -> int:
@@ -381,8 +395,11 @@ def main() -> int:
     if args.outputs:
         return _write_outputs()
     attempts = WINDOWS_ATTEMPTS if os.name == "nt" else 1
-    # Outside the checkout, so that no configuration of the project applies
-    with tempfile.TemporaryDirectory(prefix="contextgem-docling-") as scratch:
+    # Outside the checkout, so that no configuration of the project applies. A file
+    # of the environment can still be open on Windows when the folder is removed.
+    with tempfile.TemporaryDirectory(
+        prefix="contextgem-docling-", ignore_cleanup_errors=True
+    ) as scratch:
         python = _setup(args.docling_version, Path(scratch))
         for attempt in range(1, attempts + 1):
             result = subprocess.run(  # nosec B603 - the Python of the environment, no shell

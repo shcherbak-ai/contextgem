@@ -41,7 +41,7 @@ Or using pip:
 Optional Extras
 ~~~~~~~~~~~~~~~~
 
-* ``docling``: `Docling <https://github.com/docling-project/docling>`_, to convert files such as PDF, DOCX, PPTX, XLSX and HTML, and create documents from them (see :doc:`documents/docling`): ``uv add "contextgem[docling]"``. Docling runs its models on PyTorch, which the extra installs. The extra does not install on an Intel Mac: docling-parse, the PDF parser of Docling, publishes no packages for Intel Macs from version 7, which Docling 2.112 and later need.
+* ``docling``: `Docling <https://github.com/docling-project/docling>`_, to convert files such as PDF, DOCX, PPTX, XLSX and HTML, and create documents from them (see :doc:`documents/docling`): ``uv add "contextgem[docling]"``. Docling runs its models on PyTorch, which the extra installs. The extra does not install on an Intel Mac: docling-parse, the PDF parser of Docling, publishes no packages for Intel Macs from version 7, which Docling needs.
 
 Development Installation
 ~~~~~~~~~~~~~~~~~~~~~~~~~

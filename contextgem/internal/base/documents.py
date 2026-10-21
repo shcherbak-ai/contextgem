@@ -460,8 +460,9 @@ class _Document(_AssignedInstancesProcessor):
         in the table (``row_index``). The provenance is empty for the formats
         without pages, e.g. DOCX and HTML.
 
-        Page headers and footers, comments and the text found inside pictures are
-        not converted.
+        Page headers and footers, comments, the speaker notes of a presentation,
+        hidden slides and sheets, and the text found inside pictures are not
+        converted.
 
         Requires the ``docling`` extra, which installs Docling:
         ``uv add "contextgem[docling]"``. A Docling document converted elsewhere,

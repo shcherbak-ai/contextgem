@@ -1,12 +1,12 @@
 :og:description: ContextGem: Converting Files with Docling
 
 .. meta::
-   :description: How to create a Document from a PDF, DOCX, PPTX, XLSX, HTML or scanned file converted with Docling, with the structure of the file in the additional context of the paragraphs and the page of each paragraph in its custom data.
+   :description: How to create a Document from a PDF, DOCX, PPTX, XLSX, HTML or scanned file converted with Docling, with the structure of the file in the additional context of the paragraphs and the pages of each paragraph.
 
 Converting Files with Docling
 ==============================
 
-`Docling <https://github.com/docling-project/docling>`_ converts files such as PDF, DOCX, PPTX, XLSX, HTML and scanned images into a ``DoclingDocument``: the text, the tables and the pictures of the file, with their structure and their place on each page. :meth:`~contextgem.public.documents.Document.from_docling` creates a ContextGem document from it. The models get the structure of the file together with its text, and each extracted item can be traced to the page it was found on.
+`Docling <https://github.com/docling-project/docling>`_ converts files such as PDF, DOCX, PPTX, XLSX, HTML and scanned images into a ``DoclingDocument``: the text, the tables and the pictures of the file, with their structure and their place on each page. :meth:`~contextgem.public.documents.Document.from_docling` creates a ContextGem document from it. The models get the structure of the file together with its paragraphs, and each item extracted with references can be traced to the page it was found on.
 
 
 📦 Installation
@@ -55,7 +55,7 @@ Each piece of text in the body of the Docling document becomes a paragraph, in r
      - The text, after the number of a numbered item, e.g. ``2.1 Invoices are payable within 30 days.``, or its position in its list where the file gives no number, e.g. in HTML
      - ``List item``, ``List item, level 2``
    * - Table
-     - A paragraph with the headers of the columns, then a paragraph for each row, with each value after the header of its column, e.g. ``Service: Hosting; Monthly fee: 1,200 EUR``
+     - A paragraph with the headers of the columns, if the table has them, then a paragraph for each row, with each value after the header of its column, e.g. ``Service: Hosting; Monthly fee: 1,200 EUR``
      - ``Table header``, ``Table row``, with the caption of the table
    * - Caption, footnote, code, formula
      - The text
@@ -64,9 +64,9 @@ Each piece of text in the body of the Docling document becomes a paragraph, in r
      - The key and the value, e.g. ``Full name: Ada Lovelace`` or ``I agree to the terms: checked``
      - ``Form field``, ``Key-value pair``
 
-The additional context also gives the headings of the section of the paragraph, e.g. ``Section: 3. Term and Termination > 3.2 Notice``, in spreadsheets and presentations, its sheet or slide, e.g. ``Sheet: Q3 figures`` or ``Slide 2``, and in a subtitle file, e.g. WebVTT, the speaker of its cue, e.g. ``Speaker: Ann Berg``. The title of a file is in the section of no paragraph, as it would be in the additional context of all of them, unless the file has several titles: each slide of a presentation can have its own, and Docling makes a title of the heading of each chapter of an EPUB file and of each top-level heading (``#``) of a Markdown file. The titles of such a file are the top level of the sections, e.g. ``Slide 2; Section: Results``, and the headings in a slide or a sheet end with it. The additional context is sent to the models together with the paragraph, in the requests that list paragraphs (see :ref:`paragraph-additional-context`): to an LLM, which gets the structure of the file without Markdown syntax in the text of the paragraphs, and to a decision model, which reads each paragraph on its own.
+The additional context also gives the headings of the section of the paragraph, e.g. ``Section: 3. Term and Termination > 3.2 Notice``, in spreadsheets and presentations, its sheet or slide, e.g. ``Sheet: Q3 figures`` or ``Slide 2``, and in a subtitle file, e.g. WebVTT, the speaker of its cue, e.g. ``Speaker: Ann Berg``. The title of a file is in the section of no paragraph, as it would be in the additional context of all of them, unless the file has several titles: each slide of a presentation can have its own, and Docling makes a title of the heading of each chapter of an EPUB file and of each top-level heading (``#``) of a Markdown file. The titles of such a file are the top level of the sections, e.g. ``Slide 2; Section: Results``, and the headings in a slide or a sheet end with it. The additional context is sent to the models together with the paragraph, in the requests that list paragraphs (see :ref:`paragraph-additional-context`): to an LLM, which gets the structure of the file without Markdown syntax in the text of the paragraphs, and to a decision model, which reads each paragraph on its own. These are the requests for aspects, and for concepts with references (``add_references=True``): a concept without references is extracted from the text of the paragraphs only, e.g. without the sheet or the speaker of a paragraph, and its items have no pages.
 
-Page headers and footers, comments, and the text that Docling finds inside pictures are not converted.
+Page headers and footers, comments, the speaker notes of a presentation, hidden slides and sheets, and the text that Docling finds inside pictures are not converted.
 
 A scanned PDF file or image is converted the same way: Docling reads its text with OCR, and finds its structure with its layout and table models. Its paragraphs have page numbers too.
 
@@ -93,7 +93,7 @@ For more than the page, e.g. to highlight a paragraph in the file, the custom da
 - ``self_ref``: the reference of the Docling item that the paragraph is made from, e.g. ``"#/texts/12"``, to look the item up in the Docling document.
 - ``label``: the label of that item, e.g. ``"list_item"`` or ``"table"``.
 - ``prov``: for each part of the item, the number of its page (``page_no``) and its bounding box on the page (``bbox``, with the coordinates ``l``, ``t``, ``r`` and ``b`` from the origin ``coord_origin``).
-- ``row_index``: for a table row, the index of the row in the table.
+- ``row_index``: for a table row, the index of the row in the table, whose header rows count, e.g. ``1`` for the first row under a header row.
 - ``source``: for a cue of a subtitle file, its start and end times in seconds (``start_time``, ``end_time``), and its identifier and speaker (``identifier``, ``voice``) where it has them, e.g. to cite the time of an extracted item. The times are not sent to the models.
 
 E.g. the custom data of the first row of the fee table in the example above, with the coordinates rounded:
@@ -144,6 +144,8 @@ Docling keeps the images of the pictures of a PDF file only when asked to:
            InputFormat.PDF: PdfFormatOption(pipeline_options=pipeline_options)
        }
    )
+
+Docling reads the images of an HTML or Markdown file only with ``fetch_images=True`` in the options of its backend (see the documentation of Docling). The images of a Docling document saved with its images in separate files (``image_mode=ImageRefMode.REFERENCED``) are read from their files only after ``docling_document.load_local_images()``, which docling-core leaves to the calling code, for a Docling document from a trusted source. An image at a remote URL is not fetched. The pictures that are not attached as images are counted, with the reason, in a message logged at the ``INFO`` level.
 
 
 ⚙️ Other Settings of the Document

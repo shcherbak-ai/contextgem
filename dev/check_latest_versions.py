@@ -59,6 +59,10 @@ EXCEPTIONS: dict[str, str] = {
     "genai-prices": "pinned, as its API changes often",
     "litellm": "pinned, as its patches and minor versions are at times unstable",
     "openai": "pinned to the version that the pinned litellm is tested with",
+    "pillow": (
+        "capped below 13, as the packages of Docling are, so that ContextGem "
+        "installs only with the versions that its tests run on"
+    ),
 }
 
 # The name of a requirement, at its start (PEP 508)

@@ -81,7 +81,7 @@ EXPECTED_FAILURES: dict[tuple[str, str | None], str] = {
 # without them, by platform and Python (None: on every Python)
 EXPECTED_EXTRA_FAILURES: dict[tuple[str, str | None], str] = {
     ("x86_64-apple-darwin", None): (
-        "docling-parse 7+, needed by Docling 2.112+ (the docling extra), publishes "
+        "docling-parse 7+, needed by Docling (the docling extra), publishes "
         "no Intel Mac wheels (docs/source/installation.rst)"
     ),
 }

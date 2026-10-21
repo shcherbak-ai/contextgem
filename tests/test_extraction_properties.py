@@ -161,9 +161,17 @@ _NON_BLANK_TEXTS = st.text(_TEXT_CHARACTERS, min_size=1, max_size=20).filter(str
 # the first marker of the text of the request.
 _RE_MARKER = re.compile(r"Clause (\d+)-(\d+)\.")
 
+# Custom data, also with nested values, as e.g. the Docling data of a paragraph
 _CUSTOM_DATA = st.dictionaries(
     st.text(max_size=5),
-    st.one_of(st.none(), st.booleans(), st.integers(-1000, 1000), _TEXTS),
+    st.one_of(
+        st.none(),
+        st.booleans(),
+        st.integers(-1000, 1000),
+        _TEXTS,
+        st.dictionaries(st.text(max_size=5), st.integers(-1000, 1000), max_size=2),
+        st.lists(st.integers(-1000, 1000), max_size=2),
+    ),
     max_size=2,
 )
 
@@ -1044,6 +1052,26 @@ def _check_items(
                 item.reference_sentences, reference_sentences, strict=True
             )
         )
+
+
+def _check_custom_data_copy(item: Any, reference: Any) -> None:
+    """
+    Checks that an extracted item has the custom data of its reference paragraph or
+    sentence, in a copy of its own: a change to a value nested in it, e.g. to
+    the Docling data of a paragraph, leaves the reference as it is.
+
+    :param item: Extracted item of an aspect.
+    :type item: Any
+    :param reference: The reference paragraph or sentence of the item, whose text
+        is its value.
+    :type reference: Any
+    :return: None
+    :rtype: None
+    """
+    assert item.custom_data == reference.custom_data
+    for key, value in item.custom_data.items():
+        if isinstance(value, dict | list):
+            assert value is not reference.custom_data[key], key
 
 
 # Output of an LLM for aspects
@@ -3357,7 +3385,7 @@ class TestExtractionProperties(BaseTest):
                     if reference_depth == "sentences"
                     else item.reference_paragraphs[0]
                 )
-                assert item.custom_data == reference.custom_data
+                _check_custom_data_copy(item, reference)
             # The references of the aspect are those of its items, in their order
             expected_paragraphs = list(
                 dict.fromkeys(
@@ -4126,10 +4154,12 @@ class TestExtractionProperties(BaseTest):
                 if sentence_position is None:
                     assert item.value == paragraph.raw_text
                     assert not item.reference_sentences
+                    _check_custom_data_copy(item, paragraph)
                 else:
                     sentence = paragraph.sentences[sentence_position]
                     assert item.value == sentence.raw_text
                     assert item.reference_sentences[0] is sentence
+                    _check_custom_data_copy(item, sentence)
                 assert item.probabilities == {True: p, False: 1 - p}
         self.check_instance_serialization_and_cloning(document)
 
@@ -4593,6 +4623,99 @@ class TestExtractionProperties(BaseTest):
             stub.decision_requests
         )
         self.check_instance_serialization_and_cloning(document)
+
+    @pytest.mark.parametrize("use_concurrency", [False, True])
+    def test_extract_all_after_failed_aspect(self, use_concurrency: bool):
+        """
+        Tests that ``extract_all()`` with ``raise_exception_on_extraction_error=False``
+        extracts the concepts of the other aspects and of the document when
+        the extraction of an aspect fails, and leaves the concepts of that aspect
+        unextracted, with a warning that names them.
+
+        The API of the LLM is stubbed, i.e. no cassette is required.
+        """
+        document = Document(
+            paragraphs=[
+                Paragraph(raw_text="The monthly fee is 100 EUR."),
+                Paragraph(raw_text="The term of the agreement is two years."),
+            ],
+            aspects=[
+                Aspect(
+                    name="Fees",
+                    description="Fees of the agreement",
+                    concepts=[StringConcept(name="Fee", description="The fee")],
+                ),
+                Aspect(
+                    name="Term",
+                    description="Term of the agreement",
+                    concepts=[StringConcept(name="Duration", description="The term")],
+                ),
+            ],
+            concepts=[StringConcept(name="Currency", description="The currency")],
+        )
+
+        def complete(request: dict[str, Any]) -> Any:
+            """
+            Answers a request to the LLM: an output that is not JSON for the aspect
+            "Fees", the second paragraph for the aspect "Term", and an item for
+            each concept.
+            """
+            prompt = _get_prompt(request)
+            if "<aspect_name>Fees</aspect_name>" in prompt:
+                return _completion("not JSON")
+            aspects = re.findall(r"<aspect_id>(A\d+)</aspect_id>", prompt)
+            if aspects:
+                output = [
+                    {"aspect_id": aspect_id, "paragraph_ids": ["P1"]}
+                    for aspect_id in aspects
+                ]
+            else:
+                output = [
+                    {"concept_id": concept_id, "extracted_items": [f"{name} value"]}
+                    for concept_id, name in re.findall(
+                        r"<concept_id>(C\d+)</concept_id>\s*"
+                        r"<concept_name>(.+?)</concept_name>",
+                        prompt,
+                    )
+                ]
+            assert output, prompt
+            return _completion(json.dumps(output))
+
+        llm = DocumentLLM(
+            model=_LLM_MODEL, api_key="test_api_key", max_retries_invalid_data=0
+        )
+        stub = _ModelAPIsStub(complete=complete)
+        with stub.installed(), _recorded_warnings() as caught:
+            llm.extract_all(
+                document,
+                max_items_per_call=1,
+                use_concurrency=use_concurrency,
+                raise_exception_on_extraction_error=False,
+            )
+
+        fees, term = document.aspects
+        assert not fees._is_processed
+        assert not fees.concepts[0]._is_processed
+        assert not fees.concepts[0].extracted_items
+        assert term._is_processed
+        assert [item.value for item in term.extracted_items] == [
+            document.paragraphs[1].raw_text
+        ]
+        assert [item.value for item in term.concepts[0].extracted_items] == [
+            "Duration value"
+        ]
+        assert [item.value for item in document.concepts[0].extracted_items] == [
+            "Currency value"
+        ]
+        messages = _get_messages(caught)
+        assert any(
+            "could not be processed" in message and "'Fees'" in message
+            for message in messages
+        ), messages
+        assert any(
+            "Concepts of aspect `Fees`" in message and "'Fee'" in message
+            for message in messages
+        ), messages
 
     @_PROPERTY_SETTINGS
     @given(data=st.data())

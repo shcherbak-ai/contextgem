@@ -24,6 +24,7 @@ import base64
 import importlib.metadata
 import io
 import re
+from collections import Counter
 from collections.abc import Iterable, Sequence
 from pathlib import Path
 from typing import Any, NamedTuple
@@ -137,8 +138,25 @@ _CHECKBOX_VALUES = {
     DocItemLabel.CHECKBOX_UNSELECTED: "unchecked",
 }
 
-# The MIME types of the images that a ContextGem document holds
-_IMAGE_MIME_TYPES = frozenset({"image/jpg", "image/jpeg", "image/png", "image/webp"})
+# Why the pictures that are not attached as images are not, by where their image
+# is (see `_missing_image_source()`), for the log of the conversion
+_MISSING_IMAGE_REASONS = {
+    "none": (
+        "as the Docling document has no image data for them. Docling keeps "
+        "the images of the pictures of a PDF file with "
+        "`generate_picture_images=True` in its PDF pipeline options, and reads "
+        "those of an HTML or Markdown file with `fetch_images=True` in the options "
+        "of its backend."
+    ),
+    "file": (
+        "as their images are in local files, which docling-core reads only after "
+        "`docling_document.load_local_images()`, for a Docling document from "
+        "a trusted source, e.g. one saved by Docling with "
+        "`image_mode=ImageRefMode.REFERENCED`."
+    ),
+    "url": "as their images are at URLs, which are not fetched.",
+    "data": "as their image data cannot be read, e.g. that of an SVG image.",
+}
 
 # The parts of an inline text are joined with a space, except before closing
 # punctuation and after an opening bracket
@@ -408,19 +426,39 @@ def _row_text(row: Sequence[TableCell], labels: Sequence[str]) -> str:
     return "; ".join(parts)
 
 
+def _image_type(data: bytes) -> str | None:
+    """
+    Returns the MIME type of an image, by its first bytes, if it is of a type that
+    a ContextGem document holds.
+
+    :param data: The bytes of the image.
+    :type data: bytes
+    :return: "image/png", "image/jpeg" or "image/webp", or None for data of another
+        type.
+    :rtype: str | None
+    """
+    if data.startswith(b"\x89PNG\r\n\x1a\n"):
+        return "image/png"
+    if data.startswith(b"\xff\xd8\xff"):
+        return "image/jpeg"
+    if data[:4] == b"RIFF" and data[8:12] == b"WEBP":
+        return "image/webp"
+    return None
+
+
 def _image_data(
     picture: PictureItem, document: DoclingDocument
 ) -> tuple[str, str] | None:
     """
     Returns the image data of a picture.
 
-    An image embedded in the Docling document is taken as it is, if it is of a type
-    that a ContextGem document holds, else converted to PNG. A picture without an
-    embedded image is cropped from the image of its page, if the Docling document
-    has the images of its pages. An image referenced by a remote URL is not
-    fetched, and an image in a local file is read only if Docling allows it (see
-    ``DoclingDocument.load_local_images()``). An image larger than Pillow decodes
-    (``PIL.Image.MAX_IMAGE_PIXELS``) is not read.
+    An image embedded in the Docling document is taken as it is, with the type that
+    its data has, if it is of a type that a ContextGem document holds, else
+    converted to PNG. A picture without an embedded image is cropped from the image
+    of its page, if the Docling document has the images of its pages. An image
+    referenced by a remote URL is not fetched, and an image in a local file is read
+    only if Docling allows it (see ``DoclingDocument.load_local_images()``). An
+    image larger than Pillow decodes (``PIL.Image.MAX_IMAGE_PIXELS``) is not read.
 
     :param picture: The picture.
     :type picture: PictureItem
@@ -437,9 +475,17 @@ def _image_data(
             if not data:
                 # Docling fails to read a data URI without data
                 return None
-            mime_type = header.removeprefix("data:").split(";")[0].lower()
-            if header.endswith(";base64") and mime_type in _IMAGE_MIME_TYPES:
-                return mime_type, data
+            if header.endswith(";base64"):
+                # The type that the data URI gives is not relied on, as a model
+                # provider can refuse an image whose data is of another type. Data
+                # that is not valid base64, or an image of another type, is read
+                # with Pillow below.
+                try:
+                    mime_type = _image_type(base64.b64decode(data, validate=True))
+                except ValueError:
+                    mime_type = None
+                if mime_type is not None:
+                    return mime_type, data
     try:
         image = picture.get_image(document)
         if image is None:
@@ -452,6 +498,28 @@ def _image_data(
         logger.debug(f"Image of the picture {picture.self_ref} not read: {e}")
         return None
     return "image/png", base64.b64encode(buffer.getvalue()).decode("ascii")
+
+
+def _missing_image_source(picture: PictureItem) -> str:
+    """
+    Returns where the image of a picture is, whose image data cannot be read, for
+    the log of the conversion.
+
+    :param picture: The picture.
+    :type picture: PictureItem
+    :return: "none" for a picture without an image, "file" for an image in a local
+        file, "url" for an image at another URL, or "data" for an image embedded in
+        the Docling document.
+    :rtype: str
+    """
+    image_ref = picture.image
+    if image_ref is None:
+        return "none"
+    if isinstance(image_ref.uri, Path) or image_ref.uri.scheme == "file":
+        return "file"
+    if image_ref.uri.scheme == "data":
+        return "data"
+    return "url"
 
 
 class _PendingParagraph(NamedTuple):
@@ -484,7 +552,9 @@ class _DoclingConverter:
         self._document = document
         self.paragraphs: list[_Paragraph] = []
         self.images: list[_Image] = []
-        self.pictures_without_images = 0
+        # The number of pictures that are not attached as images, by where their
+        # image is (see `_missing_image_source()`)
+        self.pictures_without_images: Counter[str] = Counter()
         # The headings of the current section, from the top, as (level, text) pairs,
         # a title at level 0
         self._headings: list[tuple[int, str]] = []
@@ -496,8 +566,11 @@ class _DoclingConverter:
         # The sheet or the slide that the converted items are on, e.g. "Slide 2"
         self._containers: list[str] = []
         # The captions and the footnotes of tables, pictures, code blocks, key-value
-        # regions and forms, which are converted with the item that they belong to,
-        # not where the body of the document has them
+        # regions and forms in the body, which are converted with the item that
+        # they belong to, not where the body of the document has them. Those of
+        # an item that is not converted, e.g. a table in a page header, and those
+        # that are not texts of the body, e.g. a picture given as a caption, are
+        # converted where the body has them.
         self._attached_refs = {
             ref.cref
             for item in (
@@ -507,7 +580,10 @@ class _DoclingConverter:
                 *document.key_value_items,
                 *document.form_items,
             )
+            if item.content_layer == ContentLayer.BODY
             for ref in (*item.captions, *item.footnotes)
+            if isinstance(attached := ref.resolve(document), TextItem)
+            and attached.content_layer == ContentLayer.BODY
         }
         # The numbers of the items of each numbered list that Docling gives no
         # numbers, by the reference of the list, worked out once for each list
@@ -757,7 +833,8 @@ class _DoclingConverter:
             elif isinstance(first, TextItem) and first.label in _BODY_TEXT_LABELS:
                 text = first.text.strip()
                 sources.append(first)
-                children = children[1:]
+                # The items under that text item are converted after the item
+                children = [*self._children(first), *children[1:]]
         return text, sources, children
 
     def _add_attached_texts(self, refs: Iterable[RefItem], kind: str) -> None:
@@ -959,7 +1036,12 @@ class _DoclingConverter:
         """
         captions = [ref.resolve(self._document) for ref in table.captions]
         caption = _clean(
-            " ".join(item.text for item in captions if isinstance(item, TextItem))
+            " ".join(
+                item.text
+                for item in captions
+                if isinstance(item, TextItem)
+                and item.content_layer == ContentLayer.BODY
+            )
         )
         self._add_attached_texts(table.captions, "Table caption")
         in_caption = (
@@ -1024,7 +1106,7 @@ class _DoclingConverter:
         self._add_attached_texts(picture.captions, "Picture caption")
         image_data = _image_data(picture, self._document)
         if image_data is None:
-            self.pictures_without_images += 1
+            self.pictures_without_images[_missing_image_source(picture)] += 1
         elif any(image.base64_data == image_data[1] for image in self.images):
             # The images of a document are unique: a picture that repeats an
             # earlier one, e.g. a logo on each page, is attached once
@@ -1108,6 +1190,8 @@ class _DoclingConverter:
         values, and for each cell that is not linked to a key, after the paragraphs
         of its captions and before those of its footnotes. A key and its value are
         linked from the key to the value, from the value to the key, or both.
+        A value that is also the key of other values has a paragraph of its own
+        too, with them.
 
         :param item: The key-value region or the form.
         :type item: KeyValueItem | FormItem
@@ -1135,7 +1219,7 @@ class _DoclingConverter:
         }
         kind = "Form field" if isinstance(item, FormItem) else "Key-value pair"
         for cell in item.graph.cells:
-            if cell.cell_id in linked_values:
+            if cell.cell_id in linked_values and cell.cell_id not in values_of_keys:
                 continue
             parts = [cells[value] for value in values_of_keys.get(cell.cell_id, [])]
             value = "; ".join(_clean(part.text) for part in parts if _clean(part.text))
@@ -1178,14 +1262,13 @@ def _convert_docling_document(
         )
     converter = _DoclingConverter(document)
     converter.convert()
-    if converter.pictures_without_images:
-        logger.info(
-            f"{converter.pictures_without_images} picture(s) of the Docling document "
-            f"are not attached to the document as images, as the Docling document "
-            f"has no image data for them. To attach the pictures of a PDF file, "
-            f"convert it with `generate_picture_images=True` in the PDF pipeline "
-            f"options of Docling."
-        )
+    for source, reason in _MISSING_IMAGE_REASONS.items():
+        if converter.pictures_without_images[source]:
+            logger.info(
+                f"{converter.pictures_without_images[source]} picture(s) of "
+                f"the Docling document are not attached to the document as images, "
+                f"{reason}"
+            )
     if not converter.paragraphs and not converter.images:
         raise ValueError(
             "The body of the Docling document has no text or images to create "

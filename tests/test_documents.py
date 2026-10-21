@@ -32,10 +32,12 @@ from unittest.mock import patch
 import pytest
 from docling_core.types.doc import (
     BoundingBox,
+    CodeItem,
     ContentLayer,
     CoordOrigin,
     DocItemLabel,
     DoclingDocument,
+    FormItem,
     GraphCell,
     GraphCellLabel,
     GraphData,
@@ -43,6 +45,7 @@ from docling_core.types.doc import (
     GraphLinkLabel,
     GroupLabel,
     ImageRef,
+    KeyValueItem,
     NodeItem,
     PictureItem,
     ProvenanceItem,
@@ -210,8 +213,20 @@ def _check_docling_text_kept(
     docling_document: DoclingDocument, document: Document
 ) -> None:
     """
-    Checks that a document has each text and each table cell of the body of
-    the Docling document that it was created from, outside pictures.
+    Checks that a document has each text, each table cell and each key-value cell
+    of the body of the Docling document that it was created from, outside
+    pictures, each in the paragraph made from it, which the Docling reference in
+    the custom data of the paragraph gives: a text in its own paragraph, or in
+    that of the item that it is part of, e.g. an inline group, a heading or
+    a list item with formatted text, or a form field; a caption or a footnote in
+    its own paragraph; a table cell in the paragraph of its row, or of the header
+    for a header row; and a key-value cell in a paragraph of its region. A text
+    is not looked for in the other paragraphs, so that a paragraph left out is
+    noticed also where its text is in another one, e.g. a repeated heading or
+    a number.
+
+    Also checks that only a table, a key-value region or a form is made into
+    several paragraphs.
 
     :param docling_document: The Docling document.
     :type docling_document: DoclingDocument
@@ -221,35 +236,100 @@ def _check_docling_text_kept(
     :rtype: None
     """
 
-    def inside(item: NodeItem, kind: type) -> bool:
-        """
-        Tells whether an item is under an item of a kind, e.g. a picture.
-        """
-        parent = item.parent
-        while parent is not None:
-            node = parent.resolve(docling_document)
-            if isinstance(node, kind):
-                return True
-            parent = node.parent
-        return False
-
     def clean(text: str) -> str:
         """
         Collapses the whitespace of a text.
         """
         return " ".join(text.split())
 
-    paragraphs = "\n".join(clean(p.raw_text) for p in document.paragraphs)
+    def ancestors(item: NodeItem) -> list[NodeItem]:
+        """
+        Returns an item and the items above it, from the item up.
+        """
+        chain = [item]
+        while (parent := chain[-1].parent) is not None:
+            chain.append(parent.resolve(docling_document))
+        return chain
+
+    # The row index, for the row of a table, and the text of each paragraph made
+    # from a Docling item, by the reference of the item
+    paragraphs_of: dict[str, list[tuple[int | None, str]]] = {}
+    for paragraph in document.paragraphs:
+        data = paragraph.custom_data["docling"]
+        paragraphs_of.setdefault(data["self_ref"], []).append(
+            (data.get("row_index"), clean(paragraph.raw_text))
+        )
+
+    def text_of(self_ref: str) -> str:
+        """
+        Returns the text of the paragraphs made from a Docling item.
+        """
+        return "\n".join(text for _, text in paragraphs_of.get(self_ref, []))
+
+    several = {
+        item.self_ref
+        for item in (
+            *docling_document.tables,
+            *docling_document.key_value_items,
+            *docling_document.form_items,
+        )
+    }
+    for self_ref, paragraphs in paragraphs_of.items():
+        assert len(paragraphs) == 1 or self_ref in several, self_ref
+
     for item, _ in docling_document.iterate_items():
-        if isinstance(item, TextItem) and not inside(item, PictureItem):
-            # The text of a cell of a table is in the row, below
-            in_table = inside(item, TableItem)
-            if clean(item.text) and not in_table and item.label != "marker":
-                assert clean(item.text) in paragraphs, item.self_ref
-        if isinstance(item, TableItem) and not inside(item, PictureItem):
-            for row in item.data.grid:
-                for cell in row:
-                    assert clean(cell.text) in paragraphs, item.self_ref
+        chain = ancestors(item)
+        if any(isinstance(node, PictureItem) for node in chain[1:]):
+            continue
+        if isinstance(
+            item, TableItem | PictureItem | CodeItem | KeyValueItem | FormItem
+        ):
+            # A caption or a footnote, wherever the Docling document has it, e.g.
+            # under a picture
+            for ref in (*item.captions, *item.footnotes):
+                attached = ref.resolve(docling_document)
+                if (
+                    isinstance(attached, TextItem)
+                    and attached.content_layer == ContentLayer.BODY
+                    and clean(attached.text)
+                ):
+                    assert clean(attached.text) in text_of(attached.self_ref), (
+                        attached.self_ref
+                    )
+        if isinstance(item, TextItem):
+            text = clean(item.text)
+            if not text or item.label == DocItemLabel.MARKER:
+                continue
+            # The text of a cell of a table is in its row, below
+            if item.self_ref not in paragraphs_of and any(
+                isinstance(node, TableItem) for node in chain[1:]
+            ):
+                continue
+            owner = next(
+                (node for node in chain if node.self_ref in paragraphs_of), None
+            )
+            assert owner is not None, f"{item.self_ref} not converted: {text}"
+            assert text in text_of(owner.self_ref), item.self_ref
+        elif isinstance(item, TableItem):
+            rows = dict(paragraphs_of.get(item.self_ref, []))
+            for index, row in enumerate(item.data.grid):
+                cells = [clean(cell.text) for cell in row if clean(cell.text)]
+                if not cells:
+                    continue
+                if index not in rows:
+                    # A header row is in the header paragraph, without a row index
+                    assert all(
+                        cell.column_header for cell in row if clean(cell.text)
+                    ), f"Row {index} of {item.self_ref} not converted"
+                for cell in cells:
+                    assert cell in rows.get(index, rows.get(None, "")), (
+                        f"{cell} of row {index} of {item.self_ref}"
+                    )
+        elif isinstance(item, KeyValueItem | FormItem):
+            for cell in item.graph.cells:
+                # A key is given without the colon at its end
+                key_or_value = clean(cell.text).rstrip(":").rstrip()
+                assert key_or_value in text_of(item.self_ref), item.self_ref
 
 
 # The fixture files that the tests convert with Docling, in the formats that the
@@ -2217,6 +2297,130 @@ class TestDocuments(BaseTest):
             ("2. Run the install script.", "List item"),
             ("1. Check the log.", "List item, level 2"),
         ]
+        # A list that starts with a bullet is not numbered, and the number that
+        # Docling gives an item is kept as it is
+        docling_document = DoclingDocument(name="restore")
+        steps = docling_document.add_list_group()
+        docling_document.add_list_item("Back up the data first.", parent=steps)
+        docling_document.add_list_item(
+            "Stop the service.", enumerated=True, parent=steps
+        )
+        docling_document.add_list_item(
+            "Restore the backup.", enumerated=True, marker=" iii. ", parent=steps
+        )
+        assert _texts_and_contexts(Document.from_docling(docling_document)) == [
+            ("Back up the data first.", "List item"),
+            ("Stop the service.", "List item"),
+            ("iii. Restore the backup.", "List item"),
+        ]
+
+        # The items under a text, e.g. a list under the sentence that introduces
+        # it, follow the text
+        docling_document = DoclingDocument(name="payment")
+        introduction = docling_document.add_text(
+            DocItemLabel.TEXT, "Payment is accepted by:"
+        )
+        methods = docling_document.add_list_group(parent=introduction)
+        docling_document.add_list_item("bank transfer;", parent=methods)
+        docling_document.add_list_item("card.", parent=methods)
+        docling_document.add_text(DocItemLabel.TEXT, "Invoices are sent monthly.")
+        assert _texts_and_contexts(Document.from_docling(docling_document)) == [
+            ("Payment is accepted by:", None),
+            ("bank transfer;", "List item"),
+            ("card.", "List item"),
+            ("Invoices are sent monthly.", None),
+        ]
+
+    def test_from_docling_provenance(self):
+        """
+        Tests that the custom data of a paragraph has the page and the box of each
+        part of the Docling items that it is made from, once each: e.g. the two
+        boxes of a text that goes on in the next column of its page, and the boxes
+        of the parts of a heading with formatted text, on two pages.
+        """
+
+        def box(page_no: int, top: float) -> dict[str, Any]:
+            """
+            Returns the provenance entry of `_docling_prov()` in the custom data
+            of a paragraph.
+            """
+            return {
+                "page_no": page_no,
+                "bbox": {
+                    "l": 72.0,
+                    "t": top,
+                    "r": 520.0,
+                    "b": top - 20.0,
+                    "coord_origin": "BOTTOMLEFT",
+                },
+            }
+
+        docling_document = DoclingDocument(name="report")
+        columns = docling_document.add_text(
+            DocItemLabel.TEXT,
+            "The service was available all year.",
+            prov=_docling_prov(1, 100.0),
+        )
+        columns.prov.append(_docling_prov(1, 700.0))
+        # The same box twice is given once
+        columns.prov.append(_docling_prov(1, 100.0))
+        heading = docling_document.add_heading("", level=1, prov=_docling_prov(1, 60.0))
+        heading_text = docling_document.add_inline_group(parent=heading)
+        docling_document.add_text(
+            DocItemLabel.TEXT,
+            "2. Fees",
+            parent=heading_text,
+            prov=_docling_prov(1, 60.0),
+        )
+        docling_document.add_text(
+            DocItemLabel.TEXT,
+            "and Payment",
+            parent=heading_text,
+            prov=_docling_prov(2, 750.0),
+        )
+        # A sentence with formatted parts, whose inline group has no provenance of
+        # its own
+        sentence = docling_document.add_inline_group()
+        docling_document.add_text(
+            DocItemLabel.TEXT, "Invoices are", parent=sentence, prov=_docling_prov(2)
+        )
+        docling_document.add_text(
+            DocItemLabel.TEXT, "payable", parent=sentence, prov=_docling_prov(2, 680.0)
+        )
+
+        document = Document.from_docling(docling_document)
+        assert [
+            (p.raw_text, p.page_numbers, p.custom_data["docling"])
+            for p in document.paragraphs
+        ] == [
+            (
+                "The service was available all year.",
+                [1],
+                {
+                    "self_ref": columns.self_ref,
+                    "label": "text",
+                    "prov": [box(1, 100.0), box(1, 700.0)],
+                },
+            ),
+            (
+                "2. Fees and Payment",
+                [1, 2],
+                {
+                    "self_ref": heading.self_ref,
+                    "label": "section_header",
+                    "prov": [box(1, 60.0), box(2, 750.0)],
+                },
+            ),
+            (
+                "Invoices are payable",
+                [2],
+                {
+                    "self_ref": sentence.self_ref,
+                    "label": "inline",
+                    "prov": [box(2, 700.0), box(2, 680.0)],
+                },
+            ),
+        ]
 
     def test_from_docling_tables(self):
         """
@@ -2334,9 +2538,80 @@ class TestDocuments(BaseTest):
             3,
         ]
         assert document.paragraphs[3].custom_data["docling"]["prov"] == table_prov
+        # The index of a row counts the header rows, e.g. two above the rows
+        assert [
+            p.custom_data["docling"].get("row_index") for p in document.paragraphs[7:10]
+        ] == [None, 2, 3]
         # The page numbers of a paragraph are those of its provenance
         assert document.paragraphs[3].page_numbers == [2]
         assert document.paragraphs[0].page_numbers == []
+
+        # A header that spans two columns is listed once in the header. A cell that
+        # spans the row under different headers has no label, as the title of
+        # a section of the table has none, also where it spans one column.
+        docling_document = DoclingDocument(name="fees by year")
+        docling_document.add_table(
+            data=_docling_table_data(
+                [
+                    _docling_cell(0, 0, "Service", header=True),
+                    _docling_cell(0, 1, "Fee", col_span=2, header=True),
+                    _docling_cell(1, 0, "Hosting"),
+                    _docling_cell(1, 1, "1,100 EUR"),
+                    _docling_cell(1, 2, "1,200 EUR"),
+                    # A merged cell, e.g. of a DOCX or HTML file, which Docling does
+                    # not mark as a section
+                    _docling_cell(2, 0, "Waived for the first year", col_span=3),
+                    _docling_cell(3, 0, "Optional services", section=True),
+                    _docling_cell(4, 0, "Monitoring"),
+                    _docling_cell(4, 1, "300 EUR"),
+                ]
+            )
+        )
+        assert _texts_and_contexts(Document.from_docling(docling_document)) == [
+            ("Service; Fee", "Table header"),
+            ("Service: Hosting; Fee: 1,100 EUR; Fee: 1,200 EUR", "Table row"),
+            ("Waived for the first year", "Table row"),
+            ("Optional services", "Table row"),
+            ("Service: Monitoring; Fee: 300 EUR", "Table row"),
+        ]
+
+        # A first row of which only some cells are column headers, e.g. a key in
+        # bold before its value, is not a header row, and an empty cell, e.g.
+        # the corner of a table, does not make a row a header row or not
+        docling_document = DoclingDocument(name="parties and fees")
+        docling_document.add_table(
+            data=_docling_table_data(
+                [
+                    _docling_cell(0, 0, "Supplier", header=True),
+                    _docling_cell(0, 1, "Northwind Analytics AS"),
+                    _docling_cell(1, 0, "Customer", header=True),
+                    _docling_cell(1, 1, "Riverbank Logistics Ltd"),
+                ]
+            )
+        )
+        docling_document.add_table(
+            data=_docling_table_data(
+                [
+                    _docling_cell(0, 1, "2026", header=True),
+                    _docling_cell(1, 0, "Hosting"),
+                    _docling_cell(1, 1, "1,200 EUR"),
+                ]
+            )
+        )
+        document = Document.from_docling(docling_document)
+        assert [
+            (
+                p.raw_text,
+                p.additional_context,
+                p.custom_data["docling"].get("row_index"),
+            )
+            for p in document.paragraphs
+        ] == [
+            ("Supplier; Northwind Analytics AS", "Table row", 0),
+            ("Customer; Riverbank Logistics Ltd", "Table row", 1),
+            ("2026", "Table header", None),
+            ("Hosting; 2026: 1,200 EUR", "Table row", 1),
+        ]
 
         # A long caption is shortened in the additional context of the rows, which
         # repeats it, and is whole in its own paragraph
@@ -2361,6 +2636,51 @@ class TestDocuments(BaseTest):
         assert shortened.endswith("...")
         assert len(shortened) <= 100
         assert long_caption.startswith(shortened.removesuffix("..."))
+        # A comma, a semicolon or a colon before the cut is left out
+        docling_document = DoclingDocument(name="response times")
+        docling_document.add_table(
+            data=_docling_table_data([_docling_cell(0, 0, "Critical")]),
+            caption=docling_document.add_text(
+                DocItemLabel.CAPTION,
+                (
+                    "Table 5: Response times. The times apply on business days and on "
+                    "public holidays in Norway, Sweden and Denmark."
+                ),
+            ),
+        )
+        row = Document.from_docling(docling_document).paragraphs[-1]
+        assert row.additional_context == (
+            "Table row; Table caption: Table 5: Response times. The times apply on "
+            "business days and on public holidays in Norway..."
+        )
+
+        # A caption in the furniture of the page, or that is not a text, is not
+        # a paragraph
+        docling_document = DoclingDocument(name="draft")
+        table = docling_document.add_table(
+            data=_docling_table_data([_docling_cell(0, 0, "Northwind Analytics AS")]),
+            caption=docling_document.add_text(
+                DocItemLabel.CAPTION, "Draft", content_layer=ContentLayer.FURNITURE
+            ),
+        )
+        table.captions.append(docling_document.add_group(name="not a text").get_ref())
+        assert [
+            p.raw_text for p in Document.from_docling(docling_document).paragraphs
+        ] == ["Northwind Analytics AS"]
+
+        # The caption in the body of a table that is not converted, e.g. a table in
+        # a page header, is a paragraph where the body has it
+        docling_document = DoclingDocument(name="letterhead")
+        docling_document.add_text(DocItemLabel.TEXT, "Dear Customer,")
+        docling_document.add_table(
+            data=_docling_table_data([_docling_cell(0, 0, "Northwind Analytics AS")]),
+            caption=docling_document.add_text(DocItemLabel.CAPTION, "Our offices"),
+            content_layer=ContentLayer.FURNITURE,
+        )
+        assert _texts_and_contexts(Document.from_docling(docling_document)) == [
+            ("Dear Customer,", None),
+            ("Our offices", "Caption"),
+        ]
 
     def test_from_docling_pictures(self):
         """
@@ -2368,6 +2688,19 @@ class TestDocuments(BaseTest):
         are attached to the document as images, once each, and that their captions
         are paragraphs, but not the text found inside them.
         """
+
+        def page_pixels(left: int, top: int, right: int, bottom: int) -> bytes:
+            """
+            Returns the RGB pixels of a region of the image of the page, from its
+            top left corner.
+            """
+            return bytes(
+                channel
+                for y in range(top, bottom)
+                for x in range(left, right)
+                for channel in (2 * x, 2 * y, 255 - x - y)
+            )
+
         docling_document = DoclingDocument(name="report")
         caption = docling_document.add_text(
             DocItemLabel.CAPTION, "Figure 1: Uptime in 2026"
@@ -2381,11 +2714,15 @@ class TestDocuments(BaseTest):
         # A picture without image data, e.g. of a PDF file converted without
         # picture images
         docling_document.add_picture(prov=_docling_prov(3))
-        # A picture without an embedded image, cropped from the image of its page
+        # A picture without an embedded image, cropped from the image of its page,
+        # whose pixels each have a colour of their own
         docling_document.add_page(
             page_no=4,
             size=Size(width=100, height=100),
-            image=_docling_image("blue", size=100),
+            image=ImageRef.from_pil(
+                PILImage.frombytes("RGB", (100, 100), page_pixels(0, 0, 100, 100)),
+                dpi=72,
+            ),
         )
         docling_document.add_picture(
             prov=ProvenanceItem(
@@ -2449,10 +2786,13 @@ class TestDocuments(BaseTest):
             }
         }
         assert cropped_image.mime_type == "image/png"
-        with PILImage.open(
-            io.BytesIO(base64.b64decode(cropped_image.base64_data))
-        ) as image:
-            assert image.size == (20, 20)
+        # The box of the picture is 10 to 30 points from the left and from the top
+        # of the page
+        assert _image_pixels(document)[1] == (
+            "RGB",
+            (20, 20),
+            page_pixels(10, 10, 30, 30),
+        )
         assert any(
             "1 picture(s) of the Docling document are not attached" in message
             and "generate_picture_images=True" in message
@@ -2462,10 +2802,11 @@ class TestDocuments(BaseTest):
     def test_from_docling_picture_image_sources(self, tmp_path: Path):
         """
         Tests that a picture whose image is not in the Docling document, or cannot
-        be read, is left out without stopping the conversion: an image at a remote
-        URL is not fetched, an image in a local file is not read, and a malformed
-        or oversized image is skipped. An image of another format or mode is
-        converted to PNG.
+        be read, is left out without stopping the conversion, with a message that
+        says why: an image at a remote URL is not fetched, an image in a local file
+        is not read, and a malformed or oversized image is skipped. An image of
+        another format or mode is converted to PNG, and an embedded image is given
+        the type of its data, whatever type its data URI gives.
         """
 
         def data_uri(image: PILImage.Image, image_format: str, mime_type: str) -> str:
@@ -2487,7 +2828,9 @@ class TestDocuments(BaseTest):
         )
         oversized[6:10] = (20000).to_bytes(2, "little") * 2
         uris = [
-            "https://example.invalid/logo.png",
+            # An address of the documentation range, which no host has: a fetch
+            # would not need a name lookup, and fails the test below
+            "https://192.0.2.1/logo.png",
             local_image,
             local_image.as_uri(),
             "data:image/gif;base64",
@@ -2496,6 +2839,15 @@ class TestDocuments(BaseTest):
             data_uri(PILImage.new("P", (4, 4)), "GIF", "image/gif"),
             data_uri(
                 PILImage.new("CMYK", (4, 4), (0, 255, 0, 0)), "TIFF", "image/tiff"
+            ),
+            # A JPEG image that the data URI calls a PNG image, which a model
+            # provider can refuse as such
+            data_uri(PILImage.new("RGB", (4, 4), "blue"), "JPEG", "image/png"),
+            # Not base64, and an SVG image, which Pillow does not read
+            "data:image/png;base64,@@@",
+            "data:image/svg+xml;base64,"
+            + base64.b64encode(b'<svg xmlns="http://www.w3.org/2000/svg"/>').decode(
+                "ascii"
             ),
         ]
         docling_document = DoclingDocument(name="pictures")
@@ -2512,18 +2864,54 @@ class TestDocuments(BaseTest):
                 )
             )
 
-        with patch.object(
-            socket.socket, "connect", side_effect=AssertionError("Image fetched")
+        # Each attempt to reach the network is recorded, as the error that it raises
+        # could be caught on the way, e.g. as an image that cannot be read
+        attempts = []
+
+        def no_network(*args: Any, **kwargs: Any) -> None:
+            """
+            Records an attempt to reach the network, and fails it.
+            """
+            attempts.append(args)
+            raise AssertionError(f"Network access: {args}")
+
+        with (
+            patch.object(socket, "getaddrinfo", no_network),
+            patch.object(socket, "create_connection", no_network),
+            patch.object(socket.socket, "connect", no_network),
+            patch.object(socket.socket, "connect_ex", no_network),
+            capture_logs() as logs,
         ):
             document = Document.from_docling(docling_document)
+        assert not attempts
         assert [
-            image.custom_data["docling"]["self_ref"] for image in document.images
-        ] == ["#/pictures/6", "#/pictures/7"]
-        for image in document.images:
-            assert image.mime_type == "image/png"
+            (image.custom_data["docling"]["self_ref"], image.mime_type)
+            for image in document.images
+        ] == [
+            ("#/pictures/6", "image/png"),
+            ("#/pictures/7", "image/png"),
+            ("#/pictures/8", "image/jpeg"),
+        ]
+        assert docling_document.pictures[8].image is not None
+        assert (
+            document.images[2].base64_data
+            == str(docling_document.pictures[8].image.uri).split(",", 1)[1]
+        )
+        for image, image_format in zip(
+            document.images, ["PNG", "PNG", "JPEG"], strict=True
+        ):
             with PILImage.open(io.BytesIO(base64.b64decode(image.base64_data))) as png:
-                assert png.format == "PNG"
+                assert png.format == image_format
                 assert png.size == (4, 4)
+        # The pictures that are not attached are counted by where their image is
+        not_attached = [message for message in logs if "are not attached" in message]
+        assert len(not_attached) == 3
+        assert not_attached[0].startswith("2 picture(s)")
+        assert "load_local_images()" in not_attached[0]
+        assert not_attached[1].startswith("1 picture(s)")
+        assert "at URLs, which are not fetched" in not_attached[1]
+        assert not_attached[2].startswith("5 picture(s)")
+        assert "image data cannot be read" in not_attached[2]
 
     def test_from_docling_forms(self):
         """
@@ -2647,18 +3035,107 @@ class TestDocuments(BaseTest):
                 ("Total: 100 EUR", "Key-value pair")
             ]
 
+        # A value that is also the key of other values has a paragraph of its own
+        # with them, as have two cells that are each the value of the other
+        for texts, links, expected in (
+            (
+                ["Shipping address", "Street", "Main Street 1"],
+                [(0, 1), (1, 2)],
+                ["Shipping address: Street", "Street: Main Street 1"],
+            ),
+            (
+                ["Total", "100 EUR"],
+                [(0, 1), (1, 0)],
+                ["Total: 100 EUR", "100 EUR: Total"],
+            ),
+        ):
+            docling_document = DoclingDocument(name="delivery")
+            docling_document.add_key_values(
+                graph=GraphData(
+                    cells=[
+                        GraphCell(
+                            label=GraphCellLabel.KEY, cell_id=i, text=text, orig=text
+                        )
+                        for i, text in enumerate(texts)
+                    ],
+                    links=[
+                        GraphLink(
+                            label=GraphLinkLabel.TO_VALUE,
+                            source_cell_id=source,
+                            target_cell_id=target,
+                        )
+                        for source, target in links
+                    ],
+                )
+            )
+            assert [
+                paragraph.raw_text
+                for paragraph in Document.from_docling(docling_document).paragraphs
+            ] == expected
+
+        # Links of other kinds, e.g. to a child or to a parent, do not pair a key
+        # with a value, and links to cells that the graph does not have are left out
+        docling_document = DoclingDocument(name="invoice")
+        key_values = docling_document.add_key_values(
+            graph=GraphData(
+                cells=[
+                    GraphCell(
+                        label=GraphCellLabel.KEY,
+                        cell_id=0,
+                        text="Invoice no.",
+                        orig="Invoice no.",
+                    ),
+                    GraphCell(
+                        label=GraphCellLabel.VALUE,
+                        cell_id=1,
+                        text="INV-2026-042",
+                        orig="INV-2026-042",
+                    ),
+                ],
+                links=[
+                    GraphLink(
+                        label=GraphLinkLabel.TO_CHILD,
+                        source_cell_id=0,
+                        target_cell_id=1,
+                    ),
+                    GraphLink(
+                        label=GraphLinkLabel.TO_PARENT,
+                        source_cell_id=1,
+                        target_cell_id=0,
+                    ),
+                ],
+            )
+        )
+        # Docling checks the cells of the links when the graph is created, not
+        # after
+        key_values.graph.links += [
+            GraphLink(
+                label=GraphLinkLabel.TO_VALUE, source_cell_id=0, target_cell_id=7
+            ),
+            GraphLink(label=GraphLinkLabel.TO_KEY, source_cell_id=1, target_cell_id=9),
+        ]
+        assert _texts_and_contexts(Document.from_docling(docling_document)) == [
+            ("Invoice no.", "Key-value pair"),
+            ("INV-2026-042", "Key-value pair"),
+        ]
+
     def test_from_docling_code_blocks(self):
         """
         Tests that the caption of a code block is a paragraph before it, and its
         footnote one after it, also where the body of the Docling document has the
-        caption after the code block, e.g. from AsciiDoc or a PDF file.
+        caption after the code block, e.g. from AsciiDoc or a PDF file, and that
+        the items under each follow it.
         """
         docling_document = DoclingDocument(name="manual")
         docling_document.add_heading("Configuration", level=1)
         code = docling_document.add_code('{ "retries": 3 }')
+        docling_document.add_text(DocItemLabel.TEXT, "The default is 3.", parent=code)
         caption = docling_document.add_text(DocItemLabel.CAPTION, "Listing 1: Retries")
         code.captions.append(caption.get_ref())
-        footnote = docling_document.add_text(DocItemLabel.FOOTNOTE, "In seconds.")
+        footnote = docling_document.add_text(DocItemLabel.FOOTNOTE, "In seconds:")
+        delays = docling_document.add_list_group(parent=footnote)
+        docling_document.add_list_item("2 after a timeout;", parent=delays)
+        docling_document.add_list_item("10 after a server error.", parent=delays)
         code.footnotes.append(footnote.get_ref())
         docling_document.add_heading("Logging", level=1)
 
@@ -2666,7 +3143,10 @@ class TestDocuments(BaseTest):
             ("Configuration", "Heading, level 1"),
             ("Listing 1: Retries", "Code caption; Section: Configuration"),
             ('{ "retries": 3 }', "Code; Section: Configuration"),
-            ("In seconds.", "Code footnote; Section: Configuration"),
+            ("In seconds:", "Code footnote; Section: Configuration"),
+            ("2 after a timeout;", "List item; Section: Configuration"),
+            ("10 after a server error.", "List item; Section: Configuration"),
+            ("The default is 3.", "Section: Configuration"),
             ("Logging", "Heading, level 1"),
         ]
 
@@ -2784,6 +3264,22 @@ class TestDocuments(BaseTest):
             ("Text of slide 3.", "Slide 3"),
         ]
 
+        # A sheet without a name, and a group whose name only starts as that of
+        # a slide, are not named
+        docling_document = DoclingDocument(name="unnamed")
+        for label, name in (
+            (GroupLabel.SHEET, " "),
+            (GroupLabel.SLIDE, "slide-3-notes"),
+        ):
+            group = docling_document.add_group(label=label, name=name)
+            docling_document.add_text(
+                DocItemLabel.TEXT, f"In the {label.value}.", parent=group
+            )
+        assert _texts_and_contexts(Document.from_docling(docling_document)) == [
+            ("In the sheet.", None),
+            ("In the slide.", None),
+        ]
+
     def test_from_docling_errors_and_document_attributes(self):
         """
         Tests the errors of creating a document from a Docling document, and that
@@ -2839,6 +3335,12 @@ class TestDocuments(BaseTest):
         the lower bound of docling-core in the `docling` extra and in the dev group.
         """
         installed_version = importlib.metadata.version
+        module_name = "contextgem.internal.converters.docling"
+        # Each import of the converter module below makes it the attribute of its
+        # package, which `patch.dict(sys.modules)` does not restore: the package
+        # would keep a module of its own, which a later test could patch in vain
+        converters_package = sys.modules["contextgem.internal.converters"]
+        patch_package = patch.object(converters_package, "docling", converter_module)
 
         def fake_version(name: str, docling_core_version: str | None) -> str:
             """
@@ -2864,6 +3366,7 @@ class TestDocuments(BaseTest):
         ):
             with (
                 patch.dict(sys.modules),
+                patch_package,
                 patch.object(
                     importlib.metadata,
                     "version",
@@ -2871,7 +3374,7 @@ class TestDocuments(BaseTest):
                 ),
             ):
                 # The converter module is imported again, and checks docling-core
-                sys.modules.pop("contextgem.internal.converters.docling", None)
+                sys.modules.pop(module_name, None)
                 with pytest.raises(ImportError, match=message) as error:
                     Document.from_docling(DoclingDocument(name="any"))
                 assert 'uv add "contextgem[docling]"' in str(error.value)
@@ -2879,19 +3382,25 @@ class TestDocuments(BaseTest):
         for docling_core_version in ("2.103.0rc1", "2.110.0", "3.0.0"):
             with (
                 patch.dict(sys.modules),
+                patch_package,
                 patch.object(
                     importlib.metadata,
                     "version",
                     lambda name, v=docling_core_version: fake_version(name, v),
                 ),
             ):
-                sys.modules.pop("contextgem.internal.converters.docling", None)
+                sys.modules.pop(module_name, None)
                 document = Document.from_docling(
                     DoclingDocument.load_from_json(
                         _DOCLING_FILES_DIR / "meeting_notes.md.json"
                     )
                 )
                 assert document.paragraphs
+                # The module imported again is the attribute of its package
+                assert converters_package.docling is not converter_module
+        # The converter module of the other tests is back in both places
+        assert sys.modules[module_name] is converter_module
+        assert converters_package.docling is converter_module
 
         # The oldest docling-core that the converter accepts is the lower bound of
         # the `docling` extra, and of the dev group, which tests the extra
@@ -3091,3 +3600,33 @@ class TestDocuments(BaseTest):
             "If the new output is right, write the outputs with "
             "`uv run fab docling-fixtures --outputs`"
         )
+
+    def test_from_docling_fixture_files(self):
+        """
+        Tests that each file of `tests/other_files/docling/` is a fixture file in
+        a format of `SOURCE_SUFFIXES`, which the tests above and
+        `uv run fab docling-fixtures` take, its Docling document
+        (`<file name>.json`) or its output (`<file name>.contextgem.jsonl`), or
+        a known other file, and that each fixture file has its Docling document and
+        its output. A file in another format would be left out of the tests without
+        notice.
+        """
+        # The license of the test documents of Docling
+        other_files = {"docling_tests/LICENSE"}
+        files = {
+            path.relative_to(_DOCLING_FILES_DIR).as_posix()
+            for path in _DOCLING_FILES_DIR.rglob("*")
+            if path.is_file()
+        }
+        sources = {name for name in files if Path(name).suffix in SOURCE_SUFFIXES}
+        assert sources == {*_DOCLING_CONVERTED_FILES, *_DOCLING_UNCONVERTED_FILES}
+        companions = {
+            path.relative_to(_DOCLING_FILES_DIR).as_posix()
+            for name in sources
+            for path in (
+                (_DOCLING_FILES_DIR / name).with_name(f"{Path(name).name}.json"),
+                output_path(_DOCLING_FILES_DIR / name),
+            )
+        }
+        assert not companions - files, "Missing Docling documents or outputs"
+        assert files - sources - companions == other_files, "Unknown files"
