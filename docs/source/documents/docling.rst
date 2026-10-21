@@ -194,7 +194,7 @@ Each piece of text in the body of the file becomes a paragraph, in reading order
      - The text, after the number of a numbered item, e.g. ``1. Invoices are payable within 30 days.``, or after its position in its list where the file gives no number, e.g. in HTML
      - ``List item``, ``List item, level 2``
    * - Table
-     - A paragraph with the headers of the columns, if the table has them, then a paragraph for each row, with each value after the header of its column, e.g. ``Service: Hosting; Monthly fee: 1,200 EUR``
+     - A paragraph with the headers of the columns, if the table has them, then a paragraph for each row, with each value after the header of its column, e.g. ``Service: Hosting; Monthly fee: 1,200 EUR``. A cell with paragraphs, a list or checkboxes in it, e.g. in DOCX, HTML or OpenDocument, gives their text, a numbered item after its number and a checkbox with its state, e.g. ``Options: Tea (checked) Coffee (unchecked)``. A table or a picture in a cell is converted after the table, and the cell gives its caption
      - ``Table header``, ``Table row``, with the caption of the table
    * - Caption, footnote, code, formula
      - The text

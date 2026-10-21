@@ -115,6 +115,7 @@ from docling_core.types.doc import (  # noqa: E402 - imported once its version i
     PictureItem,
     ProvenanceItem,
     RefItem,
+    RichTableCell,
     SectionHeaderItem,
     TableCell,
     TableItem,
@@ -134,7 +135,8 @@ _TEXT_KINDS = {
     DocItemLabel.CHECKBOX_UNSELECTED: "Checkbox, unchecked",
 }
 
-# The values of the checkboxes of form fields, by their Docling label
+# The states of checkboxes, by their Docling label, as the text of a form field or
+# of a table cell gives them
 _CHECKBOX_VALUES = {
     DocItemLabel.CHECKBOX_SELECTED: "checked",
     DocItemLabel.CHECKBOX_UNSELECTED: "unchecked",
@@ -238,6 +240,25 @@ def _labelled(label: str, value: str) -> str:
     if label and value and label != value:
         return f"{label}: {value}"
     return value or label
+
+
+def _checkbox_text(label: DocItemLabel, text: str) -> str:
+    """
+    Returns the text of a checkbox with its state, or the text of another item as
+    it is.
+
+    :param label: The Docling label of the item, e.g. that of a checked checkbox.
+    :type label: DocItemLabel
+    :param text: The text of the item.
+    :type text: str
+    :return: e.g. "Tea (unchecked)" for a checkbox, or its state alone if it has no
+        text, e.g. "checked".
+    :rtype: str
+    """
+    state = _CHECKBOX_VALUES.get(label)
+    if state is None:
+        return text
+    return f"{text} ({state})" if text else state
 
 
 def _join_inline(parts: Iterable[str]) -> str:
@@ -1091,9 +1112,7 @@ class _DoclingConverter:
     def _convert_list_item(self, item: ListItem, list_level: int) -> None:
         """
         Adds a paragraph for a list item, and converts the items under it, e.g.
-        a nested list. The text of a numbered list item starts with its number,
-        or with its position in its list where Docling gives it no number, e.g. in
-        an HTML or AsciiDoc file.
+        a nested list.
 
         :param item: The list item.
         :type item: ListItem
@@ -1103,12 +1122,7 @@ class _DoclingConverter:
         :return: None
         :rtype: None
         """
-        text, sources, children = self._text_of(item)
-        marker = item.marker.strip()
-        if item.enumerated and not marker:
-            marker = self._list_number(item)
-        if text and item.enumerated and marker:
-            text = f"{marker} {text}"
+        text, sources, children = self._list_item_text(item)
         level = max(list_level, 1)
         self._add_paragraph(
             text,
@@ -1119,6 +1133,28 @@ class _DoclingConverter:
         )
         for child in children:
             self._convert_item(child, list_level)
+
+    def _list_item_text(
+        self, item: ListItem
+    ) -> tuple[str, list[NodeItem], list[NodeItem]]:
+        """
+        Returns the text of a list item (see ``_text_of()``), which starts with its
+        number if the item is numbered, or with its position in its list where
+        Docling gives it no number, e.g. in an HTML or AsciiDoc file.
+
+        :param item: The list item.
+        :type item: ListItem
+        :return: The text, the items that it is made from, and the items to convert
+            after it.
+        :rtype: tuple[str, list[NodeItem], list[NodeItem]]
+        """
+        text, sources, children = self._text_of(item)
+        marker = item.marker.strip()
+        if item.enumerated and not marker:
+            marker = self._list_number(item)
+        if text and item.enumerated and marker:
+            text = f"{marker} {text}"
+        return text, sources, children
 
     def _list_number(self, item: ListItem) -> str:
         """
@@ -1173,24 +1209,17 @@ class _DoclingConverter:
 
         The header paragraph lists the labels of the columns. A row is given with
         the label of each column, so that it can be read on its own, as a decision
-        model reads it. The tables and the pictures in the cells of the table are
-        converted after it: a cell has their captions, but not their content, in
-        its text.
+        model reads it. The text of a rich cell is made from its items (see
+        ``_rich_cell_text()``). The tables and the pictures in the cells of
+        the table are converted after it: a cell has their captions, but not their
+        content, in its text.
 
         :param table: The table.
         :type table: TableItem
         :return: None
         :rtype: None
         """
-        captions = [ref.resolve(self._document) for ref in table.captions]
-        caption = _clean(
-            " ".join(
-                item.text
-                for item in captions
-                if isinstance(item, TextItem)
-                and item.content_layer == ContentLayer.BODY
-            )
-        )
+        caption = self._caption_text(table)
         self._add_attached_texts(table.captions, "Table caption")
         in_caption = (
             f"; Table caption: {_shorten(caption, _MAX_CAPTION_LENGTH_IN_ROWS)}"
@@ -1198,7 +1227,7 @@ class _DoclingConverter:
             else ""
         )
         provenance = _provenance_of_items([table])
-        grid = table.data.grid
+        grid = self._grid(table)
         header_count = _count_header_rows(grid)
         labels = _column_labels(grid[:header_count])
         # A label that spans several columns is listed once
@@ -1221,6 +1250,125 @@ class _DoclingConverter:
         self._add_attached_texts(table.footnotes, "Table footnote")
         for item in self._floating_items_in(table):
             self._convert_item(item, list_level=0)
+
+    def _caption_text(self, item: TableItem | PictureItem) -> str:
+        """
+        Returns the text of the captions of a table or a picture that are texts of
+        the body.
+
+        :param item: The table or the picture.
+        :type item: TableItem | PictureItem
+        :return: The text of the captions, on a single line, or an empty string.
+        :rtype: str
+        """
+        return _clean(
+            " ".join(
+                caption.text
+                for ref in item.captions
+                if isinstance(caption := ref.resolve(self._document), TextItem)
+                and caption.content_layer == ContentLayer.BODY
+            )
+        )
+
+    def _grid(self, table: TableItem) -> list[list[TableCell]]:
+        """
+        Returns the cells of a table, by row and column, each rich cell as a copy
+        with the text made from its items. The Docling document is left as it is.
+
+        :param table: The table.
+        :type table: TableItem
+        :return: The cells, a cell that spans several rows or columns at each of
+            its places.
+        :rtype: list[list[TableCell]]
+        """
+        rich_cells: dict[int, TableCell] = {}
+        grid = []
+        for row in table.data.grid:
+            cells = []
+            for cell in row:
+                if isinstance(cell, RichTableCell):
+                    if id(cell) not in rich_cells:
+                        rich_cells[id(cell)] = cell.model_copy(
+                            update={"text": self._rich_cell_text(cell)}
+                        )
+                    cell = rich_cells[id(cell)]
+                cells.append(cell)
+            grid.append(cells)
+        return grid
+
+    def _rich_cell_text(self, cell: RichTableCell) -> str:
+        """
+        Returns the text of a rich table cell, whose content Docling gives as items
+        under the table, e.g. paragraphs, lists or a nested table, as in a DOCX,
+        HTML or OpenDocument file. The text is made from those items as they are
+        converted elsewhere: a numbered list item starts with its number, and
+        a checkbox is followed by its state. A table or a picture in the cell,
+        which is converted after the table, is given by its captions only. The text
+        that Docling gives the cell is not used: it has the text of a nested table,
+        but not the numbers of the list items or the states of the checkboxes.
+
+        :param cell: The rich cell.
+        :type cell: RichTableCell
+        :return: The text of the cell, on a single line.
+        :rtype: str
+        """
+        return _clean(" ".join(self._cell_parts(cell.ref.resolve(self._document))))
+
+    def _cell_parts(self, item: NodeItem) -> list[str]:
+        """
+        Returns the texts of an item in a rich table cell and of the items under
+        it, in order. An item outside the body of the document is left out, and
+        the caption and the footnote of a code block are before and after its text,
+        as they are elsewhere.
+
+        :param item: The item, e.g. the group of the items of the cell.
+        :type item: NodeItem
+        :return: The texts, some of which can be empty.
+        :rtype: list[str]
+        """
+        if item.content_layer != ContentLayer.BODY:
+            return []
+        if isinstance(item, TableItem | PictureItem):
+            return [self._caption_text(item)]
+        if isinstance(item, InlineGroup):
+            texts = self._inline_texts(item)
+            parts = [_join_inline(text.text for text in texts)]
+            children = self._floating_items_in(item)
+        elif isinstance(item, ListItem):
+            text, _, children = self._list_item_text(item)
+            parts = [text]
+        elif isinstance(item, TextItem):
+            text, _, children = self._text_of(item)
+            parts = [_checkbox_text(item.label, text)]
+            if isinstance(item, CodeItem):
+                parts = [
+                    *self._attached_cell_parts(item.captions),
+                    *parts,
+                    *self._attached_cell_parts(item.footnotes),
+                ]
+        else:
+            parts = []
+            children = self._children(item)
+        for child in children:
+            parts.extend(self._cell_parts(child))
+        return parts
+
+    def _attached_cell_parts(self, refs: Iterable[RefItem]) -> list[str]:
+        """
+        Returns the texts of the captions or the footnotes of an item in a rich
+        table cell that are texts of the body, and of the items under them.
+
+        :param refs: The references of the captions or the footnotes.
+        :type refs: Iterable[RefItem]
+        :return: The texts.
+        :rtype: list[str]
+        """
+        parts = []
+        for ref in refs:
+            item = ref.resolve(self._document)
+            if isinstance(item, TextItem):
+                parts.extend(self._cell_parts(item))
+        return parts
 
     def _floating_items_in(self, item: NodeItem) -> list[NodeItem]:
         """
@@ -1326,10 +1474,7 @@ class _DoclingConverter:
         :rtype: str
         """
         sources.append(item)
-        parts = [_clean(item.text)]
-        if item.label in _CHECKBOX_VALUES:
-            state = _CHECKBOX_VALUES[item.label]
-            parts = [f"{parts[0]} ({state})" if parts[0] else state]
+        parts = [_checkbox_text(item.label, _clean(item.text))]
         for child in self._children(item):
             if isinstance(child, TextItem):
                 parts.append(self._field_value(child, sources))

@@ -49,6 +49,7 @@ from docling_core.types.doc import (
     NodeItem,
     PictureItem,
     ProvenanceItem,
+    RichTableCell,
     Size,
     TableCell,
     TableData,
@@ -238,7 +239,10 @@ def _check_docling_text_kept(
     that of the item that it is part of, e.g. an inline group, a heading or
     a list item with formatted text, or a form field; a caption or a footnote in
     its own paragraph; a table cell in the paragraph of its row, or of the header
-    for a header row; and a key-value cell in a paragraph of its region. A text
+    for a header row, and a text in a rich cell, whose items are under the table,
+    in a paragraph of the table; and a key-value cell in a paragraph of its
+    region. The text that Docling gives a rich cell is not looked for, as it has
+    that of a table in the cell, which is converted after the table. A text
     is not looked for in the other paragraphs, so that a paragraph left out is
     noticed also where its text is in another one, e.g. a repeated heading or
     a number.
@@ -318,10 +322,12 @@ def _check_docling_text_kept(
             text = clean(item.text)
             if not text or item.label == DocItemLabel.MARKER:
                 continue
-            # The text of a cell of a table is in its row, below
-            if item.self_ref not in paragraphs_of and any(
-                isinstance(node, TableItem) for node in chain[1:]
-            ):
+            # The text of an item in a rich cell is in a paragraph of its table, if
+            # the table is converted
+            tables = [node for node in chain[1:] if isinstance(node, TableItem)]
+            if item.self_ref not in paragraphs_of and tables:
+                if tables[0].self_ref in paragraphs_of:
+                    assert text in text_of(tables[0].self_ref), item.self_ref
                 continue
             owner = next(
                 (node for node in chain if node.self_ref in paragraphs_of), None
@@ -331,13 +337,15 @@ def _check_docling_text_kept(
         elif isinstance(item, TableItem):
             rows = dict(paragraphs_of.get(item.self_ref, []))
             for index, row in enumerate(item.data.grid):
-                cells = [clean(cell.text) for cell in row if clean(cell.text)]
+                # The items of a rich cell are checked above
+                plain = [cell for cell in row if not isinstance(cell, RichTableCell)]
+                cells = [clean(cell.text) for cell in plain if clean(cell.text)]
                 if not cells:
                     continue
                 if index not in rows:
                     # A header row is in the header paragraph, without a row index
                     assert all(
-                        cell.column_header for cell in row if clean(cell.text)
+                        cell.column_header for cell in plain if clean(cell.text)
                     ), f"Row {index} of {item.self_ref} not converted"
                 for cell in cells:
                     assert cell in rows.get(index, rows.get(None, "")), (
@@ -2748,6 +2756,111 @@ class TestDocuments(BaseTest):
         assert _texts_and_contexts(Document.from_docling(docling_document)) == [
             ("Dear Customer,", None),
             ("Our offices", "Caption"),
+        ]
+
+    def test_from_docling_rich_table_cells(self):
+        """
+        Tests that the text of a rich table cell, whose items are under the table,
+        e.g. in a DOCX or HTML file, is made from its items, not taken from the text
+        that Docling gives the cell: with the state of each checkbox and the number
+        of each numbered list item, and with the caption of a table or a picture in
+        the cell, which is converted after the table.
+        """
+        docling_document = DoclingDocument(name="order form")
+        table = docling_document.add_table(
+            data=_docling_table_data(
+                [
+                    _docling_cell(0, 0, "Service", header=True),
+                    _docling_cell(0, 1, "Options", header=True),
+                    _docling_cell(1, 0, "Breakfast"),
+                    _docling_cell(2, 0, "Delivery"),
+                ]
+            )
+        )
+        breakfast = docling_document.add_group(name="rich_cell_group", parent=table)
+        docling_document.add_text(DocItemLabel.TEXT, "Choose any:", parent=breakfast)
+        docling_document.add_text(
+            DocItemLabel.CHECKBOX_SELECTED, "Tea", parent=breakfast
+        )
+        docling_document.add_text(
+            DocItemLabel.CHECKBOX_UNSELECTED, "Coffee", parent=breakfast
+        )
+        delivery = docling_document.add_group(name="rich_cell_group", parent=table)
+        methods = docling_document.add_list_group(parent=delivery)
+        docling_document.add_list_item("Standard", enumerated=True, parent=methods)
+        docling_document.add_list_item("Express", enumerated=True, parent=methods)
+        docling_document.add_table(
+            data=_docling_table_data(
+                [
+                    _docling_cell(0, 0, "Zone", header=True),
+                    _docling_cell(0, 1, "Days", header=True),
+                    _docling_cell(1, 0, "Oslo"),
+                    _docling_cell(1, 1, "1"),
+                ]
+            ),
+            caption=docling_document.add_text(
+                DocItemLabel.CAPTION, "Table 2: Delivery times", parent=delivery
+            ),
+            parent=delivery,
+        )
+        docling_document.add_picture(
+            image=_docling_image("red"),
+            caption=docling_document.add_text(
+                DocItemLabel.CAPTION, "Courier map", parent=delivery
+            ),
+            parent=delivery,
+        )
+        # The text that Docling gives each cell: that of all its items, the nested
+        # table included
+        for row, group, text in (
+            (1, breakfast, "Choose any:\nTea\nCoffee"),
+            (
+                2,
+                delivery,
+                (
+                    "Standard\nExpress\nTable 2: Delivery times\nZone Days\nOslo 1\n"
+                    "Courier map"
+                ),
+            ),
+        ):
+            docling_document.add_table_cell(
+                table,
+                RichTableCell(
+                    text=text,
+                    ref=group.get_ref(),
+                    start_row_offset_idx=row,
+                    end_row_offset_idx=row + 1,
+                    start_col_offset_idx=1,
+                    end_col_offset_idx=2,
+                ),
+            )
+
+        document = Document.from_docling(docling_document)
+        nested_context = "Table caption: Table 2: Delivery times"
+        assert _texts_and_contexts(document) == [
+            ("Service; Options", "Table header"),
+            (
+                (
+                    "Service: Breakfast; Options: Choose any: Tea (checked) "
+                    "Coffee (unchecked)"
+                ),
+                "Table row",
+            ),
+            (
+                (
+                    "Service: Delivery; Options: 1. Standard 2. Express "
+                    "Table 2: Delivery times Courier map"
+                ),
+                "Table row",
+            ),
+            # The table and the picture in the cell, after the table
+            ("Table 2: Delivery times", "Table caption"),
+            ("Zone; Days", f"Table header; {nested_context}"),
+            ("Zone: Oslo; Days: 1", f"Table row; {nested_context}"),
+            ("Courier map", "Picture caption"),
+        ]
+        assert [image.custom_data["docling"]["label"] for image in document.images] == [
+            "picture"
         ]
 
     def test_from_docling_pictures(self):

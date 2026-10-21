@@ -436,6 +436,10 @@ class _Document(_AssignedInstancesProcessor):
         - A table is a paragraph with the headers of its columns, if it has them,
           followed by a paragraph for each row, with each value after the header
           of its column, e.g. ``Service: Hosting; Monthly fee: 1,200 EUR``.
+          A cell with paragraphs, a list or checkboxes in it, e.g. in a DOCX or
+          HTML file, gives their text, a numbered item after its number and
+          a checkbox with its state, e.g. ``Tea (checked)``. A table or a picture
+          in a cell is converted after the table, and the cell gives its caption.
         - Each form field is a paragraph with its key and its value.
         - The pictures are attached as images, if the Docling document has image
           data for them. For a PDF file, convert it with
