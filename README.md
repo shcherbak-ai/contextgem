@@ -285,9 +285,9 @@ Your documents are files. [Docling](https://github.com/docling-project/docling) 
 </table>
 <!-- markdownlint-enable MD033 -->
 
-Its tests convert files in each of these formats. The [supported formats](https://contextgem.shcherbak.ai/documents/docling/#supported-formats) give their extensions, and what some of them need, e.g. LibreOffice for DOC, PPT, XLS and RTF.
+Each format is tested with files of its own. The [supported formats](https://contextgem.shcherbak.ai/documents/docling/#supported-formats) give the extensions, and what some formats need, e.g. LibreOffice for DOC, PPT, XLS and RTF.
 
-Below, an LLM extracts a concept and an aspect from a [two-page service agreement](tests/other_files/docling/service_agreement.pdf), and each item is cited by its page.
+Below, an LLM extracts an aspect and a concept from a [two-page service agreement](tests/other_files/docling/service_agreement.pdf), and each item is cited by its page.
 
 ```python
 import os
@@ -392,7 +392,7 @@ fees = doc.get_concept_by_name("Fees").extracted_items
 </p>
 <!-- markdownlint-enable MD033 -->
 
-1. **Wrap your content in a [Document](https://contextgem.shcherbak.ai/documents/document_config/).** Pass text, images or both, or **start from a file**: [Docling](https://github.com/docling-project/docling) converts files in the [supported formats](https://contextgem.shcherbak.ai/documents/docling/#supported-formats), e.g. PDF, DOCX, PPTX, XLSX and HTML, and [`Document.from_docling()`](https://contextgem.shcherbak.ai/documents/docling/) keeps the structure of the file and the pages of each paragraph, which give the pages of the items that refer to it.
+1. **Wrap your content in a [Document](https://contextgem.shcherbak.ai/documents/document_config/).** Pass text, images or both, or **start from a file** that [Docling](https://github.com/docling-project/docling) converts: [`Document.from_docling()`](https://contextgem.shcherbak.ai/documents/docling/) keeps its structure and the page of each paragraph.
 2. **Say what to extract.** [Aspects](https://contextgem.shcherbak.ai/aspects/aspects/) pull out the parts of the document on a topic, as paragraphs or sentences. [Concepts](https://contextgem.shcherbak.ai/concepts/supported_concepts/) extract typed values from the whole document or from an aspect, with optional references and justifications. Keep a set of both as a reusable [extraction pipeline](https://contextgem.shcherbak.ai/pipelines/extraction_pipelines/).
 3. **Run a model.** One call to an [LLM](https://contextgem.shcherbak.ai/llms/llm_extraction_methods/), a [decision model](https://contextgem.shcherbak.ai/decision_models/decision_models/) or a [model group](https://contextgem.shcherbak.ai/llms/llm_config/#model-groups) of both extracts everything. A group sends each aspect and concept to the model of its role, e.g. the closed questions to a decision model and the rest to an LLM, and each model can have fallbacks.
 

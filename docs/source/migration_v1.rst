@@ -682,7 +682,7 @@ Accordingly, ``llm.tools`` now returns the functions, not the tool schemas.
 📄 DOCX Converter
 ------------------
 
-``DocxConverter`` is removed. Convert your files to text with a dedicated document conversion library, e.g. `Docling <https://github.com/docling-project/docling>`_ or `MarkItDown <https://github.com/microsoft/markitdown>`_, and pass the text to :class:`~contextgem.public.documents.Document`:
+``DocxConverter`` is removed. From v1.2, :meth:`~contextgem.public.documents.Document.from_docling` creates the document from a file converted with `Docling <https://github.com/docling-project/docling>`_, with the images of the file and the additional context of its paragraphs, which the converter also provided (see :doc:`documents/docling`):
 
 .. code-block:: python
    :caption: Before v1.0
@@ -692,7 +692,19 @@ Accordingly, ``llm.tools`` now returns the functions, not the tool schemas.
    document = DocxConverter().convert("path/to/file.docx")
 
 .. code-block:: python
-   :caption: In v1.0
+   :caption: In v1.2 and later
+
+   from docling.document_converter import DocumentConverter
+
+   from contextgem import Document
+
+   result = DocumentConverter().convert("path/to/file.docx")
+   document = Document.from_docling(result.document)
+
+In v1.0 and v1.1, or with another conversion library, e.g. `MarkItDown <https://github.com/microsoft/markitdown>`_, convert the file to text, and pass the text to :class:`~contextgem.public.documents.Document`:
+
+.. code-block:: python
+   :caption: In v1.0 and later, from the text of the file
 
    from contextgem import Document
 
@@ -701,9 +713,7 @@ Accordingly, ``llm.tools`` now returns the functions, not the tool schemas.
 
 ``DocxConverter.convert_to_text_format()`` and the exceptions of the converter (``DocxConverterError`` and its subclasses) are removed as well, and ContextGem no longer depends on ``lxml``.
 
-For a file converted with Docling, :meth:`~contextgem.public.documents.Document.from_docling` creates the document with the images of the file and the additional context of its paragraphs, which the converter provided (see :doc:`documents/docling`).
-
-What else the converter provided, and how to get it in v1.0:
+What else the converter provided, and how to get it from the text of a file:
 
 - **Images.** The converter attached the images embedded in a DOCX file to the document. Extract the images with your conversion library, and pass them to the document via ``images``. See :func:`~contextgem.public.utils.create_image`.
 - **Additional context of paragraphs.** The converter described the style, list and table position of each paragraph in its ``additional_context``. To keep providing such details to the LLM, create the paragraphs yourself. See :ref:`paragraph-additional-context`.
