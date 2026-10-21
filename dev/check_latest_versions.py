@@ -108,15 +108,19 @@ ACCEPTED_ADVISORIES: dict[str, str] = {
     **{
         advisory: _PILLOW_BELOW_13
         for advisory in (
+            "GHSA-4558-3h8r-v8xp",
             "GHSA-462x-pgg6-55fp",
             "GHSA-58r4-6rv3-gfh8",
             "GHSA-65qm-jvmh-6pqg",
+            "GHSA-7mwm-ghpf-9vrm",
             "GHSA-8g5g-8vmr-9782",
             "GHSA-c6hw-5grf-ff96",
+            "GHSA-j4m9-6w36-pw47",
             "GHSA-p4wg-p73j-c528",
             "GHSA-pchr-8j38-3x4p",
             "GHSA-q45j-58j2-45rg",
             "GHSA-vx6w-vv9f-6gvg",
+            "GHSA-w889-685w-c8fh",
         )
     },
     **{
