@@ -13,6 +13,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 - ContextGem now requires certifi 2026.10.19 or later. Earlier versions trust the emSign root of eMudhra, whose intermediate certificate authorities were compromised ([GHSA-6q48-6c7w-9gw2](https://github.com/certifi/python-certifi/security/advisories/GHSA-6q48-6c7w-9gw2)), and litellm verifies the connections to the model providers, as huggingface_hub does the downloads of SaT models, against the root certificates of certifi, unless `SSL_CERT_FILE` names others: with an older certifi, a forged certificate is accepted, e.g. to read the API key that a request sends. An environment keeps its installed certifi until a package requires a newer one, so upgrading ContextGem now upgrades it.
 - ContextGem now allows Pillow 13 (`pillow>=11.3.0,<14.0.0`), which fixes the 39 advisories of Pillow 12.3.0, 4 of them critical, e.g. a heap buffer overflow when a JPEG image is decoded. Pillow was capped below 13, as the packages of Docling were, so that ContextGem installs only with the Pillow versions that its tests run on: the tests now run on Pillow 13, with Docling 2.142.0, the first release of Docling that allows it.
 
+### Known issues
+
+- With docling-core 2.104.0, the first version that allows Pillow 13 (above), an HTML block in a Markdown file converted with Docling, e.g. a `<table>`, comes out as its markup: `Document.from_docling()` gives one paragraph of the HTML text, where it gave the text of the block, e.g. a table header and a paragraph for each row. Docling passes an HTML block through a code block, whose text docling-core now escapes ([docling-project/docling-core#894](https://github.com/docling-project/docling-core/pull/894)). Markdown files without HTML blocks are not affected. The issue is reported to Docling ([docling-project/docling#4982](https://github.com/docling-project/docling/issues/4982)). `Document.from_docling()` gives what Docling reads: upgrading to a release of Docling that reads the HTML blocks as before brings back the earlier paragraphs, without a new release of ContextGem.
+
 ## [1.2.0] - 2026-10-22
 
 ### Added
