@@ -105,14 +105,19 @@ if TYPE_CHECKING:
 # A PDF file and the Docling document that Docling converted it into
 _DOCLING_FILES_DIR = Path(__file__).parent / "other_files" / "docling"
 
-# For the tests that run code in a new Python process
-_SKIP_NEW_PROCESS_ON_WINDOWS_PY311 = pytest.mark.skipif(
-    sys.platform == "win32" and sys.version_info < (3, 12),
-    reason=(
-        "On Windows, Python 3.11 launches `cmd /c ver` for `platform.system()`, "
-        "which aiohttp calls on import, and the network guard that the new "
-        "Python process inherits refuses to launch it"
-    ),
+# The start of the scripts that the tests run in a new Python process. On
+# Windows, `platform.system()`, which aiohttp calls on import, launches
+# `cmd /c ver` for the version of Windows where WMI gives none: always on Python
+# 3.11, and when the WMI query fails, as it did on CI runners, on later versions.
+# The network guard that the new process inherits refuses to launch it, with an
+# error that Python does not take for a failed command. Made to give nothing, as
+# a failed command does, `ver` leaves Python to take the version from
+# `sys.getwindowsversion()`
+_NEW_PROCESS_SCRIPT_START = (
+    "import platform\n"
+    "platform._syscmd_ver = lambda system='', release='', version='', *args: (\n"
+    "    system, release, version\n"
+    ")\n"
 )
 
 
@@ -1076,7 +1081,6 @@ class TestDocuments(BaseTest):
                     sat_model_id=temp_dir,
                 )
 
-    @_SKIP_NEW_PROCESS_ON_WINDOWS_PY311
     def test_local_sat_model_without_network_access(self, tmp_path):
         """
         Tests that a SaT model in a local directory that also has the tokenizer
@@ -1109,7 +1113,7 @@ class TestDocuments(BaseTest):
             except OSError:
                 shutil.copyfile(cached_path, model_dir / filename)
 
-        script = (
+        script = _NEW_PROCESS_SCRIPT_START + (
             "import sys\n"
             "from contextgem import Document\n"
             "document = Document(\n"
@@ -3752,7 +3756,6 @@ class TestDocuments(BaseTest):
                 lower_bounds.add(lower_bound.group(1))
         assert lower_bounds == {converter_module._MIN_DOCLING_CORE_VERSION}
 
-    @_SKIP_NEW_PROCESS_ON_WINDOWS_PY311
     def test_import_without_docling_core(self):
         """
         Tests that ContextGem is imported without importing docling-core, which
@@ -3761,7 +3764,10 @@ class TestDocuments(BaseTest):
         The import runs in a new Python process, in which nothing has imported
         docling-core before.
         """
-        script = "import sys\nimport contextgem\nprint('docling_core' in sys.modules)\n"
+        script = (
+            _NEW_PROCESS_SCRIPT_START
+            + "import sys\nimport contextgem\nprint('docling_core' in sys.modules)\n"
+        )
         result = subprocess.run(  # nosec B603 - the Python of the tests, no shell
             [sys.executable, "-c", script],
             env={**os.environ, "LITELLM_LOCAL_MODEL_COST_MAP": "True"},
