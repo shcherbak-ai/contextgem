@@ -206,10 +206,10 @@ contextgem/
     - **If a hook modifies files** (e.g. Ruff formatting, the README): review the changes, add the modified files to the staging area, and commit again.
     - **If a hook reports a problem** (e.g. a Bandit finding or a type error): fix it, add the fixed files to the staging area, and commit again.
 
-3. **🧪 Run tests** to ensure your changes do not break existing functionality:
+3. **🧪 Run tests** to ensure your changes do not break existing functionality (in 8 worker processes, see [Running Tests](#-running-tests)):
 
    ```bash
-   uv run pytest
+   uv run pytest -n 8
    ```
 
    > **Note:** Your changes may require re-recording VCR cassettes for the tests, see [VCR Cassette Management](#-vcr-cassette-management).
@@ -310,7 +310,7 @@ Tests are split across the feature/integration test modules, two files for pure 
   | `test_usage_and_cost.py` | Usage and cost tracking, model pricing |
   | `test_usage_examples.py` | Usage examples in the documentation, README and docstrings |
 
-  All these test classes inherit from `BaseTest` in **`tests/base.py`**, which creates the test objects (documents, LLMs, images, etc.) once and shares them across the test classes. A test must leave the shared objects unchanged: a test that changes a document works on its copy (`document = self.document.clone()`). The usage and cost recorded by the shared LLMs are reset before each test. The tests do not depend on the order in which they are run.
+  All these test classes inherit from `BaseTest` in **`tests/base.py`**, which creates the test objects (documents, LLMs, images, etc.) once and shares them across the test classes. A test must leave the shared objects unchanged: a test that changes a document works on its copy (`document = self.document.clone()`). The usage and cost recorded by the shared LLMs are reset before each test. The tests do not depend on the order in which they are run, or on the worker process that runs them (see [Running Tests](#-running-tests)).
 - **`tests/test_properties.py`** and **`tests/test_units.py`** — property-based and example-based tests of pure utility helpers (see [below](#-tests-for-pure-helpers-property-based-and-example-based)).
 - **`tests/test_changelog.py`** — checks that each version in `CHANGELOG.md` has its compare link, and that `CITATION.cff` gives the version of the package and the release date of that version in the changelog.
 - **`tests/test_check_links.py`** — tests the link check (see [Checking the Links](#-checking-the-links)) on a small build and working tree of their own, and with stand-ins for the other sites, so they need neither a build of the documentation nor the network.
@@ -332,12 +332,12 @@ When you add an example, add it to one of the lists: a test fails for an example
 ### 📏 Testing Guidelines
 
 - Write tests for new features or bug fixes
-- Make sure all tests pass before submitting a PR. For a substantial change, run them on every supported Python version, as CI does: `uv run --isolated --python 3.11 pytest` runs them on Python 3.11 and leaves the environment of the project as it is
+- Make sure all tests pass before submitting a PR. For a substantial change, run them on every supported Python version, as CI does: `uv run --isolated --python 3.11 pytest -n 8` runs them on Python 3.11 and leaves the environment of the project as it is
 - Maintain code coverage above **80%**
 - Check code coverage by running:
 
   ```bash
-  uv run pytest --cov=contextgem
+  uv run pytest -n 8 --cov=contextgem
   ```
 
 ---
@@ -419,7 +419,7 @@ The test suite automatically uses dummy environment variables with pre-recorded 
 To determine whether you need to record new or re-record existing cassettes, **run the tests first**:
 
 ```bash
-uv run pytest
+uv run pytest -n 8
 ```
 
 Based on the test results and your changes, you'll fall into one of these four scenarios:
@@ -534,7 +534,7 @@ Based on the test results and your changes, you'll fall into one of these four s
 3. **Run all tests** to re-record everything:
 
    ```bash
-   uv run pytest
+   uv run pytest -n 8
    ```
 
 > ⚠️ **Important:** This will use significant API quota and may incur substantial costs! Before deleting the cassettes, run `uv run fab costs` to see what recording them again costs (see [Important Notes](#important-notes)).
@@ -597,7 +597,7 @@ The test suite uses [tethered](https://github.com/shcherbak-ai/tethered), a deve
 
 The fixture activates tethered in **hardened mode** (`locked=True` with a private lock token, `external_subprocess_policy="block"`), so test code can't disable the policy mid-test and non-Python subprocesses are refused — closing the shell-egress bypass.
 
-The policy above applies while a test runs. Before the tests start, the `_warm_token_encodings` session fixture counts tokens once, so that the token encodings used by `litellm` are available during the tests. On Windows, this downloads the encodings if `tiktoken` rejects the bundled ones (see the Windows note in [Running Tests](#-running-tests)). The download is wrapped with `tethered.scope` that allows a single host (`openaipublic.blob.core.windows.net`), which is deliberately not a part of the replay and recording allowlists, and `tiktoken` verifies each downloaded encoding against the hash pinned in its package.
+The policy above applies while a test runs. Before the tests start, `_warm_token_encodings()` in `tests/conftest.py` counts tokens once, in the main process, before the worker processes start, so that the token encodings used by `litellm` are available during the tests. On Windows, this downloads the encodings if `tiktoken` rejects the bundled ones (see the Windows note in [Running Tests](#-running-tests)). The download is wrapped with `tethered.scope` that allows a single host (`openaipublic.blob.core.windows.net`), which is deliberately not a part of the replay and recording allowlists, and `tiktoken` verifies each downloaded encoding against the hash pinned in its package.
 
 If you add tests that connect to new endpoints, update the `_TETHERED_RECORDING_ALLOW` list in `tests/conftest.py`.
 
@@ -605,13 +605,15 @@ If you add tests that connect to new endpoints, update the `_TETHERED_RECORDING_
 
 ### 🏃 Running Tests
 
-Run all tests:
+Run all tests, in 8 worker processes ([pytest-xdist](https://pytest-xdist.readthedocs.io/)):
 
 ```bash
-uv run pytest
+uv run pytest -n 8
 ```
 
-Run specific tests:
+Each worker loads the test objects and the SaT model itself, about 1 GB of memory per worker: with fewer CPUs or less memory, give a smaller number. CI runs the tests with `-n auto`, a worker for each CPU of the runner.
+
+Run specific tests without `-n`, in one process, which starts sooner than the workers do, shows the output and the live logs of the tests, and is what a debugger needs:
 
 ```bash
 # Run a specific test method

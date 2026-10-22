@@ -85,10 +85,11 @@ uv run pre-commit run --all-files
 # 2. Run targeted tests for the code you modified
 uv run pytest tests/test_extraction.py::TestExtraction::test_relevant_method
 
-# 3. Run full test suite to check for regressions. If you added tests that call
-# LLM APIs, deselect them: a test whose cassette is missing records live
-uv run pytest
-# uv run pytest --deselect "tests/test_<area>.py::Test<Area>::test_llm_feature"
+# 3. Run full test suite to check for regressions, in 8 worker processes
+# (pytest-xdist; CI runs it with -n auto). If you added tests that call LLM
+# APIs, deselect them: a test whose cassette is missing records live
+uv run pytest -n 8
+# uv run pytest -n 8 --deselect "tests/test_<area>.py::Test<Area>::test_llm_feature"
 ```
 
 ### Writing Tests for New Implementations
@@ -98,6 +99,7 @@ When adding new functionality:
 1. **Add test methods** to the test class of the relevant feature area (`tests/test_<area>.py::Test<Area>`, e.g. `tests/test_extraction.py::TestExtraction`) following existing patterns. The test classes inherit the shared test objects (documents, LLMs, images) from `tests/base.py::BaseTest`. A test must leave them unchanged: a test that changes a document works on its copy (`document = self.document.clone()`)
 2. **For tests that do NOT call LLM APIs**: Run them to verify they pass
 3. **For tests that call LLM APIs**: Add `@pytest.mark.vcr` decorator, **do NOT run them**, and inform the user that cassettes need recording before these tests can be executed
+4. **A test runs in any worker process of the full suite**, which pytest-xdist spreads over its workers: it must not depend on a test run before it in the same process. Each worker runs the session fixtures itself, so a preparation that the workers share, e.g. a file written once, goes in `pytest_configure` of `tests/conftest.py`, in the main process only (`if not hasattr(config, "workerinput")`), as `_warm_token_encodings()` does
 
 ```python
 # Example: Adding a test in tests/test_extraction.py
@@ -183,9 +185,9 @@ uv run python dev/check_latest_versions.py  # Whether the dependencies are at th
 uv run fab docling-fixtures              # Check the Docling documents of the test fixtures with full Docling
 uv run fab docling-fixtures --outputs    # Write what ContextGem makes of them, after a converter change
 uv run fab docling-floor                 # Run the tests of from_docling() with the oldest docling-core allowed
-uv run pytest                           # Run tests (uses recorded cassettes)
-uv run pytest --cov=contextgem          # Run tests with coverage
-uv run pytest tests/test_extraction.py::TestExtraction::test_specific  # Run specific test
+uv run pytest -n 8                      # Run tests (uses recorded cassettes), in 8 worker processes
+uv run pytest -n 8 --cov=contextgem     # Run tests with coverage
+uv run pytest tests/test_extraction.py::TestExtraction::test_specific  # Run specific test, in one process
 ```
 
 ## Key Gotchas

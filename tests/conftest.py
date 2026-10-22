@@ -104,10 +104,17 @@ def vcr_config():
 def pytest_configure(config):
     """
     Configure pytest with custom settings.
+
+    Runs in the main process and, when the tests run in parallel with xdist,
+    in each worker. The token encodings are prepared in the main process only
+    (see `_warm_token_encodings`).
     """
     # Set contextgem logger level to DEBUG
     os.environ[LOGGER_LEVEL_ENV_VAR_NAME] = "DEBUG"
     reload_logger_settings()
+    # An xdist worker has `workerinput`
+    if not hasattr(config, "workerinput"):
+        _warm_token_encodings()
 
 
 @pytest.fixture
@@ -185,6 +192,10 @@ def records_cassette(request: pytest.FixtureRequest) -> bool:
 # `_note_cassette`)
 _SESSION_CASSETTES = pytest.StashKey[dict[str, bool]]()
 
+# The key of these cassettes in the output that an xdist worker sends to the main
+# process when it ends (see `pytest_sessionfinish`)
+_WORKER_OUTPUT_CASSETTES = "session_cassettes"
+
 
 @pytest.fixture(autouse=True)
 def _note_cassette(request):
@@ -204,6 +215,31 @@ def _note_cassette(request):
         ] = records_cassette(request)
 
 
+def pytest_sessionfinish(session):
+    """
+    In an xdist worker, adds the cassettes noted in the worker to the output that
+    it sends to the main process when it ends, which reports what their requests
+    cost (see `pytest_testnodedown`). Does nothing in the main process.
+    """
+    config = session.config
+    # An xdist worker has `workeroutput`
+    if hasattr(config, "workeroutput"):
+        config.workeroutput[_WORKER_OUTPUT_CASSETTES] = config.stash.get(
+            _SESSION_CASSETTES, {}
+        )
+
+
+@pytest.hookimpl(optionalhook=True)
+def pytest_testnodedown(node, error):
+    """
+    Adds the cassettes noted in an xdist worker to those of the session, in
+    the main process, when the worker ends. A hook of xdist, not called without
+    it. A worker that crashed has sent no output.
+    """
+    cassettes = getattr(node, "workeroutput", {}).get(_WORKER_OUTPUT_CASSETTES, {})
+    node.config.stash.setdefault(_SESSION_CASSETTES, {}).update(cassettes)
+
+
 def pytest_terminal_summary(terminalreporter, config):
     """
     Reports what the requests of the cassettes of the session cost, after
@@ -211,8 +247,13 @@ def pytest_terminal_summary(terminalreporter, config):
     the current prices (see `tests/cassette_costs.py`): a table of the requests
     recorded in the session, if any test recorded its cassette, and the total of
     the requests replayed, i.e. what they would cost if they were sent live.
-    A session without VCR-marked tests reports nothing.
+    A session without VCR-marked tests reports nothing. When the tests run in
+    parallel with xdist, the main process reports the cassettes of all the
+    workers, and a worker, whose output is not shown, reports nothing.
     """
+    # An xdist worker has `workerinput`
+    if hasattr(config, "workerinput"):
+        return
     cassettes = config.stash.get(_SESSION_CASSETTES, {})
     if not cassettes:
         return
@@ -308,8 +349,7 @@ _TETHERED_LOCK = object()
 _TOKEN_ENCODINGS_DOWNLOAD_HOST = "openaipublic.blob.core.windows.net"  # nosec B105 - not a password
 
 
-@pytest.fixture(scope="session", autouse=True)
-def _warm_token_encodings():
+def _warm_token_encodings() -> None:
     """
     Counts tokens once before the tests start, so that the token encodings
     used by litellm are available during the tests.
@@ -325,6 +365,11 @@ def _warm_token_encodings():
     cached in the virtual environment. tiktoken verifies each download against
     the hash pinned in its package. No network call is made if the encodings are
     valid, i.e. on Linux and macOS, or once they are cached.
+
+    Called by `pytest_configure` in the main process only. When the tests run
+    in parallel with xdist, the workers start after it and find the encodings
+    cached: each would otherwise replace the rejected files at the same time
+    as the others, and a worker could remove the file that another had cached.
     """
     try:
         with tethered.scope(

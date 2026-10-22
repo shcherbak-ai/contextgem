@@ -183,11 +183,13 @@ jobs:
           echo "::error::Failed to pre-download SaT model after 5 attempts."
           exit 1
 
+      # In parallel, with a worker for each CPU of the runner (pytest-xdist).
+      # pytest-cov measures the coverage in the workers, which `coverage run`
+      # would not see.
       - name: Run coverage (with VCR)
         run: |
-          uv run coverage run --source contextgem -m pytest --maxfail=1 --disable-warnings -v
-          uv run coverage report -m
-          uv run coverage xml -o coverage_quick.xml
+          uv run pytest -n auto --maxfail=1 --disable-warnings -v \
+            --cov=contextgem --cov-report=term-missing --cov-report=xml:coverage_quick.xml
 
       - name: Upload coverage artifact
         if: matrix.os == 'ubuntu-latest' && matrix.python-version == '3.14'
