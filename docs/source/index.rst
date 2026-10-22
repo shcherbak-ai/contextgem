@@ -291,6 +291,7 @@ Indices and tables
 
    installation
    quickstart
+   dependency_security
 
 .. toctree::
    :maxdepth: 2

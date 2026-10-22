@@ -4,7 +4,7 @@
   "name": "nested",
   "origin": {
     "mimetype": "text/html",
-    "binary_hash": 5809536284986164321,
+    "binary_hash": 823219705451625868,
     "filename": "nested.md"
   },
   "furniture": {
@@ -219,50 +219,13 @@
       },
       "children": [
         {
-          "$ref": "#/texts/21"
-        },
-        {
-          "$ref": "#/texts/22"
-        },
-        {
-          "$ref": "#/texts/25"
-        }
-      ],
-      "content_layer": "body",
-      "name": "list",
-      "label": "list"
-    },
-    {
-      "self_ref": "#/groups/13",
-      "parent": {
-        "$ref": "#/texts/22"
-      },
-      "children": [
-        {
           "$ref": "#/texts/23"
         },
         {
           "$ref": "#/texts/24"
-        }
-      ],
-      "content_layer": "body",
-      "name": "list",
-      "label": "list"
-    },
-    {
-      "self_ref": "#/groups/14",
-      "parent": {
-        "$ref": "#/texts/0"
-      },
-      "children": [
+        },
         {
           "$ref": "#/texts/27"
-        },
-        {
-          "$ref": "#/texts/28"
-        },
-        {
-          "$ref": "#/texts/31"
         }
       ],
       "content_layer": "body",
@@ -270,16 +233,16 @@
       "label": "list"
     },
     {
-      "self_ref": "#/groups/15",
+      "self_ref": "#/groups/13",
       "parent": {
-        "$ref": "#/texts/28"
+        "$ref": "#/texts/24"
       },
       "children": [
         {
-          "$ref": "#/texts/29"
+          "$ref": "#/texts/25"
         },
         {
-          "$ref": "#/texts/30"
+          "$ref": "#/texts/26"
         }
       ],
       "content_layer": "body",
@@ -307,13 +270,13 @@
           "$ref": "#/texts/20"
         },
         {
+          "$ref": "#/texts/21"
+        },
+        {
+          "$ref": "#/texts/22"
+        },
+        {
           "$ref": "#/groups/12"
-        },
-        {
-          "$ref": "#/texts/26"
-        },
-        {
-          "$ref": "#/groups/14"
         }
       ],
       "content_layer": "body",
@@ -641,79 +604,17 @@
     {
       "self_ref": "#/texts/21",
       "parent": {
-        "$ref": "#/groups/12"
+        "$ref": "#/texts/0"
       },
       "children": [],
       "content_layer": "body",
-      "label": "list_item",
+      "label": "text",
       "prov": [],
-      "orig": "First item",
-      "text": "First item",
-      "enumerated": false,
-      "marker": ""
+      "orig": "<ul> <li>First item</li> <li>Second item with subitems: <ul> <li>Subitem 1</li> <li>Subitem 2</li> </ul> </li> <li>Last list item</li> </ul> <!-- Table nesting apparently not yet suported by HTML backend: <table> <tr> <td>Cell</td> <td>Nested Table <table> <tr> <td>Cell 1</td> <> </tr> <tr> <td>Cell 2</td> </tr> <tr> <td>Cell 3</td> </tr> <tr> <td>Cell 4</td> </tr> </table> </td> </tr> <tr><td>additional row</td></tr> </table> -->",
+      "text": "<ul> <li>First item</li> <li>Second item with subitems: <ul> <li>Subitem 1</li> <li>Subitem 2</li> </ul> </li> <li>Last list item</li> </ul> <!-- Table nesting apparently not yet suported by HTML backend: <table> <tr> <td>Cell</td> <td>Nested Table <table> <tr> <td>Cell 1</td> <> </tr> <tr> <td>Cell 2</td> </tr> <tr> <td>Cell 3</td> </tr> <tr> <td>Cell 4</td> </tr> </table> </td> </tr> <tr><td>additional row</td></tr> </table> -->"
     },
     {
       "self_ref": "#/texts/22",
-      "parent": {
-        "$ref": "#/groups/12"
-      },
-      "children": [
-        {
-          "$ref": "#/groups/13"
-        }
-      ],
-      "content_layer": "body",
-      "label": "list_item",
-      "prov": [],
-      "orig": "Second item with subitems:",
-      "text": "Second item with subitems:",
-      "enumerated": false,
-      "marker": ""
-    },
-    {
-      "self_ref": "#/texts/23",
-      "parent": {
-        "$ref": "#/groups/13"
-      },
-      "children": [],
-      "content_layer": "body",
-      "label": "list_item",
-      "prov": [],
-      "orig": "Subitem 1",
-      "text": "Subitem 1",
-      "enumerated": false,
-      "marker": ""
-    },
-    {
-      "self_ref": "#/texts/24",
-      "parent": {
-        "$ref": "#/groups/13"
-      },
-      "children": [],
-      "content_layer": "body",
-      "label": "list_item",
-      "prov": [],
-      "orig": "Subitem 2",
-      "text": "Subitem 2",
-      "enumerated": false,
-      "marker": ""
-    },
-    {
-      "self_ref": "#/texts/25",
-      "parent": {
-        "$ref": "#/groups/12"
-      },
-      "children": [],
-      "content_layer": "body",
-      "label": "list_item",
-      "prov": [],
-      "orig": "Last list item",
-      "text": "Last list item",
-      "enumerated": false,
-      "marker": ""
-    },
-    {
-      "self_ref": "#/texts/26",
       "parent": {
         "$ref": "#/texts/0"
       },
@@ -725,9 +626,9 @@
       "text": "A nested ordered list:"
     },
     {
-      "self_ref": "#/texts/27",
+      "self_ref": "#/texts/23",
       "parent": {
-        "$ref": "#/groups/14"
+        "$ref": "#/groups/12"
       },
       "children": [],
       "content_layer": "body",
@@ -739,13 +640,13 @@
       "marker": "1."
     },
     {
-      "self_ref": "#/texts/28",
+      "self_ref": "#/texts/24",
       "parent": {
-        "$ref": "#/groups/14"
+        "$ref": "#/groups/12"
       },
       "children": [
         {
-          "$ref": "#/groups/15"
+          "$ref": "#/groups/13"
         }
       ],
       "content_layer": "body",
@@ -757,9 +658,9 @@
       "marker": "2."
     },
     {
-      "self_ref": "#/texts/29",
+      "self_ref": "#/texts/25",
       "parent": {
-        "$ref": "#/groups/15"
+        "$ref": "#/groups/13"
       },
       "children": [],
       "content_layer": "body",
@@ -771,9 +672,9 @@
       "marker": "1."
     },
     {
-      "self_ref": "#/texts/30",
+      "self_ref": "#/texts/26",
       "parent": {
-        "$ref": "#/groups/15"
+        "$ref": "#/groups/13"
       },
       "children": [],
       "content_layer": "body",
@@ -785,9 +686,9 @@
       "marker": "2."
     },
     {
-      "self_ref": "#/texts/31",
+      "self_ref": "#/texts/27",
       "parent": {
-        "$ref": "#/groups/14"
+        "$ref": "#/groups/12"
       },
       "children": [],
       "content_layer": "body",

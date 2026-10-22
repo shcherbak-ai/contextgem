@@ -6,6 +6,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 - **Refactor**: Code reorganization that doesn't change functionality but improves structure or maintainability
 
+## [Unreleased]
+
+### Security
+
+- ContextGem now requires certifi 2026.10.19 or later. Earlier versions trust the emSign root of eMudhra, whose intermediate certificate authorities were compromised ([GHSA-6q48-6c7w-9gw2](https://github.com/certifi/python-certifi/security/advisories/GHSA-6q48-6c7w-9gw2)), and litellm verifies the connections to the model providers, as huggingface_hub does the downloads of SaT models, against the root certificates of certifi, unless `SSL_CERT_FILE` names others: with an older certifi, a forged certificate is accepted, e.g. to read the API key that a request sends. An environment keeps its installed certifi until a package requires a newer one, so upgrading ContextGem now upgrades it.
+- ContextGem now allows Pillow 13 (`pillow>=11.3.0,<14.0.0`), which fixes the 39 advisories of Pillow 12.3.0, 4 of them critical, e.g. a heap buffer overflow when a JPEG image is decoded. Pillow was capped below 13, as the packages of Docling were, so that ContextGem installs only with the Pillow versions that its tests run on: the tests now run on Pillow 13, with Docling 2.142.0, the first release of Docling that allows it.
+
 ## [1.2.0] - 2026-10-22
 
 ### Added
@@ -638,6 +645,7 @@ See the [migration guide](https://contextgem.shcherbak.ai/migration_v1/) for upd
 
 - Added DocxConverter for converting DOCX files into ContextGem Document objects
 
+[Unreleased]: https://github.com/shcherbak-ai/contextgem/compare/v1.2.0...HEAD
 [1.2.0]: https://github.com/shcherbak-ai/contextgem/compare/v1.1.0...v1.2.0
 [1.1.0]: https://github.com/shcherbak-ai/contextgem/compare/v1.0.0...v1.1.0
 [1.0.0]: https://github.com/shcherbak-ai/contextgem/compare/v0.27.0...v1.0.0

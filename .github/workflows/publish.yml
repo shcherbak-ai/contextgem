@@ -13,7 +13,7 @@ permissions:
   contents: read
 
 env:
-  UV_VERSION: "0.13.1"
+  UV_VERSION: "0.13.5"
 
 jobs:
   publish-gate:
@@ -117,7 +117,7 @@ jobs:
           merge-multiple: true
 
       - name: Publish to PyPI
-        uses: pypa/gh-action-pypi-publish@dc37677b2e1c63e2034f94d8a5b11f265b73ba33  # v1.14.2
+        uses: pypa/gh-action-pypi-publish@7245906fb61fa33a13554f9d5fb856fe61758086  # v1.14.3
         with:
           # Two runs of the tests at one commit (e.g. a re-run) lead to two
           # publish runs: the second upload of the same version is then a

@@ -24,6 +24,7 @@ This software includes the following third-party components:
 
 Core Dependencies (installed with ContextGem):
 - aiolimiter: Rate limiting for asynchronous operations
+- certifi: Mozilla's root certificates, which litellm and the downloads of SaT models verify TLS connections with (required at a version that trusts no compromised certificate authority)
 - colorlog: Colored logging formatter
 - docstring-parser: Docstring parsing for auto-generating tool schemas
 - fastjsonschema: Fast JSON schema validator

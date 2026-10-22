@@ -113,11 +113,12 @@ repos:
 
       # The ranges admit the latest releases of more than a week ago and the
       # lockfiles hold them, but for the packages in its EXCEPTIONS, and no
-      # locked version has an advisory at osv.dev, but for its
-      # ACCEPTED_ADVISORIES. At each commit, as a release or an advisory comes
-      # out without a change to a file, and asking PyPI, npm and osv.dev. CI
-      # skips it (SKIP), where its result would depend on the day, not on the
-      # commit. Verbose, for its warnings, which do not fail it.
+      # locked version, nor uv (the workflows' UV_VERSION and the one that runs
+      # it), has an advisory at osv.dev, but for its ACCEPTED_ADVISORIES. At each
+      # commit, as a release or an advisory comes out without a change to a
+      # file, and asking PyPI, npm and osv.dev. CI skips it (SKIP), where its
+      # result would depend on the day, not on the commit. Verbose, for its
+      # warnings, which do not fail it.
       - id: latest-versions
         name: dependencies at their latest versions, without advisories
         entry: uv run python dev/check_latest_versions.py

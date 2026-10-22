@@ -16,6 +16,12 @@ cooldown, ``exclude-newer`` can be a fixed date, past which nothing enters
 ``uv.lock``: the check warns of it until every version of ``uv.lock`` is older
 than the cooldown, and then fails until it is set to the span.
 
+A security fix younger than the cooldown is taken through
+``[tool.uv.exclude-newer-package]``, dated at its upload: the check passes the
+entries to ``uv pip compile`` too, warns of each until the cooldown admits it, and
+then fails until it is removed. Their versions are left out of the newest upload
+that dates the switch of a fixed ``exclude-newer`` to the span.
+
 For the Python packages, against PyPI:
 
 - each range of ``pyproject.toml`` (the dependencies, the extras and the
@@ -42,7 +48,12 @@ It asks osv.dev for the advisories of each version of ``uv.lock`` and of
 ``package-lock.json``: a known vulnerability, or a report of a malicious
 package, fails the check, but for the advisories of ``ACCEPTED_ADVISORIES``,
 with their reasons. A report of a malicious package (``MAL-``) is never
-accepted. An accepted advisory of no locked version fails the check.
+accepted. An accepted advisory of no locked version fails the check. It asks for
+the advisories of uv too, which makes its requests with certificates of its own:
+uv 0.13.1 trusted a compromised certificate authority (GHSA-hq85-5cpj-mr62) when
+the certifi of ``uv.lock`` was fixed. It asks for the uv that the workflows set up
+(``UV_VERSION``), and for the uv that runs the check, with which the dependencies
+are locked. A workflow that sets up uv without a version to check fails the check.
 
 Runs as a pre-commit hook at each commit, as a release or an advisory can come
 out between two commits, and asks the indexes: uv answers from its cache of
@@ -80,20 +91,11 @@ EXCEPTIONS: dict[str, str] = {
     "genai-prices": "pinned, as its API changes often",
     "litellm": "pinned, as its patches and minor versions are at times unstable",
     "openai": "pinned to the version that the pinned litellm is tested with",
-    "pillow": (
-        "capped below 13, as the packages of Docling are, so that ContextGem "
-        "installs only with the versions that its tests run on"
-    ),
 }
 
 # How many days a release stays out of the lockfiles after its upload:
 # `[tool.uv] exclude-newer` of pyproject.toml and `min-release-age` of .npmrc
 COOLDOWN_DAYS = 7
-
-_PILLOW_BELOW_13 = (
-    "fixed in Pillow 13 only, which the packages of Docling do not allow yet: "
-    "pillow is capped below 13 with them (EXCEPTIONS)"
-)
 
 _MARKDOWNLINT_CLI2_0_24 = (
     "markdown-it and smol-toml, which markdownlint-cli2 0.23.3 pins: fixed in "
@@ -105,39 +107,6 @@ _MARKDOWNLINT_CLI2_0_24 = (
 # osv.dev, with the reasons: a vulnerability that no version that the ranges
 # admit fixes. A report of a malicious package (MAL-) is never accepted
 ACCEPTED_ADVISORIES: dict[str, str] = {
-    **{
-        advisory: _PILLOW_BELOW_13
-        for advisory in (
-            "GHSA-22hg-r758-rrw9",
-            "GHSA-254f-3936-288h",
-            "GHSA-27h8-gf7j-v5hc",
-            "GHSA-332p-7hrc-92wf",
-            "GHSA-4558-3h8r-v8xp",
-            "GHSA-462x-pgg6-55fp",
-            "GHSA-4rr5-89j8-mwwm",
-            "GHSA-58r4-6rv3-gfh8",
-            "GHSA-5xm2-6676-qcp9",
-            "GHSA-65qm-jvmh-6pqg",
-            "GHSA-74r2-7ff9-mjj2",
-            "GHSA-7mwm-ghpf-9vrm",
-            "GHSA-8g5g-8vmr-9782",
-            "GHSA-c6hw-5grf-ff96",
-            "GHSA-cp9v-662q-vvx9",
-            "GHSA-f2g6-542v-9j58",
-            "GHSA-fc9g-5qg7-mf45",
-            "GHSA-gg2r-wvfm-q9rx",
-            "GHSA-j4m9-6w36-pw47",
-            "GHSA-jg86-v3jv-hrpm",
-            "GHSA-p4wg-p73j-c528",
-            "GHSA-pchr-8j38-3x4p",
-            "GHSA-q45j-58j2-45rg",
-            "GHSA-rfgq-q3w2-pmv2",
-            "GHSA-vx6w-vv9f-6gvg",
-            "GHSA-w889-685w-c8fh",
-            "GHSA-xgh8-jp6q-p5x8",
-            "GHSA-xvh5-g6gv-559v",
-        )
-    },
     **{
         advisory: _MARKDOWNLINT_CLI2_0_24
         for advisory in (
@@ -159,6 +128,14 @@ ACCEPTED_ADVISORIES: dict[str, str] = {
 
 # The batch query of osv.dev, for the advisories of many versions at once
 _OSV_QUERY_BATCH = "https://api.osv.dev/v1/querybatch"
+
+# The version in the output of `uv --version`, e.g. `uv 0.13.5 (46776a95d ...)`
+_UV_VERSION_OUTPUT = re.compile(r"uv (\d[\w.+-]*)")
+
+# The version of uv that a workflow sets up, e.g. `UV_VERSION: "0.13.5"`
+_UV_VERSION = re.compile(
+    r"""^[ \t]*UV_VERSION:[ \t]*(["']?)(\d[\w.+-]*)\1[ \t]*(?:#.*)?$""", re.MULTILINE
+)
 
 # The name of a requirement, at its start (PEP 508)
 _NAME = re.compile(r"\s*([A-Za-z0-9][A-Za-z0-9._-]*)")
@@ -196,7 +173,7 @@ def _requirements(pyproject: dict) -> dict[str, list[str]]:
     :param pyproject: The parsed ``pyproject.toml``.
     :type pyproject: dict
     :returns: The requirements of each package, without their markers, by the
-        normalized name, e.g. ``{"pillow": ["pillow (>=11.3.0,<13.0.0)"]}``.
+        normalized name, e.g. ``{"pillow": ["pillow (>=11.3.0,<14.0.0)"]}``.
     :rtype: dict[str, list[str]]
     """
     project = pyproject["project"]
@@ -255,18 +232,38 @@ def _locked_versions(lock: dict) -> dict[str, list[str]]:
     return locked
 
 
-def _newest_upload(lock: dict) -> datetime.datetime:
+def _exemptions(pyproject: dict) -> dict[str, str]:
     """
-    Find when the newest file of ``uv.lock`` was uploaded.
+    Read the packages taken before the cooldown admits them
+    (``[tool.uv.exclude-newer-package]``), each with the date of its upload.
+
+    :param pyproject: The parsed ``pyproject.toml``.
+    :type pyproject: dict
+    :returns: The date of each package, by the normalized name, e.g.
+        ``{"docling-core": "2026-10-22T14:03:00Z"}``.
+    :rtype: dict[str, str]
+    """
+    entries = pyproject.get("tool", {}).get("uv", {}).get("exclude-newer-package", {})
+    return {_normalize(name): str(date) for name, date in entries.items()}
+
+
+def _newest_upload(lock: dict, exempt: set[str]) -> datetime.datetime:
+    """
+    Find when the newest file of ``uv.lock`` was uploaded, but for the packages
+    taken before the cooldown admits them.
 
     :param lock: The parsed ``uv.lock``.
     :type lock: dict
+    :param exempt: The normalized names of the packages of
+        ``[tool.uv.exclude-newer-package]``.
+    :type exempt: set[str]
     :returns: The time of the upload, in UTC.
     :rtype: datetime.datetime
     """
     times = [
         file["upload-time"]
         for package in lock["package"]
+        if _normalize(package["name"]) not in exempt
         for file in [*package.get("wheels", []), package.get("sdist", {})]
         if "upload-time" in file
     ]
@@ -276,7 +273,7 @@ def _newest_upload(lock: dict) -> datetime.datetime:
 
 
 def _cooldown(
-    pyproject: dict, lock: dict, now: datetime.datetime
+    pyproject: dict, lock: dict, now: datetime.datetime, exemptions: dict[str, str]
 ) -> tuple[str, list[str], list[str]]:
     """
     Check that new releases stay out of the lockfiles for ``COOLDOWN_DAYS``.
@@ -287,6 +284,9 @@ def _cooldown(
     :type lock: dict
     :param now: The current time, in UTC.
     :type now: datetime.datetime
+    :param exemptions: The packages taken before the cooldown admits them, with
+        the dates of their uploads (``_exemptions()``).
+    :type exemptions: dict[str, str]
     :returns: The cutoff of uv (``exclude-newer``), which the latest releases are
         looked up with; what fails the check; and what it warns of.
     :rtype: tuple[str, list[str], list[str]]
@@ -301,7 +301,9 @@ def _cooldown(
     elif re.match(r"\d{4}-\d{2}-\d{2}", cutoff):
         # A fixed date, until the newest version of uv.lock is as old as the
         # cooldown, from when the span changes nothing in uv.lock
-        due = _newest_upload(lock) + datetime.timedelta(days=COOLDOWN_DAYS)
+        due = _newest_upload(lock, set(exemptions)) + datetime.timedelta(
+            days=COOLDOWN_DAYS
+        )
         if now >= due:
             findings.append(
                 f"pyproject.toml: [tool.uv] exclude-newer is the fixed date {cutoff}, "
@@ -318,6 +320,27 @@ def _cooldown(
         findings.append(
             f'pyproject.toml: [tool.uv] exclude-newer is "{cutoff}": set it to "{span}"'
         )
+    # A security fix taken before the cooldown admits it, until it does
+    table = "pyproject.toml: [tool.uv.exclude-newer-package]"
+    for name, date in sorted(exemptions.items()):
+        try:
+            uploaded = datetime.datetime.fromisoformat(date)
+        except ValueError:
+            findings.append(f"{table} {name} = {date!r}: date it at its upload")
+            continue
+        if uploaded.tzinfo is None:
+            uploaded = uploaded.replace(tzinfo=datetime.UTC)
+        due = uploaded + datetime.timedelta(days=COOLDOWN_DAYS)
+        if now >= due:
+            findings.append(
+                f"{table} {name}: the cooldown admits it since "
+                f"{due:%Y-%m-%d %H:%M} UTC: remove the entry"
+            )
+        else:
+            warnings.append(
+                f"{table} takes {name} before the cooldown admits it: remove the "
+                f"entry from {due:%Y-%m-%d %H:%M} UTC"
+            )
     if (ROOT / "package.json").is_file():
         npmrc = ROOT / ".npmrc"
         text = npmrc.read_text(encoding="utf-8") if npmrc.is_file() else ""
@@ -327,22 +350,70 @@ def _cooldown(
     return cutoff, findings, warnings
 
 
-def _advisories(lock: dict) -> tuple[list[str], set[str]]:
+def _workflow_uv_versions(workflows: Path) -> list[str]:
     """
-    Ask osv.dev for the advisories of the versions of ``uv.lock`` and of
-    ``package-lock.json``: known vulnerabilities, and reports of malicious
-    packages.
+    Read the versions of uv that the workflows set up (``UV_VERSION``).
+
+    :param workflows: The folder of the workflows, ``.github/workflows``.
+    :type workflows: Path
+    :returns: The versions, e.g. ``["0.13.5"]``.
+    :rtype: list[str]
+    """
+    versions = set()
+    for path in sorted(workflows.glob("*.y*ml")):
+        text = path.read_text(encoding="utf-8")
+        if "astral-sh/setup-uv" not in text:
+            continue
+        found = [match[2] for match in _UV_VERSION.finditer(text)]
+        if not found:
+            raise _CheckError(
+                f"{path.name} sets up uv without a version to check: set "
+                'UV_VERSION: "<version>" in its env.'
+            )
+        versions.update(found)
+    return sorted(versions)
+
+
+def _local_uv_version(uv: str) -> str:
+    """
+    Read the version of the uv that runs the check, with which the dependencies
+    are locked.
+
+    :param uv: The path of the uv command.
+    :type uv: str
+    :returns: E.g. ``0.13.5``.
+    :rtype: str
+    """
+    proc = _run([uv, "--version"], cwd=ROOT)
+    match = _UV_VERSION_OUTPUT.match(proc.stdout.strip())
+    if proc.returncode != 0 or match is None:
+        raise _CheckError(
+            f"Cannot read the version of uv: {(proc.stdout + proc.stderr).strip()}"
+        )
+    return match[1]
+
+
+def _advisories(
+    lock: dict, uv_versions: list[tuple[str, str]]
+) -> tuple[list[str], set[str]]:
+    """
+    Ask osv.dev for the advisories of the versions of ``uv.lock``, of
+    ``package-lock.json`` and of uv: known vulnerabilities, and reports of
+    malicious packages.
 
     :param lock: The parsed ``uv.lock``.
     :type lock: dict
-    :returns: Each locked version with advisories that ``ACCEPTED_ADVISORIES``
-        does not accept, e.g. ``pillow 12.3.0 (PyPI): GHSA-462x-pgg6-55fp``; and
-        the IDs of all the advisories found.
+    :param uv_versions: The versions of uv to ask about, each with where it is
+        used, e.g. ``("0.13.5", "UV_VERSION of the workflows")``.
+    :type uv_versions: list[tuple[str, str]]
+    :returns: Each version with advisories that ``ACCEPTED_ADVISORIES`` does not
+        accept, e.g. ``pillow 12.3.0 (PyPI): GHSA-462x-pgg6-55fp``; and the IDs
+        of all the advisories found.
     :rtype: tuple[list[str], set[str]]
     """
     packages = sorted(
         {
-            ("PyPI", package["name"], package["version"])
+            ("PyPI", package["name"], package["version"], "")
             for package in lock["package"]
             if "registry" in package.get("source", {})
         }
@@ -352,14 +423,17 @@ def _advisories(lock: dict) -> tuple[list[str], set[str]]:
         entries = json.loads(npm_lock.read_text(encoding="utf-8"))["packages"]
         packages += sorted(
             {
-                ("npm", path.rsplit("node_modules/", 1)[-1], entry["version"])
+                ("npm", path.rsplit("node_modules/", 1)[-1], entry["version"], "")
                 for path, entry in entries.items()
                 if path and "version" in entry and not entry.get("link")
             }
         )
+    packages += [
+        ("PyPI", "uv", version, f", {where}") for version, where in uv_versions
+    ]
     queries = [
         {"package": {"ecosystem": ecosystem, "name": name}, "version": version}
-        for ecosystem, name, version in packages
+        for ecosystem, name, version, _ in packages
     ]
     request = urllib.request.Request(
         _OSV_QUERY_BATCH,
@@ -374,10 +448,12 @@ def _advisories(lock: dict) -> tuple[list[str], set[str]]:
     except (urllib.error.URLError, TimeoutError, KeyError, ValueError) as e:
         raise _CheckError(f"Cannot ask osv.dev for advisories: {e}") from None
     if len(results) != len(packages):
-        raise _CheckError("osv.dev did not answer for each locked version.")
+        raise _CheckError("osv.dev did not answer for each version.")
     found = []
     seen: set[str] = set()
-    for (ecosystem, name, version), result in zip(packages, results, strict=True):
+    for (ecosystem, name, version, where), result in zip(
+        packages, results, strict=True
+    ):
         ids = [vuln["id"] for vuln in result.get("vulns", [])]
         seen.update(ids)
         listed = [
@@ -389,7 +465,7 @@ def _advisories(lock: dict) -> tuple[list[str], set[str]]:
         if result.get("next_page_token"):
             listed.append("and more, at osv.dev")
         if listed:
-            found.append(f"{name} {version} ({ecosystem}): {', '.join(listed)}")
+            found.append(f"{name} {version} ({ecosystem}{where}): {', '.join(listed)}")
     return found, seen
 
 
@@ -421,6 +497,7 @@ def _newest(
     requirements: list[str],
     python: str,
     cutoff: str,
+    exemptions: dict[str, str],
     scratch: str,
     label: str,
 ) -> dict[str, str]:
@@ -439,6 +516,9 @@ def _newest(
     :param cutoff: The releases uploaded after it are left out (``exclude-newer``
         of uv: a date, or a span back from now, e.g. ``7 days``).
     :type cutoff: str
+    :param exemptions: The cutoff of each package taken before the cooldown
+        admits it (``exclude-newer-package`` of uv), by the normalized name.
+    :type exemptions: dict[str, str]
     :param scratch: A folder to work in, outside the checkout.
     :type scratch: str
     :param label: The name of the requirements file, one per call.
@@ -453,6 +533,11 @@ def _newest(
             *(uv, "pip", "compile", "--quiet", "--no-config", "--no-header"),
             *("--no-annotate", "--no-deps", "--universal"),
             *("--exclude-newer", cutoff),
+            *(
+                option
+                for name, date in sorted(exemptions.items())
+                for option in ("--exclude-newer-package", f"{name}={date}")
+            ),
             *("--python-version", python, str(path)),
         ],
         cwd=scratch,
@@ -554,10 +639,10 @@ def _npm_outdated() -> tuple[dict[str, str], dict[str, dict] | None, str | None]
 def main() -> int:
     """
     Check the ranges and the lockfiles against the latest releases from before
-    the cooldown, and the locked versions against the advisories.
+    the cooldown, and the locked versions and uv against the advisories.
 
     :returns: 0 when every dependency is at its latest version, or left out, and
-        no locked version has an advisory that is not accepted, else 1.
+        no locked version or uv has an advisory that is not accepted, else 1.
     :rtype: int
     """
     uv = shutil.which("uv")
@@ -574,8 +659,16 @@ def main() -> int:
         python = _newest_python(pyproject["project"]["requires-python"])
         lock = tomllib.loads((ROOT / "uv.lock").read_text(encoding="utf-8"))
         locked = _locked_versions(lock)
+        uv_versions = [
+            *(
+                (version, "UV_VERSION of the workflows")
+                for version in _workflow_uv_versions(ROOT / ".github" / "workflows")
+            ),
+            (_local_uv_version(uv), "the uv that runs the check"),
+        ]
+        exemptions = _exemptions(pyproject)
         cutoff, cooldown_findings, cooldown_warnings = _cooldown(
-            pyproject, lock, datetime.datetime.now(datetime.UTC)
+            pyproject, lock, datetime.datetime.now(datetime.UTC), exemptions
         )
         checked = {
             name: listed
@@ -592,14 +685,14 @@ def main() -> int:
             concurrent.futures.ThreadPoolExecutor(max_workers=5) as pool,
         ):
             latest_job = pool.submit(
-                _newest, uv, names, python, cutoff, scratch, "latest"
+                _newest, uv, names, python, cutoff, exemptions, scratch, "latest"
             )
             admitted_job = pool.submit(
-                _newest, uv, ranges, python, cutoff, scratch, "ranges"
+                _newest, uv, ranges, python, cutoff, exemptions, scratch, "ranges"
             )
             changes_job = pool.submit(_lock_changes, uv)
             npm_job = pool.submit(_npm_outdated)
-            advisories_job = pool.submit(_advisories, lock)
+            advisories_job = pool.submit(_advisories, lock, uv_versions)
             latest = latest_job.result()
             admitted = admitted_job.result()
             changes = changes_job.result()
@@ -668,7 +761,7 @@ def main() -> int:
     findings = {
         f"The cooldown: a release enters the lockfiles {COOLDOWN_DAYS} days after "
         "its upload": cooldown_findings,
-        "Advisories of locked versions (osv.dev)": advisories,
+        "Advisories of locked versions and of uv (osv.dev)": advisories,
         "ACCEPTED_ADVISORIES: advisories of no locked version, to remove": sorted(
             ACCEPTED_ADVISORIES.keys() - advisory_ids
         ),
@@ -743,7 +836,7 @@ def main() -> int:
         f"Every dependency of {files} is at its latest version from before the "
         f"cooldown (exclude-newer: {cutoff})"
         + (f", but for {' and '.join(but)}" if but else "")
-        + ", and no locked version has an advisory"
+        + ", and no locked version or uv has an advisory"
         + (", but for those accepted." if ACCEPTED_ADVISORIES else ".")
     )
     return 0

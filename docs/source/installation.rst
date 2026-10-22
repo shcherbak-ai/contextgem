@@ -36,6 +36,8 @@ Or using pip:
 
     pip install -U contextgem
 
+For an application, :doc:`dependency_security` shows how to keep the versions of its dependencies under control.
+
 Optional Extras
 ~~~~~~~~~~~~~~~~
 

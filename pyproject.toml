@@ -99,6 +99,7 @@ classifiers = [
 ]
 dependencies = [
     "aiolimiter (>=1.2.1,<2.0.0)",
+    "certifi (>=2026.10.19)", # the CA bundle that litellm and httpx verify TLS with: older ones trust a compromised CA (GHSA-6q48-6c7w-9gw2)
     "colorlog (>=6.9.0,<7.0.0)",
     "docstring-parser (>=0.17.0,<1.0.0)",
     "fastjsonschema (>=2.21.2,<3.0.0)",
@@ -106,7 +107,7 @@ dependencies = [
     "jinja2 (>=3.1.5,<4.0.0)",
     "litellm==1.105.2", # pin version due to occasional instability between patches and minor versions
     "openai==2.54.0", # pinned to the version tested with litellm (openai 1.100.0 once broke importing litellm 1.75.8)
-    "pillow (>=11.3.0,<13.0.0)",
+    "pillow (>=11.3.0,<14.0.0)",
     "pydantic (>=2.10.6,<3.0.0)",
     "python-ulid (>=3.0.0,<5.0.0)",
     "tenacity (>=9.1.2,<10.0.0)", # required by litellm for retry logic
@@ -185,6 +186,17 @@ include = ["/contextgem"]
 # file. From 2026-10-28, "7 days" (the latest-versions hook says when)
 exclude-newer = "2026-10-21T00:06:00Z"
 
+# Security fixes taken before the cooldown admits them, by decision of the
+# maintainer, each dated at its upload: the latest-versions hook fails once the
+# cooldown admits it, to remove the entry. The releases of Docling that allow
+# Pillow 13, which fixes the advisories of Pillow 12 (2026-10-22)
+[tool.uv.exclude-newer-package]
+docling = "2026-10-22T14:32:00Z"
+docling-core = "2026-10-22T14:03:00Z"
+docling-ibm-models = "2026-10-21T11:35:00Z"
+docling-parse = "2026-10-22T14:54:00Z"
+docling-slim = "2026-10-22T14:30:00Z"
+
 [tool.ruff]
 line-length = 88
 target-version = "py311"
@@ -262,6 +274,7 @@ extend_exclude = [
 
 [tool.deptry.per_rule_ignores]
 DEP002 = [
+    "certifi",      # minimum version of the CA bundle that litellm and httpx verify TLS with
     "onnxruntime",  # constrained for Python 3.14 compat (transitive via wtpsplit-lite)
     "openai",       # due to pinned version in dependencies
     "tenacity",     # required by litellm for retry logic
