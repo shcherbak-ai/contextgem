@@ -15,6 +15,7 @@
   <a href="https://pypi.org/project/contextgem/"><img src="https://img.shields.io/pypi/dm/contextgem?style=flat-square&labelColor=18181b&color=0e74bc&label=downloads" alt="Downloads per month"></a>
   <a href="https://github.com/shcherbak-ai/contextgem/actions/workflows/ci-tests.yml"><img src="https://img.shields.io/github/actions/workflow/status/shcherbak-ai/contextgem/ci-tests.yml?branch=main&style=flat-square&labelColor=18181b&label=CI" alt="CI"></a>
   <a href="https://github.com/shcherbak-ai/contextgem/actions/workflows/ci-tests.yml"><img src="https://img.shields.io/endpoint?url=https://gist.githubusercontent.com/SergiiShcherbak/daaee00e1dfff7a29ca10a922ec3becd/raw/coverage.json&style=flat-square&labelColor=18181b&color=0e74bc" alt="Coverage"></a>
+  <a href="https://www.bestpractices.dev/projects/10489"><img src="https://img.shields.io/cii/level/10489?style=flat-square&labelColor=18181b&color=0e74bc&label=OpenSSF%20best%20practices" alt="OpenSSF Best Practices"></a>
 </p>
 
 <p align="center">
@@ -22,6 +23,7 @@
   <a href="https://contextgem.shcherbak.ai/how_it_works/"><strong>How it works</strong></a> ·
   <a href="https://contextgem.shcherbak.ai/agentic_workflows/"><strong>Agentic&nbsp;workflows</strong></a> ·
   <a href="CHANGELOG.md"><strong>Changelog</strong></a> ·
+  <a href="SECURITY.md"><strong>Security</strong></a> ·
   <a href="https://contextgem.shcherbak.ai/"><strong>Documentation</strong></a>
 </p>
 
@@ -460,7 +462,7 @@ For visual architecture maps and natural language Q&A on the codebase, see [Deep
 </tr>
 <tr>
 <td valign="top"><strong>Want to contribute?</strong><br>Contributions are welcome, from a fixed typo to a new feature: see the <a href="CONTRIBUTING.md">Contributor Guidelines</a>.</td>
-<td valign="top"><strong>Security</strong><br>The project is scanned with <a href="https://codeql.github.com/">CodeQL</a> and <a href="https://github.com/PyCQA/bandit">Bandit</a>, and with <a href="https://snyk.io">Snyk</a> as needed: see the <a href="SECURITY.md">security policy</a>.</td>
+<td valign="top"><strong>Security</strong><br>The code is scanned with <a href="https://codeql.github.com/">CodeQL</a> and <a href="https://github.com/PyCQA/bandit">Bandit</a>, and the dependencies are checked against known advisories: see the <a href="SECURITY.md">security policy</a>.</td>
 </tr>
 </table>
 <!-- markdownlint-enable MD033 -->
