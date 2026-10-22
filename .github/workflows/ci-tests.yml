@@ -142,6 +142,11 @@ jobs:
       # plain `uv run` rebuilds the environment on that pin, and every cell
       # of the matrix tests the same Python.
       UV_PYTHON: ${{ matrix.python-version }}
+      # coverage's default core on Python 3.12 and 3.13 traces with
+      # sys.settrace, which made the tests about 3-4 times slower on 3.12 than
+      # sys.monitoring; 3.14 uses it by default, and 3.11 has none (an empty
+      # value leaves the default)
+      COVERAGE_CORE: ${{ matrix.python-version != '3.11' && 'sysmon' || '' }}
 
     steps:
 
