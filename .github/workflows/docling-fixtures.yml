@@ -72,12 +72,31 @@ jobs:
       # LibreOffice, with which Docling converts the legacy Office and RTF files
       # (DOC, XLS, PPT, RTF) into DOCX, XLSX and PPTX: Writer, Calc and Impress,
       # without the packages that they only recommend; and ffmpeg, with which
-      # Whisper reads the audio and video files, and Docling the frames of a video
+      # Whisper reads the audio and video files, and Docling the frames of a video.
+      # The download of a package from the mirror of the runner can stall, past
+      # the time limit of the job (twice in October 2026, with 49 of 151 packages
+      # downloaded): an attempt to download them that takes more than 3 minutes,
+      # where all of them take seconds, is stopped and made again, on new
+      # connections, and apt resumes the files that it has partly downloaded.
+      # The installation, from the downloaded files, is never stopped half-way
       - name: Install LibreOffice and ffmpeg
-        run: >-
-          sudo apt-get update &&
-          sudo apt-get install -y --no-install-recommends
-          libreoffice-writer libreoffice-calc libreoffice-impress ffmpeg
+        timeout-minutes: 15
+        env:
+          PACKAGES: libreoffice-writer libreoffice-calc libreoffice-impress ffmpeg
+        run: |
+          sudo apt-get update
+          for attempt in 1 2 3; do
+            if sudo timeout --kill-after=10 180 apt-get install --download-only \
+                -y --no-install-recommends $PACKAGES; then
+              break
+            fi
+            if [ "$attempt" = 3 ]; then
+              echo "::error::The packages were not downloaded in 3 attempts"
+              exit 1
+            fi
+            echo "::warning::Attempt $attempt to download the packages stopped"
+          done
+          sudo apt-get install -y --no-install-recommends $PACKAGES
 
       # The layout, table and OCR models of Docling, about 0.5 GB, and the small
       # model of Whisper, about 0.5 GB
