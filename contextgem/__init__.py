@@ -5,7 +5,7 @@
 ContextGem - Extract structured data and insights from documents using LLMs and decision models
 """
 
-__version__ = "1.2.0"
+__version__ = "1.2.1"
 __author__ = "Shcherbak AI AS"
 
 from contextgem.public import (
