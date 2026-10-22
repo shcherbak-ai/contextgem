@@ -105,6 +105,16 @@ if TYPE_CHECKING:
 # A PDF file and the Docling document that Docling converted it into
 _DOCLING_FILES_DIR = Path(__file__).parent / "other_files" / "docling"
 
+# For the tests that run code in a new Python process
+_SKIP_NEW_PROCESS_ON_WINDOWS_PY311 = pytest.mark.skipif(
+    sys.platform == "win32" and sys.version_info < (3, 12),
+    reason=(
+        "On Windows, Python 3.11 launches `cmd /c ver` for `platform.system()`, "
+        "which aiohttp calls on import, and the network guard that the new "
+        "Python process inherits refuses to launch it"
+    ),
+)
+
 
 def _docling_prov(page_no: int = 1, top: float = 700.0) -> ProvenanceItem:
     """
@@ -1066,14 +1076,7 @@ class TestDocuments(BaseTest):
                     sat_model_id=temp_dir,
                 )
 
-    @pytest.mark.skipif(
-        sys.platform == "win32" and sys.version_info < (3, 12),
-        reason=(
-            "On Windows, Python 3.11 launches `cmd /c ver` for `platform.system()`, "
-            "which aiohttp calls on import, and the network guard that the new "
-            "Python process inherits refuses to launch it"
-        ),
-    )
+    @_SKIP_NEW_PROCESS_ON_WINDOWS_PY311
     def test_local_sat_model_without_network_access(self, tmp_path):
         """
         Tests that a SaT model in a local directory that also has the tokenizer
@@ -3657,8 +3660,7 @@ class TestDocuments(BaseTest):
         """
         Tests that creating a document from a Docling document without docling-core,
         or with a docling-core older than the converter needs, raises an error that
-        names the extra that installs it, and that ContextGem is imported without
-        importing docling-core.
+        names the extra that installs it.
 
         Also tests that the oldest docling-core that the converter accepts is
         the lower bound of docling-core in the `docling` extra and in the dev group.
@@ -3750,6 +3752,15 @@ class TestDocuments(BaseTest):
                 lower_bounds.add(lower_bound.group(1))
         assert lower_bounds == {converter_module._MIN_DOCLING_CORE_VERSION}
 
+    @_SKIP_NEW_PROCESS_ON_WINDOWS_PY311
+    def test_import_without_docling_core(self):
+        """
+        Tests that ContextGem is imported without importing docling-core, which
+        only the `docling` extra installs.
+
+        The import runs in a new Python process, in which nothing has imported
+        docling-core before.
+        """
         script = "import sys\nimport contextgem\nprint('docling_core' in sys.modules)\n"
         result = subprocess.run(  # nosec B603 - the Python of the tests, no shell
             [sys.executable, "-c", script],
