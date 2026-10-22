@@ -611,7 +611,7 @@ Run all tests, in 8 worker processes ([pytest-xdist](https://pytest-xdist.readth
 uv run pytest -n 8
 ```
 
-Each worker loads the test objects and the SaT model itself, about 1 GB of memory per worker: with fewer CPUs or less memory, give a smaller number. CI runs the tests with `-n auto`, a worker for each CPU of the runner.
+Each worker loads the test objects and the SaT model itself, about 1 GB of memory per worker: with fewer CPUs or less memory, give a smaller number. CI runs the tests on Linux, Windows and macOS, with each supported Python, and with `-n auto`, a worker for each CPU of the runner.
 
 Run specific tests without `-n`, in one process, which starts sooner than the workers do, shows the output and the live logs of the tests, and is what a debugger needs:
 

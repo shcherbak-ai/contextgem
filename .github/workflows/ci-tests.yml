@@ -57,14 +57,24 @@ jobs:
           SKIP: latest-versions
 
   prefetch-models:
-    # Download the SaT model ONCE on a single runner and publish the warmed
-    # HuggingFace cache for the test matrix to restore. Without this, the four
-    # matrix jobs start with a cold cache simultaneously and download from
-    # HuggingFace in parallel — `actions/cache` only writes in its post-job
-    # step, so there is no shared cache to hit on the first run. Four concurrent
-    # cold downloads from one runner IP pool is exactly what trips HF's 429 and
-    # aborts pytest collection. Serializing the download here removes that race.
-    runs-on: ubuntu-latest
+    # Download the SaT model ONCE per operating system and publish the warmed
+    # HuggingFace cache for the test matrix to restore. The cache is kept per
+    # OS (`runner.os` in its key), so each OS of the matrix needs its own.
+    # Without this, the four matrix jobs of an OS start with a cold cache
+    # simultaneously and download from HuggingFace in parallel —
+    # `actions/cache` only writes in its post-job step, so there is no shared
+    # cache to hit on the first run. Four concurrent cold downloads from one
+    # runner IP pool is exactly what trips HF's 429 and aborts pytest
+    # collection. Serializing the download here removes that race.
+    strategy:
+      matrix:
+        os: [ "ubuntu-latest", "windows-latest", "macos-latest" ]
+
+    defaults:
+      run:
+        shell: bash
+
+    runs-on: ${{ matrix.os }}
     timeout-minutes: 10
     steps:
       - name: Check out repository
@@ -107,14 +117,17 @@ jobs:
 
   tests-with-vcr:
 
-    # Wait for the single prefetch job to warm the shared HF cache before the
-    # matrix fans out, so the four jobs restore the cache instead of racing to
-    # download the model concurrently.
+    # Wait for the prefetch jobs to warm the HF cache of each OS before the
+    # matrix fans out, so the four jobs of an OS restore the cache instead of
+    # racing to download the model concurrently.
     needs: prefetch-models
 
     strategy:
+      # A failure in one cell does not cancel the others, which then show
+      # whether it is limited to one OS or one Python
+      fail-fast: false
       matrix:
-        os: [ "ubuntu-latest" ]
+        os: [ "ubuntu-latest", "windows-latest", "macos-latest" ]
         python-version: ["3.11", "3.12", "3.13", "3.14"]
 
     defaults:
@@ -153,11 +166,11 @@ jobs:
         run: uv run python -c "import sys; found = '%d.%d' % sys.version_info[:2]; assert found == '${{ matrix.python-version }}', found"
 
       - name: Restore HuggingFace models cache
-        # Restore the cache warmed by the `prefetch-models` job (same key). With
-        # a warm cache, the model is read from disk and HuggingFace
+        # Restore the cache warmed by the `prefetch-models` job of this OS (same
+        # key). With a warm cache, the model is read from disk and HuggingFace
         # HEAD-revalidation 429s are non-fatal, so the matrix never re-downloads
         # concurrently. SaT model files are Python-version-independent, so the
-        # whole matrix shares one cache.
+        # cells of an OS share one cache.
         uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9  # v6.1.0
         with:
           path: ~/.cache/huggingface
