@@ -41,6 +41,12 @@ class DocumentModelGroup(_DocumentModelGroup):
         default system messages.
         Does not apply to the decision models in the group, which produce no text.
     :vartype output_language: LanguageRequirement
+    :ivar is_group: Whether the object is a model group: always True for a model group.
+        Read-only.
+    :vartype is_group: bool
+    :ivar list_roles: The roles of the models in the group, in the order of ``models``,
+        with None for the model without a role. Read-only.
+    :vartype list_roles: list[str | None]
 
     Note:
         Refer to the :class:`~contextgem.public.llms.DocumentLLM` class for more information on constructing LLMs

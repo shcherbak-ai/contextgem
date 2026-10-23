@@ -35,6 +35,18 @@ class ExtractionPipeline(_ExtractionPipeline):
     :ivar concepts: A list of concepts to identify within documents. Concepts represent
                    specific information elements to extract. Defaults to an empty list.
     :vartype concepts: list[_Concept]
+    :ivar model_roles: The ``model_role`` values of the pipeline's aspects and concepts,
+        and of the sub-aspects and concepts of its aspects, with None for those without
+        a role. Read-only.
+    :vartype model_roles: set[str | None]
+    :ivar custom_data: A dictionary for data of your own about the pipeline, e.g. the ID
+        that your application has for it. Must be JSON-serializable. Not sent to the models,
+        and kept when the pipeline is serialized or cloned. Defaults to an empty dict.
+    :vartype custom_data: dict[str, Any]
+    :ivar unique_id: The unique ID of the pipeline, a ULID assigned when the pipeline is
+        created. Read-only. Kept when the pipeline is serialized or cloned, i.e. a restored
+        or cloned pipeline has the ID of the original.
+    :vartype unique_id: str
 
     Note:
         A pipeline is a reusable configuration of extraction steps. You can use the same pipeline

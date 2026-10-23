@@ -73,6 +73,21 @@ class StringConcept(_StringConcept):
         number of items to extract from the concept's name, description, and type (e.g.,
         "document title" vs "key findings").
     :vartype singular_occurrence: StrictBool
+    :ivar extracted_items: The items extracted for the concept, set by the extraction
+        methods: each has the extracted ``value``, and its ``justification``, references
+        (``reference_paragraphs`` and ``reference_sentences``, the document's own objects),
+        ``reference_page_numbers`` and ``probabilities`` where these apply. For
+        the attributes of the items, see
+        https://contextgem.shcherbak.ai/concepts/string_concept/. Defaults to an empty list.
+    :vartype extracted_items: list[_StringItem]
+    :ivar custom_data: A dictionary for data of your own about the concept, e.g. the ID
+        that your application has for it. Must be JSON-serializable. Not sent to the models,
+        and kept when the concept is serialized or cloned. Defaults to an empty dict.
+    :vartype custom_data: dict[str, Any]
+    :ivar unique_id: The unique ID of the concept, a ULID assigned when the concept is
+        created. Read-only. Kept when the concept is serialized or cloned, i.e. a restored
+        or cloned concept has the ID of the original.
+    :vartype unique_id: str
 
     Example:
         .. literalinclude:: ../../../dev/usage_examples/docstrings/concepts/def_string_concept.py
@@ -132,6 +147,21 @@ class BooleanConcept(_BooleanConcept):
         Defaults to None, in which case the ``decision_threshold`` of the decision model
         applies. Ignored when the concept is extracted by an LLM.
     :vartype decision_threshold: float | None
+    :ivar extracted_items: The items extracted for the concept, set by the extraction
+        methods: each has the extracted ``value``, and its ``justification``, references
+        (``reference_paragraphs`` and ``reference_sentences``, the document's own objects),
+        ``reference_page_numbers`` and ``probabilities`` where these apply. For
+        the attributes of the items, see
+        https://contextgem.shcherbak.ai/concepts/boolean_concept/. Defaults to an empty list.
+    :vartype extracted_items: list[_BooleanItem]
+    :ivar custom_data: A dictionary for data of your own about the concept, e.g. the ID
+        that your application has for it. Must be JSON-serializable. Not sent to the models,
+        and kept when the concept is serialized or cloned. Defaults to an empty dict.
+    :vartype custom_data: dict[str, Any]
+    :ivar unique_id: The unique ID of the concept, a ULID assigned when the concept is
+        created. Read-only. Kept when the concept is serialized or cloned, i.e. a restored
+        or cloned concept has the ID of the original.
+    :vartype unique_id: str
 
     Example:
         .. literalinclude:: ../../../dev/usage_examples/docstrings/concepts/def_boolean_concept.py
@@ -185,6 +215,21 @@ class NumericalConcept(_NumericalConcept):
         number of items to extract from the concept's name, description, and type (e.g.,
         "total revenue" vs "monthly sales figures").
     :vartype singular_occurrence: StrictBool
+    :ivar extracted_items: The items extracted for the concept, set by the extraction
+        methods: each has the extracted ``value``, and its ``justification``, references
+        (``reference_paragraphs`` and ``reference_sentences``, the document's own objects),
+        ``reference_page_numbers`` and ``probabilities`` where these apply. For
+        the attributes of the items, see
+        https://contextgem.shcherbak.ai/concepts/numerical_concept/. Defaults to an empty list.
+    :vartype extracted_items: list[_IntegerItem | _FloatItem | _IntegerOrFloatItem]
+    :ivar custom_data: A dictionary for data of your own about the concept, e.g. the ID
+        that your application has for it. Must be JSON-serializable. Not sent to the models,
+        and kept when the concept is serialized or cloned. Defaults to an empty dict.
+    :vartype custom_data: dict[str, Any]
+    :ivar unique_id: The unique ID of the concept, a ULID assigned when the concept is
+        created. Read-only. Kept when the concept is serialized or cloned, i.e. a restored
+        or cloned concept has the ID of the original.
+    :vartype unique_id: str
 
     Example:
         .. literalinclude:: ../../../dev/usage_examples/docstrings/concepts/def_numerical_concept.py
@@ -242,6 +287,21 @@ class RatingConcept(_RatingConcept):
         the extraction method): it then returns an item for each part, and rejects a concept
         with ``singular_occurrence=True`` with ``ValueError``.
     :vartype singular_occurrence: StrictBool
+    :ivar extracted_items: The items extracted for the concept, set by the extraction
+        methods: each has the extracted ``value``, and its ``justification``, references
+        (``reference_paragraphs`` and ``reference_sentences``, the document's own objects),
+        ``reference_page_numbers`` and ``probabilities`` where these apply. For
+        the attributes of the items, see
+        https://contextgem.shcherbak.ai/concepts/rating_concept/. Defaults to an empty list.
+    :vartype extracted_items: list[_IntegerItem]
+    :ivar custom_data: A dictionary for data of your own about the concept, e.g. the ID
+        that your application has for it. Must be JSON-serializable. Not sent to the models,
+        and kept when the concept is serialized or cloned. Defaults to an empty dict.
+    :vartype custom_data: dict[str, Any]
+    :ivar unique_id: The unique ID of the concept, a ULID assigned when the concept is
+        created. Read-only. Kept when the concept is serialized or cloned, i.e. a restored
+        or cloned concept has the ID of the original.
+    :vartype unique_id: str
 
     Example:
         .. literalinclude:: ../../../dev/usage_examples/docstrings/concepts/def_rating_concept.py
@@ -326,6 +386,21 @@ class JsonObjectConcept(_JsonObjectConcept):
         number of items to extract from the concept's name, description, and type (e.g.,
         "product specifications" vs "customer order details").
     :vartype singular_occurrence: StrictBool
+    :ivar extracted_items: The items extracted for the concept, set by the extraction
+        methods: each has the extracted ``value``, and its ``justification``, references
+        (``reference_paragraphs`` and ``reference_sentences``, the document's own objects),
+        ``reference_page_numbers`` and ``probabilities`` where these apply. For
+        the attributes of the items, see
+        https://contextgem.shcherbak.ai/concepts/json_object_concept/. Defaults to an empty list.
+    :vartype extracted_items: list[_JsonObjectItem]
+    :ivar custom_data: A dictionary for data of your own about the concept, e.g. the ID
+        that your application has for it. Must be JSON-serializable. Not sent to the models,
+        and kept when the concept is serialized or cloned. Defaults to an empty dict.
+    :vartype custom_data: dict[str, Any]
+    :ivar unique_id: The unique ID of the concept, a ULID assigned when the concept is
+        created. Read-only. Kept when the concept is serialized or cloned, i.e. a restored
+        or cloned concept has the ID of the original.
+    :vartype unique_id: str
 
     Example:
         .. literalinclude:: ../../../dev/usage_examples/docstrings/concepts/def_json_object_concept.py
@@ -376,6 +451,21 @@ class DateConcept(_DateConcept):
         number of items to extract from the concept's name, description, and type (e.g.,
         "contract signing date" vs "meeting dates").
     :vartype singular_occurrence: StrictBool
+    :ivar extracted_items: The items extracted for the concept, set by the extraction
+        methods: each has the extracted ``value``, and its ``justification``, references
+        (``reference_paragraphs`` and ``reference_sentences``, the document's own objects),
+        ``reference_page_numbers`` and ``probabilities`` where these apply. For
+        the attributes of the items, see
+        https://contextgem.shcherbak.ai/concepts/date_concept/. Defaults to an empty list.
+    :vartype extracted_items: list[_DateItem]
+    :ivar custom_data: A dictionary for data of your own about the concept, e.g. the ID
+        that your application has for it. Must be JSON-serializable. Not sent to the models,
+        and kept when the concept is serialized or cloned. Defaults to an empty dict.
+    :vartype custom_data: dict[str, Any]
+    :ivar unique_id: The unique ID of the concept, a ULID assigned when the concept is
+        created. Read-only. Kept when the concept is serialized or cloned, i.e. a restored
+        or cloned concept has the ID of the original.
+    :vartype unique_id: str
 
     Example:
         .. literalinclude:: ../../../dev/usage_examples/docstrings/concepts/def_date_concept.py
@@ -453,6 +543,21 @@ class LabelConcept(_LabelConcept):
         the ``decision_threshold`` of the decision model applies. Ignored when
         the concept is extracted by an LLM.
     :vartype decision_threshold: float | None
+    :ivar extracted_items: The items extracted for the concept, set by the extraction
+        methods: each has the extracted ``value``, and its ``justification``, references
+        (``reference_paragraphs`` and ``reference_sentences``, the document's own objects),
+        ``reference_page_numbers`` and ``probabilities`` where these apply. For
+        the attributes of the items, see
+        https://contextgem.shcherbak.ai/concepts/label_concept/. Defaults to an empty list.
+    :vartype extracted_items: list[_LabelItem]
+    :ivar custom_data: A dictionary for data of your own about the concept, e.g. the ID
+        that your application has for it. Must be JSON-serializable. Not sent to the models,
+        and kept when the concept is serialized or cloned. Defaults to an empty dict.
+    :vartype custom_data: dict[str, Any]
+    :ivar unique_id: The unique ID of the concept, a ULID assigned when the concept is
+        created. Read-only. Kept when the concept is serialized or cloned, i.e. a restored
+        or cloned concept has the ID of the original.
+    :vartype unique_id: str
 
     Example:
         .. literalinclude:: ../../../dev/usage_examples/docstrings/concepts/def_label_concept.py

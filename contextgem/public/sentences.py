@@ -41,6 +41,21 @@ class Sentence(_Sentence):
         in ascending order. Sentences that are segmented automatically inherit the page numbers of
         their paragraph. They are not sent to the models. Defaults to an empty list.
     :vartype page_numbers: list[int]
+    :ivar custom_data: A dictionary for data of your own about the sentence, e.g. the ID
+        that your application has for its text. It reaches the extraction results: the
+        ``reference_sentences`` of aspects and extracted items are the sentences of
+        the document's own paragraphs, not copies (see
+        https://contextgem.shcherbak.ai/documents/document_config/#locating-paras-and-sents),
+        and an item that an aspect extracts as the sentence (``reference_depth="sentences"``)
+        gets a copy of it. Sentences that are segmented automatically get a copy of
+        the custom data of their paragraph. Must be JSON-serializable. Not sent to
+        the models, and kept when the document is serialized or cloned. Defaults to an
+        empty dict.
+    :vartype custom_data: dict[str, Any]
+    :ivar unique_id: The unique ID of the sentence, a ULID assigned when the sentence is
+        created. Read-only. Kept when the document is serialized or cloned, i.e. a restored
+        or cloned sentence has the ID of the original.
+    :vartype unique_id: str
 
     Note:
         Normally, you do not need to construct sentences manually, as they are populated automatically

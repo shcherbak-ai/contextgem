@@ -29,6 +29,13 @@ class StringExample(_StringExample):
 
     :ivar content: A non-empty string that holds the text content of the example.
     :vartype content: str
+    :ivar custom_data: A dictionary for data of your own about the example. Must be
+        JSON-serializable. Not sent to the models, and kept when the example is
+        serialized or cloned. Defaults to an empty dict.
+    :vartype custom_data: dict[str, Any]
+    :ivar unique_id: The unique ID of the example, a ULID assigned when the example is
+        created. Read-only. Kept when the example is serialized or cloned.
+    :vartype unique_id: str
 
     Note:
         Examples are optional and can be used to guide LLM extraction tasks. They serve as reference
@@ -50,6 +57,13 @@ class JsonObjectExample(_JsonObjectExample):
     :ivar content: A JSON-serializable dict with the minimum length of 1 that holds
         the content of the example.
     :vartype content: dict[str, Any]
+    :ivar custom_data: A dictionary for data of your own about the example. Must be
+        JSON-serializable. Not sent to the models, and kept when the example is
+        serialized or cloned. Defaults to an empty dict.
+    :vartype custom_data: dict[str, Any]
+    :ivar unique_id: The unique ID of the example, a ULID assigned when the example is
+        created. Read-only. Kept when the example is serialized or cloned.
+    :vartype unique_id: str
 
     Note:
         Examples are optional and can be used to guide LLM extraction tasks. They serve as reference

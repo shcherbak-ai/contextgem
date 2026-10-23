@@ -162,6 +162,30 @@ class DocumentLLM(_DocumentLLM):
         If ``litellm`` reports the seed as not supported for the model, it is dropped from
         the request, with a warning logged. Defaults to None (the parameter is not sent).
     :vartype seed: int | None
+    :ivar tools: The tools that the LLM can call in a chat: functions decorated with
+        ``@register_tool``, as a list or a tuple. Used by ``chat()`` and ``chat_async()``
+        only: the extraction methods send no tools, and warn that they are ignored. See
+        https://contextgem.shcherbak.ai/llms/chat_with_tools/. Defaults to None.
+    :vartype tools: list[Callable] | None
+    :ivar tool_choice: How the LLM uses the tools in a chat: ``"none"``, ``"auto"``,
+        ``"required"``, or a dict that forces a specific tool. ``"required"`` and
+        a forced tool apply to the first round only. Defaults to None, in which case
+        the default of the API applies.
+    :vartype tool_choice: str | dict | None
+    :ivar parallel_tool_calls: Whether the LLM may call several tools at once in a chat,
+        where the model supports it. Defaults to None, in which case the default of
+        the model applies.
+    :vartype parallel_tool_calls: bool | None
+    :ivar tool_max_rounds: The maximum number of rounds of tool calls in a chat turn: if
+        the LLM still calls tools after them, ``LLMToolLoopLimitError`` is raised.
+        Defaults to 10.
+    :vartype tool_max_rounds: int
+    :ivar is_group: Whether the object is a model group: always False for an LLM.
+        Read-only.
+    :vartype is_group: bool
+    :ivar list_roles: The role of the LLM, as a list of one element: ``[role]``, with
+        None for an LLM without a role. Read-only.
+    :vartype list_roles: list[str | None]
 
     Note:
 
@@ -201,6 +225,19 @@ class ChatSession(_ChatSession):
 
     To be used as ``chat_session=...`` parameter for ``DocumentLLM.chat(...)``
     or ``DocumentLLM.chat_async(...)``.
+
+    :ivar messages: The messages of the session, in order: the system message, if any,
+        the messages of the user, and the answers of the LLM. Read-only. The tool calls
+        and their results are not listed, although they are kept in the history that
+        is sent to the LLM.
+    :vartype messages: list[_Message]
+    :ivar custom_data: A dictionary for data of your own about the session, e.g. the ID
+        that your application has for it. Must be JSON-serializable. Not sent to the models,
+        and kept when the session is serialized or cloned. Defaults to an empty dict.
+    :vartype custom_data: dict[str, Any]
+    :ivar unique_id: The unique ID of the session, a ULID assigned when the session is
+        created. Read-only. Kept when the session is serialized or cloned.
+    :vartype unique_id: str
 
     Note:
         A chat session keeps the first system message it is given: the system message

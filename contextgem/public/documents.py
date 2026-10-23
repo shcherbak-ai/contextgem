@@ -54,6 +54,22 @@ class Document(_Document):
         improving initialization performance. When True, sentences are segmented immediately during
         Document creation using the SaT model.
     :vartype pre_segment_sentences: bool
+    :ivar sentences: All the sentences of the document's paragraphs, in order. Read-only:
+        the sentences are those of the paragraphs, i.e. the same objects.
+    :vartype sentences: list[Sentence]
+    :ivar model_roles: The ``model_role`` values of the document's aspects and concepts,
+        and of the sub-aspects and concepts of its aspects, with None for those without
+        a role. Read-only. A ``DocumentModelGroup`` that extracts them needs a model
+        for each of these roles.
+    :vartype model_roles: set[str | None]
+    :ivar custom_data: A dictionary for data of your own about the document, e.g. the ID
+        that your application has for it. Must be JSON-serializable. Not sent to the models,
+        and kept when the document is serialized or cloned. Defaults to an empty dict.
+    :vartype custom_data: dict[str, Any]
+    :ivar unique_id: The unique ID of the document, a ULID assigned when the document is
+        created. Read-only. Kept when the document is serialized or cloned, i.e. a restored
+        or cloned document has the ID of the original.
+    :vartype unique_id: str
 
     Note:
         Normally, you do not need to construct/populate paragraphs manually, as they are

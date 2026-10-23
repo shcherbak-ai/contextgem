@@ -32,6 +32,16 @@ class Image(_Image):
         ``image_to_base64()`` from ``contextgem.public.utils`` can be used to
         encode images to base64.
     :vartype base64_data: str
+    :ivar custom_data: A dictionary for data of your own about the image, e.g. the ID
+        that your application has for it. ``Document.from_docling()`` stores where
+        the image comes from under the key ``"docling"``. Must be JSON-serializable.
+        Not sent to the models, and kept when the image is serialized or cloned.
+        Defaults to an empty dict.
+    :vartype custom_data: dict[str, Any]
+    :ivar unique_id: The unique ID of the image, a ULID assigned when the image is
+        created. Read-only. Kept when the image is serialized or cloned, i.e. a restored
+        or cloned image has the ID of the original.
+    :vartype unique_id: str
 
     Note:
         - Attached to documents:

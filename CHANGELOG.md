@@ -8,6 +8,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ## [Unreleased]
 
+### Added
+
+- The docstring of each public class now names all its public attributes and properties, the inherited ones included, e.g. `custom_data`, where your own data goes, such as an ID of your own for a paragraph, and `unique_id`. The docstrings of `Paragraph` and `Sentence` say that the references of aspects and extracted items are the document's own paragraphs and sentences.
+
 ### Removed
 
 - A multi-class `LabelConcept` no longer logs a message at the `INFO` level when it is created, which suggested a catch-all label such as `"other"` for every such concept, also one whose labels already cover all cases. The docstring of `LabelConcept` gives the advice.

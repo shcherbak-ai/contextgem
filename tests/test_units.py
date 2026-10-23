@@ -16,6 +16,8 @@ type-hint serialization/normalization.
 from __future__ import annotations
 
 import ast
+import functools
+import inspect
 import re
 import warnings
 from dataclasses import dataclass
@@ -35,7 +37,7 @@ from typing import (  # noqa: UP035
 
 import pytest
 from dotenv import dotenv_values
-from pydantic import Field, StringConstraints
+from pydantic import BaseModel, Field, StringConstraints
 from vcr.request import Request as VCRRequest
 
 import contextgem
@@ -1380,3 +1382,40 @@ def test_every_warning_of_the_package_has_its_category() -> None:
         assert isinstance(category, ast.Name) and category.id == "ContextGemWarning", (
             f"{path.name}:{node.lineno}: a warning without the ContextGemWarning category"
         )
+
+
+# ---------------------------------------------------------------------------
+# docstrings of the public classes
+# ---------------------------------------------------------------------------
+
+
+def test_public_classes_document_their_attributes() -> None:
+    """Every public field and property of a class exported from ``contextgem`` has
+    an ``:ivar <name>:`` entry in the docstring of the class itself. The docstring
+    is what a reader of the installed package, e.g. a coding agent, finds: the
+    fields and properties that a class inherits are defined in internal modules,
+    which such a reader does not look for. Pydantic's own attributes, e.g.
+    ``model_extra``, are left out."""
+    pydantic_attributes = set(dir(BaseModel))
+    missing: dict[str, list[str]] = {}
+    for name in contextgem.__all__:
+        cls = getattr(contextgem, name)
+        if not (inspect.isclass(cls) and issubclass(cls, BaseModel)):
+            continue
+        attributes = set(cls.model_fields) | {
+            attr
+            for attr in dir(cls)
+            if isinstance(
+                inspect.getattr_static(cls, attr, None),
+                property | functools.cached_property,
+            )
+        }
+        documented = set(re.findall(r":ivar (\w+):", cls.__doc__ or ""))
+        undocumented = sorted(
+            attr
+            for attr in attributes - documented
+            if not attr.startswith("_") and attr not in pydantic_attributes
+        )
+        if undocumented:
+            missing[name] = undocumented
+    assert not missing, f"Public attributes without an :ivar entry: {missing}"

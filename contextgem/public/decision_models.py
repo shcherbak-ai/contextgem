@@ -131,6 +131,12 @@ class DocumentDecisionModel(_DocumentDecisionModel):
         Requests to a fallback model are controlled by the limiter of that fallback model.
         See https://github.com/mjpieters/aiolimiter for configuration details.
     :vartype async_limiter: AsyncLimiter
+    :ivar is_group: Whether the object is a model group: always False for a decision
+        model. Read-only.
+    :vartype is_group: bool
+    :ivar list_roles: The role of the decision model, as a list of one element:
+        ``[role]``, with None for a model without a role. Read-only.
+    :vartype list_roles: list[str | None]
 
     Note:
         For what a decision model extracts, how its requests are formed, how

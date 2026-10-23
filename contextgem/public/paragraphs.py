@@ -48,6 +48,21 @@ class Paragraph(_Paragraph):
         made from them, e.g. to cite the pages of an extracted item. They are not sent to the
         models. Sentences segmented from the paragraph inherit them. Defaults to an empty list.
     :vartype page_numbers: list[int]
+    :ivar custom_data: A dictionary for data of your own about the paragraph, e.g. the ID
+        that your application has for its text. It reaches the extraction results: the
+        ``reference_paragraphs`` of aspects and extracted items are the document's own
+        paragraphs, not copies (see
+        https://contextgem.shcherbak.ai/documents/document_config/#locating-paras-and-sents),
+        an item that an aspect extracts as the paragraph gets a copy of it, and so does each
+        sentence segmented from the paragraph. ``Document.from_docling()`` stores where
+        the paragraph comes from under the key ``"docling"``. Must be JSON-serializable.
+        Not sent to the models, and kept when the document is serialized or cloned.
+        Defaults to an empty dict.
+    :vartype custom_data: dict[str, Any]
+    :ivar unique_id: The unique ID of the paragraph, a ULID assigned when the paragraph is
+        created. Read-only. Kept when the document is serialized or cloned, i.e. a restored
+        or cloned paragraph has the ID of the original.
+    :vartype unique_id: str
 
     Note:
         Normally, you do not need to construct paragraphs manually, as they are populated automatically
