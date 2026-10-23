@@ -149,7 +149,7 @@ class TestExtraction(BaseTest):
         _orig_query_llm = llm._query_llm
         llm._query_llm = types.MethodType(_invalid_json_query_stub, llm)  # ty: ignore[invalid-assignment]
         try:
-            with pytest.raises(ModelExtractionError, match=r"invalid JSON.*1 retries"):
+            with pytest.raises(ModelExtractionError, match=r"invalid data.*1 retries"):
                 llm.extract_aspects_from_document(
                     document,
                     overwrite_existing=True,
@@ -162,12 +162,12 @@ class TestExtraction(BaseTest):
                     document,
                     overwrite_existing=True,
                 )
-            with pytest.raises(ModelExtractionError, match=r"invalid JSON.*1 retries"):
+            with pytest.raises(ModelExtractionError, match=r"invalid data.*1 retries"):
                 llm.extract_concepts_from_document(
                     document,
                     overwrite_existing=True,
                 )
-            with pytest.raises(ModelExtractionError, match=r"invalid JSON.*1 retries"):
+            with pytest.raises(ModelExtractionError, match=r"invalid data.*1 retries"):
                 llm.extract_all(
                     document,
                     overwrite_existing=True,
@@ -181,9 +181,9 @@ class TestExtraction(BaseTest):
                     raise_exception_on_extraction_error=False,
                 )
                 assert any(
-                    re.search(r"invalid JSON.*1 retries", log) for log in captured_logs
+                    re.search(r"invalid data.*1 retries", log) for log in captured_logs
                 ), (
-                    f"Expected warning pattern 'invalid JSON.*1 retries' not found in logs: {captured_logs}"
+                    f"Expected warning pattern 'invalid data.*1 retries' not found in logs: {captured_logs}"
                 )
 
             with pytest.raises(ValueError, match=r"Aspect.*not yet processed"):
@@ -203,9 +203,9 @@ class TestExtraction(BaseTest):
                     raise_exception_on_extraction_error=False,
                 )
                 assert any(
-                    re.search(r"invalid JSON.*1 retries", log) for log in captured_logs
+                    re.search(r"invalid data.*1 retries", log) for log in captured_logs
                 ), (
-                    f"Expected warning pattern 'invalid JSON.*1 retries' not found in logs: {captured_logs}"
+                    f"Expected warning pattern 'invalid data.*1 retries' not found in logs: {captured_logs}"
                 )
 
             # The concept of the aspect is not extracted, with a warning, as the
@@ -240,7 +240,7 @@ class TestExtraction(BaseTest):
         _orig_query_llm_no_retry = llm._query_llm
         llm._query_llm = types.MethodType(_invalid_json_query_stub, llm)  # ty: ignore[invalid-assignment]
         try:
-            with pytest.raises(ModelExtractionError, match=r"invalid JSON.*0 retries"):
+            with pytest.raises(ModelExtractionError, match=r"invalid data.*0 retries"):
                 llm.extract_aspects_from_document(
                     document,
                     overwrite_existing=True,
@@ -253,12 +253,12 @@ class TestExtraction(BaseTest):
                     document,
                     overwrite_existing=True,
                 )
-            with pytest.raises(ModelExtractionError, match=r"invalid JSON.*0 retries"):
+            with pytest.raises(ModelExtractionError, match=r"invalid data.*0 retries"):
                 llm.extract_concepts_from_document(
                     document,
                     overwrite_existing=True,
                 )
-            with pytest.raises(ModelExtractionError, match=r"invalid JSON.*0 retries"):
+            with pytest.raises(ModelExtractionError, match=r"invalid data.*0 retries"):
                 llm.extract_all(
                     document,
                     overwrite_existing=True,
@@ -272,9 +272,9 @@ class TestExtraction(BaseTest):
                     raise_exception_on_extraction_error=False,
                 )
                 assert any(
-                    re.search(r"invalid JSON.*0 retries", log) for log in captured_logs
+                    re.search(r"invalid data.*0 retries", log) for log in captured_logs
                 ), (
-                    f"Expected warning pattern 'invalid JSON.*0 retries' not found in logs: {captured_logs}"
+                    f"Expected warning pattern 'invalid data.*0 retries' not found in logs: {captured_logs}"
                 )
 
             with pytest.raises(ValueError, match=r"Aspect.*not yet processed"):
@@ -294,9 +294,9 @@ class TestExtraction(BaseTest):
                     raise_exception_on_extraction_error=False,
                 )
                 assert any(
-                    re.search(r"invalid JSON.*0 retries", log) for log in captured_logs
+                    re.search(r"invalid data.*0 retries", log) for log in captured_logs
                 ), (
-                    f"Expected warning pattern 'invalid JSON.*0 retries' not found in logs: {captured_logs}"
+                    f"Expected warning pattern 'invalid data.*0 retries' not found in logs: {captured_logs}"
                 )
 
             # The concept of the aspect is not extracted, with a warning, as the
@@ -2865,7 +2865,7 @@ class TestExtraction(BaseTest):
             )
             error = asyncio.run(extract(llm, document))
             assert isinstance(error, ModelExtractionError)
-            assert "invalid JSON" in str(error)
+            assert "invalid data" in str(error)
             assert error.retry_count == 1
             check_outcome(
                 llm,
@@ -2887,7 +2887,7 @@ class TestExtraction(BaseTest):
                 (
                     lambda: create_llm(max_retries_invalid_data=0),
                     primary_model,
-                    "invalid JSON returned by LLM",
+                    "invalid data returned by LLM",
                 ),
                 (
                     create_decision_model,
@@ -3043,7 +3043,7 @@ class TestExtraction(BaseTest):
                         )
                     assert any(
                         re.search(
-                            r"invalid JSON.*\(0 retries\)\. If you want to raise",
+                            r"invalid data.*\(0 retries\)\. If you want to raise",
                             str(call.args[0]),
                         )
                         for call in log_warning.call_args_list
@@ -3456,13 +3456,13 @@ class TestExtraction(BaseTest):
                 [primary_model, fallback_model],
                 [
                     *not_valid_json,
-                    "INFO: Retrying {type}s with invalid JSON (1/2)",
+                    "INFO: Retrying {type}s with invalid data (1/2)",
                     *not_valid_json,
-                    "INFO: Retrying {type}s with invalid JSON (2/2)",
+                    "INFO: Retrying {type}s with invalid data (2/2)",
                     *not_valid_json,
                     trying_fallback_llm,
                     *not_valid_json,
-                    "INFO: Retrying {type}s with invalid JSON (1/3)",
+                    "INFO: Retrying {type}s with invalid data (1/3)",
                 ],
                 request_outcomes={
                     primary_model: [invalid_answer] * 3,
@@ -3761,7 +3761,7 @@ class TestExtraction(BaseTest):
                         f"Trying with fallback {fallback} ({position}/{len(chain) - 1})"
                     )
                 expected_log += [
-                    f"Retrying {instance_type}s with invalid JSON ({i + 1}/{retries})"
+                    f"Retrying {instance_type}s with invalid data ({i + 1}/{retries})"
                     for i in range(retries or 0)
                 ]
             return expected_log
@@ -3812,7 +3812,7 @@ class TestExtraction(BaseTest):
                     reported = (
                         "due to an invalid response returned by decision model"
                         if chain[-1] is None
-                        else "due to invalid JSON returned by LLM"
+                        else "due to invalid data returned by LLM"
                     )
                     for instance_type, use_concurrency in combinations:
                         expected_log = get_expected_log(chain, instance_type)
@@ -4432,7 +4432,7 @@ class TestExtraction(BaseTest):
             )
             document = create_document()
             responses.append(malformed_response)
-            with pytest.raises(ModelExtractionError, match="invalid JSON"):
+            with pytest.raises(ModelExtractionError, match="invalid data"):
                 llm.extract_aspects_from_document(document)
             assert not responses
 
@@ -4444,7 +4444,7 @@ class TestExtraction(BaseTest):
                     document, raise_exception_on_extraction_error=False
                 )
             assert any(
-                "invalid JSON" in str(call.args[0])
+                "invalid data" in str(call.args[0])
                 for call in log_warning.call_args_list
             )
             assert not responses

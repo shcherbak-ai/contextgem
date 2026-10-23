@@ -235,12 +235,14 @@ class _DocumentLLM(_DocumentModel):
     def _invalid_output_desc(self) -> str:
         """
         Returns what the LLM is said to have returned when its output cannot
-        be used, as worded in the messages on the extraction that fails for it.
+        be used, as worded in the messages on the extraction that fails for it:
+        an output that is not JSON, and one that is valid JSON but does not match
+        the answer format or the values that the aspects and concepts accept.
 
         :return: The description of an output of the LLM that cannot be used.
         :rtype: str
         """
-        return "invalid JSON"
+        return "invalid data"
 
     @property
     def _retries_invalid_data(self) -> int:

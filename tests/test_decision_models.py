@@ -5217,7 +5217,7 @@ class TestDecisionModels(BaseTest):
         # model to fail, with the number of the retries of the LLM
         with pytest.raises(
             ModelExtractionError,
-            match=r"invalid JSON returned by LLM.*\(after 2 retries\)",
+            match=r"invalid data returned by LLM.*\(after 2 retries\)",
         ) as extraction_exc_info:
             extract(
                 create_decision_model_with_llm_fallback(),

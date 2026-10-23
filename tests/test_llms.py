@@ -1533,7 +1533,7 @@ class TestLLMs(BaseTest):
 
             # Extraction: invalid data is requested again without a delay
             set_outcomes({primary_model: [invalid_answer]})
-            with pytest.raises(ModelExtractionError, match=r"invalid JSON.*2 retries"):
+            with pytest.raises(ModelExtractionError, match=r"invalid data.*2 retries"):
                 create_llm(max_retries_invalid_data=2).extract_concepts_from_document(
                     create_document()
                 )
@@ -1729,7 +1729,7 @@ class TestLLMs(BaseTest):
 
             # Invalid data in a complete response is still requested again
             set_outcomes({primary_model: [(invalid_answer, "stop")]})
-            with pytest.raises(ModelExtractionError, match=r"invalid JSON.*3 retries"):
+            with pytest.raises(ModelExtractionError, match=r"invalid data.*3 retries"):
                 create_llm().extract_concepts_from_document(create_document())
             assert requests == [primary_model] * 4
 
