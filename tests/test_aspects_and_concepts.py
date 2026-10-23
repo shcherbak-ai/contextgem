@@ -7,14 +7,18 @@ Module defining tests for aspects and concepts.
 
 from __future__ import annotations
 
+import json
 import os
+import types
 from dataclasses import dataclass, field
 from datetime import date
 from typing import Any, Dict, List, Literal, Optional  # noqa: UP035
+from unittest.mock import patch
 
 import pytest
 from pydantic import BaseModel, Field, field_validator
 
+from contextgem.internal.base import llms as llms_module
 from contextgem.internal.base.concepts import _Concept
 from contextgem.internal.base.items import _ExtractedItem
 from contextgem.internal.items import (
@@ -1695,6 +1699,118 @@ class TestAspectsAndConcepts(BaseTest):
         # Test instance serialization and cloning
         self.check_instance_serialization_and_cloning(complex_concept)
         self.check_instance_serialization_and_cloning(document)
+
+    def test_invalid_llm_output_is_logged_without_its_values(self):
+        """
+        Tests that the errors logged on an LLM output that cannot be used say
+        where and how the output is invalid, but give none of its values, which
+        can hold text of the document: a field of an item beside its value,
+        a field of a JSON object of another type than its structure gives, a date
+        that cannot be parsed, and a label that is not a label of the concept.
+
+        LLM API calls are stubbed, i.e. no cassette is required.
+        """
+        litellm = llms_module.litellm
+        sensitive_text = "Patient Jane Roe, born on 4 March 1971, treated in ward 7"
+        answers: list[str] = []
+
+        async def acompletion_stub(**kwargs: Any):
+            """
+            Simulates the LLM API: returns the next answer of the queue.
+            """
+            return types.SimpleNamespace(
+                choices=[
+                    types.SimpleNamespace(
+                        message=types.SimpleNamespace(content=answers.pop(0))
+                    )
+                ],
+                usage=types.SimpleNamespace(prompt_tokens=1, completion_tokens=1),
+            )
+
+        def answer(items: list[Any]) -> str:
+            """
+            Returns an answer with the given items for the concept of the prompt.
+            """
+            return json.dumps([{"concept_id": "C0", "extracted_items": items}])
+
+        def json_object_concept() -> JsonObjectConcept:
+            """
+            Returns a JSON object concept with justifications and references.
+            """
+            return JsonObjectConcept(
+                name="Alert",
+                description="The alert in the record",
+                structure={"title": str, "severity": str},
+                add_justifications=True,
+                add_references=True,
+            )
+
+        cases = [
+            (
+                json_object_concept(),
+                answer(
+                    [
+                        {
+                            "value": {"severity": "high"},
+                            "title": sensitive_text,
+                            "justification": "Stated in the record.",
+                            "reference_paragraph_ids": ["P0"],
+                        }
+                    ]
+                ),
+                "`0.extracted_items.0.title`: Extra inputs are not permitted",
+            ),
+            (
+                json_object_concept(),
+                answer(
+                    [
+                        {
+                            "value": {"title": [sensitive_text], "severity": "high"},
+                            "justification": "Stated in the record.",
+                            "reference_paragraph_ids": ["P0"],
+                        }
+                    ]
+                ),
+                "`title`: Input should be a valid string",
+            ),
+            (
+                DateConcept(name="Birth date", description="The birth date"),
+                answer([sensitive_text]),
+                "Failed to parse a date string of concept `Birth date`",
+            ),
+            (
+                LabelConcept(
+                    name="Record type",
+                    description="The type of the record",
+                    labels=["Admission", "Discharge"],
+                ),
+                answer([{"labels": [sensitive_text]}]),
+                "Invalid labels for concept `Record type`: 1 of 1 labels",
+            ),
+        ]
+        llm = DocumentLLM(
+            model="openai/gpt-6-luna",
+            api_key="test_api_key",
+            max_retries_invalid_data=0,
+        )
+        for concept, llm_answer, expected_message_part in cases:
+            document = Document(raw_text="Admission record of ward 7.")
+            document.concepts = [concept]
+            answers[:] = [llm_answer]
+            with (
+                patch.object(litellm, "acompletion", new=acompletion_stub),
+                capture_logs() as messages,
+            ):
+                llm.extract_concepts_from_document(
+                    document, raise_exception_on_extraction_error=False
+                )
+            assert not concept.extracted_items
+            assert any(expected_message_part in message for message in messages), (
+                messages
+            )
+            for message in messages:
+                assert "Jane Roe" not in message
+                assert "1971" not in message
 
     def test_init_and_validate_date_concept(self):
         """

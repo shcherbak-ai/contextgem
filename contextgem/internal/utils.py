@@ -1055,6 +1055,36 @@ def _get_sentence_position_from_prompt_id(
     return int(match.group(2))
 
 
+def _describe_error_without_values(error: Exception) -> str:
+    """
+    Describes an error raised while an output of a model is validated or processed,
+    without the values of the output that the error was raised for, so that it can
+    be logged: the output can hold text of the document, e.g. in an extracted value,
+    which does not belong in the logs of the calling code.
+
+    A ``ValidationError`` of pydantic is described by the location and the message
+    of each of its errors, i.e. without the input of each error that its text
+    gives. The messages of the validators of the framework that check the values
+    of a model's output do not give the values either. Any other error is described
+    by its text.
+
+    :param error: The error to describe.
+    :type error: Exception
+    :return: The description of the error.
+    :rtype: str
+    """
+    if not isinstance(error, pydantic.ValidationError):
+        return str(error)
+    descriptions: list[str] = []
+    for details in error.errors(
+        include_url=False, include_context=False, include_input=False
+    ):
+        location = ".".join(str(part) for part in details["loc"])
+        message = details["msg"]
+        descriptions.append(f"`{location}`: {message}" if location else message)
+    return "; ".join(descriptions)
+
+
 def _validate_parsed_llm_output(
     parsed_json: dict | list | None,
     extracted_item_type: ExtractedInstanceType,
@@ -1111,7 +1141,10 @@ def _validate_parsed_llm_output(
     try:
         validation_model.model_validate(parsed_json, context=validation_context)
     except ValueError as e:
-        logger.error(f"Error when using validation model {validation_model}: {e}")
+        logger.error(
+            f"LLM output does not match the answer format: "
+            f"{_describe_error_without_values(e)}"
+        )
         return None
 
     return parsed_json

@@ -433,6 +433,8 @@ class _RatingConcept(_Concept):
         Validates rating values against concept-specific business logic.
 
         Checks that the rating value is within the defined rating scale range.
+        The message of the error does not give the value, which can be
+        an output of a model, as the errors on such output are logged.
 
         :param rating_value: Rating value to validate.
         :type rating_value: int
@@ -440,8 +442,8 @@ class _RatingConcept(_Concept):
         """
         if not self._rating_start <= rating_value <= self._rating_end:
             raise ValueError(
-                f"Invalid value for scaled rating concept: "
-                f"value {rating_value} is outside of the scale range "
+                f"Invalid value for rating concept `{self.name}`: "
+                f"a value is outside of the scale range "
                 f"{self._rating_start} to {self._rating_end}"
             )
 
@@ -916,6 +918,8 @@ class _DateConcept(_Concept):
         :return: Python date object.
         :rtype: date
         :raises ValueError: If the string can't be parsed according to the specified format.
+            Its message does not give the string, which is an output of a model,
+            as the errors on such output are logged.
         """
 
         # Convert the user-friendly format to Python's strptime format
@@ -927,9 +931,10 @@ class _DateConcept(_Concept):
         try:
             return datetime.strptime(date_string.strip(), py_format).date()
         except ValueError as e:
+            # The error of `strptime` gives the string: it is chained, not quoted
             raise ValueError(
-                f"Failed to parse date string '{date_string}' with "
-                f"format '{self._date_format_in_prompt}': {e}"
+                f"Failed to parse a date string of concept `{self.name}` with "
+                f"format '{self._date_format_in_prompt}'"
             ) from e
 
 
@@ -1075,7 +1080,9 @@ class _LabelConcept(_Concept):
         Validates label values against concept-specific business logic.
 
         Checks that all labels are from the predefined set and enforces
-        classification type constraints.
+        classification type constraints. The messages of the errors do not give
+        the labels that are checked, which can be an output of a model, as
+        the errors on such output are logged.
 
         :param labels_list: List of label strings to validate.
         :type labels_list: list[str]
@@ -1086,14 +1093,16 @@ class _LabelConcept(_Concept):
         invalid_labels = [label for label in labels_list if label not in self.labels]
         if invalid_labels:
             raise ValueError(
-                f"Invalid labels found for concept `{self.__class__.__name__}`: "
-                f"{invalid_labels}. Must be from predefined labels: {self.labels}"
+                f"Invalid labels for concept `{self.name}`: {len(invalid_labels)} "
+                f"of {len(labels_list)} labels are not among the predefined "
+                f"labels {self.labels}"
             )
 
         # Validate classification type constraints
         if self.classification_type == "multi_class" and len(labels_list) > 1:
             raise ValueError(
-                f"Multi-class classification allows only one label, got {len(labels_list)}: {labels_list}"
+                f"Multi-class classification of concept `{self.name}` allows "
+                f"only one label, got {len(labels_list)}"
             )
 
     def _process_item_value(self, value: dict[str, list[str]]) -> list[str]:

@@ -82,6 +82,7 @@ from contextgem.internal.utils import (
     _async_multi_executor,
     _chunk_list,
     _clean_text_for_llm_prompt,
+    _describe_error_without_values,
     _get_distinct_instances,
     _get_position_from_prompt_id,
     _get_sentence_position_from_prompt_id,
@@ -2843,7 +2844,9 @@ class _GenericModelProcessor(_AbstractGenericModelProcessor):
                                 )._process_item_value(i["value"])
                             except ValueError as e:
                                 logger.error(
-                                    f"Error processing extracted item value: {e}"
+                                    f"Error processing extracted item value of "
+                                    f"concept `{relevant_concept.name}`: "
+                                    f"{_describe_error_without_values(e)}"
                                 )
                                 return None, all_usage_data
                             concept_extracted_item_kwargs: dict[str, Any] = {
@@ -2994,7 +2997,10 @@ class _GenericModelProcessor(_AbstractGenericModelProcessor):
                                 )
                             except ValueError as e:
                                 logger.error(
-                                    f"Error creating {relevant_concept._item_class.__name__}: {e}"
+                                    f"Error creating "
+                                    f"{relevant_concept._item_class.__name__} for "
+                                    f"concept `{relevant_concept.name}`: "
+                                    f"{_describe_error_without_values(e)}"
                                 )
                                 return None, all_usage_data
                             extracted_item.reference_paragraphs = reference_paragraphs
@@ -3017,14 +3023,19 @@ class _GenericModelProcessor(_AbstractGenericModelProcessor):
                                 )._process_item_value(i)
                             except ValueError as e:
                                 logger.error(
-                                    f"Error processing extracted item value: {e}"
+                                    f"Error processing extracted item value of "
+                                    f"concept `{relevant_concept.name}`: "
+                                    f"{_describe_error_without_values(e)}"
                                 )
                                 return None, all_usage_data
                             try:
                                 extracted_item = relevant_concept._item_class(value=i)
                             except ValueError as e:
                                 logger.error(
-                                    f"Error creating {relevant_concept._item_class.__name__}: {e}"
+                                    f"Error creating "
+                                    f"{relevant_concept._item_class.__name__} for "
+                                    f"concept `{relevant_concept.name}`: "
+                                    f"{_describe_error_without_values(e)}"
                                 )
                                 return None, all_usage_data
                             # Safe cast: "extracted_items" key always contains a list

@@ -12,6 +12,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 - A multi-class `LabelConcept` no longer logs a message at the `INFO` level when it is created, which suggested a catch-all label such as `"other"` for every such concept, also one whose labels already cover all cases. The docstring of `LabelConcept` gives the advice.
 
+### Security
+
+- The errors logged when the output of a model cannot be used no longer give its values, which can hold text of the document: they say where the output is invalid and how, e.g. `` `0.extracted_items.1.title`: Extra inputs are not permitted `` for a field of an item that an LLM wrote beside its value. The text of a validation error of pydantic gives the input of each error, of which such a log line held up to about 50 characters, e.g. of an extracted string, and the messages on a date that cannot be parsed and on a label that is not a label of the concept gave the whole value. These errors are logged at the `ERROR` level, which the default level (`INFO`) shows. The `ValueError` raised for a label or a rating that a concept does not accept, e.g. in extracted items assigned to it, no longer gives the value either, and names the concept.
+
 ## [1.2.1] - 2026-10-23
 
 ### Security

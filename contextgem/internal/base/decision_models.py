@@ -68,6 +68,7 @@ from contextgem.internal.typings.types import ExtractedInstanceType, ItemProbabi
 from contextgem.internal.utils import (
     _MODEL_API_RETRIES_ATTEMPTED_ATTR,
     _chunk_list,
+    _describe_error_without_values,
     _get_cache_token_counts,
     _get_model_api_retry_delay,
     _group_instances_by_fields,
@@ -1170,7 +1171,10 @@ class _DocumentDecisionModel(_DocumentModel):
         if not isinstance(error, _InvalidDecisionResponseError):
             # Not an answer to a specific question, e.g. a value that the item
             # of an aspect or a concept does not accept
-            return f"{intro} {extracted_item_type}s: {error}"
+            return (
+                f"{intro} {extracted_item_type}s: "
+                f"{_describe_error_without_values(error)}"
+            )
 
         # What each question of the call is on, by the names of the questions
         subjects: dict[str, str] = {}
