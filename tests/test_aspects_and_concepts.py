@@ -2167,6 +2167,89 @@ class TestAspectsAndConcepts(BaseTest):
         # Check cost
         self.check_cost(llm)
 
+    def test_label_concept_amount_of_items_in_prompt(self):
+        """
+        Tests that the prompt asks for at least one extracted item of a multi-class
+        label concept, whose label must always be selected, and for exactly one
+        if the concept has a singular occurrence, while it allows no items for
+        a multi-label concept.
+
+        LLM API calls are stubbed, i.e. no cassette is required.
+        """
+        litellm = llms_module.litellm
+        prompts: list[str] = []
+
+        async def acompletion_stub(**kwargs: Any):
+            """
+            Simulates the LLM API: records the prompt, and returns no items for
+            the concept of the prompt.
+            """
+            prompts.append(kwargs["messages"][-1]["content"])
+            return types.SimpleNamespace(
+                choices=[
+                    types.SimpleNamespace(
+                        message=types.SimpleNamespace(
+                            content='[{"concept_id": "C0", "extracted_items": []}]'
+                        )
+                    )
+                ],
+                usage=types.SimpleNamespace(prompt_tokens=1, completion_tokens=1),
+            )
+
+        labels = ["Contract", "Invoice", "Other"]
+        # The amount of items that the prompt gives, by the classification type
+        # and the singular occurrence of the concept
+        expected_amounts: dict[
+            tuple[Literal["multi_class", "multi_label"], bool], str
+        ] = {
+            ("multi_class", False): (
+                "This concept must have one or more extracted items, never zero."
+            ),
+            ("multi_class", True): (
+                "This concept must have exactly one extracted item, "
+                "never zero or multiple items."
+            ),
+            ("multi_label", False): (
+                "This concept may have zero, one, or multiple extracted items."
+            ),
+            ("multi_label", True): (
+                "This concept may have zero or one extracted item, "
+                "never multiple items."
+            ),
+        }
+        llm = DocumentLLM(model="openai/gpt-6-luna", api_key="test_api_key")
+        for concept_kind, expected_amount in expected_amounts.items():
+            classification_type, singular = concept_kind
+            document = Document(raw_text="The parties sign the agreement below.")
+            document.concepts = [
+                LabelConcept(
+                    name="Document type",
+                    description="The type of the document",
+                    labels=labels,
+                    classification_type=classification_type,
+                    singular_occurrence=singular,
+                )
+            ]
+            prompts.clear()
+            with patch.object(litellm, "acompletion", new=acompletion_stub):
+                llm.extract_concepts_from_document(document)
+            [prompt] = prompts
+            amount_lines = [
+                line.strip()
+                for line in prompt.splitlines()
+                if line.strip().startswith("<amount_of_extracted_items>")
+            ]
+            expected_line = (
+                f"<amount_of_extracted_items>{expected_amount}"
+                f"</amount_of_extracted_items>"
+            )
+            assert amount_lines == [expected_line]
+            # The instruction on the labels agrees with the amount of items
+            assert (
+                'Never leave the "extracted_items" array empty for this concept.'
+                in prompt
+            ) == (classification_type == "multi_class")
+
     def test_init_example(self):
         """
         Tests the initialization of the example classes.

@@ -395,7 +395,15 @@ CONCEPTS:
         {% endif %}
     </available_labels>
     {% endif %}
-    {% if concept_data.singular_occurrence %}
+    {% if concept_data.labels and concept_data.classification_type == "multi_class" %}
+        {% if concept_data.singular_occurrence %}
+
+    <amount_of_extracted_items>This concept must have exactly one extracted item, never zero or multiple items.</amount_of_extracted_items>
+        {% else %}
+
+    <amount_of_extracted_items>This concept must have one or more extracted items, never zero.</amount_of_extracted_items>
+        {% endif %}
+    {% elif concept_data.singular_occurrence %}
 
     <amount_of_extracted_items>This concept may have zero or one extracted item, never multiple items.</amount_of_extracted_items>
     {% else %}

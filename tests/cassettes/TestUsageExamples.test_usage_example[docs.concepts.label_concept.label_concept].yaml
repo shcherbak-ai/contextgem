@@ -216,7 +216,7 @@ interactions:
       a mandatory field \"labels\" mapped to an array containing only the selected
       label, e.g. {\"labels\": [\"label1\"]}. Never leave the \"extracted_items\"
       array empty for this concept.\n    </available_labels>\n\n    <amount_of_extracted_items>This
-      concept may have zero or one extracted item, never multiple items.</amount_of_extracted_items>\n\n    <extracted_item_type>dict
+      concept must have exactly one extracted item, never zero or multiple items.</amount_of_extracted_items>\n\n    <extracted_item_type>dict
       (must be exactly as specified)</extracted_item_type>\n</concept>\n\n</concepts>\n\n<document_text>\nNON-DISCLOSURE
       AGREEMENT\n\nThis Non-Disclosure Agreement (\"Agreement\") is entered into as
       of January 15, 2025, by and between TechCorp Inc., a Delaware corporation (\"Disclosing
@@ -238,7 +238,7 @@ interactions:
       connection:
       - keep-alive
       content-length:
-      - '19550'
+      - '19559'
       content-type:
       - application/json
       cookie:
@@ -272,15 +272,15 @@ interactions:
   response:
     body:
       string: !!binary |
-        H4sIAAAAAAAA/3WTTW/bMAyG7/kVhs7OYDtd3O0WtEOxwwYMu3SLA0OVmUSbLBkSvSQo8t9HyZ/B
-        1osg8yGJVy/p10UUMVmxjxETR46ibtTy0/Ml33zPzt/yZHP5vDo1P56eRH76+Vy36RcW+wrz8gsE
-        DlXvhKE6QGl0h4UFjuC7pvmHNF/frdMsgNpUoHzZocHleqlazfuKo5ECHKEtfUbRazi9Nl3BmcJJ
-        PERqcI4fgGJDEgWtUT7CuHPSIdfI4gkKoxF0kLstNDX3RxQVHghosJRVQbBgD0nB4gHCGS0X9IxS
-        ItTOZ2w7NnboEhV/AdVz9vVxU7DdgK/dJXzTfTdXZWHfOu7d0K1SM8C1Nsi9m8GPXU+uowN7qaU7
-        lmSyI8fpVQ5NwwK90rkLjrY3JrHG0oywRPMbQttVnmddQzZNb8Lv73uIJEXNyu5X/SRuO5YVIJfK
-        zabCBBdHcm+sTVfrPL6B5cmSt1NGdpdkYwZvK2kmlixmJvyr+X8COoOkPsw1vNl/AsIvBSlvLFRS
-        3BozpVnw/8BbaeM0gmLmwP6hBS9RgvUTq2DPW9VtKXMXRxtW0lgPYBsrw6r6pVhcF38BL3w8XKED
-        AAA=
+        H4sIAAAAAAAA/3WTTU/jMBCG7/0Vkc/pqm2gabktsKuFAyckhJoqMva0NevakT1hqVD/O2On+agW
+        LpYzz8yr8TuTj1GSMCXZVcLEjqPYV3r8S/z+c32zeZb23sGydvPp0+vd4/3hsJjpiqWhwr68gsC2
+        6oewVAeorGmwcMARguo0X87yRbZYZhHsrQQdyrYVjudjXRt+qthZJcATWtFnknzEM/RmJLxTeJK2
+        kT14z7dAsTaJgs7qEGHce+WRG2RpD4U1CCa2uyoMiYcjSYoABFRYKlkQLNjNpGBpC+EdHRf0jFIh
+        7H3IWDWsU2gSNX8BfeLs4fZnwdYtPjaX+E339bArB5va8+CGqbUeAG6MRR7cjH6sT+TYObBRRvld
+        SSZ7cpxe5dFWLNIjnevoaH1mEqsczQhLtH8hymZ5njWCrJ9ejy8vThCpFT0oW8zy9AvFUgJypf1g
+        KkxwsSP3utppNs/TM1j+c+RtnzG7mGRdBq+lsj2bjAYm/N/zVw00Bimz7VWW38r3QISdoMYrB1KJ
+        c1/6NAfhF/gurRtGbJh5cG+03yUqcGFgEja81s2SMn/wtGAlTXULrnIqbmrYidFx9AlwBI6joAMA
+        AA==
     headers:
       access-control-expose-headers:
       - X-Request-ID
@@ -303,7 +303,7 @@ interactions:
       openai-organization:
       - DUMMY
       openai-processing-ms:
-      - '1259'
+      - '4390'
       openai-project:
       - DUMMY
       openai-version:
@@ -327,9 +327,9 @@ interactions:
       x-ratelimit-remaining-tokens:
       - DUMMY
       x-ratelimit-reset-requests:
-      - 12ms
+      - 6ms
       x-ratelimit-reset-tokens:
-      - 143ms
+      - 28ms
       x-request-id:
       - DUMMY
     status:

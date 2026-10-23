@@ -29,6 +29,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ### Fixed
 
+- The extraction prompt of a multi-class `LabelConcept` no longer contradicts itself: it said that the concept may have no extracted items, and that its items must never be empty, as a label is always selected. It now asks for one or more items, or for exactly one with `singular_occurrence=True`. Only the prompts with multi-class label concepts change.
 - The warnings issued during an extraction or a chat are now attributed to the line of your code that calls the extraction method or `chat()`, as the warnings issued when a model is created are: that `genai-prices` has no prices for the model, issued when the usage of each call is recorded, that the references of a multimodal concept are added only for its text, that tools are ignored in the extraction of an LLM or a model group, that an `ollama_chat/` model is sent images, and that a chat uses the default system message. They were attributed to the code of ContextGem or of `asyncio`, which a warning filter by the module of your code does not match. When a warning filter makes the warning on unknown prices an error, the extraction method now stops after the call is recorded in the usage: its tokens were recorded, but not the call. [Stopping a model whose prices are unknown](https://contextgem.shcherbak.ai/llms/llm_config/#stopping-a-model-whose-prices-are-unknown), new in the documentation, gives such a filter, e.g. for a budget, which makes the model raise where it is created.
 
 ### Security

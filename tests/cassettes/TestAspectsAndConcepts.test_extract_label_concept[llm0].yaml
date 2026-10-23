@@ -263,8 +263,8 @@ interactions:
       \   The output must be an object with a mandatory field \\\"labels\\\" mapped
       to an array containing only the selected label, e.g. {\\\"labels\\\": [\\\"label1\\\"]}.
       Never leave the \\\"extracted_items\\\" array empty for this concept.\\n    </available_labels>\\n\\n
-      \   <amount_of_extracted_items>This concept may have zero or one extracted item,
-      never multiple items.</amount_of_extracted_items>\\n\\n    <extracted_item_type>dict
+      \   <amount_of_extracted_items>This concept must have exactly one extracted
+      item, never zero or multiple items.</amount_of_extracted_items>\\n\\n    <extracted_item_type>dict
       (must be exactly as specified)</extracted_item_type>\\n</concept>\\n\\n</concepts>\\n\\n<document_paragraphs>\\nDOCUMENT
       PARAGRAPHS:\\n    <paragraph id=\\\"P0\\\">\\n        <paragraph_id>P0</paragraph_id>\\n
       \       \\n        <paragraph_text>\\n        Non-Disclosure Agreement (NDA)\\n
@@ -492,11 +492,9 @@ interactions:
       connection:
       - keep-alive
       content-length:
-      - '38967'
+      - '38976'
       content-type:
       - application/json
-      cookie:
-      - DUMMY
       host:
       - DUMMY
       user-agent:
@@ -526,17 +524,17 @@ interactions:
   response:
     body:
       string: !!binary |
-        H4sIAAAAAAAA/3VUy27bMBC8+ysInuVAdvzsLWj6Atq0QFsEhWUINLWS6VKkQFKuncD/3iUVWTLi
-        XAhqZ3cwHA71PCCEioy+I5RvmeNlJYcfHsvfnx/j/XL308S3X/98e/p0LDf8+xf3cWdo5Cf0Zgfc
-        tVM3XOMcOKFVA3MDzIFnHc2Xo8liNF0sA1DqDKQfKyo3nA1lrdjLxFYLDhahFX4S8hxWr01lcMBy
-        HLWVEqxlBWCtbcKi0dJXKLNWWMeUo1EHcq0cqCB3lSgk9wshiQc4VC4VWYJgQt/HCY1aEA7OMI7H
-        SIWD0vqOVYOdGZrGPZM1eLhX9XXJNiAv51ro4f4uof3iuvs4RX3yXW2dyAVn3t1G5a8tkEzzusQz
-        EWEJHCopuHDySByukBFGHrQa3gvLpba1AXJXGIDQz1RGAB3aSGG3YInGTRHILXGaVEY7vFmCzuQi
-        wwHBJBEq16YMTTdngxp5BnIwgC6mFTOsMKzaopuvD53QH/HFaCiNrpTmfWPOtpyaTfjG/bp/vaih
-        tszHStVS9gCmlHbN2bye9aA1uI1SLhS6kGJaLUYX42GdrmhAT7iuQzTri7RRdKjEyDj9FwLtfDad
-        NIS0ewYdPBpPX1CHWmRvbj5fRlco0wwcE9L28k0541vMYUd6O5tHF2D6z2BKu47ZeDE5d7A6E7rD
-        4kHPhdeirwloHBKq6FjG8Zv8HcD980LllYFM8EtnujYD/m/yVtv5OoJiasHs8VeROgHGX1kGOatl
-        896pPVp8qyneawGmMiI8ep+KwWnwH8RSB8XrBAAA
+        H4sIAAAAAAAA/3VUwU7jMBC99yssn1PUpmrD7g0tsHsChNDugVSRa09Ss64d2RMoi/rvO05Ikwq4
+        WPF7M88z4+e8TRjjWvHvjMutQLmrzfRKXl89rH559fNu+c9mL7f73/fXJfy5v0pvL3gSM9zmCST2
+        WWfSUR6gdrajpQeBEFXn2bc0O19k6bIldk6BiWlVjdPV1DRWvGdsnZYQiHqkLWNv7Rprswr2BM+S
+        HtlBCKICwvogAr0zEeEiBB1QWOTJQEpnEWxb7mNuSTwujOWRkFBjoVVOZM5/zHKe9CTs0QtJbRQa
+        YRdixGPHHRW6wGdhGoj0CI24ERswp3k9dXN5kfMxuB42h2Qs/tQE1KWWIk63q/JhC0w52eyoJ6YD
+        g31ttNRoXhnSCooJduPs9FIHaVxoPLCLygO08cIqFgADcw0y6r/UimAtjMZX5jZGV+1JgZXOM6ST
+        auFRQzg7Tqary0MJHmh8BQWIyot6S2P82G3O72YnqS00H3d/7P3QfbR7+l6P75DOa4KI3rGNMSNC
+        WOuwqzmevZ70U+z9Umqrw7YgSwbyJ3kgoKt5yx5oXbf+a04sxWtPjsYC3V9oZbPVctkJ8sHrAz1P
+        F+8sUi1mlJdl58knkoUCFNqEkYm5FHJLZhtEF6ssOSGLF09WHCJW6fnyGCEapd3AzSajKXws+rMC
+        uglpWw0qafql/kDI+Iao8tqD0vJ0MkOYh/jL+CrseB1txTyAf6b/QUHO8/HKFJSiMd2j5uE10IMs
+        6F4r8LXX7cuOrpgcJv8BIGKF99AEAAA=
     headers:
       access-control-expose-headers:
       - X-Request-ID
@@ -559,13 +557,15 @@ interactions:
       openai-organization:
       - DUMMY
       openai-processing-ms:
-      - '1510'
+      - '3931'
       openai-project:
       - DUMMY
       openai-version:
       - '2020-10-01'
       server:
       - cloudflare
+      set-cookie:
+      - DUMMY
       strict-transport-security:
       - max-age=31536000; includeSubDomains; preload
       transfer-encoding:
@@ -583,9 +583,9 @@ interactions:
       x-ratelimit-remaining-tokens:
       - DUMMY
       x-ratelimit-reset-requests:
-      - 12ms
+      - 6ms
       x-ratelimit-reset-tokens:
-      - 284ms
+      - 56ms
       x-request-id:
       - DUMMY
     status:
@@ -1313,23 +1313,21 @@ interactions:
   response:
     body:
       string: !!binary |
-        H4sIAAAAAAAA/7VX32vbMBB+z18h/OwWO7GbZntb2aAwxn50DNaUoEqXWJ0sGUlOW0r/953kJLa3
-        hDGMX4x1393p06czvnuZEBIJHr0hESuoY2Ulz97/KL9ff5kXTv98l3wSD/T68en99VVdii+FjWIf
-        oe8fgLl91DnTGAdOaNXAzAB14LOm80WaXab5IglAqTlIH7ap3NnFmawV3UUUWjCwCN3ikpCX8PTc
-        FIcnNIf4YCnBWroBtO2d0Gi09JaIWiuso8pFcQsyrRyoQPd2qTC5fxCy9ACDyq0EXyK4jK6SZRTv
-        QXhyhjI8xko4KK33uG2wQ4bGcUtlDR7uWL1d0nuQ/bg9dKXVWnDkJKgU7vmwa+txA6xQWurNMfCD
-        UBSZH0E+woZKcuXvQ5xwuSmE4eQzNe6ZfAVJ/bXZI37IMQhAbsD443fxu3bxGne1eKitE2vBQtZG
-        1JsCCN0YgBLPSzishQJLqOKkMtphGVnCOnIQodbalCFBjAsmay7UhjgvCCbuOYQ0Vq/dIzWAaTi8
-        JZRzgyWCe6AE98Lri2+lcM2mpVbgqHkmnJZYRvZtkwMQ3ugtGOU3k/QxJgYZcwE2Dh7gd2Wwz4jc
-        t8J66c7JtSNUWr2Lt4QLy6S2NdJAslstt+EAQfcKdRe78wNW6r0UtvDrg0LOy01szQpCMVdtdlJQ
-        RLn32BEy4GqjiF4T1AIMSmfPe9e4jAyswQCWwQq3xR1oVfxdjy9/XvyRqMMX8jmdHymVNsKC/9Tw
-        RfBjlU+aFGffkn499SqqX1P/TXAxnOBiTILTZDDBaRIIxiegdDzu+XDu+ZjizqaDCc6moxIcruBs
-        XAUvhxO8PFmeHhqvPLPhn1Z2+tPKmk/rFDQd71jZ8GNlY9ZMNryos/y07vmoNTO83rPLUcUd/kPL
-        /v1DaxcH+84W1vh+122pcf/aUt/Kq1rKDkCV0q7pKT2Zu8legH37ju0fdjwrnBAsjgvYklunqyig
-        r/i8C+NA3evwI2y2SmzTnf4FIW2azKd5kzFqZ48Wn88vdqhDMrITmOZJGh9JuuLYFAppO1NFxCgr
-        sPtvg2cX87gHrh4Nzgatx2KW5wcPin2rbrFk0tHhb9bHCDQaYe/YZpmmFyc3aAHmpxqkXhlsYFlf
-        m9bNgB/iTrkdbiRQjiyYLU5oK2xejb817ONpLZsxK7LPFkekFV7tBkxlRJi1fGFMXie/AU8Bdehi
-        DgAA
+        H4sIAAAAAAAA/7VWUW/aMBB+51dYeQ4VBChlfWvVTpP2UG1U2lYQMvaRuHPszHagXdX/vrNTSLKC
+        pgnxEsX33Z0/f+fk7qVDSCR49IFELKOO5YXs3rDbm2/s/mr8fdCHq/Xd9OOvHxn7Pf10/3szjGIf
+        oZePwNw26oxpjAMntKpgZoA68Fn740kyvhiMk0kAcs1B+rC0cN3zriwVfYvItGBgEXrAJSEv4em5
+        KQ5PaO7FW0sO1tIU0LZ1QqPR0lsiaq2wjioXxTXItHKgAt2HmcLk/kHIzAMMCrcQfIbgLLruzaJ4
+        C8KTM5ThMRbCQW69x0OF7TJUjmsqS/Bww+rtki5BtuO20LVWK8GRk6BSuOfdrrXHFFimtNTpPvBW
+        KIrM9yCfIaWSXPt6iAMu00wYTu6occ/kC0jqy2b3+CHHIACZgvHHb+LzevEaN7V4LK0TK8FC1krU
+        aQaEpgYgx/MSDiuhwBKqOCmMdniNLGENOYhQK23ykCDGBZMlFyolzguCiVsOIY3VK7ehBjANh0ti
+        ATOugkI+HeqwFF5kfMuFq3bmNMcrZC8J5dzgfUJCzsvSLYIsXFgmtS0xp/deltZz9jwlFlWbSrPL
+        AAJet6UUNsMcqV6DUZ6tpJuAapeB8ecLUpbIx3k1z1p6zyIDKzCA9VogARSLFtn7i/Pyd4X2RO2u
+        8l1/vKemdYQF/03gi+D7riipUnS/9tqFb5W+Xfz/JZj0jiaY9ALB+ADUPx330fHcR6cUd3BxNMHB
+        xSkJDo+v/vBw9T2UnI778Hjuw5OKe/y3P/z3t18vdvY3W1jj+7zZhXH/0lLf/VUpZQOgSmlX/VI9
+        mXlnK8C24+PPHP+vCxwqLE4Y2MWt00UU0Fd8zsMEUbaGggh7S46d3emfENL2e+NkVGWM6nGlxs+H
+        kzfUIRnZCOwPxsN4T9IFB0eFtI1BJGKUZTgw1MGD83HcAhcbg+NE7TEZjEY7D4qtTtdYr9PQ4T3r
+        fQQqjbAD1VmSi+TgBjXA/CCE1AsDXLC2NrWbAT/3HXLbVSRQjiyYNQ51CyfA+Kph66elrCazyD5b
+        nKoWWNoUTGFEGM/8xei8dv4AvE93o5UKAAA=
     headers:
       access-control-expose-headers:
       - X-Request-ID
@@ -1352,7 +1350,7 @@ interactions:
       openai-organization:
       - DUMMY
       openai-processing-ms:
-      - '6835'
+      - '9848'
       openai-project:
       - DUMMY
       openai-version:
@@ -1376,9 +1374,9 @@ interactions:
       x-ratelimit-remaining-tokens:
       - DUMMY
       x-ratelimit-reset-requests:
-      - 12ms
+      - 6ms
       x-ratelimit-reset-tokens:
-      - 407ms
+      - 81ms
       x-request-id:
       - DUMMY
     status:
@@ -1648,8 +1646,8 @@ interactions:
       \   The output must be an object with a mandatory field \\\"labels\\\" mapped
       to an array containing only the selected label, e.g. {\\\"labels\\\": [\\\"label1\\\"]}.
       Never leave the \\\"extracted_items\\\" array empty for this concept.\\n    </available_labels>\\n\\n
-      \   <amount_of_extracted_items>This concept may have zero or one extracted item,
-      never multiple items.</amount_of_extracted_items>\\n\\n    <extracted_item_type>dict
+      \   <amount_of_extracted_items>This concept must have exactly one extracted
+      item, never zero or multiple items.</amount_of_extracted_items>\\n\\n    <extracted_item_type>dict
       (must be exactly as specified)</extracted_item_type>\\n</concept>\\n\\n</concepts>\\n\\n<document_paragraphs>\\nDOCUMENT
       PARAGRAPHS:\\n    <paragraph id=\\\"P0\\\">\\n        <paragraph_id>P0</paragraph_id>\\n
       \       \\n        <paragraph_text>\\n        Non-Disclosure Agreement (NDA)\\n
@@ -1877,7 +1875,7 @@ interactions:
       connection:
       - keep-alive
       content-length:
-      - '38967'
+      - '38976'
       content-type:
       - application/json
       cookie:
@@ -1911,17 +1909,17 @@ interactions:
   response:
     body:
       string: !!binary |
-        H4sIAAAAAAAA/3VUTW/bMAy951cIOjtFHeRj2S1o93FZMWwdtiEODEVibGWyZEhym67Ify8l17GD
-        tBdB4iNp8vHRzyNCqBT0I6G8ZJ5XtRp/+l39+jF5/O++meJm//PPl6+rspma+/ovm32mSYgw2z1w
-        30VdcYNx4KXRLcwtMA8ha7pYptMP6Wy5jEBlBKgQVtR+PB+rRrPXiNJIDg6hNT4JeY5nqE0LOKD5
-        OuksFTjHCkBb54RGa1SwUOacdJ5pT5Me5EZ70LHcdaYxeTgIyQLAofa5FBmCGb25zmjSgXDwlnFs
-        I5ceKhc81i12ytA6PjDVQIAH1mBXbAvqPK6D7m5XGR0aN/3jmAyT7xvn5U5yFthtq7wvgQjDmwp7
-        ItIRONRKcunVE/F4giCM3Bk9vpWOK+MaC2RVWIDoz7QggAxtlXQlOGLwUsTkjuyMJbU1HkcrdUGQ
-        nZ0UGCSZIlIjWkXHqxNJbYkWdmABmcxrZllhWV0io5eNZ/T79VloNKWXpslsSM6JmmN7iW+8b4Yj
-        xhoax4K0dKPUAGBaG9/2F+rZjDqSOzntpEYmclSsQ/miRJw3NY3oEc9NlGdzpjiKJFUoG2/+QUy7
-        mM+mbULar0IPp5PJK+qxFjWIWyzmyRspcwGeSeUGGqec8RK1OPxmmpyB+aNFpfYe/cqwRkgzAEYD
-        Ci4rfuvrLT2oikFXi3fz9wAP+4Vl1xaE5Oe09G4Wwu/kPbfTLGLF1IF9wH9F7iXYMC8BO9aoduGp
-        e3K4rDkOtQBbWxm3PkhidBy9AJsKd+LsBAAA
+        H4sIAAAAAAAA/3VUTU8bMRC951dYPieI0Ia0vdECFwSqRE9lo5WxZzdDHXtrjykI5b937CXZjYCL
+        tX5vvv1mXyZCSDTym5B6rUhvOju70JcXqBbN7W1apMvf1/bm6u+Xs+/Xxp1cnctp9vD3D6Bp53Wk
+        PfsBoXc9rQMoghx1vvx6svzyafn5uBAbb8Bmt7aj2enMJqdePdYeNUSm7vgqxEs5c23OwBPDxb8g
+        G4hRtcDYzojB4G1GpIoRIylHcjqQ2jsCV8q9qxwHz4cQVSY0dFSjqZis5I/jSk53JDxRUJrbqJFg
+        E7PFXc/tI/SGj8omyPQIzbhV92AP/XbUzflZJcfgarhsp+PgDykSNqhVnm5f5a81CON12nBPAqOA
+        p86iRrLPgvgEI5S48W52jlFbH1MAcdYGgGKvnBERKAqfSHD/DRqGUVmkZ+HvLbYlUxSND4I4U6cC
+        IcSj/WT6ugI0EIDHV7OBaoPq1jzGt91W8ufxgWuB5uPu971v+49y5+/V+A05X4oqa8cla0eEcs5T
+        X3POvZrsprjTS4MO47pmSUbWJ2sgku9kYbd8ror+0oGkZBdY0VST/wMl7PJ0segDykHrAz2fn76y
+        xLXYkd9yOZ++E7I2QAptHIlYaqXXLLZxzpPpAVn/CyzFwWLYCZUM+hExGY3gbcXvZe/Hg64ddbX4
+        MP5A6LxAXHYXwKA+HMtgFiD/Lz4y279FqVhGCI/8M6hZdiG/l4FGJdtvtIzPkbex5kdtIXQBy1pn
+        SUy2k/8lY4+ozQQAAA==
     headers:
       access-control-expose-headers:
       - X-Request-ID
@@ -1944,7 +1942,7 @@ interactions:
       openai-organization:
       - DUMMY
       openai-processing-ms:
-      - '1658'
+      - '3010'
       openai-project:
       - DUMMY
       openai-version:
@@ -1968,9 +1966,9 @@ interactions:
       x-ratelimit-remaining-tokens:
       - DUMMY
       x-ratelimit-reset-requests:
-      - 12ms
+      - 6ms
       x-ratelimit-reset-tokens:
-      - 284ms
+      - 56ms
       x-request-id:
       - DUMMY
     status:
@@ -2698,21 +2696,21 @@ interactions:
   response:
     body:
       string: !!binary |
-        H4sIAAAAAAAA/61W227bMAx9z1cIfnaK2HUu3Wt3QYFhK7YMA9YEgSIxtjpZMiS5lxX591FyEjtr
-        +uAhL4bEQ1JHJA2dlwEhkeDROxKxgjpWVnL44Wf5Y/6jmk0m/NfXP8V4zicjevPl/fSTmORR7CP0
-        +h6Y20ddMI1x4IRWDcwMUAc+azK9SrJZMhklASg1B+nD8soNJ0NZK7qLKLRgYBG6wy0hL+HruSkO
-        T2gexXtLCdbSHNC2d0Kj0dJbImqtsI4qF8UtyLRyoALdu4XC5P5DyMIDDCq3EnyB4CK6Hi2ieA/C
-        kzOU4TVWwkFpvcddgx0yNI4PVNbg4Y7V2yVdgzyO20PXWm0ER06CSuGeD6e2HnNghdJS56fAj0JR
-        ZH4C+Qw5leTa90O84TIvhOHklhr3TL6BpL5t9oQfcgwFIHMw/vpdfNlutnG3Fve1dWIjWMjaFHVe
-        AKG5ASjxvgSwO2spbAGWsOMqkMpoh2Pl+RCqOOIPYCxxvhSYUhKhNtqUIXdwsHrjHqkB9ORwQW4c
-        odJqYsFZgvdfi5BWilK4JiOnJY6OjQnl3OAcIQnnyzGsQjm4sExqWxuIm/wVMLwNeuWeihIqJ5I+
-        xt6xqh0QzKFl7fmgrTa0WflQ7Qow/oahhjWSd76MF0eFXkQGNmAAG7VCBlglWhWvJ+bl39aciDrM
-        8G0yPdHMNsKC/xlwIfjuJB8y/I6jv+xGbeP/p5COelNIR4FCTHbr5Jx0xv3pjM9bkcu0N4XL9MwU
-        Zv0pzNqm+PU5m5L1n5GsMyN+nZ6TTtafTnbeBmX9xzQbdyoyPnOD+s9LNjtzRa76U7g6QaHdHOw7
-        W9jjetnVC3hCbanXKaqWsgNQpbRrHkx/3HKwv+Jem2yEwqdthfLHohZCvWGdrqKAbvG7DFqnPpIv
-        Eb56JWoQp39DSJuMpum4yRi1wqrFJ7PJDnVIRnYCkyxJ4hNJVxwcFdJ2JFPEKCtQ2hydmsZH6OrR
-        oPJpXVoJRmsudAcYdKrwmvOp45sK4XvaZknH2ZsHtADzgg2JVwa4YMeVad0MeH36ltuhH4FyZME8
-        oPhcOQHG94zDhtayUZCRfbao/lbY2BxMZUSQkX4sBtvBX5Rshos9CwAA
+        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
     headers:
       access-control-expose-headers:
       - X-Request-ID
@@ -2735,7 +2733,7 @@ interactions:
       openai-organization:
       - DUMMY
       openai-processing-ms:
-      - '6326'
+      - '8629'
       openai-project:
       - DUMMY
       openai-version:
@@ -2759,9 +2757,9 @@ interactions:
       x-ratelimit-remaining-tokens:
       - DUMMY
       x-ratelimit-reset-requests:
-      - 24ms
+      - 6ms
       x-ratelimit-reset-tokens:
-      - 640ms
+      - 81ms
       x-request-id:
       - DUMMY
     status:
@@ -3137,14 +3135,14 @@ interactions:
   response:
     body:
       string: !!binary |
-        H4sIAAAAAAAA/32SwW7bMAyG73kKQ2ensJEsyXYbih62YTs17SEODE1mHK6yZEj00qLIu49SEtvB
-        2l4EiB9J/PzJ10mSCKzEl0SovSTVtHp699is5Vc8dOv7h/znt3md/8Cmuf9lUH5/EmmosL//gKJL
-        1Y2yXAeE1pywciAJQtd8+Tmfr/JFtoqgsRXoUFa3NF1MdWfkuWJvUYFntOFvkrzGN2gzFTxzOEsv
-        kQa8lzVw7JLEQWd1iAjpPXqShkQ6QGUNgYlyN4Xh5uFJkiIABS2VWBUMC3GbFSK9QHgmJxWPUSJB
-        40PGZhvgsTDbcXsHu87LMJbptB4BaYwlGWyJg23P5NiPskODfl+yW56tY3mebCsiPfK7jdZ0V9OK
-        1rHZVJJ9gtj2U5bPTg3FsIYBL+dnSCxFj8tWy/SNjmUFJFH7kb1CSbVnG/rafLZYplewPDg2aciY
-        LeazPkN2FdqBZZORCf9rfkvAySA09dDlg/4DUGG7rLx1UKG6NmZIcxCO+b20fhtRsfDg/vKlloTg
-        wsYq2MlOn85N+BfPp1LyWmtwrcN4c+EoJsfJP8GSkzFqAwAA
+        H4sIAAAAAAAA/3WS3WrjMBCF7/MURtdOieMm7va2tLRQKIWFwsbBaKWJo1aRhDTuppS8+46UHzu0
+        vRFovpnhzJn5HGUZU5JdZ0ysOYqN0+NbcXfbFerJ3k9fWuPEAz5vpUN8+SMef7M8Vti/ryDwWHUh
+        LNUBKmv2WHjgCLFrUf2aVldlNZsmsLESdCxrHY7nY90ZfqhYWyUgEFrQN8s+0xu1GQlbCk/yY2QD
+        IfAWKHZMoqC3OkYYD0EF5AZZ3kNhDYJJche1oebxybI6AgEOGyVrgjW7mdQsP0LYoueCxmgUwibE
+        jMUywl1tlsP2HlZd4HEs02k9ANwYizzakgZbHsjuNMpKGRXWDbkVyDqSF9A6luiO3mWypjubljlP
+        ZmOD9g1S29mkKPcNWb+GHlfTA0SSoodlV7P8m46NBORKh4G9THCxJhtOtUU5r/Iz2PzzZFKfUc4v
+        y1MG76SyPZuMBiZ81fydgL1ByrR9l8vix/49EHG7pNx5kEqcG9OneYjH/FPaaRtJMQvg3+lSG1Tg
+        48YkrHin9+fGwkegU2lorS1451W6uXgUo93oP3ZoLmhqAwAA
     headers:
       access-control-expose-headers:
       - X-Request-ID
@@ -3167,7 +3165,7 @@ interactions:
       openai-organization:
       - DUMMY
       openai-processing-ms:
-      - '1195'
+      - '2215'
       openai-project:
       - DUMMY
       openai-version:
@@ -3191,9 +3189,9 @@ interactions:
       x-ratelimit-remaining-tokens:
       - DUMMY
       x-ratelimit-reset-requests:
-      - 24ms
+      - 6ms
       x-ratelimit-reset-tokens:
-      - 251ms
+      - 38ms
       x-request-id:
       - DUMMY
     status:
@@ -3428,7 +3426,7 @@ interactions:
       mapped to an array containing only the selected label, e.g. {\\\"labels\\\":
       [\\\"label1\\\"]}. Never leave the \\\"extracted_items\\\" array empty for this
       concept.\\n    </available_labels>\\n\\n    <amount_of_extracted_items>This
-      concept may have zero, one, or multiple extracted items.</amount_of_extracted_items>\\n\\n
+      concept must have one or more extracted items, never zero.</amount_of_extracted_items>\\n\\n
       \   <extracted_item_type>dict (must be exactly as specified)</extracted_item_type>\\n</concept>\\n\\n</concepts>\\n\\n<document_text>\\nNon-Disclosure
       Agreement (NDA)\\n\\nThis Non-Disclosure Agreement (the \\\"Agreement\\\") is
       made and entered into as of July 16, 2024, by and between:\\n\\nParty A:\\n\\n_____\\n_____\\n_____\\nContact:
@@ -3535,7 +3533,7 @@ interactions:
       connection:
       - keep-alive
       content-length:
-      - '26294'
+      - '26296'
       content-type:
       - application/json
       cookie:
@@ -3569,15 +3567,14 @@ interactions:
   response:
     body:
       string: !!binary |
-        H4sIAAAAAAAA/3WTwW7bMAyG73kKQ2dnsJvUcXYb1qEoWvRW7BAHhiLTjjpZMiR661Dk3UfJcexg
-        7UWQ+ZE/qJ/0+yKKmKzY14iJI0fRdmr542f7cnjlTf7cPuX57U1X3Zu77eYx+1a/pCz2FebwCgLH
-        qi/CUB2gNHrAwgJH8KrpZpuu8zRLtgG0pgLly5oOl9lS9ZqfK45GCnCEdvQZRe/h9L3pCt4onMRj
-        pAXneAMUG5MoaI3yEcadkw65RhZPUBiNoEO7u0KTuD+iqPBAQIelrAqCBfueFCweIbyh5YKeUUqE
-        1vmM3cAuCkOi4gdQZ86ee7TSOxE96NrYlvt7wfZjwWm4hG+67+d9Wqh7x70/uldqBrjWBoNScGh/
-        JqeLJ7XU0h1Lst3RDOidDk3HAj3RuQ8e91e2sc7S1LBE8wuC7G2SZoMgm+Y54TTNzxSpFzWrS1fr
-        +APJsgLkUrnZoJjg4kiGTqKrbBNfwfIP2QdTxipbZ5cM3lfSTCxZzFz4v+mPGhgckrqZVDarT/Un
-        IPyeUOedhUqKa2emNAv+t/gs7TKO0DFzYH/TzpcowfqRVVDzXg2Ly9xfR0tX0lwbsJ2VYXv9VixO
-        i3/B6LPktAMAAA==
+        H4sIAAAAAAAA/31SyU7DMBC99ysin1OU0JIAV1YJcYADB0gVGWeaGhw7sidsVf+dsbskFYssWfK8
+        N+M3b2Y5iiImK3YaMbHgKJpWjS/E5cX71Y3M1NfdFNLz6aNNbut5c3dzLR5Y7DPM8wsI3GYdCEN5
+        gNLoNSwscARfNc1PDvPjSX40DUBjKlA+rW5xnI1Vp/kmY2GkAEfQEz2jaBlur01X8EHhJN5GGnCO
+        10CxLYmC1igfYdw56ZBrZHEPCqMRdJD7tCz8U0CLpawKdlqws6RgccHgAy0XpLqUCI0jyHMVfwYV
+        HkQ05lXqOroHIVug4GxFZ/iRhXnnuG9Qd0oNAK61Qe4NCi3ONshq19RcaukWJfnmyEQS6tC0LKAr
+        umfBpG6vb9Zash1LNK8Qyh4labYuyPqB9HCab1EkLWqQl54cxr+ULCtALpUbOM0EFwuyqC86yfJ4
+        DyzfLRnYMybZNNsxeFdJ02PJaODCT9G/CVg7RGMYaPjngx4QfuYkvbVQSbFvTU+z4Bf7L9puHkEy
+        c2DfaGtLlGD9zCqY806tV4+5T0d7VNJga7CtlWH//FqMVqNv3Ow/d3YDAAA=
     headers:
       access-control-expose-headers:
       - X-Request-ID
@@ -3600,7 +3597,7 @@ interactions:
       openai-organization:
       - DUMMY
       openai-processing-ms:
-      - '2191'
+      - '3523'
       openai-project:
       - DUMMY
       openai-version:
@@ -3624,9 +3621,9 @@ interactions:
       x-ratelimit-remaining-tokens:
       - DUMMY
       x-ratelimit-reset-requests:
-      - 12ms
+      - 6ms
       x-ratelimit-reset-tokens:
-      - 193ms
+      - 38ms
       x-request-id:
       - DUMMY
     status:
