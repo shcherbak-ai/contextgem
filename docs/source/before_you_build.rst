@@ -1,0 +1,17 @@
+.. meta::
+   :description: What ContextGem already does that is easy to miss when you build on it, or when a coding agent does: references, your own IDs, the system message, retries and refusals, errors, logs, costs, tests without API calls, and what a request sends.
+
+Before You Build on ContextGem
+==============================
+
+Each point below is something that ContextGem already does, and that is easy to build again, or to get wrong, at first sight. Each links to the page that describes it.
+
+- **References are the document's own objects.** A paragraph in ``reference_paragraphs`` of an extracted item is the same object as in ``document.paragraphs``, and each paragraph and sentence has a ``unique_id``. Put your own data, e.g. the ID of the record that a paragraph comes from, in the paragraph's ``custom_data``, and read it from the references. Do not match references by their text, which two paragraphs can share. See :ref:`locating-paras-and-sents`.
+- **The system message can be replaced.** The default system message is written for extraction from documents. Set ``system_message`` of the LLM to your own text, or to ``""`` to send none, and compare the results on your documents. See :doc:`llms/llm_config`.
+- **An invalid answer is asked for again, a refusal is not.** An answer that cannot be parsed or validated is requested again, up to ``max_retries_invalid_data`` times (3 by default), and then the fallback models are tried. A refusal of the model or of its provider ends the call at once, with ``ModelRefusalError``, without a retry or a fallback model. See :ref:`llm-retries-label` and :ref:`llm-refusals-label`.
+- **Errors are exceptions of their own.** ``ContextGemError`` is the base of the errors of a run, e.g. ``ModelExtractionError`` and ``ModelAPIError``, while a mistake in your code, e.g. an invalid argument, is a ``ValueError`` or a ``TypeError``. With ``raise_exception_on_extraction_error=False``, a failed extraction logs a warning instead. See :doc:`api/exceptions`.
+- **What is logged.** The logger logs at the ``INFO`` level by default, which ``CONTEXTGEM_LOGGER_LEVEL`` changes. An answer that cannot be used is logged with where and how it is invalid, without its values. What in your code will not have the expected effect is a Python warning of the ``ContextGemWarning`` category instead. See :doc:`logging_config`.
+- **The costs of a model without prices.** With ``auto_pricing=True``, a model that ``genai-prices`` has no prices for gets a warning, and its costs stay at zero. A warning filter makes it raise where it is created, e.g. for a budget. See :ref:`llm-unknown-prices-label`.
+- **Tests without API calls.** Replace ``litellm.acompletion`` and ``litellm.adecisions``, which ContextGem looks up at each request, with a stand-in in your tests. See :doc:`testing`.
+- **What a request sends.** Each request to an LLM sends the system message, the instructions of the task with your aspects and concepts, and the content: the text as it is, or, for aspects and with references, each paragraph with its ID in markup. See :ref:`optimization-cost-request-label`.
+- **Which version the documentation describes.** This documentation describes the latest release. The docstrings of the installed package describe the installed version, and the `changelog <https://github.com/shcherbak-ai/contextgem/blob/main/CHANGELOG.md>`_ gives the changes between versions.

@@ -137,7 +137,10 @@ llms_txt_description = (
     "ContextGem is a free, open-source framework for extracting structured data "
     "and insights from documents using LLMs and decision models: you describe "
     "what to extract as aspects and concepts, and ContextGem handles the "
-    "prompts, the data models, the source references and the justifications."
+    "prompts, the data models, the source references and the justifications. "
+    "Before you build on it, read Before You Build on ContextGem "
+    f"({site_url.rstrip('/')}/before_you_build/index.html.md), which lists what "
+    "ContextGem already does that is easy to miss."
 )
 llms_txt_nested_enabled = False  # one index, at the root of the site
 # Full URLs for the links in llms.txt and in the Markdown copies, so that they

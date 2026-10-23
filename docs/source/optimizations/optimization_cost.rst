@@ -1,5 +1,5 @@
 .. meta::
-   :description: How to lower the cost of extraction: cost-efficient models, decision models for closed questions, default parameters, sparing justifications, and usage and cost monitoring.
+   :description: How to lower the cost of extraction: cost-efficient models, decision models for closed questions, default parameters, sparing justifications, usage and cost monitoring, and what each request to an LLM sends.
 
 Optimizing for Cost
 ====================
@@ -16,3 +16,17 @@ ContextGem offers several strategies to optimize for cost efficiency while maint
 .. literalinclude:: ../../../dev/usage_examples/docs/optimizations/optimization_cost.py
     :language: python
     :caption: Example of optimizing extraction for cost
+
+
+.. _optimization-cost-request-label:
+
+📨 What a Request Sends
+------------------------
+
+Each request to an LLM sends the system message, the instructions of the task with the aspects or concepts of the request, and the content:
+
+- **The system message**: the default one is written for extraction from documents, and you can replace it, or send none, with ``system_message`` (see :doc:`../llms/llm_config`).
+- **The instructions**: fixed text for the kind of request, with more of it for a reasoning model, and the descriptions of the aspects or concepts, with their structures, labels and examples.
+- **The content**: for concepts without references, the text of the document or of the aspect as it is. For aspects, and for concepts with references, each paragraph with its ID in markup, and its additional context, if any; with references to sentences, each sentence with its own ID. For a document of many short paragraphs, e.g. lines of a log, the markup can be a large part of the request.
+
+The system message and the instructions are sent again with each request: the more requests an extraction takes, e.g. with ``max_items_per_call`` or ``max_paragraphs_to_analyze_per_call`` (see :doc:`../llms/llm_extraction_methods`), the more often they are paid for. To see the requests, and count their tokens, before any is paid for, capture them with a stand-in for the LLM (see :doc:`../testing`).

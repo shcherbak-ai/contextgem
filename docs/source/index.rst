@@ -291,6 +291,7 @@ Indices and tables
 
    installation
    quickstart
+   before_you_build
    dependency_security
 
 .. toctree::
