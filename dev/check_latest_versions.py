@@ -120,10 +120,6 @@ ACCEPTED_ADVISORIES: dict[str, str] = {
         "katex 0.16, which markdownlint's math parser allows (^0.16): fixed in 0.18 "
         "only; markdownlint parses math and renders none"
     ),
-    "GHSA-vfj7-8cjw-p6xm": (
-        "braces 3.0.3 of micromatch, of markdownlint-cli2: no release fixes it; a "
-        "stack overflow on a deeply nested glob, and the globs are the project's own"
-    ),
 }
 
 # The batch query of osv.dev, for the advisories of many versions at once
