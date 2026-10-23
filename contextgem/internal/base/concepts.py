@@ -26,10 +26,7 @@ from pydantic import (
 from contextgem.internal.base.attrs import _ExtractedItemsAttributeProcessor
 from contextgem.internal.base.examples import _JsonObjectExample, _StringExample
 from contextgem.internal.base.items import _ExtractedItem
-from contextgem.internal.decorators import (
-    _disable_direct_initialization,
-    _post_init_method,
-)
+from contextgem.internal.decorators import _disable_direct_initialization
 from contextgem.internal.items import (
     _BooleanItem,
     _DateItem,
@@ -43,7 +40,6 @@ from contextgem.internal.items import (
 from contextgem.internal.llm_output_structs.concept_structs import (
     _LabelConceptItemValueModel,
 )
-from contextgem.internal.loggers import logger
 from contextgem.internal.typings.typed_class_utils import (
     _get_model_fields,
     _is_typed_class,
@@ -994,25 +990,6 @@ class _LabelConcept(_Concept):
                 "is always selected."
             )
         return self
-
-    @_post_init_method
-    def _post_init(self, context: Any, /):
-        """
-        Post-initialization method that provides guidance for multi-class classification.
-
-        :param context: Pydantic context (unused).
-        :type context: Any
-        """
-        if self.classification_type == "multi_class":
-            logger.info(
-                f"For multi-class classification in concept '{self.name}', you should consider including "
-                f"a general 'other' (or 'N/A', 'misc', etc.) label to handle cases where none "
-                f"of the specific labels apply, unless you already have such a label, your labels are "
-                f"broad enough to cover all cases, or you know that the classified content always falls "
-                f"under one of the predefined labels without edge cases. Multi-class classification "
-                f"should always return a label, so having a catch-all option ensures appropriate "
-                f"classification when no specific label fits the content."
-            )
 
     @field_validator("labels")
     @classmethod

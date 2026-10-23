@@ -6,6 +6,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 - **Refactor**: Code reorganization that doesn't change functionality but improves structure or maintainability
 
+## [Unreleased]
+
+### Removed
+
+- A multi-class `LabelConcept` no longer logs a message at the `INFO` level when it is created, which suggested a catch-all label such as `"other"` for every such concept, also one whose labels already cover all cases. The docstring of `LabelConcept` gives the advice.
+
 ## [1.2.1] - 2026-10-23
 
 ### Security
@@ -649,6 +655,7 @@ See the [migration guide](https://contextgem.shcherbak.ai/migration_v1/) for upd
 
 - Added DocxConverter for converting DOCX files into ContextGem Document objects
 
+[Unreleased]: https://github.com/shcherbak-ai/contextgem/compare/v1.2.1...HEAD
 [1.2.1]: https://github.com/shcherbak-ai/contextgem/compare/v1.2.0...v1.2.1
 [1.2.0]: https://github.com/shcherbak-ai/contextgem/compare/v1.1.0...v1.2.0
 [1.1.0]: https://github.com/shcherbak-ai/contextgem/compare/v1.0.0...v1.1.0

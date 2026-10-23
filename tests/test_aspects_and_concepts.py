@@ -47,7 +47,11 @@ from contextgem.public import (
     StringExample,
 )
 from tests.base import BaseTest
-from tests.utils import get_project_root_path, get_test_document_text
+from tests.utils import (
+    capture_logs,
+    get_project_root_path,
+    get_test_document_text,
+)
 
 
 class TestAspectsAndConcepts(BaseTest):
@@ -1748,14 +1752,17 @@ class TestAspectsAndConcepts(BaseTest):
         """
         Tests the initialization of the LabelConcept class with valid and invalid input parameters.
         """
-        # Valid initialization with multi-class classification
-        multi_class_concept = LabelConcept(
-            name="Document Type",
-            description="Classify the type of legal document",
-            labels=["NDA", "Consultancy Agreement", "Privacy Policy", "Other"],
-            classification_type="multi_class",
-            add_justifications=True,
-        )
+        # Valid initialization with multi-class classification, which logs nothing:
+        # the advice on a catch-all label is in the docstring
+        with capture_logs() as messages:
+            multi_class_concept = LabelConcept(
+                name="Document Type",
+                description="Classify the type of legal document",
+                labels=["NDA", "Consultancy Agreement", "Privacy Policy", "Other"],
+                classification_type="multi_class",
+                add_justifications=True,
+            )
+        assert messages == []
 
         # Valid initialization with multi-label classification
         multi_label_concept = LabelConcept(
