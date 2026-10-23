@@ -47,7 +47,7 @@ Measures the quality and the cost of extraction on evaluation cases with referen
 
 - **`run_eval`, `decision_probabilities` and `judge` send live, paid requests.** Run them only when the maintainer asks for it. The other scripts send nothing.
 - **Keys come from the environment or the `.env` file of the repo** (`CONTEXTGEM_OPENAI_API_KEY`, `CONTEXTGEM_ANTHROPIC_API_KEY`, `CONTEXTGEM_TYPESAFE_API_KEY`, `CONTEXTGEM_AZURE_AI_API_KEY` with `CONTEXTGEM_AZURE_AI_API_BASE`). Never print them. The host of a Microsoft Foundry resource is replaced in what is written.
-- **A label is one experiment.** A run whose file exists is skipped, so results are never overwritten: record a change under a new label, and leave the baselines (`baseline_2026-10-11`, `baseline_2026-10-15`) as they are.
+- **A label is one experiment.** A run whose file exists is skipped, so results are never overwritten: record a change under a new label, and leave the baselines (`baseline_2026-10-11`, `baseline_2026-10-15`, `baseline_2026-10-23`) as they are.
 - **Results are tracked artifacts.** Do not edit or delete the files under `results/`. `summary.*` and `thresholds.*` are generated: regenerate them, do not edit them. The scores of a run are rewritten only by `rescore`, and its judgment (`judgments/`) only by `judge`, when the judge, its questions or the reference answers of the case changed.
 - **The reference answers change only by a recorded review.** Do not change a `.gold.json` or `.neutral.json` file to make a result pass. Record a change with its reason in `cases/reference_review.md`, and run `check_scorer` after a change in a case, in its reference answers or in the scorer. After a change in the reference answers, score the recorded runs again with `rescore`, and regenerate the summaries.
 
@@ -108,7 +108,7 @@ uv run python -m dev.evals.docling_pdf_cases --report
 
 `--concurrency` runs the extraction with `use_concurrency=True`. One line is printed per run, which starts with the name of its file. The library prints its logs as usual: set `CONTEXTGEM_LOGGER_LEVEL=WARNING` for a quiet run.
 
-A run records the calls that failed without an exception (`extraction_warnings`) and the aspects that a decision model refused to answer about on some paragraphs (`refusal_warnings`) from the messages that the library logs at the `WARNING` level. The runs recorded from 2026-10-15 to 2026-10-23 have both lists empty: they were read from Python warnings, which the library stopped issuing for these events on 2026-10-15. In those runs, a failed call shows only in the scores, e.g. an aspect F1 of 0.
+A run records the calls that failed without an exception (`extraction_warnings`) and the aspects that a decision model refused to answer about on some paragraphs (`refusal_warnings`) from the messages that the library logs at the `WARNING` level. The runs recorded from 2026-10-15 to 2026-10-23, before `baseline_2026-10-23`, have both lists empty: they were read from Python warnings, which the library stopped issuing for these events on 2026-10-15. In those runs, a failed call shows only in the scores, e.g. an aspect F1 of 0.
 
 ## What Is Measured
 
@@ -141,11 +141,11 @@ Every experiment and baseline runs the same models, each for a purpose, so that 
 | `openai/gpt-6.1-sol` | A top LLM | 1 | Baselines |
 | `openai/gpt-6-luna` with `--concurrency` | The extraction with concurrency | 3 | Baselines |
 
-- **The second LLM is of the same tier as the first**, not a stronger one: it tells whether the effect of a change holds for another model, and a change of a prompt shows at this tier. `openai/gpt-6.1-sol` already extracts nearly all the concepts of the cases (all 22 of `complex_dpa` and all 26 of `complex_mcu` in `baseline_2026-10-15`).
+- **The second LLM is of the same tier as the first**, not a stronger one: it tells whether the effect of a change holds for another model, and a change of a prompt shows at this tier. `openai/gpt-6.1-sol` already extracts nearly all the concepts of the cases (all 22 of `complex_dpa` and all 26 of `complex_mcu` in `baseline_2026-10-15` and `baseline_2026-10-23`).
 - **The top LLM tells the limit of a model from a problem of a case** or of its reference answers. A run costs about 20 times one of `openai/gpt-6-luna`, so it is in the baselines only.
 - **Each model runs with its defaults**: the harness sets no temperature, reasoning effort or output limit.
 - **Local models are run when a question concerns them**, under a label of their own: `baseline_2026-10-11` is what is known of them.
-- **The second LLM was `openai/gpt-5.6-luna` until 2026-10-20**, in every label recorded until then: an older model of the same provider, which got fewer concepts than `openai/gpt-6-luna` at about twice the cost of a run. `anthropic/claude-haiku-5-5` has no baseline yet: compare its runs with the control recorded at the same time. It returns invalid JSON for the aspects of `complex_mcu` often enough to fail whole runs (see From a PDF File): count its failed runs, and compare the valid ones. The tests keep `openai/gpt-5.6-luna` as a second, distinct model (fallbacks, a model with a role), whose extraction they do not measure.
+- **The second LLM was `openai/gpt-5.6-luna` until 2026-10-20**, in every label recorded until then: an older model of the same provider, which got fewer concepts than `openai/gpt-6-luna` at about twice the cost of a run. `anthropic/claude-haiku-5-5` is in the baselines from `baseline_2026-10-23`. Before the leaner listing of the paragraphs, it returned invalid JSON for the aspects of `complex_mcu` often enough to fail whole runs (see From a PDF File): count its failed runs, and compare the valid ones. The tests keep `openai/gpt-5.6-luna` as a second, distinct model (fallbacks, a model with a role), whose extraction they do not measure.
 
 ## Comparing a Change with the Baseline
 
@@ -163,7 +163,35 @@ A baseline is a snapshot: what the models score and cost on the cases at one sta
 
 ## The Baseline
 
-**`baseline_2026-10-15`**, the current one, on the three cases, recorded on 2026-10-15 with `litellm` 1.105.1, from commit `1ecd68c` of the library (the reading of model output made strict), with the hosted models only:
+**`baseline_2026-10-23`**, the current one, on the four cases, recorded on 2026-10-23 with `litellm` 1.105.2, from commit `fc14cf2` of the library, with the hosted models only. Since `baseline_2026-10-15`, the library lists the paragraphs in the prompts of LLMs on one line each (see The Markup of the Paragraphs in the Prompts of LLMs), asks for at least one item of a multi-class label concept, tells refusals apart from invalid data, and logs no value of an answer that cannot be used:
+
+- **LLMs**, each case: `openai/gpt-6-luna` (3 runs, and 3 with concurrency), `anthropic/claude-haiku-5-5` (3), `openai/gpt-6.1-sol` (1).
+- **Decision models**, each case: `typesafe/jev-latest`, `openai/gpt-6-luna` and `azure_ai/ms-decision-model` (2 runs each), and one pass of `decision_probabilities` each.
+- **The judge**: `typesafe/jev-latest`, which agreed with 75 of the 76 checks: it judged the wrong justification of `complex_stability-justification-rule-wrong-condition` correct, as in most labels since 2026-10-20.
+- **No failed run, and 3 retries for invalid data**, all of `anthropic/claude-haiku-5-5` (2 on `complex_nda`, 1 on `complex_dpa`); its runs of `complex_mcu`, whose aspects it often answered with invalid JSON before the leaner listing, needed none.
+- **Refused answers**: the decision model `openai/gpt-6-luna` refuses to answer the question of an aspect on 1 to 8 paragraphs for 15 aspects of the four cases, 37 answers a run (the same in both runs), about 1% of its questions; these paragraphs are left out of the aspects. It is the first label that records them (see Commands); its scores and input tokens are those of 2026-10-15, so it most likely refused then too.
+- **Cost**: USD 1.44 for the runs, USD 0.02 for the judge, USD 0.13 for the probabilities.
+
+Against `baseline_2026-10-15`, means of the runs, 2026-10-15 / 2026-10-23 (`complex_stability` and `anthropic/claude-haiku-5-5` are not in the earlier baseline, whose second LLM was `openai/gpt-5.6-luna`):
+
+| Case | Model | Aspect F1 | Concepts correct | Reference F1 | Justifications correct (judged) | Input tokens a run | USD a run |
+|------|-------|-----------|------------------|--------------|---------------------------------|--------------------|-----------|
+| `complex_nda` | `openai/gpt-6-luna` | 0.995 / 0.995 | 17.7 / 18.0 of 18 | 0.857 / 0.867 | 20.7 / 21.0 | 48,282 / 42,907 (-11%) | 0.0056 / 0.0054 |
+| `complex_dpa` | `openai/gpt-6-luna` | 0.980 / 0.979 | 21.3 / 21.7 of 22 | 0.855 / 0.848 | 21.0 / 21.0 | 57,288 / 51,649 (-10%) | 0.0072 / 0.0065 |
+| `complex_mcu` | `openai/gpt-6-luna` | 0.940 / 0.923 | 25.7 / 24.3 of 26 | 0.711 / 0.698 | 25.7 / 22.7 | 103,428 / 83,269 (-19%) | 0.0147 / 0.0135 |
+| `complex_nda` | `openai/gpt-6-luna`, concurrency | 0.977 / 0.975 | 18.0 / 18.0 of 18 | 0.857 / 0.852 | 20.7 / 20.7 | 197,177 / 173,066 (-12%) | 0.0167 / 0.0166 |
+| `complex_dpa` | `openai/gpt-6-luna`, concurrency | 0.954 / 0.953 | 22.0 / 21.7 of 22 | 0.900 / 0.901 | 22.0 / 19.7 | 259,170 / 228,679 (-12%) | 0.0206 / 0.0190 |
+| `complex_mcu` | `openai/gpt-6-luna`, concurrency | 0.920 / 0.901 | 25.3 / 25.0 of 26 | 0.767 / 0.764 | 25.7 / 23.0 | 434,962 / 337,843 (-22%) | 0.0418 / 0.0349 |
+| `complex_nda` | `openai/gpt-6.1-sol` (1 run) | 1.000 / 1.000 | 18 / 18 of 18 | 0.892 / 0.912 | 21 / 21 | 48,358 / 42,991 (-11%) | 0.1397 / 0.1234 |
+| `complex_dpa` | `openai/gpt-6.1-sol` (1 run) | 0.946 / 0.895 | 22 / 22 of 22 | 0.937 / 0.927 | 22 / 21 | 58,664 / 52,802 (-10%) | 0.1699 / 0.1535 |
+| `complex_mcu` | `openai/gpt-6.1-sol` (1 run) | 0.954 / 0.942 | 26 / 26 of 26 | 0.740 / 0.745 | 26 / 25 | 102,631 / 84,067 (-18%) | 0.2902 / 0.2438 |
+
+- **The input tokens of the LLMs drop by 10% to 22% a run**, most on `complex_mcu`, and their cost by 1% to 17%.
+- **The scores stay within the spread of the runs**, which is wide (see Comparing a Change with the Baseline): on `complex_mcu`, `openai/gpt-6-luna` got 24.3 of 26 concepts (23 to 26) against 25.7, and fewer judged justifications, which count only the items extracted; the measurement of the listing, with its control recorded at the same time, found 25.0 and 24.8 concepts and the same justifications with the old and the new listing. `openai/gpt-6.1-sol` scored 0.895 on the aspects of `complex_dpa` against 0.946, in one run each.
+- **The decision models are unchanged**: their input tokens are within 1% of 2026-10-15, and their aspect F1 within 0.025 on each case (`typesafe/jev-latest` on `complex_nda`: 0.818 against 0.840).
+- **On `complex_stability`, new to the baseline**: `openai/gpt-6-luna` 0.942 aspect F1 and 14.3 of 16 concepts, `anthropic/claude-haiku-5-5` 0.900 and 13.7, `openai/gpt-6.1-sol` 0.984 and 16, the decision models 0.37 to 0.41, as from the text on 2026-10-20 (0.65 to 0.76 from the Docling document, see Extraction from Docling Documents). `anthropic/claude-haiku-5-5` on the other cases: aspect F1 0.951, 0.909 and 0.690, concepts 17.7 of 18, 21.3 of 22 and 19.7 of 26.
+
+**`baseline_2026-10-15`**, the previous one, on the three cases, recorded on 2026-10-15 with `litellm` 1.105.1, from commit `1ecd68c` of the library (the reading of model output made strict), with the hosted models only:
 
 - **LLMs**, each case: `openai/gpt-6-luna` (3 runs, and 3 with concurrency), `openai/gpt-5.6-luna` (3), `openai/gpt-6.1-sol` (1).
 - **Decision models**, each case: `typesafe/jev-latest`, `openai/gpt-6-luna` and `azure_ai/ms-decision-model`, a deployment of Microsoft-Decision-1 in Microsoft Foundry (2 runs each), and one pass of `decision_probabilities` each.
@@ -357,7 +385,7 @@ The prompts of LLMs that list paragraphs (those of aspects, and of concepts with
 
 **From the Docling documents** (`--input docling`, every paragraph with its additional context): `markup_2026-10-23_docling_control` and `markup_2026-10-23_docling_lean`, 3 runs of `complex_mcu` and `complex_stability` with both LLMs, recorded at the same time, judged (75 and 76 of the 76 checks). The input tokens drop by 15% to 27% a run (`complex_mcu` with `openai/gpt-6-luna`: 140,060 to 118,797), the retries from 9 to 5, and `openai/gpt-6-luna` scores the same or higher on both cases. `anthropic/claude-haiku-5-5` on `complex_mcu` has an aspect F1 of 0.723 against 0.758, 0.005 beyond the rule's floor with three runs, and one concept fewer (20.7 against 21.7), again by single runs among the concepts of DR-114; on `complex_stability` it scores higher (reference F1 0.873 against 0.722). Cost: USD 0.48 for the two labels.
 
-Not measured: sentence-level references, which no case asks for, and other models. Adopting the listing changes the requests of every recorded test with aspects or concept references, whose cassettes are then recorded again, and calls for a new baseline.
+Not measured: sentence-level references, which no case asks for, and other models. Adopting the listing changed the requests of the recorded tests, whose cassettes were recorded again, and `baseline_2026-10-23` is recorded with it.
 
 ## Adding a Case
 

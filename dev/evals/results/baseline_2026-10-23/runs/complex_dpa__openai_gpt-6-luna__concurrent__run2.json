@@ -1,0 +1,951 @@
+{
+  "case": "complex_dpa",
+  "model": "openai/gpt-6-luna",
+  "kind": "llm",
+  "mode": "concurrent",
+  "input": "text",
+  "label": "baseline_2026-10-23",
+  "run": 2,
+  "error": null,
+  "seconds": 27.8,
+  "usage": {
+    "requests": 30,
+    "requests_without_response": 0,
+    "input_tokens": 228475,
+    "output_tokens": 10834,
+    "cache_read_tokens": 177919,
+    "cache_write_tokens": 50466,
+    "cost_total": "0.01352"
+  },
+  "retries_for_invalid_data": 0,
+  "responses_not_valid_json": 0,
+  "extraction_warnings": [],
+  "refusal_warnings": [],
+  "provenance": {
+    "litellm": "1.105.2",
+    "prompts": {
+      "decision_question_aspect.j2": "7b069363576f",
+      "decision_question_concept.j2": "603962caf35d",
+      "default_system_message.j2": "8bb691c5e36c",
+      "extract_aspect_items.j2": "a413910857ef",
+      "extract_concept_items.j2": "8c0e800ae81b"
+    }
+  },
+  "scores": {
+    "summary": {
+      "aspect_f1": 0.9481481481481482,
+      "aspect_precision": 0.9444444444444445,
+      "aspect_recall": 0.9666666666666667,
+      "concept_accuracy": 0.9545454545454546,
+      "n_concepts_scored": 22,
+      "n_concepts_correct": 21,
+      "string_exact": 0.5,
+      "n_strings": 2,
+      "reference_f1": 0.9117087019260932,
+      "n_concepts_without_items": 0
+    },
+    "aspects": [
+      {
+        "name": "Amendment effectiveness and precedence",
+        "n_predicted": 4,
+        "n_gold": 5,
+        "n_neutral_predicted": 2,
+        "predicted_paragraphs": [
+          90,
+          91,
+          92,
+          93,
+          117,
+          118
+        ],
+        "precision": 1.0,
+        "recall": 0.8,
+        "f1": 0.888888888888889
+      },
+      {
+        "name": "Personal data breach notification",
+        "n_predicted": 12,
+        "n_gold": 8,
+        "n_neutral_predicted": 4,
+        "predicted_paragraphs": [
+          38,
+          39,
+          40,
+          41,
+          94,
+          95,
+          96,
+          119,
+          120,
+          121,
+          122,
+          123,
+          135,
+          136,
+          137,
+          138
+        ],
+        "precision": 0.6666666666666666,
+        "recall": 1.0,
+        "f1": 0.8
+      },
+      {
+        "name": "Incident IR-27",
+        "n_predicted": 14,
+        "n_gold": 14,
+        "n_neutral_predicted": 0,
+        "predicted_paragraphs": [
+          39,
+          40,
+          41,
+          91,
+          95,
+          96,
+          118,
+          119,
+          121,
+          122,
+          123,
+          136,
+          137,
+          138
+        ],
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0
+      },
+      {
+        "name": "Retention TR-27",
+        "n_predicted": 12,
+        "n_gold": 12,
+        "n_neutral_predicted": 8,
+        "predicted_paragraphs": [
+          54,
+          55,
+          60,
+          61,
+          67,
+          77,
+          91,
+          92,
+          93,
+          104,
+          105,
+          118,
+          119,
+          124,
+          125,
+          126,
+          127,
+          140,
+          141,
+          142
+        ],
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0
+      },
+      {
+        "name": "Supplier approvals in May 2027",
+        "n_predicted": 21,
+        "n_gold": 21,
+        "n_neutral_predicted": 3,
+        "predicted_paragraphs": [
+          29,
+          30,
+          31,
+          32,
+          50,
+          52,
+          81,
+          82,
+          83,
+          84,
+          91,
+          93,
+          101,
+          102,
+          103,
+          118,
+          129,
+          130,
+          131,
+          144,
+          145,
+          146,
+          147,
+          148
+        ],
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0
+      },
+      {
+        "name": "Liability LC-27",
+        "n_predicted": 10,
+        "n_gold": 10,
+        "n_neutral_predicted": 4,
+        "predicted_paragraphs": [
+          57,
+          58,
+          91,
+          92,
+          93,
+          107,
+          118,
+          132,
+          133,
+          134,
+          149,
+          150,
+          151,
+          152
+        ],
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0
+      }
+    ],
+    "concepts": [
+      {
+        "context": "document",
+        "name": "Breach notification deadline in force on 15 September 2026",
+        "type": "NumericalConcept",
+        "n_items": 1,
+        "n_gold_items": 1,
+        "predicted": [
+          48.0
+        ],
+        "gold": [
+          48.0
+        ],
+        "scoring": "exact",
+        "correct": true,
+        "predicted_references": [],
+        "values": [
+          48
+        ],
+        "justifications": [
+          "The DPA sets a maximum of 48 hours after awareness of a breach. The amendment reducing this to 24 hours does not take effect until 1 October 2026, so it is not in force on 15 September 2026."
+        ]
+      },
+      {
+        "context": "document",
+        "name": "Breach notification deadline in force on 1 November 2026",
+        "type": "NumericalConcept",
+        "n_items": 1,
+        "n_gold_items": 1,
+        "predicted": [
+          24.0
+        ],
+        "gold": [
+          24.0
+        ],
+        "scoring": "exact",
+        "correct": true,
+        "predicted_references": [],
+        "values": [
+          24
+        ],
+        "justifications": [
+          "Amendment No. 1 took effect on 1 October 2026 and replaced the 48-hour deadline with a maximum of 24 hours. Amendment No. 2 had not taken effect by 1 November 2026."
+        ]
+      },
+      {
+        "context": "document",
+        "name": "Audit notice period in force on 1 November 2026",
+        "type": "NumericalConcept",
+        "n_items": 1,
+        "n_gold_items": 1,
+        "predicted": [
+          20.0
+        ],
+        "gold": [
+          20.0
+        ],
+        "scoring": "exact",
+        "correct": true,
+        "predicted_references": [],
+        "values": [
+          20
+        ],
+        "justifications": [
+          "The amendment effective 1 October 2026 reduced the prior notice for routine on-site audits from 30 days to 20 days. Although the audit protocol states 10 Business Days, the amendment's main body prevails over its annex in the event of a conflict."
+        ]
+      },
+      {
+        "context": "document",
+        "name": "Liability cap in force on 1 November 2026",
+        "type": "NumericalConcept",
+        "n_items": 1,
+        "n_gold_items": 1,
+        "predicted": [
+          1000000.0
+        ],
+        "gold": [
+          1000000.0
+        ],
+        "scoring": "exact",
+        "correct": true,
+        "predicted_references": [],
+        "values": [
+          1000000
+        ],
+        "justifications": [
+          "Amendment No. 1, effective 1 October 2026, replaces the prior cap with a EUR 1,000,000 cap for breaches of the DPA. The EUR 700,000 fee amount does not change this fixed cap."
+        ]
+      },
+      {
+        "context": "document",
+        "name": "Liability cap covers confidentiality breaches",
+        "type": "BooleanConcept",
+        "n_items": 1,
+        "n_gold_items": 1,
+        "predicted": [
+          false
+        ],
+        "gold": [
+          false
+        ],
+        "scoring": "exact",
+        "correct": true,
+        "predicted_references": [],
+        "values": [
+          false
+        ],
+        "justifications": [
+          "The amendment effective 1 October 2026 states that the Processor's liability cap does not apply to breaches of Section 4 (Confidentiality)."
+        ]
+      },
+      {
+        "context": "document",
+        "name": "Meridian Mail approved on 1 November 2026",
+        "type": "BooleanConcept",
+        "n_items": 1,
+        "n_gold_items": 1,
+        "predicted": [
+          true
+        ],
+        "gold": [
+          true
+        ],
+        "scoring": "exact",
+        "correct": true,
+        "predicted_references": [],
+        "values": [
+          true
+        ],
+        "justifications": [
+          "Meridian Mail Ltd is listed as an approved Sub-processor in Annex 3. Its approval is withdrawn effective 1 January 2027, so it remains approved on 1 November 2026."
+        ]
+      },
+      {
+        "context": "document",
+        "name": "Meridian Mail approved on 1 February 2027",
+        "type": "BooleanConcept",
+        "n_items": 1,
+        "n_gold_items": 1,
+        "predicted": [
+          false
+        ],
+        "gold": [
+          false
+        ],
+        "scoring": "exact",
+        "correct": true,
+        "predicted_references": [],
+        "values": [
+          false
+        ],
+        "justifications": [
+          "Meridian Mail Ltd's approval was withdrawn effective 1 January 2027, so it was not an approved Sub-processor on 1 February 2027."
+        ]
+      },
+      {
+        "context": "document",
+        "name": "Distinct data locations count as of 1 February 2027",
+        "type": "NumericalConcept",
+        "n_items": 1,
+        "n_gold_items": 1,
+        "predicted": [
+          5.0
+        ],
+        "gold": [
+          5.0
+        ],
+        "scoring": "exact",
+        "correct": true,
+        "predicted_references": [],
+        "values": [
+          5
+        ],
+        "justifications": [
+          "As of 1 February 2027, the stated data locations are Norway and Estonia, plus Lithuania, France, and Denmark through approved sub-processors. Meridian Mail's Ireland approval had been withdrawn effective 1 January 2027."
+        ]
+      },
+      {
+        "context": "document",
+        "name": "Deletion deadline for year-end termination",
+        "type": "DateConcept",
+        "n_items": 1,
+        "n_gold_items": 1,
+        "predicted": [
+          "2027-03-01"
+        ],
+        "gold": [
+          "2027-03-01"
+        ],
+        "scoring": "exact",
+        "correct": true,
+        "predicted_references": [],
+        "values": [
+          "2027-03-01"
+        ],
+        "justifications": [
+          "The amendment replacing the 90-day period with 60 days took effect on 1 October 2026. Counting 60 calendar days after the 31 December 2026 termination, excluding the termination date, gives a deadline of 1 March 2027."
+        ]
+      },
+      {
+        "context": "document",
+        "name": "Approved sub-processors as of 1 February 2027",
+        "type": "JsonObjectConcept",
+        "n_items": 4,
+        "n_gold_items": 4,
+        "predicted": [
+          {
+            "country": "estonia",
+            "name": "skylark hosting ou",
+            "service": "cloud infrastructure and data centre services"
+          },
+          {
+            "country": "lithuania",
+            "name": "baltika analytics uab",
+            "service": "log aggregation and monitoring services"
+          },
+          {
+            "country": "france",
+            "name": "cendrillon mail sas",
+            "service": "transactional email delivery services"
+          },
+          {
+            "country": "denmark",
+            "name": "dagmar backup aps",
+            "service": "encrypted backup storage services"
+          }
+        ],
+        "gold": [
+          {
+            "country": "estonia",
+            "name": "skylark hosting ou",
+            "service": "cloud infrastructure and data centre services"
+          },
+          {
+            "country": "lithuania",
+            "name": "baltika analytics uab",
+            "service": "log aggregation and monitoring services"
+          },
+          {
+            "country": "france",
+            "name": "cendrillon mail sas",
+            "service": "transactional email delivery services"
+          },
+          {
+            "country": "denmark",
+            "name": "dagmar backup aps",
+            "service": "encrypted backup storage services"
+          }
+        ],
+        "scoring": "names_of_objects",
+        "correct": true,
+        "field_match_rate": 1.0,
+        "predicted_references": [],
+        "values": [
+          {
+            "name": "Skylark Hosting OU",
+            "country": "Estonia",
+            "service": "Cloud infrastructure and data centre services"
+          },
+          {
+            "name": "Baltika Analytics UAB",
+            "country": "Lithuania",
+            "service": "Log aggregation and monitoring services"
+          },
+          {
+            "name": "Cendrillon Mail SAS",
+            "country": "France",
+            "service": "Transactional email delivery services"
+          },
+          {
+            "name": "Dagmar Backup ApS",
+            "country": "Denmark",
+            "service": "Encrypted backup storage services"
+          }
+        ],
+        "justifications": [
+          null,
+          null,
+          null,
+          null
+        ]
+      },
+      {
+        "context": "document",
+        "name": "Breach notification obligation summary",
+        "type": "StringConcept",
+        "n_items": 1,
+        "n_gold_items": 1,
+        "predicted": [
+          "the processor must notify the controller without undue delay, and no later than 24 hours after becoming aware of a personal data breach affecting data processed under the dpa. the notice must describe the breach, the categories and approximate numbers of affected data subjects and records, likely consequences, and measures taken or proposed to address it and mitigate adverse effects."
+        ],
+        "gold": [
+          "the processor must notify the controller without undue delay and within 24 hours after becoming aware of a personal data breach affecting data processed under the dpa, describing its nature, affected categories and approximate numbers of data subjects and records, likely consequences, and measures taken or proposed to address the breach and mitigate its effects. it must document all breaches and cooperate with any regulatory notifications or data subject communications the controller determines are required."
+        ],
+        "scoring": "exact_or_accepted",
+        "correct": false,
+        "predicted_references": [],
+        "values": [
+          "The Processor must notify the Controller without undue delay, and no later than 24 hours after becoming aware of a Personal Data Breach affecting data processed under the DPA. The notice must describe the breach, the categories and approximate numbers of affected Data Subjects and records, likely consequences, and measures taken or proposed to address it and mitigate adverse effects."
+        ],
+        "justifications": [
+          "The amendment effective 1 October 2026 replaces the 48-hour deadline with a 24-hour limit; the DPA’s notification-content requirements remain unchanged."
+        ]
+      },
+      {
+        "context": "aspect: Incident IR-27",
+        "name": "Applicable initial notification regime",
+        "type": "LabelConcept",
+        "n_items": 1,
+        "n_gold_items": 1,
+        "predicted": [
+          [
+            "expedited"
+          ]
+        ],
+        "gold": [
+          [
+            "expedited"
+          ]
+        ],
+        "scoring": "exact",
+        "correct": true,
+        "predicted_references": [
+          121,
+          136
+        ],
+        "references": {
+          "precision": 1.0,
+          "recall": 1.0,
+          "f1": 1.0
+        },
+        "values": [
+          [
+            "expedited"
+          ]
+        ],
+        "justifications": [
+          "IR-27 was confirmed to involve exposed usable privileged credentials, which triggers the 12-hour expedited initial-notification limit from the original awareness of the breach."
+        ]
+      },
+      {
+        "context": "aspect: Incident IR-27",
+        "name": "Initial notice lateness in minutes",
+        "type": "NumericalConcept",
+        "n_items": 1,
+        "n_gold_items": 1,
+        "predicted": [
+          50.0
+        ],
+        "gold": [
+          50.0
+        ],
+        "scoring": "exact",
+        "correct": true,
+        "predicted_references": [
+          121,
+          136,
+          137
+        ],
+        "references": {
+          "precision": 1.0,
+          "recall": 0.75,
+          "f1": 0.8571428571428571
+        },
+        "values": [
+          50
+        ],
+        "justifications": [
+          "Because usable privileged credentials were confirmed exposed, the applicable outer limit was 12 hours from the original awareness at 17:10 on 9 April, expiring at 05:10 on 10 April. The first notice arrived at 06:00, 50 minutes after the deadline."
+        ]
+      },
+      {
+        "context": "aspect: Incident IR-27",
+        "name": "Completed follow-up report deadline",
+        "type": "DateConcept",
+        "n_items": 1,
+        "n_gold_items": 1,
+        "predicted": [
+          "2027-04-16"
+        ],
+        "gold": [
+          "2027-04-16"
+        ],
+        "scoring": "exact",
+        "correct": true,
+        "predicted_references": [
+          119,
+          122,
+          123,
+          136,
+          138
+        ],
+        "references": {
+          "precision": 1.0,
+          "recall": 1.0,
+          "f1": 1.0
+        },
+        "values": [
+          "2027-04-16"
+        ],
+        "justifications": [
+          "Awareness occurred on 9 April. Counting three Business Days after that date excludes the 12 April closure and the only approved pause day, 14 April, making 16 April the third counted Business Day."
+        ]
+      },
+      {
+        "context": "aspect: Retention TR-27",
+        "name": "Held ORD records deletion deadline",
+        "type": "DateConcept",
+        "n_items": 1,
+        "n_gold_items": 1,
+        "predicted": [
+          "2027-09-08"
+        ],
+        "gold": [
+          "2027-09-09"
+        ],
+        "scoring": "exact",
+        "correct": false,
+        "predicted_references": [
+          105,
+          118,
+          119,
+          125,
+          140,
+          141
+        ],
+        "references": {
+          "precision": 0.8333333333333334,
+          "recall": 1.0,
+          "f1": 0.9090909090909091
+        },
+        "values": [
+          "2027-09-08"
+        ],
+        "justifications": [
+          "The ordinary deletion deadline is 60 calendar days after the 30 June 2027 termination, or 29 August. The last applicable hold ends on 25 August, and the tenth Business Day after release is 8 September; the later date governs."
+        ]
+      },
+      {
+        "context": "aspect: Retention TR-27",
+        "name": "BK-0630 deletion deadline",
+        "type": "DateConcept",
+        "n_items": 1,
+        "n_gold_items": 1,
+        "predicted": [
+          "2027-08-04"
+        ],
+        "gold": [
+          "2027-08-04"
+        ],
+        "scoring": "exact",
+        "correct": true,
+        "predicted_references": [
+          105,
+          118,
+          119,
+          125,
+          126,
+          140
+        ],
+        "references": {
+          "precision": 0.8333333333333334,
+          "recall": 0.8333333333333334,
+          "f1": 0.8333333333333334
+        },
+        "values": [
+          "2027-08-04"
+        ],
+        "justifications": [
+          "The backup must be deleted by the earlier of its ordinary deletion deadline and 35 calendar days after creation. Counting from the day after its 30 June 2027 creation date, the 35-day limit is 4 August 2027."
+        ]
+      },
+      {
+        "context": "aspect: Retention TR-27",
+        "name": "Permitted uses of held ORD records on 1 September 2027",
+        "type": "LabelConcept",
+        "n_items": 1,
+        "n_gold_items": 1,
+        "predicted": [
+          [
+            "legal preservation"
+          ]
+        ],
+        "gold": [
+          [
+            "legal preservation"
+          ]
+        ],
+        "scoring": "exact",
+        "correct": true,
+        "predicted_references": [
+          105,
+          118,
+          119,
+          125,
+          127,
+          140,
+          141
+        ],
+        "references": {
+          "precision": 0.8571428571428571,
+          "recall": 0.8571428571428571,
+          "f1": 0.8571428571428571
+        },
+        "values": [
+          [
+            "legal preservation"
+          ]
+        ],
+        "justifications": [
+          "The final hold ends on 25 August, and the tenth Business Day after release is 9 September, later than the ordinary deletion deadline. On 1 September, the records therefore remain retained solely under the legal-hold deletion window and may be used only for legal preservation."
+        ]
+      },
+      {
+        "context": "aspect: Supplier approvals in May 2027",
+        "name": "Nordlicht infrastructure approval start",
+        "type": "DateConcept",
+        "n_items": 1,
+        "n_gold_items": 1,
+        "predicted": [
+          "2027-04-22"
+        ],
+        "gold": [
+          "2027-04-22"
+        ],
+        "scoring": "exact",
+        "correct": true,
+        "predicted_references": [
+          129,
+          144
+        ],
+        "references": {
+          "precision": 1.0,
+          "recall": 1.0,
+          "f1": 1.0
+        },
+        "values": [
+          "2027-04-22"
+        ],
+        "justifications": [
+          "Approval could begin only once the proposed start date, written consent, and completed security review were all in place. The latest condition was met on 22 April, when processing also began."
+        ]
+      },
+      {
+        "context": "aspect: Supplier approvals in May 2027",
+        "name": "Ordinary customer email providers on 10 May 2027",
+        "type": "StringConcept",
+        "n_items": 1,
+        "n_gold_items": 1,
+        "predicted": [
+          "cendrillon mail sas"
+        ],
+        "gold": [
+          "cendrillon mail sas"
+        ],
+        "scoring": "exact_or_accepted",
+        "correct": true,
+        "predicted_references": [
+          102,
+          131,
+          146,
+          148
+        ],
+        "references": {
+          "precision": 1.0,
+          "recall": 0.5714285714285714,
+          "f1": 0.7272727272727273
+        },
+        "values": [
+          "Cendrillon Mail SAS"
+        ],
+        "justifications": [
+          "Cendrillon Mail SAS remains approved for ordinary transactional email from France. Meridian Mail Ltd's temporary emergency permission is expressly limited to incident notices and does not restore approval for ordinary customer email."
+        ]
+      },
+      {
+        "context": "aspect: Supplier approvals in May 2027",
+        "name": "Authorised data locations on 15 May 2027",
+        "type": "LabelConcept",
+        "n_items": 1,
+        "n_gold_items": 1,
+        "predicted": [
+          [
+            "estonia",
+            "france",
+            "lithuania",
+            "norway",
+            "sweden"
+          ]
+        ],
+        "gold": [
+          [
+            "estonia",
+            "france",
+            "lithuania",
+            "norway",
+            "sweden"
+          ]
+        ],
+        "scoring": "exact",
+        "correct": true,
+        "predicted_references": [
+          52,
+          82,
+          84,
+          102,
+          129,
+          130,
+          144,
+          145,
+          146,
+          147,
+          148
+        ],
+        "references": {
+          "precision": 1.0,
+          "recall": 0.9166666666666666,
+          "f1": 0.9565217391304348
+        },
+        "values": [
+          [
+            "Norway",
+            "Estonia",
+            "France",
+            "Lithuania",
+            "Sweden"
+          ]
+        ],
+        "justifications": [
+          "Personal Data continues to be processed in Norway and Estonia, and the approved services in France and Lithuania remain active. Sweden is also authorized because written consent and the security review were completed before processing began; Denmark’s authorization and processing ceased, while the other proposed or emergency locations do not qualify on the queried date."
+        ]
+      },
+      {
+        "context": "aspect: Supplier approvals in May 2027",
+        "name": "Written consent date for Nordlicht email in Finland",
+        "type": "DateConcept",
+        "n_items": 0,
+        "n_gold_items": 0,
+        "predicted": [],
+        "gold": [],
+        "scoring": "exact",
+        "correct": true,
+        "predicted_references": [],
+        "values": [],
+        "justifications": []
+      },
+      {
+        "context": "aspect: Liability LC-27",
+        "name": "Security cap before earlier payments in EUR",
+        "type": "NumericalConcept",
+        "n_items": 1,
+        "n_gold_items": 1,
+        "predicted": [
+          2280000.0
+        ],
+        "gold": [
+          2280000.0
+        ],
+        "scoring": "exact",
+        "correct": true,
+        "predicted_references": [
+          133,
+          150
+        ],
+        "references": {
+          "precision": 1.0,
+          "recall": 1.0,
+          "f1": 1.0
+        },
+        "values": [
+          2280000
+        ],
+        "justifications": [
+          "Qualifying fees are EUR 1,140,000 after excluding VAT and the one-off training fee, subtracting the service credit, and excluding April 2027 fees. Twice that amount is EUR 2,280,000, which exceeds the EUR 2,000,000 minimum security cap."
+        ]
+      },
+      {
+        "context": "aspect: Liability LC-27",
+        "name": "Ordinary cap remaining before new claims in EUR",
+        "type": "NumericalConcept",
+        "n_items": 1,
+        "n_gold_items": 1,
+        "predicted": [
+          700000.0
+        ],
+        "gold": [
+          700000.0
+        ],
+        "scoring": "exact",
+        "correct": true,
+        "predicted_references": [
+          133,
+          151
+        ],
+        "references": {
+          "precision": 1.0,
+          "recall": 0.6666666666666666,
+          "f1": 0.8
+        },
+        "values": [
+          700000
+        ],
+        "justifications": [
+          "The ordinary cap is EUR 1,000,000 for the Contract Year, and EUR 300,000 has already been paid for ordinary breaches in that same year. The remaining ordinary pool before the new claims is EUR 700,000."
+        ]
+      },
+      {
+        "context": "aspect: Liability LC-27",
+        "name": "Total payable on new claims in EUR",
+        "type": "NumericalConcept",
+        "n_items": 1,
+        "n_gold_items": 1,
+        "predicted": [
+          2800000.0
+        ],
+        "gold": [
+          2800000.0
+        ],
+        "scoring": "exact",
+        "correct": true,
+        "predicted_references": [
+          107,
+          133,
+          134,
+          150,
+          151,
+          152
+        ],
+        "references": {
+          "precision": 1.0,
+          "recall": 1.0,
+          "f1": 1.0
+        },
+        "values": [
+          2800000
+        ],
+        "justifications": [
+          "Qualifying fees are EUR 1,140,000 after excluding VAT and the paid credit, making the security cap EUR 2,280,000. After prior payments, EUR 700,000 remains under the ordinary cap and EUR 1,780,000 under the security cap; the shared security loss is EUR 1,750,000, while the two Section 4 losses are uncapped, for a total payable of EUR 2,800,000."
+        ]
+      }
+    ]
+  }
+}

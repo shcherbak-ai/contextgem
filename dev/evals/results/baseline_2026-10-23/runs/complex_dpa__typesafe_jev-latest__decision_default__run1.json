@@ -1,0 +1,371 @@
+{
+  "case": "complex_dpa",
+  "model": "typesafe/jev-latest",
+  "kind": "decision",
+  "mode": "decision_default",
+  "input": "text",
+  "label": "baseline_2026-10-23",
+  "run": 1,
+  "error": null,
+  "seconds": 29.2,
+  "usage": {
+    "requests": 157,
+    "requests_without_response": 0,
+    "input_tokens": 143802,
+    "output_tokens": 16545,
+    "cache_read_tokens": 0,
+    "cache_write_tokens": 0,
+    "cost_total": "0.00604"
+  },
+  "retries_for_invalid_data": 0,
+  "responses_not_valid_json": 0,
+  "extraction_warnings": [],
+  "refusal_warnings": [],
+  "provenance": {
+    "litellm": "1.105.2",
+    "prompts": {
+      "decision_question_aspect.j2": "7b069363576f",
+      "decision_question_concept.j2": "603962caf35d",
+      "default_system_message.j2": "8bb691c5e36c",
+      "extract_aspect_items.j2": "a413910857ef",
+      "extract_concept_items.j2": "8c0e800ae81b"
+    }
+  },
+  "scores": {
+    "summary": {
+      "aspect_f1": 0.7744937767770584,
+      "aspect_precision": 0.7610047846889952,
+      "aspect_recall": 0.8523809523809524,
+      "concept_accuracy": 0.8333333333333334,
+      "n_concepts_scored": 6,
+      "n_concepts_correct": 5,
+      "string_exact": null,
+      "n_strings": 0,
+      "reference_f1": null,
+      "n_concepts_without_items": 0
+    },
+    "aspects": [
+      {
+        "name": "Amendment effectiveness and precedence",
+        "n_predicted": 11,
+        "n_gold": 5,
+        "n_neutral_predicted": 3,
+        "predicted_paragraphs": [
+          51,
+          90,
+          91,
+          92,
+          93,
+          99,
+          101,
+          102,
+          103,
+          117,
+          118,
+          125,
+          126,
+          129
+        ],
+        "precision": 0.45454545454545453,
+        "recall": 1.0,
+        "f1": 0.625
+      },
+      {
+        "name": "Personal data breach notification",
+        "n_predicted": 11,
+        "n_gold": 8,
+        "n_neutral_predicted": 2,
+        "predicted_paragraphs": [
+          38,
+          39,
+          40,
+          41,
+          94,
+          95,
+          96,
+          105,
+          121,
+          122,
+          123,
+          137,
+          148
+        ],
+        "precision": 0.7272727272727273,
+        "recall": 1.0,
+        "f1": 0.8421052631578948
+      },
+      {
+        "name": "Incident IR-27",
+        "n_predicted": 19,
+        "n_gold": 14,
+        "n_neutral_predicted": 3,
+        "predicted_paragraphs": [
+          20,
+          31,
+          38,
+          39,
+          40,
+          41,
+          91,
+          94,
+          95,
+          96,
+          103,
+          105,
+          113,
+          118,
+          119,
+          121,
+          122,
+          123,
+          135,
+          136,
+          137,
+          148
+        ],
+        "precision": 0.6842105263157895,
+        "recall": 0.9285714285714286,
+        "f1": 0.7878787878787878
+      },
+      {
+        "name": "Retention TR-27",
+        "n_predicted": 10,
+        "n_gold": 12,
+        "n_neutral_predicted": 5,
+        "predicted_paragraphs": [
+          53,
+          54,
+          67,
+          76,
+          77,
+          124,
+          125,
+          126,
+          127,
+          139,
+          140,
+          141,
+          142,
+          147,
+          148
+        ],
+        "precision": 0.8,
+        "recall": 0.6666666666666666,
+        "f1": 0.7272727272727272
+      },
+      {
+        "name": "Supplier approvals in May 2027",
+        "n_predicted": 13,
+        "n_gold": 21,
+        "n_neutral_predicted": 2,
+        "predicted_paragraphs": [
+          30,
+          31,
+          52,
+          81,
+          100,
+          101,
+          102,
+          129,
+          130,
+          131,
+          144,
+          145,
+          146,
+          147,
+          148
+        ],
+        "precision": 1.0,
+        "recall": 0.6190476190476191,
+        "f1": 0.7647058823529412
+      },
+      {
+        "name": "Liability LC-27",
+        "n_predicted": 10,
+        "n_gold": 10,
+        "n_neutral_predicted": 2,
+        "predicted_paragraphs": [
+          15,
+          57,
+          58,
+          106,
+          107,
+          118,
+          132,
+          133,
+          134,
+          150,
+          151,
+          152
+        ],
+        "precision": 0.9,
+        "recall": 0.9,
+        "f1": 0.9
+      }
+    ],
+    "concepts": [
+      {
+        "context": "document",
+        "name": "Liability cap covers confidentiality breaches",
+        "type": "BooleanConcept",
+        "n_items": 1,
+        "n_gold_items": 1,
+        "predicted": [
+          false
+        ],
+        "gold": [
+          false
+        ],
+        "scoring": "exact",
+        "correct": true,
+        "predicted_references": [],
+        "values": [
+          false
+        ],
+        "justifications": [
+          null
+        ]
+      },
+      {
+        "context": "document",
+        "name": "Meridian Mail approved on 1 November 2026",
+        "type": "BooleanConcept",
+        "n_items": 1,
+        "n_gold_items": 1,
+        "predicted": [
+          false
+        ],
+        "gold": [
+          true
+        ],
+        "scoring": "exact",
+        "correct": false,
+        "predicted_references": [],
+        "values": [
+          false
+        ],
+        "justifications": [
+          null
+        ]
+      },
+      {
+        "context": "document",
+        "name": "Meridian Mail approved on 1 February 2027",
+        "type": "BooleanConcept",
+        "n_items": 1,
+        "n_gold_items": 1,
+        "predicted": [
+          false
+        ],
+        "gold": [
+          false
+        ],
+        "scoring": "exact",
+        "correct": true,
+        "predicted_references": [],
+        "values": [
+          false
+        ],
+        "justifications": [
+          null
+        ]
+      },
+      {
+        "context": "aspect: Incident IR-27",
+        "name": "Applicable initial notification regime",
+        "type": "LabelConcept",
+        "n_items": 1,
+        "n_gold_items": 1,
+        "predicted": [
+          [
+            "expedited"
+          ]
+        ],
+        "gold": [
+          [
+            "expedited"
+          ]
+        ],
+        "scoring": "exact",
+        "correct": true,
+        "predicted_references": [],
+        "values": [
+          [
+            "expedited"
+          ]
+        ],
+        "justifications": [
+          null
+        ]
+      },
+      {
+        "context": "aspect: Retention TR-27",
+        "name": "Permitted uses of held ORD records on 1 September 2027",
+        "type": "LabelConcept",
+        "n_items": 1,
+        "n_gold_items": 1,
+        "predicted": [
+          [
+            "legal preservation"
+          ]
+        ],
+        "gold": [
+          [
+            "legal preservation"
+          ]
+        ],
+        "scoring": "exact",
+        "correct": true,
+        "predicted_references": [],
+        "values": [
+          [
+            "legal preservation"
+          ]
+        ],
+        "justifications": [
+          null
+        ]
+      },
+      {
+        "context": "aspect: Supplier approvals in May 2027",
+        "name": "Authorised data locations on 15 May 2027",
+        "type": "LabelConcept",
+        "n_items": 1,
+        "n_gold_items": 1,
+        "predicted": [
+          [
+            "estonia",
+            "france",
+            "lithuania",
+            "norway",
+            "sweden"
+          ]
+        ],
+        "gold": [
+          [
+            "estonia",
+            "france",
+            "lithuania",
+            "norway",
+            "sweden"
+          ]
+        ],
+        "scoring": "exact",
+        "correct": true,
+        "predicted_references": [],
+        "values": [
+          [
+            "Norway",
+            "Estonia",
+            "Lithuania",
+            "France",
+            "Sweden"
+          ]
+        ],
+        "justifications": [
+          null
+        ]
+      }
+    ]
+  }
+}

@@ -1,0 +1,280 @@
+{
+  "case": "complex_stability",
+  "model": "typesafe/jev-latest",
+  "kind": "decision",
+  "mode": "decision_default",
+  "input": "text",
+  "label": "baseline_2026-10-23",
+  "run": 2,
+  "error": null,
+  "seconds": 22.5,
+  "usage": {
+    "requests": 128,
+    "requests_without_response": 0,
+    "input_tokens": 92695,
+    "output_tokens": 9241,
+    "cache_read_tokens": 0,
+    "cache_write_tokens": 0,
+    "cost_total": "0.00389"
+  },
+  "retries_for_invalid_data": 0,
+  "responses_not_valid_json": 0,
+  "extraction_warnings": [],
+  "refusal_warnings": [],
+  "provenance": {
+    "litellm": "1.105.2",
+    "prompts": {
+      "decision_question_aspect.j2": "7b069363576f",
+      "decision_question_concept.j2": "603962caf35d",
+      "default_system_message.j2": "8bb691c5e36c",
+      "extract_aspect_items.j2": "a413910857ef",
+      "extract_concept_items.j2": "8c0e800ae81b"
+    }
+  },
+  "scores": {
+    "summary": {
+      "aspect_f1": 0.37894288150042627,
+      "aspect_precision": 0.6596153846153846,
+      "aspect_recall": 0.36888736263736266,
+      "concept_accuracy": 0.6,
+      "n_concepts_scored": 5,
+      "n_concepts_correct": 3,
+      "string_exact": null,
+      "n_strings": 0,
+      "reference_f1": null,
+      "n_concepts_without_items": 0
+    },
+    "aspects": [
+      {
+        "name": "Shelf-life acceptance criteria",
+        "n_predicted": 10,
+        "n_gold": 7,
+        "n_neutral_predicted": 4,
+        "predicted_paragraphs": [
+          12,
+          21,
+          29,
+          38,
+          56,
+          79,
+          95,
+          96,
+          97,
+          99,
+          101,
+          103,
+          107,
+          116
+        ],
+        "precision": 0.1,
+        "recall": 0.14285714285714285,
+        "f1": 0.11764705882352941
+      },
+      {
+        "name": "Stability results of V20-2604",
+        "n_predicted": 3,
+        "n_gold": 20,
+        "n_neutral_predicted": 3,
+        "predicted_paragraphs": [
+          58,
+          65,
+          72,
+          79,
+          97,
+          99
+        ],
+        "precision": 1.0,
+        "recall": 0.15,
+        "f1": 0.2608695652173913
+      },
+      {
+        "name": "Results outside the shelf-life specification",
+        "n_predicted": 4,
+        "n_gold": 13,
+        "n_neutral_predicted": 4,
+        "predicted_paragraphs": [
+          29,
+          38,
+          79,
+          96,
+          97,
+          99,
+          101,
+          116
+        ],
+        "precision": 1.0,
+        "recall": 0.3076923076923077,
+        "f1": 0.47058823529411764
+      },
+      {
+        "name": "Shelf-life rules and proposal",
+        "n_predicted": 13,
+        "n_gold": 8,
+        "n_neutral_predicted": 6,
+        "predicted_paragraphs": [
+          4,
+          21,
+          30,
+          33,
+          79,
+          99,
+          100,
+          102,
+          103,
+          104,
+          105,
+          107,
+          108,
+          109,
+          110,
+          111,
+          112,
+          115,
+          116
+        ],
+        "precision": 0.5384615384615384,
+        "recall": 0.875,
+        "f1": 0.6666666666666667
+      }
+    ],
+    "concepts": [
+      {
+        "context": "document",
+        "name": "Batches with a significant change at the accelerated condition",
+        "type": "LabelConcept",
+        "n_items": 1,
+        "n_gold_items": 1,
+        "predicted": [
+          [
+            "v20-2604",
+            "v20-2607"
+          ]
+        ],
+        "gold": [
+          [
+            "v20-2604",
+            "v20-2607"
+          ]
+        ],
+        "scoring": "exact",
+        "correct": true,
+        "predicted_references": [],
+        "values": [
+          [
+            "V20-2604",
+            "V20-2607"
+          ]
+        ],
+        "justifications": [
+          null
+        ]
+      },
+      {
+        "context": "document",
+        "name": "The conclusion on V20-2607 at the accelerated condition agrees with its results",
+        "type": "BooleanConcept",
+        "n_items": 1,
+        "n_gold_items": 1,
+        "predicted": [
+          true
+        ],
+        "gold": [
+          false
+        ],
+        "scoring": "exact",
+        "correct": false,
+        "predicted_references": [],
+        "values": [
+          true
+        ],
+        "justifications": [
+          null
+        ]
+      },
+      {
+        "context": "aspect: Results outside the shelf-life specification",
+        "name": "Tests with a result outside the shelf-life specification",
+        "type": "LabelConcept",
+        "n_items": 1,
+        "n_gold_items": 1,
+        "predicted": [
+          [
+            "impurity d",
+            "total impurities",
+            "water content"
+          ]
+        ],
+        "gold": [
+          [
+            "impurity d",
+            "total impurities",
+            "water content"
+          ]
+        ],
+        "scoring": "exact",
+        "correct": true,
+        "predicted_references": [],
+        "values": [
+          [
+            "Impurity D",
+            "Total impurities",
+            "Water content"
+          ]
+        ],
+        "justifications": [
+          null
+        ]
+      },
+      {
+        "context": "aspect: Results outside the shelf-life specification",
+        "name": "Every result outside the shelf-life specification is investigated in section 5",
+        "type": "BooleanConcept",
+        "n_items": 1,
+        "n_gold_items": 1,
+        "predicted": [
+          true
+        ],
+        "gold": [
+          false
+        ],
+        "scoring": "exact",
+        "correct": false,
+        "predicted_references": [],
+        "values": [
+          true
+        ],
+        "justifications": [
+          null
+        ]
+      },
+      {
+        "context": "aspect: Shelf-life rules and proposal",
+        "name": "Rule that gives the proposed shelf life of the PVC/Alu blister",
+        "type": "LabelConcept",
+        "n_items": 1,
+        "n_gold_items": 1,
+        "predicted": [
+          [
+            "6.2"
+          ]
+        ],
+        "gold": [
+          [
+            "6.2"
+          ]
+        ],
+        "scoring": "exact",
+        "correct": true,
+        "predicted_references": [],
+        "values": [
+          [
+            "6.2"
+          ]
+        ],
+        "justifications": [
+          null
+        ]
+      }
+    ]
+  }
+}
