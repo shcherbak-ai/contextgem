@@ -66,6 +66,10 @@ class _LogCapture(logging.Handler):
     def __init__(self) -> None:
         super().__init__()
         self.messages: list[str] = []
+        # The messages logged at the WARNING level: the library logs a call that
+        # fails without an exception, and the answers that a decision model
+        # refused to give for an aspect, at that level only
+        self.warnings: list[str] = []
 
     def emit(self, record: logging.LogRecord) -> None:
         """
@@ -76,7 +80,10 @@ class _LogCapture(logging.Handler):
         :return: None
         :rtype: None
         """
-        self.messages.append(record.getMessage())
+        message = record.getMessage()
+        self.messages.append(message)
+        if record.levelno == logging.WARNING:
+            self.warnings.append(message)
 
 
 @contextmanager
@@ -169,10 +176,12 @@ def run_once(
 
     error = None
     started = time.time()
-    # The retries for invalid data are told by the logs of the library
+    # The retries for invalid data, the failed calls and the refused answers are
+    # told by the logs of the library. Its Python warnings, on the configuration,
+    # are not part of the record.
     with (
         _capture_library_logs() as log_capture,
-        warnings.catch_warnings(record=True) as caught_warnings,
+        warnings.catch_warnings(record=True),
     ):
         warnings.simplefilter("always")
         try:
@@ -185,7 +194,7 @@ def run_once(
             error = scrub(f"{type(e).__name__}: {str(e)[:500]}", private_texts)
     seconds = time.time() - started
 
-    warning_messages = [str(warning.message) for warning in caught_warnings]
+    warning_messages = log_capture.warnings
     return {
         "case": case,
         "model": model,
@@ -203,11 +212,14 @@ def run_once(
         "responses_not_valid_json": sum(
             "did not return valid JSON" in message for message in log_capture.messages
         ),
-        # A failed call that is not raised as an exception
+        # A failed call that is not raised as an exception: for invalid data,
+        # a refusal or a response cut off, with the hint on raising, or for
+        # a failed request
         "extraction_warnings": [
             scrub(message[:300], private_texts)
             for message in warning_messages
-            if "could not be processed" in message or "Exception occurred" in message
+            if "If you want to raise an exception instead" in message
+            or "Exception occurred" in message
         ],
         # One for each aspect that a decision model refused to answer about on
         # some of the paragraphs or sentences

@@ -108,6 +108,8 @@ uv run python -m dev.evals.docling_pdf_cases --report
 
 `--concurrency` runs the extraction with `use_concurrency=True`. One line is printed per run, which starts with the name of its file. The library prints its logs as usual: set `CONTEXTGEM_LOGGER_LEVEL=WARNING` for a quiet run.
 
+A run records the calls that failed without an exception (`extraction_warnings`) and the aspects that a decision model refused to answer about on some paragraphs (`refusal_warnings`) from the messages that the library logs at the `WARNING` level. The runs recorded from 2026-10-15 to 2026-10-23 have both lists empty: they were read from Python warnings, which the library stopped issuing for these events on 2026-10-15. In those runs, a failed call shows only in the scores, e.g. an aspect F1 of 0.
+
 ## What Is Measured
 
 - **Aspects**: precision, recall and F1 of the extracted paragraphs against those of the reference answers, averaged over the aspects. The neutral paragraphs of an aspect are left out of both.
