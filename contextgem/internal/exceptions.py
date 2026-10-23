@@ -87,8 +87,8 @@ class ModelExtractionError(ContextGemError):
       was asked again ``max_retries_invalid_data`` times;
     - the response of a decision model cannot be used, e.g. an answer without
       valid probabilities. A decision model is not asked again;
-    - the model or its provider declined to answer: then the subclass
-      :class:`ModelRefusalError` is raised.
+    - the model or its provider declined to answer, also after the retries and
+      the fallback models: then the subclass :class:`ModelRefusalError` is raised.
 
     If ``raise_exception_on_extraction_error=False`` is passed to the extraction
     method, a warning is logged instead.
@@ -109,7 +109,7 @@ class ModelExtractionError(ContextGemError):
 class ModelRefusalError(ModelExtractionError):
     """
     Exception raised when a model or its provider declined to answer, in extraction
-    and in chat:
+    and in chat, and there is no retry and no fallback model left to try:
 
     - the model refused to answer, e.g. an LLM of OpenAI with its ``refusal``
       field, or a decision model with a refused answer to a question of a concept,
@@ -125,12 +125,14 @@ class ModelRefusalError(ModelExtractionError):
     reason, i.e. the message cannot always tell them apart. It also reports
     a question that a decision model left unanswered as a refused answer.
 
-    A refusal is final: the request is not sent again to the same model,
-    whatever ``max_retries_invalid_data`` is, and it is not sent to a fallback
-    model. The answer of a refused request is not used, also if it is valid JSON.
-    In chat, a refused answer that has a text is returned as it is, with
-    a warning logged: the error is raised for a refused answer without a text,
-    and for a request that the provider blocked.
+    The answer of a refused request is not used, also if it is valid JSON.
+    In extraction, a refused request is sent again as for invalid data, up to
+    ``max_retries_invalid_data`` times for an LLM, as the verdict of a model or of
+    a content filter can differ on another request, and then to the fallback models,
+    each with its own retries. In chat, a refused answer that has a text is returned
+    as it is, with a warning logged, while a refused answer without a text, and
+    a request that the provider blocked, are sent to the next fallback LLM, as an
+    empty answer is.
 
     As a subclass of :class:`ModelExtractionError`, it is caught by
     ``except ModelExtractionError`` and ``except ContextGemError``. If
@@ -145,10 +147,11 @@ class ModelRefusalError(ModelExtractionError):
 
     :ivar message: Human-readable error description
     :vartype message: str
-    :ivar retry_count: Always 0, as a refused request is not sent again
+    :ivar retry_count: Number of times that the model the error is for, i.e. the last
+        model that was tried, was called again, as for
+        :class:`ModelExtractionError`. 0 in a chat.
     :vartype retry_count: int or None
-    :ivar original_error: The exception of litellm for a request that the provider
-        blocked on its input (``litellm.ContentPolicyViolationError``), None otherwise
+    :ivar original_error: None
     :vartype original_error: Exception or None
     """
 
@@ -167,8 +170,8 @@ class ModelAPIError(ContextGemError):
     - the response of an LLM is cut off at the max output tokens during extraction,
       or is empty in a chat.
 
-    A request that the provider blocks for its content raises
-    :class:`ModelRefusalError` instead, without a fallback model being tried.
+    A request that the provider blocks for its content is a refusal instead,
+    which raises :class:`ModelRefusalError` if it is not answered otherwise.
 
     During extraction, if ``raise_exception_on_extraction_error=False`` is passed
     to the extraction method, a warning is logged instead.
@@ -292,6 +295,7 @@ class _RefusedDecisionAnswerError(_InvalidDecisionResponseError):
     Internal exception raised when the answer of a decision model to a question
     cannot be used because the model refused to answer it: a refused answer to
     a question of a concept, or to the question of an aspect on every paragraph.
-    Unlike other answers that cannot be used, a refusal is final: the extraction
-    raises :class:`ModelRefusalError` for it, and no fallback model is tried.
+    The response is handled as other responses that cannot be used, i.e. passed
+    on to the fallback models, and the extraction raises
+    :class:`ModelRefusalError` for it if none of them answers.
     """

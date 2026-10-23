@@ -131,7 +131,7 @@ class _DocumentLLM(_DocumentModel):
         description=(
             "Retries when the model returns invalid or unparsable data; "
             "a fallback LLM has its own, after it is asked for the first time. "
-            "A refusal of the model or its provider is final, i.e. not retried."
+            "A refusal of the model or its provider is retried as well."
         ),
     )
     output_language: LanguageRequirement = Field(
@@ -420,8 +420,8 @@ class _DocumentLLM(_DocumentModel):
         :raises ModelAPIError: If the request to the LLM fails, or the LLM returns
             an empty response, and no fallback LLM is left to try
         :raises ModelRefusalError: If the LLM or its provider declines to answer
-            without a text, or the provider blocks the request for its content.
-            A refusal is final: no fallback LLM is tried
+            without a text, or the provider blocks the request for its content,
+            and no fallback LLM is left to try
         :raises LLMToolLoopLimitError: If the LLM keeps calling tools after
             ``tool_max_rounds`` rounds of tool calls
         """
@@ -462,8 +462,8 @@ class _DocumentLLM(_DocumentModel):
         :raises ModelAPIError: If the request to the LLM fails, or the LLM returns
             an empty response, and no fallback LLM is left to try
         :raises ModelRefusalError: If the LLM or its provider declines to answer
-            without a text, or the provider blocks the request for its content.
-            A refusal is final: no fallback LLM is tried
+            without a text, or the provider blocks the request for its content,
+            and no fallback LLM is left to try
         :raises LLMToolLoopLimitError: If the LLM keeps calling tools after
             ``tool_max_rounds`` rounds of tool calls
         """
@@ -538,8 +538,8 @@ class _DocumentLLM(_DocumentModel):
         :type chat_session: _ChatSession | None
         :param has_fallback_pending: Whether a fallback LLM will be tried if the call to
             this LLM fails. If True, a model API error or an empty response is logged
-            without an exception being raised, and None is returned. A refusal is
-            final, i.e. it is raised in any case. Defaults to False.
+            without an exception being raised, and None is returned, as is
+            a refused answer without a text. Defaults to False.
         :type has_fallback_pending: bool
         :return: The LLM's response, or None if the LLM call fails, or the LLM returns
             an empty response, while a fallback LLM is yet to be tried
@@ -553,7 +553,7 @@ class _DocumentLLM(_DocumentModel):
             an empty response, and no fallback LLM is yet to be tried
         :raises ModelRefusalError: If the LLM or its provider declines to answer
             without a text, or the provider blocks the request for its content,
-            whether or not a fallback LLM is yet to be tried
+            and no fallback LLM is yet to be tried
         :raises LLMToolLoopLimitError: If the LLM keeps calling tools after
             ``tool_max_rounds`` rounds of tool calls
         """
@@ -656,8 +656,9 @@ class _DocumentLLM(_DocumentModel):
         if response is not None and not response.strip():
             response = None
 
-        # A refused answer is final: it is not sent to a fallback LLM. A request
-        # that the provider blocked is already raised at this point.
+        # A refused answer, or a request that the provider blocked. Without a text,
+        # it is tried with the next fallback LLM, as an empty response is, and
+        # raised if none is left
         refusal = usage.calls[-1]._refusal if usage.calls else None
         if refusal is not None:
             refusal_msg = _get_model_refusal_msg(
@@ -665,10 +666,13 @@ class _DocumentLLM(_DocumentModel):
             )
             if response is None:
                 logger.error(refusal_msg)
-                raise ModelRefusalError(refusal_msg, retry_count=0)
-            # An answer with a text is returned as it is, e.g. the model's own
-            # words on why it does not answer
-            logger.warning(f"{refusal_msg} The response is returned as it is.")
+                if not has_fallback_pending:
+                    raise ModelRefusalError(refusal_msg, retry_count=0)
+                logger.info("The call will be retried with a fallback LLM.")
+            else:
+                # An answer with a text is returned as it is, e.g. the model's own
+                # words on why it does not answer
+                logger.warning(f"{refusal_msg} The response is returned as it is.")
         elif response is None and not _model_call_result_is_api_failure(result):
             error_msg = f"LLM {self.model} returned an empty response."
             if output_truncated:
@@ -2023,7 +2027,6 @@ class _DocumentLLM(_DocumentModel):
         chat_session: _ChatSession | None = None,
         has_fallback_pending: bool = False,
         use_tools: bool = False,
-        refusal_msg_suffix: str = "",
     ) -> tuple[str | None, _ModelUsage]:
         """
         Generates a response from an LLM based on the provided messages and system
@@ -2068,10 +2071,6 @@ class _DocumentLLM(_DocumentModel):
             the tool calls requested by the LLM. Tools are used only in chat, i.e. they are
             ignored in extraction workflows. Defaults to False.
         :type use_tools: bool
-        :param refusal_msg_suffix: Appended to the message on a request that
-            the provider blocks for its content, e.g. naming the aspects or concepts
-            of the extraction call that fail with it. Defaults to an empty string.
-        :type refusal_msg_suffix: str
         :return: A tuple containing the LLM response and usage statistics.
             The LLM response is None if the LLM call fails.
         :rtype: tuple[str | None, _ModelUsage]
@@ -2079,11 +2078,6 @@ class _DocumentLLM(_DocumentModel):
             and no fallback model is yet to be tried.
         :raises ModelAPIError: If the LLM call fails due to an error in the LLM API,
             no fallback model is yet to be tried, and exceptions are to be raised.
-        :raises ModelRefusalError: If the provider blocks the request for its
-            content, and exceptions are to be raised, whether or not a fallback
-            model is yet to be tried: a refusal is final. If exceptions are not to
-            be raised, a warning is logged, and the call is recorded as unfinished,
-            with its refusal.
         :raises LLMToolLoopLimitError: If the LLM keeps requesting tool calls after
             the configured max rounds.
         """
@@ -2195,7 +2189,6 @@ class _DocumentLLM(_DocumentModel):
                     chat_session=chat_session,
                     has_fallback_pending=has_fallback_pending,
                     use_tools=use_tools,
-                    refusal_msg_suffix=refusal_msg_suffix,
                 )
             else:
                 # If drop_params was already True and we still got UnsupportedParamsError,
@@ -2227,25 +2220,15 @@ class _DocumentLLM(_DocumentModel):
                         )
                         logger.warning(warning_msg)
         except litellm.ContentPolicyViolationError as e:  # type: ignore[attr-defined]
-            # The provider blocked the request for its content. This is a refusal,
-            # not a failed request: it is final, i.e. the request is not sent to
-            # a fallback model. The error of litellm is kept on the exception
-            # raised, and is not logged.
+            # The provider blocked the request for its content: a refusal, not
+            # a failed request. The call is recorded as unfinished, with its refusal,
+            # and the caller handles it as any refused answer: in extraction, it is
+            # made again and then with the fallback models, in a chat, with the next
+            # fallback LLM. The error of litellm, the message of the provider, is
+            # logged at the DEBUG level only.
             record_failed_call()
             usage.calls[-1]._refusal = "input_blocked"
-            refusal_msg = (
-                _get_model_refusal_msg(
-                    kind_name=self._kind_name, model=self.model, refusal="input_blocked"
-                )
-                + refusal_msg_suffix
-            )
-            logger.error(refusal_msg)
-            if raise_exception_on_model_api_error:
-                await self._update_usage_and_cost((None, usage))
-                raise ModelRefusalError(
-                    refusal_msg, retry_count=0, original_error=e
-                ) from e
-            logger.warning(refusal_msg)
+            logger.debug(f"The request was blocked by the provider: {e}")
         except LLMToolLoopLimitError:
             # Propagate tool loop limit errors without wrapping
             await self._update_usage_and_cost((None, usage))

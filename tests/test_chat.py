@@ -2792,14 +2792,14 @@ class TestChat(BaseTest):
         assert llm.tools is None
         assert llm._tool_registry == {}
 
-    def test_chat_refusal_is_final(self):
+    def test_chat_refusal_falls_back(self):
         """
         Tests that a chat answer that the LLM or its provider declines to give is
-        not sent to a fallback LLM: a refused answer with a text is returned as it
-        is, with a warning, and a refused answer without a text, or a request that
-        the provider blocks for its content, raises ``ModelRefusalError``, which
-        a fallback LLM pending does not change. The refused request is recorded
-        in the usage with its refusal.
+        handled as an empty answer is: a refused answer with a text is returned as
+        it is, with a warning, while a refused answer without a text, or a request
+        that the provider blocks for its content, is sent to the fallback LLM, and
+        raises ``ModelRefusalError`` if there is none. The refused request is
+        recorded in the usage with its refusal.
 
         LLM API calls are stubbed, i.e. no cassette is required.
         """
@@ -2857,7 +2857,7 @@ class TestChat(BaseTest):
         assert call._refusal == "content_filter"
 
         # A refused answer without a text, or a request that the provider blocks,
-        # raises the error, also with a fallback LLM pending, which is not tried
+        # is sent to the fallback LLM, and raises the error if there is none
         input_blocked_error = litellm.ContentPolicyViolationError(
             message="The request was rejected by the safety system",
             model=_MAIN_MODEL,
@@ -2902,21 +2902,18 @@ class TestChat(BaseTest):
                         _FALLBACK_MODEL: [_create_completion("ContextGem is a tool.")],
                     }
                 )
-                with (
-                    patch.object(litellm, "acompletion", new=acompletion_stub),
-                    pytest.raises(ModelRefusalError) as exc_info,
-                ):
-                    llm.chat(prompt)
-                assert exc_info.value.message.startswith(message_start)
-                assert exc_info.value.message.endswith(
-                    "A refusal is final: the request is not sent again, also not "
-                    "to a fallback model."
+                with patch.object(litellm, "acompletion", new=acompletion_stub):
+                    if with_fallback:
+                        assert llm.chat(prompt) == "ContextGem is a tool."
+                    else:
+                        with pytest.raises(ModelRefusalError) as exc_info:
+                            llm.chat(prompt)
+                        assert exc_info.value.message.startswith(message_start)
+                        # The refusal text of the model is not in the message
+                        assert refusal_text not in str(exc_info.value)
+                        assert exc_info.value.original_error is None
+                assert [request["model"] for request in requests] == (
+                    [_MAIN_MODEL, _FALLBACK_MODEL] if with_fallback else [_MAIN_MODEL]
                 )
-                # The refusal text of the model is not in the message
-                assert refusal_text not in str(exc_info.value)
-                assert exc_info.value.original_error is (
-                    input_blocked_error if refusal == "input_blocked" else None
-                )
-                assert [request["model"] for request in requests] == [_MAIN_MODEL]
                 (call,) = llm.get_usage()[0].usage.calls
                 assert call._refusal == refusal

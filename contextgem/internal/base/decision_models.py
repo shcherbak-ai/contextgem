@@ -62,7 +62,6 @@ from contextgem.internal.decisions import (
 from contextgem.internal.decorators import _disable_direct_initialization
 from contextgem.internal.exceptions import (
     ModelAPIError,
-    ModelRefusalError,
     _InvalidDecisionResponseError,
     _RefusedDecisionAnswerError,
 )
@@ -76,6 +75,7 @@ from contextgem.internal.utils import (
     _describe_error_without_values,
     _get_cache_token_counts,
     _get_model_api_retry_delay,
+    _get_model_call_result_refused_call,
     _get_model_refusal_msg,
     _group_instances_by_fields,
     _is_retryable_model_api_error,
@@ -863,8 +863,8 @@ class _DocumentDecisionModel(_DocumentModel):
           the instances are None and each call is recorded as finished, so that it
           is told apart from a failed request;
         - if the model or its provider declined to answer, the instances are None
-          and the refused call is recorded with its refusal, unless an exception
-          is raised: a refusal is final, i.e. no fallback model is tried.
+          and the refused call is recorded with its refusal, so that the refusal is
+          reported if no fallback model answers.
 
         Concepts: all the questions of the concepts are sent in one request, with
         the text of the source, which is sent as a whole by default, i.e. it has to
@@ -913,9 +913,9 @@ class _DocumentDecisionModel(_DocumentModel):
         Only if the model refuses to answer the question of an aspect on every
         paragraph, the response cannot be used, as nothing is known about
         the aspect. A refused answer to a question of a concept cannot be used
-        either. Both are refusals, which are final: ``ModelRefusalError`` is raised
-        (or a warning is logged), whether or not a fallback model is yet to be
-        tried. So is a request that the provider blocks for its content.
+        either. Both are refusals, as is a request that the provider blocks for its
+        content: the call fails, the fallback models are tried, and
+        ``ModelRefusalError`` is raised (or a warning is logged) if none answers.
 
         If there are more questions on a text than a request can hold, they are
         sent in several requests on the same text.
@@ -973,9 +973,6 @@ class _DocumentDecisionModel(_DocumentModel):
         :raises ModelAPIError: If a request fails due to an error in the API of
             the model, no fallback model is yet to be tried, and exceptions are
             to be raised.
-        :raises ModelRefusalError: If the model or its provider declined to answer,
-            and exceptions are to be raised, whether or not a fallback model is
-            yet to be tried.
         """
 
         # No request is sent for what a decision model cannot extract, also if
@@ -988,10 +985,9 @@ class _DocumentDecisionModel(_DocumentModel):
         source_paragraphs = self._get_source_paragraphs(
             extracted_item_type=extracted_item_type, source=source, document=document
         )
-        # What fails with the call, named in the messages on a refusal, as in
-        # the messages on other failed calls
-        failed_instances_msg = (
-            f" Failed {extracted_item_type}s: "
+        # What the call is for, named in the messages on a refusal
+        call_instances_msg = (
+            f" {extracted_item_type.capitalize()}s of the call: "
             f"{[instance.name for instance in instances_to_process]}"
         )
 
@@ -1035,17 +1031,16 @@ class _DocumentDecisionModel(_DocumentModel):
                 )
         except _RefusedDecisionAnswerError as e:
             # The model refused to answer a question of a concept, or the question
-            # of an aspect on every paragraph: a refusal is final, i.e. no fallback
-            # model is tried. The calls are recorded as finished, with the refusal.
-            return await self._handle_refusal(
-                refusal_msg=self._get_refused_answer_msg(
+            # of an aspect on every paragraph. The calls are recorded as finished,
+            # with the refusal.
+            return self._handle_refusal(
+                refusal_subject=self._get_refused_answer_subject(
                     error=e,
                     extracted_item_type=extracted_item_type,
                     instances=instances_to_process,
-                )
-                + failed_instances_msg,
+                ),
+                call_instances_msg=call_instances_msg,
                 usage=usage,
-                raise_exception_on_extraction_error=raise_exception_on_extraction_error,
             )
         except _InvalidDecisionResponseError as e:
             # The requests succeeded, i.e. their calls are recorded as finished
@@ -1062,22 +1057,17 @@ class _DocumentDecisionModel(_DocumentModel):
             await self._update_usage_and_cost((None, usage))
             raise
         except litellm.ContentPolicyViolationError as e:  # type: ignore[attr-defined]
-            # The provider blocked a request for its content: a refusal, which is
-            # final, i.e. no fallback model is tried. The failed request is the last
-            # call recorded in the usage (call unfinished). The error of litellm is
-            # kept on the exception raised, and is not logged.
+            # The provider blocked a request for its content: a refusal, not
+            # a failed request. The failed request is the last call recorded in
+            # the usage (call unfinished), with the refusal. The error of litellm,
+            # the message of the provider, is logged at the DEBUG level only.
             if usage.calls:
                 usage.calls[-1]._refusal = "input_blocked"
-            return await self._handle_refusal(
-                refusal_msg=_get_model_refusal_msg(
-                    kind_name=self._kind_name,
-                    model=self.model,
-                    refusal="input_blocked",
-                )
-                + failed_instances_msg,
+            logger.debug(f"The request was blocked by the provider: {e}")
+            return self._handle_refusal(
+                refusal_subject="",
+                call_instances_msg=call_instances_msg,
                 usage=usage,
-                raise_exception_on_extraction_error=raise_exception_on_extraction_error,
-                original_error=e,
             )
         except Exception as e:
             # e.g. rate limit error, after the retries of the request are exhausted,
@@ -1127,19 +1117,16 @@ class _DocumentDecisionModel(_DocumentModel):
                         decision_threshold=self.decision_threshold,
                     )
             except _RefusedDecisionAnswerError as e:
-                # A refused answer to a question of a concept, which is final. Such
-                # answers are rejected when the responses are received: this is
-                # a safeguard. The usage is updated for the error below.
-                return await self._handle_refusal(
-                    refusal_msg=self._get_refused_answer_msg(
+                # A refused answer to a question of a concept. Such answers are
+                # rejected when the responses are received: this is a safeguard.
+                return self._handle_refusal(
+                    refusal_subject=self._get_refused_answer_subject(
                         error=e,
                         extracted_item_type=extracted_item_type,
                         instances=instances_to_process,
-                    )
-                    + failed_instances_msg,
+                    ),
+                    call_instances_msg=call_instances_msg,
                     usage=usage,
-                    raise_exception_on_extraction_error=raise_exception_on_extraction_error,
-                    update_usage=False,
                 )
             except ValueError as e:
                 # An answer that cannot be used (missing, of another kind than its
@@ -1293,7 +1280,7 @@ class _DocumentDecisionModel(_DocumentModel):
 
         return f"{subject}{error.location}, decision question `{error.question_name}`"
 
-    def _get_refused_answer_msg(
+    def _get_refused_answer_subject(
         self,
         *,
         error: _RefusedDecisionAnswerError,
@@ -1301,10 +1288,10 @@ class _DocumentDecisionModel(_DocumentModel):
         instances: Sequence[_Aspect | _Concept],
     ) -> str:
         """
-        Returns the message on an answer that the decision model refused to give,
-        which makes the call fail: the refused answer to a question of a concept,
-        or to the question of an aspect on every paragraph. The message names
-        the question as the message on an answer that cannot be used does (see
+        Returns what an answer that the decision model refused to give was for,
+        put after the model in the messages on the refusal: the question of
+        a concept, or the question of an aspect refused on every paragraph, named
+        as the message on an answer that cannot be used names it (see
         ``_get_invalid_response_msg``).
 
         :param error: The error on the refused answer.
@@ -1315,65 +1302,58 @@ class _DocumentDecisionModel(_DocumentModel):
         :param instances: The aspects or concepts that the questions of the call
             were built for, in the order of their questions.
         :type instances: Sequence[_Aspect | _Concept]
-        :return: The message.
+        :return: What the refused answer was for, e.g. " the question of concept
+            `Parties`, decision question `C0`".
         :rtype: str
         """
         question = self._get_question_of_error(
             error=error, extracted_item_type=extracted_item_type, instances=instances
         )
-        return _get_model_refusal_msg(
-            kind_name=self._kind_name,
-            model=self.model,
-            refusal="refusal",
-            subject=f" the question of {question}",
-        )
+        return f" the question of {question}"
 
-    async def _handle_refusal(
+    def _handle_refusal(
         self,
         *,
-        refusal_msg: str,
+        refusal_subject: str,
+        call_instances_msg: str,
         usage: _ModelUsage,
-        raise_exception_on_extraction_error: bool,
-        update_usage: bool = True,
-        original_error: Exception | None = None,
     ) -> tuple[None, _ModelUsage]:
         """
         Reports a request of the extraction that the decision model or its provider
-        declined to answer. A refusal is final, whether or not a fallback model is
-        yet to be tried: the error is raised, or a warning is logged if exceptions
-        are not to be raised, and the call fails with the refusal recorded on
-        the refused call in its usage, so that no fallback model is tried.
+        declined to answer, and returns the result of the failed call, with
+        the refusal, and what the refused answer was for, recorded on the refused
+        call in its usage. As for a response that cannot be used, the fallback
+        models are tried next, and the refusal is raised, or warned about, if none
+        of them answers.
 
-        :param refusal_msg: The message on the refusal.
-        :type refusal_msg: str
+        :param refusal_subject: What the refused answer was for, e.g.
+            " the question of concept `Parties`, decision question `C0`", or an
+            empty string for a request that the provider blocked.
+        :type refusal_subject: str
+        :param call_instances_msg: The aspects or concepts of the call, named at
+            the end of the message.
+        :type call_instances_msg: str
         :param usage: The usage of the requests of the call, with the refused call.
         :type usage: _ModelUsage
-        :param raise_exception_on_extraction_error: Whether to raise the error.
-        :type raise_exception_on_extraction_error: bool
-        :param update_usage: Whether to update the usage and cost of the model with
-            the usage before the error is raised. False where the calling code does
-            so for any error. Defaults to True.
-        :type update_usage: bool
-        :param original_error: The error of litellm for a request that the provider
-            blocked on its input, kept on the error raised. Defaults to None.
-        :type original_error: Exception | None
         :return: The result of the failed call: no instances, and the usage.
         :rtype: tuple[None, _ModelUsage]
-        :raises ModelRefusalError: If exceptions are to be raised.
         """
         # The refused call is the last one if none is recorded with the refusal
         if usage.calls and not any(call._refusal for call in usage.calls):
             usage.calls[-1]._refusal = "refusal"
-        logger.error(refusal_msg)
-        if raise_exception_on_extraction_error:
-            if update_usage:
-                await self._update_usage_and_cost((None, usage))
-            raise ModelRefusalError(
-                refusal_msg, retry_count=0, original_error=original_error
-            ) from original_error
-        logger.warning(
-            f"{refusal_msg} If you want to raise an exception instead, "
-            f"set `raise_exception_on_extraction_error` to True."
+        refused_call = _get_model_call_result_refused_call((None, usage))
+        if refused_call is None or refused_call._refusal is None:
+            # This should never happen: a request of the call is refused
+            raise RuntimeError("No refused request is recorded for the refusal.")
+        refused_call._refusal_subject = refusal_subject
+        logger.error(
+            _get_model_refusal_msg(
+                kind_name=self._kind_name,
+                model=self.model,
+                refusal=refused_call._refusal,
+                subject=refusal_subject,
+            )
+            + call_instances_msg
         )
         return None, usage
 
@@ -1584,8 +1564,8 @@ class _DocumentDecisionModel(_DocumentModel):
                 _is_refused_answer(answers, question_name)
                 for answers in answers_of_paragraphs
             ):
-                # A refusal, which is final: each request asked about the paragraphs
-                # was refused an answer to the question
+                # A refusal: each request asked about the paragraphs was refused
+                # an answer to the question
                 for call in usage.calls:
                     call._refusal = "refusal"
                 error = _RefusedDecisionAnswerError(

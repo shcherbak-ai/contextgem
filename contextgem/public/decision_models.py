@@ -109,7 +109,7 @@ class DocumentDecisionModel(_DocumentDecisionModel):
         i.e. its items have no probabilities, and is asked again when it returns
         invalid data, up to its ``max_retries_invalid_data`` times, while a fallback
         decision model is asked once. A refusal of the current model or of its provider
-        is final: no fallback is tried for it. Defaults to an empty list.
+        is passed on to the fallbacks as well. Defaults to an empty list.
     :vartype fallback_models: list[DocumentDecisionModel | DocumentLLM]
     :ivar decision_threshold: The lowest probability of "yes" (above 0, up to 1) with
         which a yes/no question is taken as answered "yes": a paragraph or a sentence

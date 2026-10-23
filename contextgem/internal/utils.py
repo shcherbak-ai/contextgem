@@ -28,7 +28,7 @@ from typing import TYPE_CHECKING, Any, Literal, TypeVar, get_args
 import pydantic
 from jinja2 import Environment, Template, nodes
 
-from contextgem.internal.data_models import _ModelUsage
+from contextgem.internal.data_models import _ModelCall, _ModelUsage
 from contextgem.internal.exceptions import ContextGemWarning
 from contextgem.internal.llm_output_structs.aspect_structs import (
     _get_aspect_extraction_output_struct,
@@ -706,6 +706,9 @@ def _model_call_result_is_api_failure(res: tuple[Any, _ModelUsage] | None) -> bo
     in the usage stats with no response received. By the time such a result is returned,
     the retries of the failed request are already exhausted (or the error is not
     retryable), so that sending the same request to the same model again is pointless.
+    A request that the provider blocked for its content is recorded as an unfinished
+    call too, with its refusal: it is a refusal (see ``_model_call_result_is_refused``),
+    not a failed request.
 
     :param res: The result to check, represented as a tuple where the first element is the relevant
         result value, and the second element is model usage stats dict that follows the _ModelUsage pattern,
@@ -717,7 +720,11 @@ def _model_call_result_is_api_failure(res: tuple[Any, _ModelUsage] | None) -> bo
     if res is None or res[0] is not None:
         return False
     calls = res[1].calls
-    return bool(calls) and calls[-1].timestamp_received is None
+    return (
+        bool(calls)
+        and calls[-1].timestamp_received is None
+        and calls[-1]._refusal is None
+    )
 
 
 def _model_call_result_is_output_truncated(
@@ -752,11 +759,12 @@ def _model_call_result_is_refused(res: tuple[Any, _ModelUsage] | None) -> bool:
     its provider declined to answer (see ``ModelRefusal``), as opposed to the model
     returning invalid data, or a request failing for another reason.
 
-    A refusal is final: the call is not made again, with the same model or with
-    a fallback model, and the refusal is reported when it occurs. The refused
-    request is recorded in the usage stats with its refusal, as the last call
-    of an LLM, or as one of the calls of a decision model, whose requests
-    on the texts of the call are recorded together.
+    The answer of a refused request is not used. The call is made again as for
+    invalid data, as the verdict of a model or of a content filter can differ on
+    another request, and then with the fallback models, and the refusal is
+    reported if none of them answers. The refused request is recorded in the usage
+    stats with its refusal, as the last call of an LLM, or as one of the calls of
+    a decision model, whose requests on the texts of the call are recorded together.
 
     :param res: The result to check, represented as a tuple where the first element is the relevant
         result value, and the second element is model usage stats dict that follows the _ModelUsage pattern,
@@ -765,9 +773,31 @@ def _model_call_result_is_refused(res: tuple[Any, _ModelUsage] | None) -> bool:
     :return: A boolean indicating whether the result is invalid due to a refusal.
     :rtype: bool
     """
+    return _get_model_call_result_refused_call(res) is not None
+
+
+def _get_model_call_result_refused_call(
+    res: tuple[Any, _ModelUsage] | None,
+) -> _ModelCall | None:
+    """
+    Returns the request that the model or its provider declined to answer in
+    the call that gave the result, i.e. the last refused request of the call,
+    with its refusal and what the refused answer was for, or None if the result
+    is valid, or invalid for another reason.
+
+    :param res: The result to check, represented as a tuple where the first element is the relevant
+        result value, and the second element is model usage stats dict that follows the _ModelUsage pattern,
+        or None if the result is not received.
+    :type res: tuple[Any, _ModelUsage] | None
+    :return: The refused request, or None.
+    :rtype: _ModelCall | None
+    """
     if res is None or res[0] is not None:
-        return False
-    return any(call._refusal is not None for call in res[1].calls)
+        return None
+    for call in reversed(res[1].calls):
+        if call._refusal is not None:
+            return call
+    return None
 
 
 def _get_model_refusal_msg(
@@ -805,10 +835,7 @@ def _get_model_refusal_msg(
             f"The provider of {kind_name} `{model}` blocked the request{subject} "
             f"for its content."
         )
-    return (
-        f"{what} A refusal is final: the request is not sent again, also not to "
-        f"a fallback model."
-    )
+    return what
 
 
 def _is_retryable_model_api_error(error: Exception) -> bool:

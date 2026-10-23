@@ -141,7 +141,7 @@ class DocumentLLM(_DocumentLLM):
         returns invalid data during extraction is asked again up to its
         ``max_retries_invalid_data`` times, as the current LLM is, and a fallback
         decision model is asked once. A refusal of the current LLM or of its provider
-        is final: no fallback is tried for it. Defaults to an empty list.
+        is passed on to the fallbacks as well. Defaults to an empty list.
     :vartype fallback_models: list[DocumentLLM | DocumentDecisionModel]
     :ivar output_language: Language for produced output text (justifications, explanations).
         Can be "en" (English) or "adapt" (adapts to document/image language). Defaults to "en".

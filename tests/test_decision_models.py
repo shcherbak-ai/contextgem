@@ -3630,9 +3630,8 @@ class TestDecisionModels(BaseTest):
         the request for one of the parts gets a response that cannot be used, or
         fails for good, with and without concurrency: no further requests are
         sent, the requests made are counted in the usage, no concept gets its
-        items, and a fallback model takes over. A refused answer is final:
-        ``ModelRefusalError`` is raised, also when a fallback model is set,
-        which is not tried.
+        items, and a fallback model takes over, also for a refused answer, which
+        raises ``ModelRefusalError`` without a fallback model.
         """
         part_texts = self._get_texts_of_parts(2)
         n_parts = len(part_texts)
@@ -3819,8 +3818,8 @@ class TestDecisionModels(BaseTest):
                 check_not_extracted(document)
 
             # === A refused answer ===
-            # A refusal is final: no further requests are sent, and no fallback
-            # model is tried, while each call is finished
+            # Without a fallback model, the refusal is raised: no further requests
+            # are sent, while each call is finished (with a fallback model, below)
             for refused_answers, log_subject in [
                 (
                     {**valid_answers, "NDA check": "refusal"},
@@ -3840,50 +3839,41 @@ class TestDecisionModels(BaseTest):
                     ),
                 ),
             ]:
-                for fallback_models in [
-                    [],
-                    [_create_decision_model(_OTHER_DECISION_MODEL, is_fallback=True)],
-                ]:
-                    decision_model = _create_decision_model(
-                        fallback_models=fallback_models
+                decision_model = _create_decision_model()
+                document = create_document()
+                decisions_stub = _DecisionsAPIStub(
+                    {
+                        _DECISION_MODEL: [
+                            create_responder({failed_position: refused_answers})
+                        ],
+                    }
+                )
+                with (
+                    patch.object(litellm, "adecisions", new=decisions_stub),
+                    pytest.raises(ModelRefusalError) as refusal_exc_info,
+                ):
+                    decision_model.extract_concepts_from_document(
+                        document,
+                        **extraction_kwargs,  # ty: ignore[invalid-argument-type]
                     )
-                    document = create_document()
-                    decisions_stub = _DecisionsAPIStub(
-                        {
-                            _DECISION_MODEL: [
-                                create_responder({failed_position: refused_answers})
-                            ],
-                            _OTHER_DECISION_MODEL: [create_responder()],
-                        }
-                    )
-                    with (
-                        patch.object(litellm, "adecisions", new=decisions_stub),
-                        pytest.raises(ModelRefusalError) as refusal_exc_info,
-                    ):
-                        decision_model.extract_concepts_from_document(
-                            document,
-                            **extraction_kwargs,  # ty: ignore[invalid-argument-type]
-                        )
-                    # The message names the question that was refused, and
-                    # the concepts of the call
-                    assert refusal_exc_info.value.message == (
-                        f"Decision model `{_DECISION_MODEL}` refused to answer "
-                        f"the question of {log_subject}. A refusal is final: "
-                        f"the request is not sent again, also not to a fallback "
-                        f"model. Failed concepts: ['NDA check', 'Topics']"
-                    )
-                    assert refusal_exc_info.value.retry_count == 0
-                    assert refusal_exc_info.value.original_error is None
-                    assert decisions_stub.requested_models() == [_DECISION_MODEL] * (
-                        failed_position + 1
-                    )
-                    check_usage(decision_model, [0, failed_position], [])
-                    # The refused request is recorded with its refusal
-                    assert [
-                        call._refusal
-                        for call in decision_model.get_usage()[0].usage.calls
-                    ] == [None, "refusal"]
-                    check_not_extracted(document)
+                # The message names the question that was refused, and
+                # the concepts of the call
+                assert refusal_exc_info.value.message == (
+                    f"Decision model `{_DECISION_MODEL}` refused to answer "
+                    f"the question of {log_subject}. Failed concepts: "
+                    f"['NDA check', 'Topics']"
+                )
+                assert refusal_exc_info.value.retry_count == 0
+                assert refusal_exc_info.value.original_error is None
+                assert decisions_stub.requested_models() == [_DECISION_MODEL] * (
+                    failed_position + 1
+                )
+                check_usage(decision_model, [0, failed_position], [])
+                # The refused request is recorded with its refusal
+                assert [
+                    call._refusal for call in decision_model.get_usage()[0].usage.calls
+                ] == [None, "refusal"]
+                check_not_extracted(document)
 
             # === A request that fails ===
             # No fallback model: a model API error is raised
@@ -3915,6 +3905,8 @@ class TestDecisionModels(BaseTest):
             for primary_outcome, finished_positions, failed_positions in [
                 (auth_error, [0], [failed_position]),
                 ({**valid_answers, "NDA check": 1.5}, [0, failed_position], []),
+                # A refusal is passed on to the fallback model too
+                ({**valid_answers, "NDA check": "refusal"}, [0, failed_position], []),
             ]:
                 decision_model = _create_decision_model(
                     fallback_models=[
@@ -4964,18 +4956,19 @@ class TestDecisionModels(BaseTest):
         assert len(decisions_stub.requests) == 1
         assert not any(concept._is_processed for concept in document.concepts)
 
-        # A refused answer fails the extraction as a refusal, which is final
+        # A refused answer fails the extraction as a refusal, without a fallback
+        # model: the refusal is logged with the concepts of the call, and raised,
+        # or warned about, with the concepts that failed
         for refused_answers, refused_concept, question_name in [
             ({**valid_answers, "C1": "refusal"}, "Notice form", "C1"),
             ({**valid_answers, "C0": "refusal"}, "NDA check", "C0"),
         ]:
-            refusal_msg = (
+            refusal_sentence = (
                 f"Decision model `{_DECISION_MODEL}` refused to answer the question "
-                f"of concept `{refused_concept}`, decision question `{question_name}`. "
-                f"A refusal is final: the request is not sent again, also not to "
-                f"a fallback model. Failed concepts: "
-                f"['NDA check', 'Notice form', 'Clarity']"
+                f"of concept `{refused_concept}`, decision question `{question_name}`."
             )
+            concept_names = "['NDA check', 'Notice form', 'Clarity']"
+            refusal_msg = f"{refusal_sentence} Failed concepts: {concept_names}"
             for raise_exception in [True, False]:
                 decision_model = _create_decision_model()
                 document = _create_document(concepts=concepts)
@@ -4994,16 +4987,18 @@ class TestDecisionModels(BaseTest):
                         assert isinstance(refusal_exc_info.value, ModelRefusalError)
                         assert refusal_exc_info.value.message == refusal_msg
                         assert refusal_exc_info.value.retry_count == 0
-                        assert refusal_msg in captured_logs, captured_logs
                     else:
                         decision_model.extract_concepts_from_document(
                             document, raise_exception_on_extraction_error=False
                         )
                         assert (
-                            f"{refusal_msg} If you want to raise an exception "
-                            f"instead, set `raise_exception_on_extraction_error` "
-                            f"to True."
+                            f"{refusal_msg} (0 retries). If you want to raise an "
+                            f"exception instead, set "
+                            f"`raise_exception_on_extraction_error` to True."
                         ) in captured_logs, captured_logs
+                    assert (
+                        f"{refusal_sentence} Concepts of the call: {concept_names}"
+                    ) in captured_logs, captured_logs
                 assert len(decisions_stub.requests) == 1
                 assert not any(concept._is_processed for concept in document.concepts)
                 # The request succeeded, i.e. its call is recorded as finished,
@@ -5029,8 +5024,8 @@ class TestDecisionModels(BaseTest):
         Tests the fallback chains with models of different kinds: a decision model
         that falls back to an LLM or to another decision model, and an LLM that
         falls back to a decision model, for a failed request and for a response
-        that cannot be used. A refusal, of the model or of a fallback model,
-        is final: it ends the chain.
+        that cannot be used. A refusal is passed on along the chain as a response
+        that cannot be used is, and raised if the last model refuses too.
         """
         llm_answer = '[{"concept_id": "C0", "extracted_items": [true]}]'
         invalid_llm_answer = "<<<not-json>>>"
@@ -5413,40 +5408,48 @@ class TestDecisionModels(BaseTest):
             _LLM_MODEL,
         ]
 
-        # === A refusal is final ===
-        # A refused answer of the decision model is not sent to a fallback model,
-        # of either kind
+        # === A refusal is passed on to the fallback models ===
+        # A refused answer of the decision model is sent to a fallback model of
+        # either kind, which answers
         refused_answers = {"C0": "refusal"}
-        for fallback_models in [
-            [_create_llm(is_fallback=True)],
-            [_create_decision_model(_OTHER_DECISION_MODEL, is_fallback=True)],
-        ]:
-            with pytest.raises(ModelRefusalError, match="refused to answer"):
-                extract(
-                    _create_decision_model(fallback_models=fallback_models),
-                    {
-                        _DECISION_MODEL: [refused_answers],
-                        _OTHER_DECISION_MODEL: [answers],
-                    },
-                    {_LLM_MODEL: [llm_answer]},
-                )
-            assert requested_models == [_DECISION_MODEL]
-        # ... and a refusal of a fallback model ends the chain: the next fallback
-        # model is not tried
-        document, _ = extract(
-            _create_decision_model(
-                fallback_models=[
-                    _create_decision_model(_OTHER_DECISION_MODEL, is_fallback=True),
-                    _create_llm(is_fallback=True),
-                ]
+        for fallback_model, fallback_name in [
+            (_create_llm(is_fallback=True), _LLM_MODEL),
+            (
+                _create_decision_model(_OTHER_DECISION_MODEL, is_fallback=True),
+                _OTHER_DECISION_MODEL,
             ),
-            {_DECISION_MODEL: [auth_error], _OTHER_DECISION_MODEL: [refused_answers]},
-            {_LLM_MODEL: [llm_answer]},
-            raise_exception_on_extraction_error=False,
-        )
+        ]:
+            document, _ = extract(
+                _create_decision_model(fallback_models=[fallback_model]),
+                {_DECISION_MODEL: [refused_answers], _OTHER_DECISION_MODEL: [answers]},
+                {_LLM_MODEL: [llm_answer]},
+            )
+            assert requested_models == [_DECISION_MODEL, fallback_name]
+            assert document.concepts[0].extracted_items[0].value is True
+        # ... and the refusal of the last model of the chain is raised, for that
+        # model
+        document = create_document()
+        with pytest.raises(
+            ModelRefusalError,
+            match=f"Decision model `{_OTHER_DECISION_MODEL}` refused to answer",
+        ):
+            extract(
+                _create_decision_model(
+                    fallback_models=[
+                        _create_decision_model(_OTHER_DECISION_MODEL, is_fallback=True)
+                    ]
+                ),
+                {
+                    _DECISION_MODEL: [auth_error],
+                    _OTHER_DECISION_MODEL: [refused_answers],
+                },
+                {},
+                document=document,
+            )
         assert requested_models == [_DECISION_MODEL, _OTHER_DECISION_MODEL]
         assert not document.concepts[0]._is_processed
-        # A refusal of an LLM is not sent to its fallback decision model either
+        # A refusal of an LLM is asked again, as invalid data is, and then sent to
+        # its fallback decision model
         refused_completion = types.SimpleNamespace(
             choices=[
                 types.SimpleNamespace(
@@ -5456,13 +5459,13 @@ class TestDecisionModels(BaseTest):
             ],
             usage=types.SimpleNamespace(prompt_tokens=10, completion_tokens=5),
         )
-        with pytest.raises(ModelRefusalError, match="`content_filter` finish reason"):
-            extract(
-                create_llm_with_decision_model_fallback(),
-                {_DECISION_MODEL: [answers]},
-                {_LLM_MODEL: [refused_completion]},
-            )
-        assert requested_models == [_LLM_MODEL]
+        document, _ = extract(
+            create_llm_with_decision_model_fallback(),
+            {_DECISION_MODEL: [answers]},
+            {_LLM_MODEL: [refused_completion]},
+        )
+        assert requested_models == [_LLM_MODEL, _LLM_MODEL, _DECISION_MODEL]
+        assert document.concepts[0].extracted_items[0].value is True
 
     def test_decision_model_fallback_validation(self):
         """
@@ -11687,7 +11690,8 @@ class TestDecisionModels(BaseTest):
 
         # === Refused answers on every paragraph, for one of the aspects ===
         # Nothing is known about the aspect, i.e. the response cannot be used:
-        # no aspect of the call is extracted, and the refusal is final
+        # no aspect of the call is extracted, and the refusal is raised, as there
+        # is no fallback model
         yes_probabilities = {
             "Termination": {2: 0.9, 4: 0.7},
             "Payment": dict.fromkeys(range(n_paragraphs), "refusal"),
@@ -11710,15 +11714,18 @@ class TestDecisionModels(BaseTest):
                     **extraction_kwargs,  # ty: ignore[invalid-argument-type]
                 )
             assert extraction_exc_info.value.retry_count == 0
-            refusal_msg = (
+            refusal_sentence = (
                 f"Decision model `{_DECISION_MODEL}` refused to answer the question "
                 "of aspect `Payment` on every paragraph (5 asked about), decision "
-                "question `A1`. A refusal is final: the request is not sent again, "
-                "also not to a fallback model. Failed aspects: "
-                "['Termination', 'Payment']"
+                "question `A1`."
             )
-            assert extraction_exc_info.value.message == refusal_msg
-            assert refusal_msg in captured_logs, captured_logs
+            aspect_names = "['Termination', 'Payment']"
+            assert extraction_exc_info.value.message == (
+                f"{refusal_sentence} Failed aspects: {aspect_names}"
+            )
+            assert (
+                f"{refusal_sentence} Aspects of the call: {aspect_names}"
+            ) in captured_logs, captured_logs
             # No warning on the paragraphs left out, as no aspect is extracted
             assert not any("not included" in log for log in captured_logs)
             # Each paragraph is asked about, once
@@ -11733,7 +11740,7 @@ class TestDecisionModels(BaseTest):
             assert not any(aspect._is_processed for aspect in document.aspects)
             assert not any(aspect.extracted_items for aspect in document.aspects)
 
-        # A fallback model is not tried: a refusal is final
+        # The fallback model is tried, and its answers are used
         answered_probabilities = {"Termination": {2: 0.9, 4: 0.7}, "Payment": {3: 0.8}}
         decision_model = _create_decision_model(
             fallback_models=[
@@ -11749,10 +11756,12 @@ class TestDecisionModels(BaseTest):
                 ],
             }
         )
-        with pytest.raises(ModelRefusalError):
-            extract_aspects(decision_model, document, decisions_stub)
-        assert decisions_stub.requested_models() == [_DECISION_MODEL] * n_paragraphs
-        assert not any(aspect._is_processed for aspect in document.aspects)
+        extract_aspects(decision_model, document, decisions_stub)
+        assert decisions_stub.requested_models() == (
+            [_DECISION_MODEL] * n_paragraphs + [_OTHER_DECISION_MODEL] * n_paragraphs
+        )
+        assert all(aspect._is_processed for aspect in document.aspects)
+        assert document.get_aspect_by_name("Payment").extracted_items
 
         # A warning is logged instead, if no exception is to be raised
         decision_model = _create_decision_model()
@@ -15061,24 +15070,28 @@ class TestDecisionModels(BaseTest):
         """
         self._check_concepts_in_parts_of_recorded_tests("microsoft_foundry")
 
-    def test_decision_model_input_blocked_is_final(self):
+    def test_decision_model_input_blocked_falls_back(self):
         """
         Tests that a request to a decision model that the provider blocks for its
-        content (``litellm.ContentPolicyViolationError``) fails the extraction as
-        a refusal, which is final: ``ModelRefusalError`` is raised, with the error
-        of litellm, or a warning is logged instead, no fallback model is tried,
-        and the blocked request is recorded in the usage as unfinished, with
-        its refusal.
+        content (``litellm.ContentPolicyViolationError``) fails the call as
+        a refusal: it is passed on to the fallback model, which answers, and
+        without a fallback model, ``ModelRefusalError`` is raised, or a warning
+        is logged instead. The blocked request is recorded in the usage as
+        unfinished, with its refusal, and is not sent again to the decision model.
         """
         input_blocked_error = _create_api_error(litellm.ContentPolicyViolationError)
-        refusal_msg = (
+        refusal_sentence = (
             f"The provider of decision model `{_DECISION_MODEL}` blocked the request "
-            f"for its content. A refusal is final: the request is not sent again, "
-            f"also not to a fallback model. Failed concepts: ['NDA check']"
+            f"for its content."
         )
-        for raise_exception in [True, False]:
+        refusal_msg = f"{refusal_sentence} Failed concepts: ['NDA check']"
+        for with_fallback, raise_exception in [
+            (True, True),
+            (False, True),
+            (False, False),
+        ]:
             decision_model = _create_decision_model(
-                fallback_models=[_create_llm(is_fallback=True)]
+                fallback_models=[_create_llm(is_fallback=True)] if with_fallback else []
             )
             document = _create_document(
                 concepts=[
@@ -15096,24 +15109,34 @@ class TestDecisionModels(BaseTest):
                 patch.object(litellm, "acompletion", new=completions_stub),
                 capture_logs(stdlib_logging.WARNING) as captured_logs,
             ):
-                if raise_exception:
+                if with_fallback:
+                    decision_model.extract_concepts_from_document(document)
+                elif raise_exception:
                     with pytest.raises(ModelRefusalError) as exc_info:
                         decision_model.extract_concepts_from_document(document)
                     assert exc_info.value.message == refusal_msg
-                    assert exc_info.value.original_error is input_blocked_error
+                    assert exc_info.value.original_error is None
                     assert exc_info.value.retry_count == 0
                 else:
                     decision_model.extract_concepts_from_document(
                         document, raise_exception_on_extraction_error=False
                     )
                     assert (
-                        f"{refusal_msg} If you want to raise an exception instead, "
-                        f"set `raise_exception_on_extraction_error` to True."
+                        f"{refusal_msg} (0 retries). If you want to raise an "
+                        f"exception instead, set `raise_exception_on_extraction_error` "
+                        f"to True."
                     ) in captured_logs, captured_logs
-            # The request is not sent again, and the fallback LLM is not tried
+            # The refusal is logged, with the concepts of the call
+            assert (
+                f"{refusal_sentence} Concepts of the call: ['NDA check']"
+            ) in captured_logs, captured_logs
+            # The request is not sent again to the decision model, and the fallback
+            # LLM answers it
             assert len(decisions_stub.requests) == 1
-            assert completions_stub.requests == []
-            assert not document.concepts[0]._is_processed
+            assert len(completions_stub.requests) == (1 if with_fallback else 0)
+            assert document.concepts[0]._is_processed is with_fallback
+            if with_fallback:
+                assert document.concepts[0].extracted_items[0].value is True
             (call,) = decision_model.get_usage()[0].usage.calls
             assert call.timestamp_received is None
             assert call._refusal == "input_blocked"

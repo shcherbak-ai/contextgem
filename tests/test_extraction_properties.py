@@ -3967,9 +3967,10 @@ class TestExtractionProperties(BaseTest):
                     assert any(answer.kind == "refusal" for answer in answers.values())
             else:
                 assert error is None
+                # The warning on the failed call, for invalid data or a refusal
                 assert any(
-                    "could not be processed" in message
-                    or "A refusal is final" in message
+                    "Failed concepts:" in message
+                    and "If you want to raise an exception instead" in message
                     for message in _get_messages(caught)
                 )
             for concept in document.concepts:
@@ -4157,22 +4158,24 @@ class TestExtractionProperties(BaseTest):
         assert usage.usage.input == _DECISION_INPUT_TOKENS * len(stub.decision_requests)
         messages = _get_messages(caught)
         # The warnings on the paragraphs and the sentences left out of an aspect
-        # for refused answers. A refusal on every paragraph fails the call: it is
-        # final, as its message says.
+        # for refused answers. A refusal on every paragraph fails the call instead,
+        # with the messages on a failed call.
         refusal_warnings = {
             match.group(1)
             for message in messages
-            if "A refusal is final" not in message
+            if "These are not included in the aspect." in message
             and (
                 match := re.search(
                     r"refused to answer the question of aspect `(.+?)`", message
                 )
             )
         }
+        # The warnings on the failed calls, for invalid data or a refusal
         failure_warnings = [
             message
             for message in messages
-            if "could not be processed" in message or "A refusal is final" in message
+            if "Failed aspects:" in message
+            and "If you want to raise an exception instead" in message
         ]
 
         failed_names = {aspects[position].name for position in failed}

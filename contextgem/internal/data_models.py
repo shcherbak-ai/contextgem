@@ -83,6 +83,10 @@ class _ModelCall(BaseModel):
     # Whether, and how, the model or its provider declined to answer the request
     # (see `ModelRefusal`). None if the request was not refused.
     _refusal: ModelRefusal | None = PrivateAttr(default=None)
+    # What the refused answer was for, named in the messages on the refusal, e.g.
+    # the question of a concept that a decision model refused to answer. Empty if
+    # the request was refused as a whole, or not refused.
+    _refusal_subject: str = PrivateAttr(default="")
 
     def _record_response_timestamp(self) -> None:
         """
