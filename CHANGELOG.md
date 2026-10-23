@@ -10,6 +10,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ### Added
 
+- [Testing without API calls](https://contextgem.shcherbak.ai/testing/), a new page of the documentation: `litellm.acompletion` and `litellm.adecisions`, which ContextGem looks up at each request, are the supported points for replacing the requests to the models in your tests, with examples of a stand-in for an LLM and for a decision model.
 - The docstring of each public class now names all its public attributes and properties, the inherited ones included, e.g. `custom_data`, where your own data goes, such as an ID of your own for a paragraph, and `unique_id`. The docstrings of `Paragraph` and `Sentence` say that the references of aspects and extracted items are the document's own paragraphs and sentences. A docstring that shows a usage example now gives the address of the API page that shows it, as the installed package has no usage examples.
 - The docstring of the package, the description on PyPI and the project URLs now point to [llms.txt](https://contextgem.shcherbak.ai/llms.txt), the index of the documentation for coding agents and LLMs, with a Markdown copy of each page. The docstring of the package says that the documentation describes the latest release, and the docstrings the installed version.
 

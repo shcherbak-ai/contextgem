@@ -360,6 +360,7 @@ Indices and tables
 
    advanced_usage
    logging_config
+   testing
 
 .. toctree::
    :maxdepth: 2

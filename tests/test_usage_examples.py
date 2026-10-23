@@ -108,6 +108,8 @@ _EXAMPLES_WITHOUT_REQUESTS = [
     "docs.optimizations.optimization_cost",
     "docs.optimizations.optimization_long_docs",
     "docs.optimizations.optimization_speed",
+    "docs.testing.stub_decision_model_requests",
+    "docs.testing.stub_llm_requests",
 ]
 
 # The usage examples that convert a PDF file with Docling. A PDF file needs the
