@@ -2910,8 +2910,12 @@ class TestChat(BaseTest):
                             llm.chat(prompt)
                         assert exc_info.value.message.startswith(message_start)
                         # The refusal text of the model is not in the message
-                        assert refusal_text not in str(exc_info.value)
-                        assert exc_info.value.original_error is None
+                        assert refusal_text not in exc_info.value.message
+                        # A blocked request keeps the error of litellm, as
+                        # ModelAPIError did
+                        assert exc_info.value.original_error is (
+                            input_blocked_error if refusal == "input_blocked" else None
+                        )
                 assert [request["model"] for request in requests] == (
                     [_MAIN_MODEL, _FALLBACK_MODEL] if with_fallback else [_MAIN_MODEL]
                 )

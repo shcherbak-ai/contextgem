@@ -6322,7 +6322,10 @@ class TestExtraction(BaseTest):
           a refusal of a model and for the content filter of a provider;
         - the refusal of OpenAI's ``refusal`` field of the message;
         - a request that the provider blocked on its input, which litellm raises
-          as ``ContentPolicyViolationError``.
+          as ``ContentPolicyViolationError``. It is handled as a failed request with
+          a non-transient error, as before refusals had an error of their own: it is
+          not sent again to the LLM, the fallback LLM is tried, and the error of
+          litellm is the ``original_error`` of ``ModelRefusalError``.
 
         LLM API calls are stubbed, i.e. no cassette is required.
         """
@@ -6391,11 +6394,7 @@ class TestExtraction(BaseTest):
                 )
             if refusal == "refusal":
                 return create_completion(None, refusal="I can't help with that.")
-            return litellm.ContentPolicyViolationError(
-                message="The request was rejected by the safety system",
-                model=primary_model,
-                llm_provider="openai",
-            )
+            return input_blocked_error
 
         def create_stub(outcomes: list[Any], requested_models: list[str]) -> Any:
             """
@@ -6451,28 +6450,38 @@ class TestExtraction(BaseTest):
                 ),
             )
 
+        input_blocked_error = litellm.ContentPolicyViolationError(
+            message="The request was rejected by the safety system",
+            model=primary_model,
+            llm_provider="openai",
+        )
         for refusal, refusal_sentence in refusals:
+            # Whether the refused request is sent again: an answer refused, not
+            # a request blocked on its input
+            sent_again = refusal != "input_blocked"
+
             # === A retry that is answered ===
-            requested_models: list[str] = []
-            llm = create_llm(max_retries=2, with_fallback=True)
-            document = create_document()
-            acompletion_stub = create_stub(
-                [refused_outcome(refusal), create_completion(answer("Acme"))],
-                requested_models,
-            )
-            with (
-                patch.object(litellm, "acompletion", new=acompletion_stub),
-                capture_logs() as messages,
-            ):
-                llm.extract_concepts_from_document(document)
-            assert requested_models == [primary_model, primary_model]
-            assert [item.value for item in document.concepts[0].extracted_items] == [
-                "Acme"
-            ]
-            assert "Retrying concepts after a refusal (1/2)" in messages
-            first_call, second_call = llm.get_usage()[0].usage.calls
-            assert first_call._refusal == refusal
-            assert second_call._refusal is None
+            if sent_again:
+                requested_models: list[str] = []
+                llm = create_llm(max_retries=2, with_fallback=True)
+                document = create_document()
+                acompletion_stub = create_stub(
+                    [refused_outcome(refusal), create_completion(answer("Acme"))],
+                    requested_models,
+                )
+                with (
+                    patch.object(litellm, "acompletion", new=acompletion_stub),
+                    capture_logs() as messages,
+                ):
+                    llm.extract_concepts_from_document(document)
+                assert requested_models == [primary_model, primary_model]
+                assert [
+                    item.value for item in document.concepts[0].extracted_items
+                ] == ["Acme"]
+                assert "Retrying concepts after a refusal (1/2)" in messages
+                first_call, second_call = llm.get_usage()[0].usage.calls
+                assert first_call._refusal == refusal
+                assert second_call._refusal is None
 
             # === Refused on each retry, answered by the fallback LLM ===
             requested_models = []
@@ -6481,7 +6490,10 @@ class TestExtraction(BaseTest):
             acompletion_stub = create_stub([refused_outcome(refusal)], requested_models)
             with patch.object(litellm, "acompletion", new=acompletion_stub):
                 llm.extract_concepts_from_document(document)
-            assert requested_models == [primary_model] * 3 + [fallback_model]
+            n_primary_requests = 3 if sent_again else 1
+            assert requested_models == (
+                [primary_model] * n_primary_requests + [fallback_model]
+            )
             # The refused answer is not used, also when it is valid JSON
             assert [item.value for item in document.concepts[0].extracted_items] == [
                 "Fallback value"
@@ -6489,7 +6501,7 @@ class TestExtraction(BaseTest):
             primary_usage, fallback_usage = llm.get_usage()
             assert [call._refusal for call in primary_usage.usage.calls] == [
                 refusal
-            ] * 3
+            ] * n_primary_requests
             assert len(fallback_usage.usage.calls) == 1
             # A blocked request has no response, and no tokens
             assert primary_usage.usage.input == (
@@ -6498,7 +6510,12 @@ class TestExtraction(BaseTest):
 
             # === Refused on each retry, without a fallback LLM ===
             for max_retries in [1, 0]:
-                expected_msg = f"{refusal_sentence} Failed concepts: ['Parties']"
+                n_retries = max_retries if sent_again else 0
+                expected_msg = (
+                    f"{refusal_sentence} Failed concepts: ['Parties']"
+                    if sent_again
+                    else refusal_sentence
+                )
                 for raise_exception in [True, False]:
                     requested_models = []
                     llm = create_llm(max_retries=max_retries, with_fallback=False)
@@ -6519,25 +6536,27 @@ class TestExtraction(BaseTest):
                                 llm.extract_concepts_from_document(document)
                             assert isinstance(exc_info.value, ModelRefusalError)
                             assert exc_info.value.message == expected_msg
-                            assert exc_info.value.retry_count == max_retries
-                            assert exc_info.value.original_error is None
+                            assert exc_info.value.retry_count == n_retries
+                            assert exc_info.value.original_error is (
+                                None if sent_again else input_blocked_error
+                            )
                         else:
                             llm.extract_concepts_from_document(
                                 document, raise_exception_on_extraction_error=False
                             )
                             assert any(
                                 str(call.args[0]).startswith(
-                                    f"{expected_msg} ({max_retries} retries)."
+                                    f"{expected_msg} ({n_retries} retries)."
                                 )
                                 for call in log_warning.call_args_list
                             ), log_warning.call_args_list
-                    assert requested_models == [primary_model] * (1 + max_retries)
+                    assert requested_models == [primary_model] * (1 + n_retries)
                     (concept,) = document.concepts
                     assert not concept._is_processed
                     assert not concept.extracted_items
                     assert [
                         call._refusal for call in llm.get_usage()[0].usage.calls
-                    ] == [refusal] * (1 + max_retries)
+                    ] == [refusal] * (1 + n_retries)
 
         # With concurrency, a refusal without a retry or a fallback model stops
         # the extraction as other final errors do, and each request sent is in

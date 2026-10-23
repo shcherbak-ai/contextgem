@@ -656,11 +656,12 @@ class _DocumentLLM(_DocumentModel):
         if response is not None and not response.strip():
             response = None
 
-        # A refused answer, or a request that the provider blocked. Without a text,
-        # it is tried with the next fallback LLM, as an empty response is, and
-        # raised if none is left
+        # A refused answer. Without a text, it is tried with the next fallback LLM,
+        # as an empty response is, and raised if none is left. A request that
+        # the provider blocked is already reported at this point, as a failed
+        # request is.
         refusal = usage.calls[-1]._refusal if usage.calls else None
-        if refusal is not None:
+        if refusal is not None and not _model_call_result_is_api_failure(result):
             refusal_msg = _get_model_refusal_msg(
                 kind_name=self._kind_name, model=self.model, refusal=refusal
             )
@@ -2220,15 +2221,30 @@ class _DocumentLLM(_DocumentModel):
                         )
                         logger.warning(warning_msg)
         except litellm.ContentPolicyViolationError as e:  # type: ignore[attr-defined]
-            # The provider blocked the request for its content: a refusal, not
-            # a failed request. The call is recorded as unfinished, with its refusal,
-            # and the caller handles it as any refused answer: in extraction, it is
-            # made again and then with the fallback models, in a chat, with the next
-            # fallback LLM. The error of litellm, the message of the provider, is
-            # logged at the DEBUG level only.
+            # The provider blocked the request for its content: a refusal, handled
+            # as a failed request with a non-transient error, i.e. it is not sent
+            # again to this LLM, and the next fallback model is tried, but raised
+            # as a refusal. The call is recorded as unfinished, with its refusal.
             record_failed_call()
             usage.calls[-1]._refusal = "input_blocked"
+            refusal_msg = _get_model_refusal_msg(
+                kind_name=self._kind_name, model=self.model, refusal="input_blocked"
+            )
+            logger.error(refusal_msg)
+            # The error of litellm, the message of the provider
             logger.debug(f"The request was blocked by the provider: {e}")
+            if has_fallback_pending:
+                logger.info("The call will be retried with a fallback model.")
+            elif raise_exception_on_model_api_error:
+                await self._update_usage_and_cost((None, usage))
+                raise ModelRefusalError(
+                    refusal_msg, retry_count=0, original_error=e
+                ) from e
+            else:
+                logger.warning(
+                    f"{refusal_msg} (0 retries). If you want to raise an exception "
+                    f"instead, set `raise_exception_on_extraction_error` to True."
+                )
         except LLMToolLoopLimitError:
             # Propagate tool loop limit errors without wrapping
             await self._update_usage_and_cost((None, usage))

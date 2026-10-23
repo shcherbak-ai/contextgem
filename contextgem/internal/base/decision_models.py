@@ -62,6 +62,7 @@ from contextgem.internal.decisions import (
 from contextgem.internal.decorators import _disable_direct_initialization
 from contextgem.internal.exceptions import (
     ModelAPIError,
+    ModelRefusalError,
     _InvalidDecisionResponseError,
     _RefusedDecisionAnswerError,
 )
@@ -1057,18 +1058,31 @@ class _DocumentDecisionModel(_DocumentModel):
             await self._update_usage_and_cost((None, usage))
             raise
         except litellm.ContentPolicyViolationError as e:  # type: ignore[attr-defined]
-            # The provider blocked a request for its content: a refusal, not
-            # a failed request. The failed request is the last call recorded in
-            # the usage (call unfinished), with the refusal. The error of litellm,
-            # the message of the provider, is logged at the DEBUG level only.
+            # The provider blocked a request for its content: a refusal, handled
+            # as a failed request with a non-transient error, i.e. the next fallback
+            # model is tried, but raised as a refusal. The failed request is the last
+            # call recorded in the usage (call unfinished), with its refusal.
             if usage.calls:
                 usage.calls[-1]._refusal = "input_blocked"
-            logger.debug(f"The request was blocked by the provider: {e}")
-            return self._handle_refusal(
-                refusal_subject="",
-                call_instances_msg=call_instances_msg,
-                usage=usage,
+            refusal_msg = _get_model_refusal_msg(
+                kind_name=self._kind_name, model=self.model, refusal="input_blocked"
             )
+            logger.error(refusal_msg)
+            # The error of litellm, the message of the provider
+            logger.debug(f"The request was blocked by the provider: {e}")
+            if has_fallback_pending:
+                logger.info("The call will be retried with a fallback model.")
+            elif raise_exception_on_extraction_error:
+                await self._update_usage_and_cost((None, usage))
+                raise ModelRefusalError(
+                    refusal_msg, retry_count=0, original_error=e
+                ) from e
+            else:
+                logger.warning(
+                    f"{refusal_msg} (0 retries). If you want to raise an exception "
+                    f"instead, set `raise_exception_on_extraction_error` to True."
+                )
+            return None, usage
         except Exception as e:
             # e.g. rate limit error, after the retries of the request are exhausted,
             # or a non-transient error such as failed authentication. The failed

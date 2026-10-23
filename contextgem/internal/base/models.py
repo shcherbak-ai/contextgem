@@ -2579,12 +2579,12 @@ class _GenericModelProcessor(_AbstractGenericModelProcessor):
                 # to be tried, or when a warning is logged for it instead of
                 # an exception. There is no response to process, and the failure
                 # is not to be reported as invalid data returned by the LLM as well.
-                # A request that the provider blocked for its content is a refusal,
-                # handled below.
+                # So is a request that the provider blocked for its content, which
+                # is reported as a refusal.
                 return None, all_usage_data
             if model_call_obj._refusal is not None:
-                # The LLM or its provider declined to answer, or the provider blocked
-                # the request. The answer is not used, also if it is valid JSON.
+                # The LLM or its provider declined to answer. The answer is not used,
+                # also if it is valid JSON.
                 # As for invalid data, the call is made again, as the verdict can
                 # differ on another request, and then with the fallback models; the
                 # refusal is raised (or warned about) if none of them answers.

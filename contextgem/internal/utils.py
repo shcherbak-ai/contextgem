@@ -707,8 +707,8 @@ def _model_call_result_is_api_failure(res: tuple[Any, _ModelUsage] | None) -> bo
     the retries of the failed request are already exhausted (or the error is not
     retryable), so that sending the same request to the same model again is pointless.
     A request that the provider blocked for its content is recorded as an unfinished
-    call too, with its refusal: it is a refusal (see ``_model_call_result_is_refused``),
-    not a failed request.
+    call too, with its refusal: it is handled as a failed request with a non-transient
+    error, and reported as a refusal (see ``_model_call_result_is_refused``).
 
     :param res: The result to check, represented as a tuple where the first element is the relevant
         result value, and the second element is model usage stats dict that follows the _ModelUsage pattern,
@@ -720,11 +720,7 @@ def _model_call_result_is_api_failure(res: tuple[Any, _ModelUsage] | None) -> bo
     if res is None or res[0] is not None:
         return False
     calls = res[1].calls
-    return (
-        bool(calls)
-        and calls[-1].timestamp_received is None
-        and calls[-1]._refusal is None
-    )
+    return bool(calls) and calls[-1].timestamp_received is None
 
 
 def _model_call_result_is_output_truncated(
@@ -762,7 +758,9 @@ def _model_call_result_is_refused(res: tuple[Any, _ModelUsage] | None) -> bool:
     The answer of a refused request is not used. The call is made again as for
     invalid data, as the verdict of a model or of a content filter can differ on
     another request, and then with the fallback models, and the refusal is
-    reported if none of them answers. The refused request is recorded in the usage
+    reported if none of them answers. A request that the provider blocked on its
+    input is handled as a failed request instead (see
+    ``_model_call_result_is_api_failure``). The refused request is recorded in the usage
     stats with its refusal, as the last call of an LLM, or as one of the calls of
     a decision model, whose requests on the texts of the call are recorded together.
 

@@ -15073,18 +15073,19 @@ class TestDecisionModels(BaseTest):
     def test_decision_model_input_blocked_falls_back(self):
         """
         Tests that a request to a decision model that the provider blocks for its
-        content (``litellm.ContentPolicyViolationError``) fails the call as
-        a refusal: it is passed on to the fallback model, which answers, and
-        without a fallback model, ``ModelRefusalError`` is raised, or a warning
-        is logged instead. The blocked request is recorded in the usage as
-        unfinished, with its refusal, and is not sent again to the decision model.
+        content (``litellm.ContentPolicyViolationError``) is handled as a failed
+        request with a non-transient error, as before refusals had an error of
+        their own: it is passed on to the fallback model, which answers, and
+        without a fallback model, ``ModelRefusalError`` is raised, with the error
+        of litellm, or a warning is logged instead. The blocked request is recorded
+        in the usage as unfinished, with its refusal, and is not sent again to
+        the decision model.
         """
         input_blocked_error = _create_api_error(litellm.ContentPolicyViolationError)
         refusal_sentence = (
             f"The provider of decision model `{_DECISION_MODEL}` blocked the request "
             f"for its content."
         )
-        refusal_msg = f"{refusal_sentence} Failed concepts: ['NDA check']"
         for with_fallback, raise_exception in [
             (True, True),
             (False, True),
@@ -15114,22 +15115,20 @@ class TestDecisionModels(BaseTest):
                 elif raise_exception:
                     with pytest.raises(ModelRefusalError) as exc_info:
                         decision_model.extract_concepts_from_document(document)
-                    assert exc_info.value.message == refusal_msg
-                    assert exc_info.value.original_error is None
+                    assert exc_info.value.message == refusal_sentence
+                    assert exc_info.value.original_error is input_blocked_error
                     assert exc_info.value.retry_count == 0
                 else:
                     decision_model.extract_concepts_from_document(
                         document, raise_exception_on_extraction_error=False
                     )
                     assert (
-                        f"{refusal_msg} (0 retries). If you want to raise an "
+                        f"{refusal_sentence} (0 retries). If you want to raise an "
                         f"exception instead, set `raise_exception_on_extraction_error` "
                         f"to True."
                     ) in captured_logs, captured_logs
-            # The refusal is logged, with the concepts of the call
-            assert (
-                f"{refusal_sentence} Concepts of the call: ['NDA check']"
-            ) in captured_logs, captured_logs
+            # The refusal is logged when it occurs
+            assert refusal_sentence in captured_logs, captured_logs
             # The request is not sent again to the decision model, and the fallback
             # LLM answers it
             assert len(decisions_stub.requests) == 1
