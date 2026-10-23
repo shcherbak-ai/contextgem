@@ -213,6 +213,25 @@ The differences are not the variation between passes: with the current wording, 
 
 Not tested: the questions of concepts (each case has six concepts that a decision model extracts, too few to compare wordings), and aspects extracted with sentences or with additional context. The recorded probabilities were not kept: the numbers above are the record.
 
+### JSON object answers that fail on the first try, and a retry with the errors (2026-10-23)
+
+A user reported that `anthropic/claude-sonnet-5-5` wrote a field of the object of a JSON object concept beside the `value` of an item (`` `0.extracted_items.1.title`: Extra inputs are not permitted ``) in 3 of 7 requests, with justifications and references on, which failed the whole answer. Two changes were in question: asking such concepts without justifications and references, and a retry that sends the failed answer back with its validation errors (their locations and messages, as the library logs them) and asks for the answer corrected, where the library sends the same request again. Measured first: how often the answers of JSON object concepts fail on the first try, one concept per request with `max_retries_invalid_data=0`, with a one-off script that was not kept, from commit `8b41d0e` with the item count of multi-class label concepts changed in `extract_concept_items.j2` (which these prompts do not include), with `litellm` 1.105.2.
+
+- **The concepts**: the two JSON object concepts of the cases, "Approved sub-processors as of 1 February 2027" of `complex_dpa` (of the document) and "Limitations present in revision C" of `complex_mcu` (of its first aspect, given the reference paragraphs of the aspect instead of extracting it), and, for `anthropic/claude-sonnet-5-5` only, a third one written for this on the same aspect, whose objects have the fields `title`, `summary` and `workaround`, as the failing answers had a `title`. Variant A asks for justifications and references (paragraphs), variant B for neither.
+- **First tries that failed**:
+
+| Model | Variant A | Variant B |
+|-------|-----------|-----------|
+| `anthropic/claude-sonnet-5-5` | 0 of 45 | 0 of 45 |
+| `openai/gpt-6-luna` | 0 of 50 | 0 of 50 |
+| `anthropic/claude-haiku-5-5` | 1 of 50 | 0 of 50 |
+
+- **The failure was not reproduced**: no answer of `anthropic/claude-sonnet-5-5` failed, i.e. at most about 8% of its answers in each variant (the upper end of a 95% interval). The one failed answer, of `anthropic/claude-haiku-5-5` on `complex_mcu` in variant A, had `reference_paragraphs_ids` for `reference_paragraph_ids` in one item: a misspelt key beside the value, not a field of the object. Every valid answer had the 4 objects of the reference answers, in both variants.
+- **The retry could not be compared**: the failed answer, given again as the first answer, was fixed by both a plain retry and the retry with its errors. One failure cannot tell them apart.
+- **Cost**: USD 3.02 for 294 requests, of which USD 2.79 for the 90 of `anthropic/claude-sonnet-5-5`; a request of `complex_dpa` with references counted about 25,000 input tokens with Anthropic's models, against 15,000 with `openai/gpt-6-luna`.
+
+Neither change has a measured reason on these cases: the documents and the structures of the report are not known, and its objects may have been larger or nested. Measure again with a case whose JSON object answers fail.
+
 ## Extraction from Docling Documents
 
 `--input` of `run_eval` and `decision_probabilities` says what the document of a case is created from: `text` (the default, as in every baseline), `docling`, `docling_without_context`, or `pdf` (below). The two Docling inputs create the document with `Document.from_docling()` from `cases/<case>.docling.json`, i.e. with the structure that Docling gives a file: the additional context of each paragraph (what it is, e.g. `Table row`, the headings of its section, the caption of its table) and each table row with the header of each column before its value. `docling_without_context` leaves out the additional context, to tell its effect from that of the table rows. A run and a pass of the probabilities record their input (`input`); those recorded before 2026-10-20 have none, and are of the text.
