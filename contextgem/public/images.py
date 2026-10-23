@@ -56,4 +56,7 @@ class Image(_Image):
         .. literalinclude:: ../../../dev/usage_examples/docstrings/images/def_image.py
             :language: python
             :caption: Image definition
+
+        .. The example above is not in the installed package. It is shown at
+           https://contextgem.shcherbak.ai/api/images/index.html.md
     """

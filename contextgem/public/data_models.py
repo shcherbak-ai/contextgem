@@ -38,4 +38,7 @@ class ModelPricing(_ModelPricing):
         .. literalinclude:: ../../../dev/usage_examples/docstrings/data_models/def_model_pricing.py
             :language: python
             :caption: Model pricing definition
+
+        .. The example above is not in the installed package. It is shown at
+           https://contextgem.shcherbak.ai/api/data_models/index.html.md
     """

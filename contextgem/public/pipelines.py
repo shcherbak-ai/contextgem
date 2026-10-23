@@ -56,4 +56,7 @@ class ExtractionPipeline(_ExtractionPipeline):
         .. literalinclude:: ../../../dev/usage_examples/docstrings/pipelines/def_pipeline.py
             :language: python
             :caption: Extraction pipeline definition
+
+        .. The example above is not in the installed package. It is shown at
+           https://contextgem.shcherbak.ai/api/pipelines/index.html.md
     """

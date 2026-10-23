@@ -56,4 +56,7 @@ class DocumentModelGroup(_DocumentModelGroup):
         .. literalinclude:: ../../../dev/usage_examples/docstrings/llms/def_model_group.py
             :language: python
             :caption: Model group definition
+
+        .. The example above is not in the installed package. It is shown at
+           https://contextgem.shcherbak.ai/api/models/index.html.md
     """

@@ -215,6 +215,9 @@ class DocumentLLM(_DocumentLLM):
         .. literalinclude:: ../../../dev/usage_examples/docstrings/llms/def_llm.py
             :language: python
             :caption: LLM definition
+
+        .. The example above is not in the installed package. It is shown at
+           https://contextgem.shcherbak.ai/api/llms/index.html.md
     """
 
 

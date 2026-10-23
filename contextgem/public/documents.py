@@ -82,4 +82,7 @@ class Document(_Document):
         .. literalinclude:: ../../../dev/usage_examples/docstrings/documents/def_document.py
             :language: python
             :caption: Document definition
+
+        .. The example above is not in the installed package. It is shown at
+           https://contextgem.shcherbak.ai/api/documents/index.html.md
     """

@@ -93,6 +93,9 @@ class StringConcept(_StringConcept):
         .. literalinclude:: ../../../dev/usage_examples/docstrings/concepts/def_string_concept.py
             :language: python
             :caption: String concept definition
+
+        .. The example above is not in the installed package. It is shown at
+           https://contextgem.shcherbak.ai/api/concepts/index.html.md
     """
 
 
@@ -167,6 +170,9 @@ class BooleanConcept(_BooleanConcept):
         .. literalinclude:: ../../../dev/usage_examples/docstrings/concepts/def_boolean_concept.py
             :language: python
             :caption: Boolean concept definition
+
+        .. The example above is not in the installed package. It is shown at
+           https://contextgem.shcherbak.ai/api/concepts/index.html.md
     """
 
 
@@ -235,6 +241,9 @@ class NumericalConcept(_NumericalConcept):
         .. literalinclude:: ../../../dev/usage_examples/docstrings/concepts/def_numerical_concept.py
             :language: python
             :caption: Numerical concept definition
+
+        .. The example above is not in the installed package. It is shown at
+           https://contextgem.shcherbak.ai/api/concepts/index.html.md
     """
 
 
@@ -307,6 +316,9 @@ class RatingConcept(_RatingConcept):
         .. literalinclude:: ../../../dev/usage_examples/docstrings/concepts/def_rating_concept.py
             :language: python
             :caption: Rating concept definition
+
+        .. The example above is not in the installed package. It is shown at
+           https://contextgem.shcherbak.ai/api/concepts/index.html.md
     """
 
 
@@ -406,6 +418,9 @@ class JsonObjectConcept(_JsonObjectConcept):
         .. literalinclude:: ../../../dev/usage_examples/docstrings/concepts/def_json_object_concept.py
             :language: python
             :caption: JSON object concept definition
+
+        .. The example above is not in the installed package. It is shown at
+           https://contextgem.shcherbak.ai/api/concepts/index.html.md
     """
 
 
@@ -471,6 +486,9 @@ class DateConcept(_DateConcept):
         .. literalinclude:: ../../../dev/usage_examples/docstrings/concepts/def_date_concept.py
             :language: python
             :caption: Date concept definition
+
+        .. The example above is not in the installed package. It is shown at
+           https://contextgem.shcherbak.ai/api/concepts/index.html.md
     """
 
 
@@ -563,4 +581,7 @@ class LabelConcept(_LabelConcept):
         .. literalinclude:: ../../../dev/usage_examples/docstrings/concepts/def_label_concept.py
             :language: python
             :caption: Label concept definition
+
+        .. The example above is not in the installed package. It is shown at
+           https://contextgem.shcherbak.ai/api/concepts/index.html.md
     """

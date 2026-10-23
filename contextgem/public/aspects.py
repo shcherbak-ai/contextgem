@@ -100,4 +100,7 @@ class Aspect(_Aspect):
         .. literalinclude:: ../../../dev/usage_examples/docstrings/aspects/def_aspect.py
             :language: python
             :caption: Aspect definition
+
+        .. The example above is not in the installed package. It is shown at
+           https://contextgem.shcherbak.ai/api/aspects/index.html.md
     """

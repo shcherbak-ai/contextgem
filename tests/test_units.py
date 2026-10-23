@@ -1419,3 +1419,33 @@ def test_public_classes_document_their_attributes() -> None:
         if undocumented:
             missing[name] = undocumented
     assert not missing, f"Public attributes without an :ivar entry: {missing}"
+
+
+def test_public_docstring_examples_point_to_their_api_page() -> None:
+    """Each usage example that a public docstring shows with ``literalinclude`` is
+    followed by a comment with the address of the Markdown copy of the module's API
+    reference page, where the example is shown: the usage examples are files of
+    the repository, which the installed package does not have. The comment is left
+    out of the page itself and of its Markdown copy (``docs/source/conf.py``)."""
+    public = Path(contextgem.__file__).parent / "public"
+    include = re.compile(
+        r"^( *)\.\. literalinclude:: \.\./\.\./\.\./dev/usage_examples/\S+\n"
+        r"(?:\1 +:\w+:.*\n)*"
+        r"\n"
+        r"\1\.\. The example above is not in the installed package\. It is shown at\n"
+        r"\1   (\S+)\n",
+        flags=re.MULTILINE,
+    )
+    n_examples = 0
+    for path in sorted(public.glob("*.py")):
+        text = path.read_text(encoding="utf-8")
+        n_includes = text.count(".. literalinclude:: ../../../dev/usage_examples/")
+        pointers = [match.group(2) for match in include.finditer(text)]
+        assert len(pointers) == n_includes, (
+            f"{path.name}: a usage example without the comment that points to "
+            f"its API page"
+        )
+        page = f"https://contextgem.shcherbak.ai/api/{path.stem}/index.html.md"
+        assert all(pointer == page for pointer in pointers), path.name
+        n_examples += n_includes
+    assert n_examples

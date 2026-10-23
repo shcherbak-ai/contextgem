@@ -62,6 +62,13 @@ def _write_children_only(translator, node):
     """
 
 
+def _write_nothing(translator, node):
+    """
+    Writes nothing for the node and its children.
+    """
+    raise nodes.SkipNode
+
+
 def _share_meta_description(app, doctree):
     """
     Gives the page's meta description to the links to it on other sites
@@ -94,6 +101,17 @@ def setup(app):
         **{
             builder: (_write_children_only, _write_children_only)
             for builder in ("markdown", "llms-markdown")
+        },
+    )
+    # A comment is left out of the HTML page, and of its Markdown copy too, which
+    # the Markdown builder would give it as an HTML comment: e.g. the address of
+    # the API reference that a docstring gives the readers of the installed
+    # package for its example, which the copy would point to itself
+    app.add_node(
+        nodes.comment,
+        override=True,
+        **{
+            builder: (_write_nothing, None) for builder in ("markdown", "llms-markdown")
         },
     )
 

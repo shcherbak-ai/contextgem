@@ -74,4 +74,7 @@ class Paragraph(_Paragraph):
         .. literalinclude:: ../../../dev/usage_examples/docstrings/paragraphs/def_paragraph.py
             :language: python
             :caption: Paragraph definition
+
+        .. The example above is not in the installed package. It is shown at
+           https://contextgem.shcherbak.ai/api/paragraphs/index.html.md
     """

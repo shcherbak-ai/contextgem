@@ -226,6 +226,9 @@ def reload_logger_settings():
         .. literalinclude:: ../../../dev/usage_examples/docstrings/utils/reload_logger_settings.py
             :language: python
             :caption: Reload logger settings
+
+        .. The example above is not in the installed package. It is shown at
+           https://contextgem.shcherbak.ai/api/utils/index.html.md
     """
     _configure_logger_from_env()
 
@@ -255,6 +258,9 @@ def release_sat_model() -> None:
         .. literalinclude:: ../../../dev/usage_examples/docstrings/utils/release_sat_model.py
             :language: python
             :caption: Release the SaT model
+
+        .. The example above is not in the installed package. It is shown at
+           https://contextgem.shcherbak.ai/api/utils/index.html.md
     """
     _release_sat_model()
 
@@ -272,4 +278,7 @@ class JsonObjectClassStruct(_JsonObjectClassStruct):
         .. literalinclude:: ../../../dev/usage_examples/docstrings/utils/json_object_cls_struct.py
             :language: python
             :caption: Using JsonObjectClassStruct for class hierarchies
+
+        .. The example above is not in the installed package. It is shown at
+           https://contextgem.shcherbak.ai/api/utils/index.html.md
     """

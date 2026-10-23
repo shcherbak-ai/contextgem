@@ -46,6 +46,9 @@ class StringExample(_StringExample):
         .. literalinclude:: ../../../dev/usage_examples/docstrings/examples/def_example_string.py
             :language: python
             :caption: String example definition
+
+        .. The example above is not in the installed package. It is shown at
+           https://contextgem.shcherbak.ai/api/examples/index.html.md
     """
 
 
@@ -74,4 +77,7 @@ class JsonObjectExample(_JsonObjectExample):
         .. literalinclude:: ../../../dev/usage_examples/docstrings/examples/def_example_json_object.py
             :language: python
             :caption: JSON object example definition
+
+        .. The example above is not in the installed package. It is shown at
+           https://contextgem.shcherbak.ai/api/examples/index.html.md
     """

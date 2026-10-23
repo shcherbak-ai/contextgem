@@ -66,4 +66,7 @@ class Sentence(_Sentence):
         .. literalinclude:: ../../../dev/usage_examples/docstrings/sentences/def_sentence.py
             :language: python
             :caption: Sentence definition
+
+        .. The example above is not in the installed package. It is shown at
+           https://contextgem.shcherbak.ai/api/sentences/index.html.md
     """

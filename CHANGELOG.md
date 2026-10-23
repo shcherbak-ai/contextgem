@@ -10,7 +10,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ### Added
 
-- The docstring of each public class now names all its public attributes and properties, the inherited ones included, e.g. `custom_data`, where your own data goes, such as an ID of your own for a paragraph, and `unique_id`. The docstrings of `Paragraph` and `Sentence` say that the references of aspects and extracted items are the document's own paragraphs and sentences.
+- The docstring of each public class now names all its public attributes and properties, the inherited ones included, e.g. `custom_data`, where your own data goes, such as an ID of your own for a paragraph, and `unique_id`. The docstrings of `Paragraph` and `Sentence` say that the references of aspects and extracted items are the document's own paragraphs and sentences. A docstring that shows a usage example now gives the address of the API page that shows it, as the installed package has no usage examples.
 
 ### Removed
 

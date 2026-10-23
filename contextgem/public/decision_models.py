@@ -147,4 +147,7 @@ class DocumentDecisionModel(_DocumentDecisionModel):
         .. literalinclude:: ../../../dev/usage_examples/docstrings/decision_models/def_decision_model.py
             :language: python
             :caption: Decision model definition
+
+        .. The example above is not in the installed package. It is shown at
+           https://contextgem.shcherbak.ai/api/decision_models/index.html.md
     """
