@@ -88,44 +88,43 @@ interactions:
       you will find a list of document paragraphs (including sentences) and a list
       of concepts.\n</introduction>\n\n<guidance_on_task_structure>\nAll structured
       information in these instructions is provided using semantic XML tags. Field
-      names correspond directly to tag names (e.g., concept_name, paragraph_text,
-      sentence_text, additional_context, etc.).\n</guidance_on_task_structure>\n\n<private_reasoning>\nUse
-      private deliberation to plan, evaluate evidence, and verify decisions. Do not
-      reveal any intermediate analysis, notes, or steps. Only output the JSON according
-      to the format specified within <answer_format></answer_format> tags.\n\nFollow
-      this internal three-stage process:\n\n1. Plan\n    - Internally restate each
-      concept in one sentence.\n    - List 3-5 concrete lexical/semantic cues for
-      relevance aligned with the concept description (include indicators of definition,
-      obligation, permission, exception, conditionals, and negations).\n    - If a
-      concept specifies a structure, rating scale, or available labels, align inclusion/exclusion
-      criteria with those constraints.\n    - For each concept, plan how to synthesize
-      the output value from the available evidence even when no literal span is present.\n\n2.
-      Evidence triage\n    - Evaluate the provided content at paragraph and sentence
-      levels; derive candidate extractions/values for the concepts (explicit or inferred
-      from context).\n    - Collect minimal sufficient evidence privately and note
-      negated, hypothetical, or conditional forms.\n    - Prefer precision over recall;
-      include only high-confidence items and omit weak or ambiguous ones.\n\n3. Consistency
-      pass\n    - Ensure all extracted items strictly match required types and any
-      specified structure, rating scales, or label constraints.\n    - Deduplicate
-      referenced paragraph and sentence IDs and preserve their original order.\n    -
-      Ensure justifications align with the item''s evidence and stance, and comply
-      with length and language constraints.\n\nNever disclose any plan, evidence,
-      or internal notes - only the JSON array defined within <answer_format></answer_format>
-      tags.\n</private_reasoning>\n\n<task_description>\nYour task is to:\n1. Read
-      through the provided document paragraphs and their sentences.\n    - Each paragraph
-      is identified by a paragraph ID (for example, \"P0\", \"P1\", etc.) specified
-      within <paragraph_id></paragraph_id> tags.\n    - Each paragraph includes sentences,
-      each identified by a sentence ID (for example, \"P0-S0\", \"P0-S1\", etc.) specified
-      within <sentence_id></sentence_id> tags, followed by the full text of the sentence
-      specified within <sentence_text></sentence_text> tags.\n    - Note that paragraphs
-      are listed in the same order they appear in the original document.\n    - You
-      may be working with document fragments rather than complete documents. Focus
-      on extracting information from the available content without making assumptions
-      about missing parts.\n2. Identify whether each concept in the concepts list
-      is addressed within the document paragraphs.\n    - Each concept is identified
-      by a concept ID (for example, \"C0\", \"C1\", etc.) specified within <concept_id></concept_id>
-      tags.\n    - Each concept is described by a concept name specified within <concept_name></concept_name>
-      tags and a concept description specified within <concept_description></concept_description>
+      names correspond directly to tag names (e.g., concept_name, additional_context,
+      etc.).\n</guidance_on_task_structure>\n\n<private_reasoning>\nUse private deliberation
+      to plan, evaluate evidence, and verify decisions. Do not reveal any intermediate
+      analysis, notes, or steps. Only output the JSON according to the format specified
+      within <answer_format></answer_format> tags.\n\nFollow this internal three-stage
+      process:\n\n1. Plan\n    - Internally restate each concept in one sentence.\n    -
+      List 3-5 concrete lexical/semantic cues for relevance aligned with the concept
+      description (include indicators of definition, obligation, permission, exception,
+      conditionals, and negations).\n    - If a concept specifies a structure, rating
+      scale, or available labels, align inclusion/exclusion criteria with those constraints.\n    -
+      For each concept, plan how to synthesize the output value from the available
+      evidence even when no literal span is present.\n\n2. Evidence triage\n    -
+      Evaluate the provided content at paragraph and sentence levels; derive candidate
+      extractions/values for the concepts (explicit or inferred from context).\n    -
+      Collect minimal sufficient evidence privately and note negated, hypothetical,
+      or conditional forms.\n    - Prefer precision over recall; include only high-confidence
+      items and omit weak or ambiguous ones.\n\n3. Consistency pass\n    - Ensure
+      all extracted items strictly match required types and any specified structure,
+      rating scales, or label constraints.\n    - Deduplicate referenced paragraph
+      and sentence IDs and preserve their original order.\n    - Ensure justifications
+      align with the item''s evidence and stance, and comply with length and language
+      constraints.\n\nNever disclose any plan, evidence, or internal notes - only
+      the JSON array defined within <answer_format></answer_format> tags.\n</private_reasoning>\n\n<task_description>\nYour
+      task is to:\n1. Read through the provided document paragraphs and their sentences.\n    -
+      Each paragraph is given within <paragraph></paragraph> tags, whose id attribute
+      holds its paragraph ID (for example, \"P0\", \"P1\", etc.).\n    - Each paragraph
+      includes sentences, each given with its full text within <sentence></sentence>
+      tags, whose id attribute holds its sentence ID (for example, \"P0-S0\", \"P0-S1\",
+      etc.).\n    - Note that paragraphs are listed in the same order they appear
+      in the original document.\n    - You may be working with document fragments
+      rather than complete documents. Focus on extracting information from the available
+      content without making assumptions about missing parts.\n2. Identify whether
+      each concept in the concepts list is addressed within the document paragraphs.\n    -
+      Each concept is identified by a concept ID (for example, \"C0\", \"C1\", etc.)
+      specified within <concept_id></concept_id> tags.\n    - Each concept is described
+      by a concept name specified within <concept_name></concept_name> tags and a
+      concept description specified within <concept_description></concept_description>
       tags.\n3. For each concept that appears, extract zero or more items relevant
       to that concept. The item format and structure are specified for each concept.\n    -
       Apply cross-paragraph reasoning when helpful (e.g., headings, lists, references
@@ -263,37 +262,25 @@ interactions:
       to 10 (inclusive).\n    </rating_scale>\n\n    <amount_of_extracted_items>This
       concept may have zero, one, or multiple extracted items.</amount_of_extracted_items>\n\n    <extracted_item_type>int
       (must be exactly as specified)</extracted_item_type>\n</concept>\n\n</concepts>\n\n<document_paragraphs>\nDOCUMENT
-      PARAGRAPHS INCLUDING SENTENCES:\n    <paragraph id=\"P0\">\n        <paragraph_id>P0</paragraph_id>\n        \n        <paragraph_sentences>\n            <sentence
-      id=\"P0-S0\">\n                <sentence_id>P0-S0</sentence_id>\n                \n                <sentence_text>\n                Software
-      Review: ProjectManager Pro 5.0\n                </sentence_text>\n            </sentence>\n        </paragraph_sentences>\n    </paragraph>\n\n    <paragraph
-      id=\"P1\">\n        <paragraph_id>P1</paragraph_id>\n        \n        <paragraph_sentences>\n            <sentence
-      id=\"P1-S0\">\n                <sentence_id>P1-S0</sentence_id>\n                \n                <sentence_text>\n                User
-      Interface: The interface is clean and modern, with intuitive navigation.\n                </sentence_text>\n            </sentence>\n            <sentence
-      id=\"P1-S1\">\n                <sentence_id>P1-S1</sentence_id>\n                \n                <sentence_text>\n                New
-      users can quickly find what they need without extensive training.\n                </sentence_text>\n            </sentence>\n            <sentence
-      id=\"P1-S2\">\n                <sentence_id>P1-S2</sentence_id>\n                \n                <sentence_text>\n                The
-      dashboard provides a comprehensive overview of project status.\n                </sentence_text>\n            </sentence>\n        </paragraph_sentences>\n    </paragraph>\n\n    <paragraph
-      id=\"P2\">\n        <paragraph_id>P2</paragraph_id>\n        \n        <paragraph_sentences>\n            <sentence
-      id=\"P2-S0\">\n                <sentence_id>P2-S0</sentence_id>\n                \n                <sentence_text>\n                Performance:
-      The application loads quickly even with large projects.\n                </sentence_text>\n            </sentence>\n            <sentence
-      id=\"P2-S1\">\n                <sentence_id>P2-S1</sentence_id>\n                \n                <sentence_text>\n                Resource-intensive
-      operations like generating reports occasionally cause minor lag on older systems.\n                </sentence_text>\n            </sentence>\n            <sentence
-      id=\"P2-S2\">\n                <sentence_id>P2-S2</sentence_id>\n                \n                <sentence_text>\n                The
-      mobile app performs exceptionally well, even on limited bandwidth.\n                </sentence_text>\n            </sentence>\n        </paragraph_sentences>\n    </paragraph>\n\n    <paragraph
-      id=\"P3\">\n        <paragraph_id>P3</paragraph_id>\n        \n        <paragraph_sentences>\n            <sentence
-      id=\"P3-S0\">\n                <sentence_id>P3-S0</sentence_id>\n                \n                <sentence_text>\n                Features:
-      Project templates are well-designed and cover most common project types.\n                </sentence_text>\n            </sentence>\n            <sentence
-      id=\"P3-S1\">\n                <sentence_id>P3-S1</sentence_id>\n                \n                <sentence_text>\n                Task
-      dependencies are easily managed, and the Gantt chart visualization is excellent.\n                </sentence_text>\n            </sentence>\n            <sentence
-      id=\"P3-S2\">\n                <sentence_id>P3-S2</sentence_id>\n                \n                <sentence_text>\n                However,
-      the software lacks advanced risk management tools that competitors offer.\n                </sentence_text>\n            </sentence>\n        </paragraph_sentences>\n    </paragraph>\n\n    <paragraph
-      id=\"P4\">\n        <paragraph_id>P4</paragraph_id>\n        \n        <paragraph_sentences>\n            <sentence
-      id=\"P4-S0\">\n                <sentence_id>P4-S0</sentence_id>\n                \n                <sentence_text>\n                Support:
-      The documentation is comprehensive and well-organized.\n                </sentence_text>\n            </sentence>\n            <sentence
-      id=\"P4-S1\">\n                <sentence_id>P4-S1</sentence_id>\n                \n                <sentence_text>\n                Customer
-      service response time averages 4 hours, which is acceptable but not industry-leading.\n                </sentence_text>\n            </sentence>\n            <sentence
-      id=\"P4-S2\">\n                <sentence_id>P4-S2</sentence_id>\n                \n                <sentence_text>\n                The
-      knowledge base needs more video tutorials.\n                </sentence_text>\n            </sentence>\n        </paragraph_sentences>\n    </paragraph>\n\n</document_paragraphs>"}],"model":"gpt-6-luna"}'
+      PARAGRAPHS INCLUDING SENTENCES:\n<paragraph id=\"P0\">\n<sentence id=\"P0-S0\">Software
+      Review: ProjectManager Pro 5.0</sentence>\n</paragraph>\n<paragraph id=\"P1\">\n<sentence
+      id=\"P1-S0\">User Interface: The interface is clean and modern, with intuitive
+      navigation.</sentence>\n<sentence id=\"P1-S1\">New users can quickly find what
+      they need without extensive training.</sentence>\n<sentence id=\"P1-S2\">The
+      dashboard provides a comprehensive overview of project status.</sentence>\n</paragraph>\n<paragraph
+      id=\"P2\">\n<sentence id=\"P2-S0\">Performance: The application loads quickly
+      even with large projects.</sentence>\n<sentence id=\"P2-S1\">Resource-intensive
+      operations like generating reports occasionally cause minor lag on older systems.</sentence>\n<sentence
+      id=\"P2-S2\">The mobile app performs exceptionally well, even on limited bandwidth.</sentence>\n</paragraph>\n<paragraph
+      id=\"P3\">\n<sentence id=\"P3-S0\">Features: Project templates are well-designed
+      and cover most common project types.</sentence>\n<sentence id=\"P3-S1\">Task
+      dependencies are easily managed, and the Gantt chart visualization is excellent.</sentence>\n<sentence
+      id=\"P3-S2\">However, the software lacks advanced risk management tools that
+      competitors offer.</sentence>\n</paragraph>\n<paragraph id=\"P4\">\n<sentence
+      id=\"P4-S0\">Support: The documentation is comprehensive and well-organized.</sentence>\n<sentence
+      id=\"P4-S1\">Customer service response time averages 4 hours, which is acceptable
+      but not industry-leading.</sentence>\n<sentence id=\"P4-S2\">The knowledge base
+      needs more video tutorials.</sentence>\n</paragraph>\n</document_paragraphs>"}],"model":"gpt-6-luna"}'
     headers:
       accept:
       - application/json
@@ -304,7 +291,7 @@ interactions:
       connection:
       - keep-alive
       content-length:
-      - '27010'
+      - '23962'
       content-type:
       - application/json
       cookie:
@@ -338,19 +325,19 @@ interactions:
   response:
     body:
       string: !!binary |
-        H4sIAAAAAAAA/3VUTW/bMAy951cQOjtF3LTJ2us2FNipRddhQBMYisTYyhTJk+SkQZH/PspO/NEu
-        F1viI58okk/vIwCmJLsHJgoexLbU4++/D/NHs3l6+SLTbw+3f19+/HraP8yNf37ZCJbECLvaoAjn
-        qCthKQ6DsqaBhUMeMLKm87t0PruZXc9rYGsl6hiWl2E8G+vK8FNEYZVAT9ArbQHe62/MzUh8I/Mk
-        OVu26D3PkWxnJzI6q6OFce+VD9wElnSgsCagqdN9XRgijx+ARQQEliFTckHggn2dLFhyBvEtOC7o
-        GpkKuPXR47XBWobGccd1hRG+S/rmTeWDWivBY10a/p8FgqJc3JoLWnmQ6IVTK5TAPQiN3CQQa+To
-        z42MzpUKaof6AIbvVM5XGhvI4B4qj47iuIE11Qn21AsIBZIvEuVehcJWAegiaDyRAF1IGWXyK4iZ
-        xK45LE5Y6Wzs6ZiqFyrKjPtiZbmTsK4ccTrwVVlaFzz44KzJ6XC+UlqFQwLxnLyIR4O0otpSsWmB
-        HoyNx5daCRXoCrE7uQEOhnycEuCoOJROW/Wmcg7X6JBak5Xc8dzxshiW/0MLLka1jX1MB0d8DPAY
-        B4QWSn4+qHF+TMfPk08kZyS9iFwv2BBY9rfHbtPaT7Z6T+tlf5IpZSp7VJCptO4B3FCp60mrNbQ8
-        IcdWNTQgyhcZCdOTSkkJPtiS1eiRvstahdVAWIxGYkvqCPYP1rS36fSmIWSd4js4vZud0EC56F7c
-        dHqS75Aykxi40r4nZSa4KEhyHel0Nk8GYLZ3JMjOY0rvS+vBK6lsh01GvSp8Tvp/CTQVoqnsWG6m
-        F/k7QMSXhDInSUklhpXp3BxGkV1ya9tRZ8xI3Tt6FbOg0MWWSVzzSjdPG/MHT89SRn3N0ZVO1e9b
-        nIrRcfQPmn2xvtYFAAA=
+        H4sIAAAAAAAA/3VUS3PaQAy+8ys0PpsMEAok107aHtNpkx4Cw4i1sJUsu87uGsJk+O/V2jxMEi4e
+        S5/0rd7vHYCEs+QWElVgUKtSd+/Uz8eHf7+9Gd7/WrjR2t65H9WjpYfX8DJJ0uhhF8+kwsHrSlnx
+        o8DWNLByhIEia398MxhPJqPBsAZWNiMd3fIydEddXRncexSWFXmBnkQEeK+/MTaT0Zuoe+lBsyLv
+        MSfRHYxE6ayOmgS9Zx/QhCQ9gcqaQKYO92lqhDx+AKYRUFSGOWdTAafJ9940SQ8gvQWHStKYc6CV
+        jxZPDXZkaAzXqCuK8E3aVj9XPvCSFca6NPx/CwJvl2GDjgDLktB5KDgv9BYqjwtNt8DBA0u8bomK
+        gD0oTWgATQaxes6kYHDNeU0bcTGuOPCa0trI0Ea4SIiVuL1WrF6EfSl1hI30CkJBWzEiETkUtgog
+        iZLxQgCSMBs2+RXESDP0xcKiywC1t1A6u+aMPCDEfjsq9l52TW7NtEnBV2VpXRAGIPSCLGMoNZtI
+        PjgyeSg8SP5OeiRMMXlwGF1SiOGIGOLb5JXjss4xs/KosRKodHah2UcTySRWjDWHbaxCKQWTkbw6
+        NrBpgqMlyauK5iU6zB2WxXknP3TzotdxRu77Z098dPAUZ01+OPv8UGN83+/+6X0iOSD9i8hgmpwD
+        s7a4OwlH/V5Xy/I/ay+FhCwFjMtoKq1bABqpdT1d9TrO9sjuuIAyS9KDuey4l4WXpfLBlkmN7uQ7
+        qxe6OtvRRIZnJYsW7AvVtMPR9bghTE7H4wQPet/2aJBYdMtvMhykX1DOMwrI2reuQqJQFbK9R9/+
+        9WicnoHzjZPdPllcD1oWWGVsT1iv06rC56C/CqCpkIx264Wbi/wnQMWjJJHLjmWszitzMnMUb/Al
+        s2M76ogTH1dUpjIwudiyjJZY6eZKJn7r5cLNpa85udJxfSrjVHR2nf8saAcaIQYAAA==
     headers:
       access-control-expose-headers:
       - X-Request-ID
@@ -373,7 +360,7 @@ interactions:
       openai-organization:
       - DUMMY
       openai-processing-ms:
-      - '2434'
+      - '2559'
       openai-project:
       - DUMMY
       openai-version:
@@ -397,9 +384,9 @@ interactions:
       x-ratelimit-remaining-tokens:
       - DUMMY
       x-ratelimit-reset-requests:
-      - 12ms
+      - 6ms
       x-ratelimit-reset-tokens:
-      - 197ms
+      - 35ms
       x-request-id:
       - DUMMY
     status:

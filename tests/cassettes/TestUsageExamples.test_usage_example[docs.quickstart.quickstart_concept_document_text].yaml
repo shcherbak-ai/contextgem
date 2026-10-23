@@ -87,40 +87,38 @@ interactions:
       across diverse document analysis tasks.\n</conclusion>"},{"role":"user","content":"<introduction>\nBelow
       you will find a list of document paragraphs and a list of concepts.\n</introduction>\n\n<guidance_on_task_structure>\nAll
       structured information in these instructions is provided using semantic XML
-      tags. Field names correspond directly to tag names (e.g., concept_name, paragraph_text,
-      sentence_text, additional_context, etc.).\n</guidance_on_task_structure>\n\n<private_reasoning>\nUse
-      private deliberation to plan, evaluate evidence, and verify decisions. Do not
-      reveal any intermediate analysis, notes, or steps. Only output the JSON according
-      to the format specified within <answer_format></answer_format> tags.\n\nFollow
-      this internal three-stage process:\n\n1. Plan\n    - Internally restate each
-      concept in one sentence.\n    - List 3-5 concrete lexical/semantic cues for
-      relevance aligned with the concept description (include indicators of definition,
-      obligation, permission, exception, conditionals, and negations).\n    - If a
-      concept specifies a structure, rating scale, or available labels, align inclusion/exclusion
-      criteria with those constraints.\n    - For each concept, plan how to synthesize
-      the output value from the available evidence even when no literal span is present.\n\n2.
-      Evidence triage\n    - Evaluate the provided content at paragraph level; derive
-      candidate extractions/values for the concepts (explicit or inferred from context).\n    -
-      Collect minimal sufficient evidence privately and note negated, hypothetical,
-      or conditional forms.\n    - Prefer precision over recall; include only high-confidence
-      items and omit weak or ambiguous ones.\n\n3. Consistency pass\n    - Ensure
-      all extracted items strictly match required types and any specified structure,
-      rating scales, or label constraints.\n    - Deduplicate referenced paragraph
-      IDs and preserve their original order.\n\nNever disclose any plan, evidence,
-      or internal notes - only the JSON array defined within <answer_format></answer_format>
-      tags.\n</private_reasoning>\n\n<task_description>\nYour task is to:\n1. Read
-      through the document paragraphs provided.\n    - Each paragraph is identified
-      by a paragraph ID (for example, \"P0\", \"P1\", etc.) specified within <paragraph_id></paragraph_id>
-      tags, followed by the full text of the paragraph specified within <paragraph_text></paragraph_text>
-      tags.\n    - Note that paragraphs are listed in the same order they appear in
-      the original document.\n    - You may be working with document fragments rather
-      than complete documents. Focus on extracting information from the available
-      content without making assumptions about missing parts.\n2. Identify whether
-      each concept in the concepts list is addressed within the document paragraphs.\n    -
-      Each concept is identified by a concept ID (for example, \"C0\", \"C1\", etc.)
-      specified within <concept_id></concept_id> tags.\n    - Each concept is described
-      by a concept name specified within <concept_name></concept_name> tags and a
-      concept description specified within <concept_description></concept_description>
+      tags. Field names correspond directly to tag names (e.g., concept_name, additional_context,
+      etc.).\n</guidance_on_task_structure>\n\n<private_reasoning>\nUse private deliberation
+      to plan, evaluate evidence, and verify decisions. Do not reveal any intermediate
+      analysis, notes, or steps. Only output the JSON according to the format specified
+      within <answer_format></answer_format> tags.\n\nFollow this internal three-stage
+      process:\n\n1. Plan\n    - Internally restate each concept in one sentence.\n    -
+      List 3-5 concrete lexical/semantic cues for relevance aligned with the concept
+      description (include indicators of definition, obligation, permission, exception,
+      conditionals, and negations).\n    - If a concept specifies a structure, rating
+      scale, or available labels, align inclusion/exclusion criteria with those constraints.\n    -
+      For each concept, plan how to synthesize the output value from the available
+      evidence even when no literal span is present.\n\n2. Evidence triage\n    -
+      Evaluate the provided content at paragraph level; derive candidate extractions/values
+      for the concepts (explicit or inferred from context).\n    - Collect minimal
+      sufficient evidence privately and note negated, hypothetical, or conditional
+      forms.\n    - Prefer precision over recall; include only high-confidence items
+      and omit weak or ambiguous ones.\n\n3. Consistency pass\n    - Ensure all extracted
+      items strictly match required types and any specified structure, rating scales,
+      or label constraints.\n    - Deduplicate referenced paragraph IDs and preserve
+      their original order.\n\nNever disclose any plan, evidence, or internal notes
+      - only the JSON array defined within <answer_format></answer_format> tags.\n</private_reasoning>\n\n<task_description>\nYour
+      task is to:\n1. Read through the document paragraphs provided.\n    - Each paragraph
+      is given with its full text within <paragraph></paragraph> tags, whose id attribute
+      holds its paragraph ID (for example, \"P0\", \"P1\", etc.).\n    - Note that
+      paragraphs are listed in the same order they appear in the original document.\n    -
+      You may be working with document fragments rather than complete documents. Focus
+      on extracting information from the available content without making assumptions
+      about missing parts.\n2. Identify whether each concept in the concepts list
+      is addressed within the document paragraphs.\n    - Each concept is identified
+      by a concept ID (for example, \"C0\", \"C1\", etc.) specified within <concept_id></concept_id>
+      tags.\n    - Each concept is described by a concept name specified within <concept_name></concept_name>
+      tags and a concept description specified within <concept_description></concept_description>
       tags.\n3. For each concept that appears, extract zero or more items relevant
       to that concept. The item format and structure are specified for each concept.\n    -
       Apply cross-paragraph reasoning when helpful (e.g., headings, lists, references
@@ -234,32 +232,19 @@ interactions:
       str\n}\n    </expected_structure>\n\n    <amount_of_extracted_items>This concept
       may have zero, one, or multiple extracted items.</amount_of_extracted_items>\n\n    <extracted_item_type>dict
       (must be exactly as specified)</extracted_item_type>\n</concept>\n\n</concepts>\n\n<document_paragraphs>\nDOCUMENT
-      PARAGRAPHS:\n    <paragraph id=\"P0\">\n        <paragraph_id>P0</paragraph_id>\n        \n        <paragraph_text>\n        Statement
-      of Work\n        </paragraph_text>\n    </paragraph>\n\n    <paragraph id=\"P1\">\n        <paragraph_id>P1</paragraph_id>\n        \n        <paragraph_text>\n        Project:
-      Cloud Migration Initiative\n        </paragraph_text>\n    </paragraph>\n\n    <paragraph
-      id=\"P2\">\n        <paragraph_id>P2</paragraph_id>\n        \n        <paragraph_text>\n        Client:
-      Acme Corporation\n        </paragraph_text>\n    </paragraph>\n\n    <paragraph
-      id=\"P3\">\n        <paragraph_id>P3</paragraph_id>\n        \n        <paragraph_text>\n        Contractor:
-      TechSolutions Inc.\n        </paragraph_text>\n    </paragraph>\n\n    <paragraph
-      id=\"P4\">\n        <paragraph_id>P4</paragraph_id>\n        \n        <paragraph_text>\n        Project
-      Timeline:\n        </paragraph_text>\n    </paragraph>\n\n    <paragraph id=\"P5\">\n        <paragraph_id>P5</paragraph_id>\n        \n        <paragraph_text>\n        Start
-      Date: March 1, 2025\n        </paragraph_text>\n    </paragraph>\n\n    <paragraph
-      id=\"P6\">\n        <paragraph_id>P6</paragraph_id>\n        \n        <paragraph_text>\n        End
-      Date: August 31, 2025\n        </paragraph_text>\n    </paragraph>\n\n    <paragraph
-      id=\"P7\">\n        <paragraph_id>P7</paragraph_id>\n        \n        <paragraph_text>\n        Deliverables:\n        </paragraph_text>\n    </paragraph>\n\n    <paragraph
-      id=\"P8\">\n        <paragraph_id>P8</paragraph_id>\n        \n        <paragraph_text>\n        1.
-      Infrastructure assessment report (Due: March 15, 2025)\n        </paragraph_text>\n    </paragraph>\n\n    <paragraph
-      id=\"P9\">\n        <paragraph_id>P9</paragraph_id>\n        \n        <paragraph_text>\n        2.
-      Migration strategy document (Due: April 10, 2025)\n        </paragraph_text>\n    </paragraph>\n\n    <paragraph
-      id=\"P10\">\n        <paragraph_id>P10</paragraph_id>\n        \n        <paragraph_text>\n        3.
-      Test environment setup (Due: May 20, 2025)\n        </paragraph_text>\n    </paragraph>\n\n    <paragraph
-      id=\"P11\">\n        <paragraph_id>P11</paragraph_id>\n        \n        <paragraph_text>\n        4.
-      Production migration (Due: July 15, 2025)\n        </paragraph_text>\n    </paragraph>\n\n    <paragraph
-      id=\"P12\">\n        <paragraph_id>P12</paragraph_id>\n        \n        <paragraph_text>\n        5.
-      Post-migration support (Due: August 31, 2025)\n        </paragraph_text>\n    </paragraph>\n\n    <paragraph
-      id=\"P13\">\n        <paragraph_id>P13</paragraph_id>\n        \n        <paragraph_text>\n        Budget:
-      $250,000\n        </paragraph_text>\n    </paragraph>\n\n    <paragraph id=\"P14\">\n        <paragraph_id>P14</paragraph_id>\n        \n        <paragraph_text>\n        Payment
-      Schedule: 20% upfront, 30% at midpoint, 50% upon completion\n        </paragraph_text>\n    </paragraph>\n\n</document_paragraphs>"}],"model":"gpt-6-luna"}'
+      PARAGRAPHS:\n<paragraph id=\"P0\">Statement of Work</paragraph>\n<paragraph
+      id=\"P1\">Project: Cloud Migration Initiative</paragraph>\n<paragraph id=\"P2\">Client:
+      Acme Corporation</paragraph>\n<paragraph id=\"P3\">Contractor: TechSolutions
+      Inc.</paragraph>\n<paragraph id=\"P4\">Project Timeline:</paragraph>\n<paragraph
+      id=\"P5\">Start Date: March 1, 2025</paragraph>\n<paragraph id=\"P6\">End Date:
+      August 31, 2025</paragraph>\n<paragraph id=\"P7\">Deliverables:</paragraph>\n<paragraph
+      id=\"P8\">1. Infrastructure assessment report (Due: March 15, 2025)</paragraph>\n<paragraph
+      id=\"P9\">2. Migration strategy document (Due: April 10, 2025)</paragraph>\n<paragraph
+      id=\"P10\">3. Test environment setup (Due: May 20, 2025)</paragraph>\n<paragraph
+      id=\"P11\">4. Production migration (Due: July 15, 2025)</paragraph>\n<paragraph
+      id=\"P12\">5. Post-migration support (Due: August 31, 2025)</paragraph>\n<paragraph
+      id=\"P13\">Budget: $250,000</paragraph>\n<paragraph id=\"P14\">Payment Schedule:
+      20% upfront, 30% at midpoint, 50% upon completion</paragraph>\n</document_paragraphs>"}],"model":"gpt-6-luna"}'
     headers:
       accept:
       - application/json
@@ -270,7 +255,7 @@ interactions:
       connection:
       - keep-alive
       content-length:
-      - '23109'
+      - '21106'
       content-type:
       - application/json
       cookie:
@@ -304,17 +289,17 @@ interactions:
   response:
     body:
       string: !!binary |
-        H4sIAAAAAAAA/31UTY/TMBC991dYFtyyq6Tf5YYWpAWEtCt6ADVV5HWmqcGxLdspW1b97zvOR5Oq
-        wMWx580bT2be+GVECBU5fUco3zPPSyNvPn4/LifL5eOauyL5Uj1+vuerP/dsnex+2A80Cgz99BO4
-        71i3XCMPvNCqgbkF5iFETRarZDGfzueLGih1DjLQCuNv5jeyUqxl7LXg4BDa4JGQl3oNuakcntEc
-        R52lBOdYAWjrnNBotQwWypwTzjPladSDXCsPqk53kyoMHhZC0gBwMD4TeYpgSu/ilEYdCM/eMo6/
-        kQkPpQsemwY7R2gcD0xWEOCBNdiN1aFKmWIltPGlrnLyVRSWhWKRT0p4gdsDnO/tyFwKTLmhvecl
-        kDttjW541874gyFXbRvCGvj+m5ZVcHZ4C7+9ojxVeQFt/DfjWRzFcXzlZNixxCwyD7YpQErH8VtS
-        mZ3FGyMywQPzpBS50SIYZjWKf9YrIqV9zFM0rJuFHVjADmSGWYY1MXvsRFto+pBgOuj1MG6/k/ab
-        nDfTlG67gKdmU59xvx32Hy+qHAu6U5WUA4AppX1d0lp521GXZqe1nVDC7TOUs0Nto36c14bW6AnX
-        ba3d6kKOoe0lasrrX1CHnc6mqyYg7avSw+OklTb1mIsc8BazjncRMsvBMyHdYAAoZ3yPQj1zk0kz
-        cD2Y/bYo495jgpN59mBVLnSPxaNBFa6T/lsCTYWEKvoo/4nfAzzMH2ZuLOSCX1amd7MQBulfbud2
-        1BlTB/aAb0nmBdjQshx2rJLNg0Dd0eEwZ9jXAqyxon4VgipGp9Ert1ln+wwFAAA=
+        H4sIAAAAAAAA/3VUy27bMBC8+ysIor0pgeS3eyvc1uihQNIWzcEyBIZaW0wpkiWpNA/437vUw5Lh
+        5iJROzvD1e6QryNCqMjpB0J5wTwvjbz6zDe/zJfbSSG/y5ipT5u1Lm43d3cvD39eKhoFhr5/AO47
+        1jXXyAMvtGpgboF5CKrJYjVeLJfz6awGSp2DDLSD8VfzK1kp1jIKLTg4hLb4Schr/Qy1qRyeMBxH
+        XaQE59gBMNYlYdBqGSKUOSecZ8rTqAe5Vh5UXe42VSgeHoSkAeBgfCbyFMGUruOURh0IT94yjr+R
+        CQ+lCxnbBjspNImPTFYQ4EE0xI3VoUuZYiW0+lJXOfkmDpaFZpGvSniBy0c47duRuRRYckP7yEsg
+        a22NbniXyfiDoVZtG8JP4MUPLauQ7HAXfn1Bua/yA7T678azOIrj+CLJsOcSq8g82KYBKR3H70ll
+        9hZ3jMgEP5gnpciNFiEwq1H8s94RKe01j9Gwbxb2YAEnkBlmGfbEFDiJttH0JsFyMOtm3L4n7Ts5
+        LaYp3XWCx2ZRf+N6N5w/blQ5FnynKikHAFNK+7qltfN2o67Mzmt7oYQrMrSzQ2+jf5zXhtboEZ+7
+        2rvVmR3D2Ev0lNe/oZadJtNVI0j7rvTwOEla1GMtcsCbzFvTn0tmOXgmpBscAMoZL9CoJ24ymS+i
+        MzD7a9HGg20Xi9Upg1W50D0WjwZduCz6fwU0HRLq0Kss4zf1e4CH84eVGwu54Oed6dMshIP0Vtpp
+        HHXF1IF9xLsk8wJsGFkOe1bJ5kKg7tnhYc5wrgewxor6VgiuGB1H/wA1ij4EDAUAAA==
     headers:
       access-control-expose-headers:
       - X-Request-ID
@@ -337,7 +322,7 @@ interactions:
       openai-organization:
       - DUMMY
       openai-processing-ms:
-      - '1951'
+      - '3023'
       openai-project:
       - DUMMY
       openai-version:
@@ -361,9 +346,9 @@ interactions:
       x-ratelimit-remaining-tokens:
       - DUMMY
       x-ratelimit-reset-requests:
-      - 12ms
+      - 6ms
       x-ratelimit-reset-tokens:
-      - 168ms
+      - 30ms
       x-request-id:
       - DUMMY
     status:

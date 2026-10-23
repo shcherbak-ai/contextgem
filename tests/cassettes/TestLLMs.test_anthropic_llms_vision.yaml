@@ -3,48 +3,48 @@ interactions:
     body: '{"model": "claude-haiku-5-5", "messages": [{"role": "user", "content":
       [{"type": "text", "text": "<introduction>\nBelow you will find a list of concepts.\n</introduction>\n\n<guidance_on_task_structure>\nAll
       structured information in these instructions is provided using semantic XML
-      tags. Field names correspond directly to tag names (e.g., concept_name, paragraph_text,
-      sentence_text, additional_context, etc.).\n</guidance_on_task_structure>\n\n<private_reasoning>\nUse
-      private deliberation to plan, evaluate evidence, and verify decisions. Do not
-      reveal any intermediate analysis, notes, or steps. Only output the JSON according
-      to the format specified within <answer_format></answer_format> tags.\n\nFollow
-      this internal three-stage process:\n\n1. Plan\n    - Internally restate each
-      concept in one sentence.\n    - List 3-5 concrete lexical/semantic cues for
-      relevance aligned with the concept description (include indicators of definition,
-      obligation, permission, exception, conditionals, and negations).\n    - If a
-      concept specifies a structure, rating scale, or available labels, align inclusion/exclusion
-      criteria with those constraints.\n    - For each concept, plan how to synthesize
-      the output value from the available evidence even when no literal span is present.\n\n2.
-      Evidence triage\n    - Evaluate salient visual regions and any readable text;
-      derive candidate extractions/values for the concepts (explicit or inferred from
-      context).\n    - Collect minimal sufficient evidence privately and note negated,
-      hypothetical, or conditional forms.\n    - Prefer precision over recall; include
-      only high-confidence items and omit weak or ambiguous ones.\n\n3. Consistency
-      pass\n    - Ensure all extracted items strictly match required types and any
-      specified structure, rating scales, or label constraints.\n    - Ensure justifications
-      align with the item''s evidence and stance, and comply with length and language
-      constraints.\n\nNever disclose any plan, evidence, or internal notes - only
-      the JSON array defined within <answer_format></answer_format> tags.\n</private_reasoning>\n\n<task_description>\nYour
-      task is to:\n1. Examine the attached image(s).\n2. Identify whether each concept
-      in the concepts list is addressed within the image(s).\n    - Each concept is
-      identified by a concept ID (for example, \"C0\", \"C1\", etc.) specified within
-      <concept_id></concept_id> tags.\n    - Each concept is described by a concept
-      name specified within <concept_name></concept_name> tags and a concept description
-      specified within <concept_description></concept_description> tags.\n3. For each
-      concept that appears, extract zero or more items relevant to that concept. The
-      item format and structure are specified for each concept.\n    - Treat negations,
-      exceptions, and conditionals carefully: relevance may involve permissions, prohibitions,
-      requirements, exceptions, thresholds, or ranges; reflect the stance  in the
-      justification.\n    - Prefer minimal sufficient evidence and value derivation:\n    -
-      Favor precision over recall; when uncertain, avoid speculative extractions or
-      derivations.\n4. Produce a JSON array containing your extracted data, in the
-      provided format.\n    - Internally verify before finalizing:\n        -- Each
-      provided concept appears once, in order, with the correct \"concept_id\".\n        --
-      The top-level structure matches the format specified within <answer_format></answer_format>
-      tags.\n        -- No structural IDs (concept/paragraph IDs) appear inside justifications.\n        --
-      Justifications meet length and language constraints.\n        -- Item values
-      strictly satisfy type and any specified structure/scale/labels constraints.\n        --
-      The structure exactly matches the format specified within <answer_format></answer_format>
+      tags. Field names correspond directly to tag names (e.g., concept_name, additional_context,
+      etc.).\n</guidance_on_task_structure>\n\n<private_reasoning>\nUse private deliberation
+      to plan, evaluate evidence, and verify decisions. Do not reveal any intermediate
+      analysis, notes, or steps. Only output the JSON according to the format specified
+      within <answer_format></answer_format> tags.\n\nFollow this internal three-stage
+      process:\n\n1. Plan\n    - Internally restate each concept in one sentence.\n    -
+      List 3-5 concrete lexical/semantic cues for relevance aligned with the concept
+      description (include indicators of definition, obligation, permission, exception,
+      conditionals, and negations).\n    - If a concept specifies a structure, rating
+      scale, or available labels, align inclusion/exclusion criteria with those constraints.\n    -
+      For each concept, plan how to synthesize the output value from the available
+      evidence even when no literal span is present.\n\n2. Evidence triage\n    -
+      Evaluate salient visual regions and any readable text; derive candidate extractions/values
+      for the concepts (explicit or inferred from context).\n    - Collect minimal
+      sufficient evidence privately and note negated, hypothetical, or conditional
+      forms.\n    - Prefer precision over recall; include only high-confidence items
+      and omit weak or ambiguous ones.\n\n3. Consistency pass\n    - Ensure all extracted
+      items strictly match required types and any specified structure, rating scales,
+      or label constraints.\n    - Ensure justifications align with the item''s evidence
+      and stance, and comply with length and language constraints.\n\nNever disclose
+      any plan, evidence, or internal notes - only the JSON array defined within <answer_format></answer_format>
+      tags.\n</private_reasoning>\n\n<task_description>\nYour task is to:\n1. Examine
+      the attached image(s).\n2. Identify whether each concept in the concepts list
+      is addressed within the image(s).\n    - Each concept is identified by a concept
+      ID (for example, \"C0\", \"C1\", etc.) specified within <concept_id></concept_id>
+      tags.\n    - Each concept is described by a concept name specified within <concept_name></concept_name>
+      tags and a concept description specified within <concept_description></concept_description>
+      tags.\n3. For each concept that appears, extract zero or more items relevant
+      to that concept. The item format and structure are specified for each concept.\n    -
+      Treat negations, exceptions, and conditionals carefully: relevance may involve
+      permissions, prohibitions, requirements, exceptions, thresholds, or ranges;
+      reflect the stance  in the justification.\n    - Prefer minimal sufficient evidence
+      and value derivation:\n    - Favor precision over recall; when uncertain, avoid
+      speculative extractions or derivations.\n4. Produce a JSON array containing
+      your extracted data, in the provided format.\n    - Internally verify before
+      finalizing:\n        -- Each provided concept appears once, in order, with the
+      correct \"concept_id\".\n        -- The top-level structure matches the format
+      specified within <answer_format></answer_format> tags.\n        -- No structural
+      IDs (concept/paragraph IDs) appear inside justifications.\n        -- Justifications
+      meet length and language constraints.\n        -- Item values strictly satisfy
+      type and any specified structure/scale/labels constraints.\n        -- The structure
+      exactly matches the format specified within <answer_format></answer_format>
       tags (no extra keys or commentary).\n</task_description>\n\n<concept_extraction_rules>\nIf
       a concept is not addressed in the image(s), you must still include an entry
       in the final JSON output but with an empty \"extracted_items\" list. However,
@@ -239,13 +239,13 @@ interactions:
       connection:
       - keep-alive
       content-length:
-      - '533434'
+      - '533403'
       content-type:
       - application/json
       host:
       - DUMMY
       user-agent:
-      - litellm/1.105.1
+      - litellm/1.105.2
       x-api-key:
       - DUMMY
     method: POST
@@ -253,14 +253,14 @@ interactions:
   response:
     body:
       string: !!binary |
-        H4sIAAAAAAAA/3VS0WrcMBD8FaM+5MVXzkkuJX5MXtpAAoFSCnEQirSxtidLjrS63nHcv3fl3pG7
-        lL7YZmZ21jPsVgzBgBOt0E5lAzOrcJlni9lC1AIN40Pq5bxpbvvLsL5ZPt6s1V2++nF//XPz9Y01
-        tBmhqCAl1QMDMbgCqJQwkfLEkA6egL/ap+1BT7AuzPRqxdO2KyINI0k0nWg7cTvvRN0J5qPSBEYi
-        wZC64tGJlXIZJtmn5vziclL+yonwFbUiDH7ivluo0K8CaqgsKAOxgvXoUCO5TcU/R5Cqs297xUMe
-        XiC21eR4Vle/LWpbGYygixwNJ2B/HqEjXz9Nfe7E7nn3zI+/YRV6iKL12blaJAqjjKBS8BwVvJGU
-        oxd7IsFbBk5+ojbAFi4dsDxV224F+jGTpLAEz+T11XnD+5S2IDUvKMHlqWR+4Jk2/+MOs2UDjBYG
-        iMrJxfCv/p1t7Ed2V4uQ6Rj6cvEBes/Fd2DRL9H3JwYJ4opblYSlPlHux6hoyin6V4ilJ9lDYKp3
-        4UW5UuIIYI61bGNQ9T7wOeh9hbs/UgEtnucCAAA=
+        H4sIAAAAAAAA/3VSwVLbMBD9Fc/2wMXpJIW01NecOjCcOIEZjZAWextZMtIqkGby712ZZCB0erE9
+        77196/dmdzAEiw4aME5ni7Ne0zrPlrMl1EBW8CF1ar5YrLqrMVyvrjp9ae/oz/PdNm5eRMPbEYsK
+        U9IdChCDK4BOiRJrzwKZ4Bnlq7nfHfWMr4WZXg3c79oiMjiyIttC08Jq3kLdgvBRG0ariHFIbfFo
+        YaNdxkn2ZfHt/GJS/s6J6YmMZgp+4m57rMhvAhmsetQWY4WvoyND7LaVk99LFYvm7NdBdJOHR4xN
+        NZme1dVLT6avLEU0ZYKshJAV+DZ2sP7awv5h/yCPt6CaPEZofHauhsRhVBF1Cl5ioreKc/RwIBI+
+        Z5TUJ2qLYuHSEctTrc0OyI+ZFYc1eiF/fp9fyj5telRGFpTQ6lQyP/JC2/9xx9myAcceB4zaqeXw
+        r/6dXfSf2X0NIfNH6MfFJ+g9l9xAT35NvjsxSBg3UqdiKvVBuR2roy1n6J8wlp5Uh0GozoVH7UqJ
+        I6L9qBUbS7rzQU7BHCrc/wUHff1s4wIAAA==
     headers:
       anthropic-organization-id:
       - DUMMY
@@ -269,25 +269,25 @@ interactions:
       anthropic-ratelimit-input-tokens-remaining:
       - DUMMY
       anthropic-ratelimit-input-tokens-reset:
-      - '2026-10-15T22:27:24Z'
+      - '2026-10-23T20:47:25Z'
       anthropic-ratelimit-output-tokens-limit:
       - DUMMY
       anthropic-ratelimit-output-tokens-remaining:
       - DUMMY
       anthropic-ratelimit-output-tokens-reset:
-      - '2026-10-15T22:27:24Z'
+      - '2026-10-23T20:47:25Z'
       anthropic-ratelimit-requests-limit:
       - DUMMY
       anthropic-ratelimit-requests-remaining:
       - DUMMY
       anthropic-ratelimit-requests-reset:
-      - '2026-10-15T22:27:22Z'
+      - '2026-10-23T20:47:23Z'
       anthropic-ratelimit-tokens-limit:
       - DUMMY
       anthropic-ratelimit-tokens-remaining:
       - DUMMY
       anthropic-ratelimit-tokens-reset:
-      - '2026-10-15T22:27:24Z'
+      - '2026-10-23T20:47:25Z'
       anthropic-workspace-id:
       - DUMMY
       cf-cache-status:
@@ -308,6 +308,8 @@ interactions:
       - DUMMY
       server:
       - cloudflare
+      server-timing:
+      - x-originResponse;dur=2260
       strict-transport-security:
       - max-age=31536000; includeSubDomains; preload
       traceresponse:
@@ -325,45 +327,45 @@ interactions:
     body: '{"model": "claude-haiku-5-5", "messages": [{"role": "user", "content":
       [{"type": "text", "text": "<introduction>\nBelow you will find a list of concepts.\n</introduction>\n\n<guidance_on_task_structure>\nAll
       structured information in these instructions is provided using semantic XML
-      tags. Field names correspond directly to tag names (e.g., concept_name, paragraph_text,
-      sentence_text, additional_context, etc.).\n</guidance_on_task_structure>\n\n<private_reasoning>\nUse
-      private deliberation to plan, evaluate evidence, and verify decisions. Do not
-      reveal any intermediate analysis, notes, or steps. Only output the JSON according
-      to the format specified within <answer_format></answer_format> tags.\n\nFollow
-      this internal three-stage process:\n\n1. Plan\n    - Internally restate each
-      concept in one sentence.\n    - List 3-5 concrete lexical/semantic cues for
-      relevance aligned with the concept description (include indicators of definition,
-      obligation, permission, exception, conditionals, and negations).\n    - If a
-      concept specifies a structure, rating scale, or available labels, align inclusion/exclusion
-      criteria with those constraints.\n    - For each concept, plan how to synthesize
-      the output value from the available evidence even when no literal span is present.\n\n2.
-      Evidence triage\n    - Evaluate salient visual regions and any readable text;
-      derive candidate extractions/values for the concepts (explicit or inferred from
-      context).\n    - Collect minimal sufficient evidence privately and note negated,
-      hypothetical, or conditional forms.\n    - Prefer precision over recall; include
-      only high-confidence items and omit weak or ambiguous ones.\n\n3. Consistency
-      pass\n    - Ensure all extracted items strictly match required types and any
-      specified structure, rating scales, or label constraints.\n\nNever disclose
-      any plan, evidence, or internal notes - only the JSON array defined within <answer_format></answer_format>
-      tags.\n</private_reasoning>\n\n<task_description>\nYour task is to:\n1. Examine
-      the attached image(s).\n2. Identify whether each concept in the concepts list
-      is addressed within the image(s).\n    - Each concept is identified by a concept
-      ID (for example, \"C0\", \"C1\", etc.) specified within <concept_id></concept_id>
-      tags.\n    - Each concept is described by a concept name specified within <concept_name></concept_name>
-      tags and a concept description specified within <concept_description></concept_description>
-      tags.\n3. For each concept that appears, extract zero or more items relevant
-      to that concept. The item format and structure are specified for each concept.\n    -
-      Treat negations, exceptions, and conditionals carefully: relevance may involve
-      permissions, prohibitions, requirements, exceptions, thresholds, or ranges;
-      reflect the stance .\n    - Prefer minimal sufficient evidence and value derivation:\n    -
-      Favor precision over recall; when uncertain, avoid speculative extractions or
-      derivations.\n4. Produce a JSON array containing your extracted data, in the
-      provided format.\n    - Internally verify before finalizing:\n        -- Each
-      provided concept appears once, in order, with the correct \"concept_id\".\n        --
-      The top-level structure matches the format specified within <answer_format></answer_format>
-      tags.\n        -- Item values strictly satisfy type and any specified structure/scale/labels
-      constraints.\n        -- The structure exactly matches the format specified
-      within <answer_format></answer_format> tags (no extra keys or commentary).\n</task_description>\n\n<concept_extraction_rules>\nIf
+      tags. Field names correspond directly to tag names (e.g., concept_name, additional_context,
+      etc.).\n</guidance_on_task_structure>\n\n<private_reasoning>\nUse private deliberation
+      to plan, evaluate evidence, and verify decisions. Do not reveal any intermediate
+      analysis, notes, or steps. Only output the JSON according to the format specified
+      within <answer_format></answer_format> tags.\n\nFollow this internal three-stage
+      process:\n\n1. Plan\n    - Internally restate each concept in one sentence.\n    -
+      List 3-5 concrete lexical/semantic cues for relevance aligned with the concept
+      description (include indicators of definition, obligation, permission, exception,
+      conditionals, and negations).\n    - If a concept specifies a structure, rating
+      scale, or available labels, align inclusion/exclusion criteria with those constraints.\n    -
+      For each concept, plan how to synthesize the output value from the available
+      evidence even when no literal span is present.\n\n2. Evidence triage\n    -
+      Evaluate salient visual regions and any readable text; derive candidate extractions/values
+      for the concepts (explicit or inferred from context).\n    - Collect minimal
+      sufficient evidence privately and note negated, hypothetical, or conditional
+      forms.\n    - Prefer precision over recall; include only high-confidence items
+      and omit weak or ambiguous ones.\n\n3. Consistency pass\n    - Ensure all extracted
+      items strictly match required types and any specified structure, rating scales,
+      or label constraints.\n\nNever disclose any plan, evidence, or internal notes
+      - only the JSON array defined within <answer_format></answer_format> tags.\n</private_reasoning>\n\n<task_description>\nYour
+      task is to:\n1. Examine the attached image(s).\n2. Identify whether each concept
+      in the concepts list is addressed within the image(s).\n    - Each concept is
+      identified by a concept ID (for example, \"C0\", \"C1\", etc.) specified within
+      <concept_id></concept_id> tags.\n    - Each concept is described by a concept
+      name specified within <concept_name></concept_name> tags and a concept description
+      specified within <concept_description></concept_description> tags.\n3. For each
+      concept that appears, extract zero or more items relevant to that concept. The
+      item format and structure are specified for each concept.\n    - Treat negations,
+      exceptions, and conditionals carefully: relevance may involve permissions, prohibitions,
+      requirements, exceptions, thresholds, or ranges; reflect the stance .\n    -
+      Prefer minimal sufficient evidence and value derivation:\n    - Favor precision
+      over recall; when uncertain, avoid speculative extractions or derivations.\n4.
+      Produce a JSON array containing your extracted data, in the provided format.\n    -
+      Internally verify before finalizing:\n        -- Each provided concept appears
+      once, in order, with the correct \"concept_id\".\n        -- The top-level structure
+      matches the format specified within <answer_format></answer_format> tags.\n        --
+      Item values strictly satisfy type and any specified structure/scale/labels constraints.\n        --
+      The structure exactly matches the format specified within <answer_format></answer_format>
+      tags (no extra keys or commentary).\n</task_description>\n\n<concept_extraction_rules>\nIf
       a concept is not addressed in the image(s), you must still include an entry
       in the final JSON output but with an empty \"extracted_items\" list. However,
       for boolean concepts (with extracted item type \"bool\"), distinguish carefully:\n    -
@@ -546,13 +548,13 @@ interactions:
       connection:
       - keep-alive
       content-length:
-      - '532371'
+      - '532340'
       content-type:
       - application/json
       host:
       - DUMMY
       user-agent:
-      - litellm/1.105.1
+      - litellm/1.105.2
       x-api-key:
       - DUMMY
     method: POST
@@ -560,14 +562,14 @@ interactions:
   response:
     body:
       string: !!binary |
-        H4sIAAAAAAAA/41SwU7cMBD9lWrUY1ZKtCyC3ApIlVpxq9oDQZaxh8RaZxzscQVa7b8zTolggdJe
-        HPu9N2+UN7ODMVj00ILxOltcDdpt82qz2kAFzgo+pl7VTXPeH4X7y28pHv8YvxxfNl/N958nouGH
-        CYsKU9I9ChCDL4BOySXWxAKZQIxya692i57xvjDzp4WrXVdEBidWznbQdnBed1B1IHzUhtEqxzim
-        rnh0kDD+dgYV6RFn9VnUZB31ny4wuZ7m0rss3R0/iKCR5xSlYhZ/bupa3PfVe06/8Ob/TNYfmJzF
-        YIYc8R8WJ7PD9f5ajj8paUcYoaXsfQWJw6Qi6hRIMkKyinMkeCIS3mWUyA7UFsXCpwXL80zaHTia
-        MisOWyQhT9frI+mnzYDKSAN2gdShpF54oe3fuKW2dMBpwBGj9mozvtU/s83wmt1XEDK/hJp68wp7
-        /jHZoMHRVmZ94LCMgF3JD8rmWR1tWWK6xViCUj0GoXofbrQvKU6I9qVWbKzTPYXEzjxluH8E2WJt
-        qyEDAAA=
+        H4sIAAAAAAAA/41SXWvcMBD8K2Xpow/sHAetHy/3lpfSFkKIg1CkrS1OXjnSKiQ57r935cYkl/Tr
+        RZZmZmfx7B5gDBY9tGC8zhZXg3b7vNqsNlCBs4KPqVd105z3F1O42n/5/nUd7ne7Jm6/PWXR8OOE
+        RYUp6R4FiMEXQKfkEmtigUwgRrm114dFz/hQmPnTwvWhKyKDEytnO2g7OK87qDoQPmrDaJVjHFNX
+        PDpIGO+dQUV6xFm9jZqso/7DDpPraS69y9Ld8aMIGnlOUSpm8cemrsX9WP3O6RJv/89k/ReTbQxm
+        yBH/YfFpdrg53sjxKyXtCCO0lL2vIHGYVESdAklGSFZxjgTPRMK7jBLZidqiWPi0YHmeSXsAR1Nm
+        xWGPJOTn9Vkj/bQZUBlpwC6QOpXUCy+0/RO31JYOOA04YtRebcb3+he2Gd6yxwpC5tdQU2/eYC8/
+        Jhs0ONrLrE8clhGwK/lB2Tyroy1LTD8wlqBUj0Go3odb7UuKE6J9rRUb63RPIbEzzxkefwKK+Y4T
+        IQMAAA==
     headers:
       anthropic-organization-id:
       - DUMMY
@@ -576,25 +578,25 @@ interactions:
       anthropic-ratelimit-input-tokens-remaining:
       - DUMMY
       anthropic-ratelimit-input-tokens-reset:
-      - '2026-10-15T22:27:25Z'
+      - '2026-10-23T20:47:27Z'
       anthropic-ratelimit-output-tokens-limit:
       - DUMMY
       anthropic-ratelimit-output-tokens-remaining:
       - DUMMY
       anthropic-ratelimit-output-tokens-reset:
-      - '2026-10-15T22:27:25Z'
+      - '2026-10-23T20:47:27Z'
       anthropic-ratelimit-requests-limit:
       - DUMMY
       anthropic-ratelimit-requests-remaining:
       - DUMMY
       anthropic-ratelimit-requests-reset:
-      - '2026-10-15T22:27:24Z'
+      - '2026-10-23T20:47:26Z'
       anthropic-ratelimit-tokens-limit:
       - DUMMY
       anthropic-ratelimit-tokens-remaining:
       - DUMMY
       anthropic-ratelimit-tokens-reset:
-      - '2026-10-15T22:27:25Z'
+      - '2026-10-23T20:47:27Z'
       anthropic-workspace-id:
       - DUMMY
       cf-cache-status:
@@ -615,6 +617,8 @@ interactions:
       - DUMMY
       server:
       - cloudflare
+      server-timing:
+      - x-originResponse;dur=1455
       strict-transport-security:
       - max-age=31536000; includeSubDomains; preload
       traceresponse:
@@ -632,48 +636,48 @@ interactions:
     body: '{"model": "claude-sonnet-5-5", "messages": [{"role": "user", "content":
       [{"type": "text", "text": "<introduction>\nBelow you will find a list of concepts.\n</introduction>\n\n<guidance_on_task_structure>\nAll
       structured information in these instructions is provided using semantic XML
-      tags. Field names correspond directly to tag names (e.g., concept_name, paragraph_text,
-      sentence_text, additional_context, etc.).\n</guidance_on_task_structure>\n\n<private_reasoning>\nUse
-      private deliberation to plan, evaluate evidence, and verify decisions. Do not
-      reveal any intermediate analysis, notes, or steps. Only output the JSON according
-      to the format specified within <answer_format></answer_format> tags.\n\nFollow
-      this internal three-stage process:\n\n1. Plan\n    - Internally restate each
-      concept in one sentence.\n    - List 3-5 concrete lexical/semantic cues for
-      relevance aligned with the concept description (include indicators of definition,
-      obligation, permission, exception, conditionals, and negations).\n    - If a
-      concept specifies a structure, rating scale, or available labels, align inclusion/exclusion
-      criteria with those constraints.\n    - For each concept, plan how to synthesize
-      the output value from the available evidence even when no literal span is present.\n\n2.
-      Evidence triage\n    - Evaluate salient visual regions and any readable text;
-      derive candidate extractions/values for the concepts (explicit or inferred from
-      context).\n    - Collect minimal sufficient evidence privately and note negated,
-      hypothetical, or conditional forms.\n    - Prefer precision over recall; include
-      only high-confidence items and omit weak or ambiguous ones.\n\n3. Consistency
-      pass\n    - Ensure all extracted items strictly match required types and any
-      specified structure, rating scales, or label constraints.\n    - Ensure justifications
-      align with the item''s evidence and stance, and comply with length and language
-      constraints.\n\nNever disclose any plan, evidence, or internal notes - only
-      the JSON array defined within <answer_format></answer_format> tags.\n</private_reasoning>\n\n<task_description>\nYour
-      task is to:\n1. Examine the attached image(s).\n2. Identify whether each concept
-      in the concepts list is addressed within the image(s).\n    - Each concept is
-      identified by a concept ID (for example, \"C0\", \"C1\", etc.) specified within
-      <concept_id></concept_id> tags.\n    - Each concept is described by a concept
-      name specified within <concept_name></concept_name> tags and a concept description
-      specified within <concept_description></concept_description> tags.\n3. For each
-      concept that appears, extract zero or more items relevant to that concept. The
-      item format and structure are specified for each concept.\n    - Treat negations,
-      exceptions, and conditionals carefully: relevance may involve permissions, prohibitions,
-      requirements, exceptions, thresholds, or ranges; reflect the stance  in the
-      justification.\n    - Prefer minimal sufficient evidence and value derivation:\n    -
-      Favor precision over recall; when uncertain, avoid speculative extractions or
-      derivations.\n4. Produce a JSON array containing your extracted data, in the
-      provided format.\n    - Internally verify before finalizing:\n        -- Each
-      provided concept appears once, in order, with the correct \"concept_id\".\n        --
-      The top-level structure matches the format specified within <answer_format></answer_format>
-      tags.\n        -- No structural IDs (concept/paragraph IDs) appear inside justifications.\n        --
-      Justifications meet length and language constraints.\n        -- Item values
-      strictly satisfy type and any specified structure/scale/labels constraints.\n        --
-      The structure exactly matches the format specified within <answer_format></answer_format>
+      tags. Field names correspond directly to tag names (e.g., concept_name, additional_context,
+      etc.).\n</guidance_on_task_structure>\n\n<private_reasoning>\nUse private deliberation
+      to plan, evaluate evidence, and verify decisions. Do not reveal any intermediate
+      analysis, notes, or steps. Only output the JSON according to the format specified
+      within <answer_format></answer_format> tags.\n\nFollow this internal three-stage
+      process:\n\n1. Plan\n    - Internally restate each concept in one sentence.\n    -
+      List 3-5 concrete lexical/semantic cues for relevance aligned with the concept
+      description (include indicators of definition, obligation, permission, exception,
+      conditionals, and negations).\n    - If a concept specifies a structure, rating
+      scale, or available labels, align inclusion/exclusion criteria with those constraints.\n    -
+      For each concept, plan how to synthesize the output value from the available
+      evidence even when no literal span is present.\n\n2. Evidence triage\n    -
+      Evaluate salient visual regions and any readable text; derive candidate extractions/values
+      for the concepts (explicit or inferred from context).\n    - Collect minimal
+      sufficient evidence privately and note negated, hypothetical, or conditional
+      forms.\n    - Prefer precision over recall; include only high-confidence items
+      and omit weak or ambiguous ones.\n\n3. Consistency pass\n    - Ensure all extracted
+      items strictly match required types and any specified structure, rating scales,
+      or label constraints.\n    - Ensure justifications align with the item''s evidence
+      and stance, and comply with length and language constraints.\n\nNever disclose
+      any plan, evidence, or internal notes - only the JSON array defined within <answer_format></answer_format>
+      tags.\n</private_reasoning>\n\n<task_description>\nYour task is to:\n1. Examine
+      the attached image(s).\n2. Identify whether each concept in the concepts list
+      is addressed within the image(s).\n    - Each concept is identified by a concept
+      ID (for example, \"C0\", \"C1\", etc.) specified within <concept_id></concept_id>
+      tags.\n    - Each concept is described by a concept name specified within <concept_name></concept_name>
+      tags and a concept description specified within <concept_description></concept_description>
+      tags.\n3. For each concept that appears, extract zero or more items relevant
+      to that concept. The item format and structure are specified for each concept.\n    -
+      Treat negations, exceptions, and conditionals carefully: relevance may involve
+      permissions, prohibitions, requirements, exceptions, thresholds, or ranges;
+      reflect the stance  in the justification.\n    - Prefer minimal sufficient evidence
+      and value derivation:\n    - Favor precision over recall; when uncertain, avoid
+      speculative extractions or derivations.\n4. Produce a JSON array containing
+      your extracted data, in the provided format.\n    - Internally verify before
+      finalizing:\n        -- Each provided concept appears once, in order, with the
+      correct \"concept_id\".\n        -- The top-level structure matches the format
+      specified within <answer_format></answer_format> tags.\n        -- No structural
+      IDs (concept/paragraph IDs) appear inside justifications.\n        -- Justifications
+      meet length and language constraints.\n        -- Item values strictly satisfy
+      type and any specified structure/scale/labels constraints.\n        -- The structure
+      exactly matches the format specified within <answer_format></answer_format>
       tags (no extra keys or commentary).\n</task_description>\n\n<concept_extraction_rules>\nIf
       a concept is not addressed in the image(s), you must still include an entry
       in the final JSON output but with an empty \"extracted_items\" list. However,
@@ -871,13 +875,13 @@ interactions:
       connection:
       - keep-alive
       content-length:
-      - '533542'
+      - '533511'
       content-type:
       - application/json
       host:
       - DUMMY
       user-agent:
-      - litellm/1.105.1
+      - litellm/1.105.2
       x-api-key:
       - DUMMY
     method: POST
@@ -885,15 +889,15 @@ interactions:
   response:
     body:
       string: !!binary |
-        H4sIAAAAAAAA/3VTTW/bMAz9K4Kwo1M4RTN0vqaH3JtiwJJAoCXG1iJLrkWlKYL891FJg3xs00XS
-        e4+k9UjvZRcMOllJ7SAZHMXgPdJoMprIQlrDRBcbVY7H0+Yp7N7ef9X17HU2fpn9nH5OX1hDnz1m
-        FcYIDTIwBJcBiNFGAk8M6eAJ+VQt9mc94S4zx62Si6UXvPanLa9lDtLYk7JmKSu+T8ulLK4FHDqA
-        JjTKEnYxqxYX/i7fJWwLLmEWPz2XZfEvxe8Uya6tBrLBn4rPWxTWb4PVKGIbPqIAMQ8EToS1+HbM
-        JD5aq1vRAekWoyCOeE31nepBzGEnwBthbNQheRIwoKgDtaJ24DeFiOEYC92RtVEkr1vwDZqHpbz9
-        3MPlujodGVnJw+pkOViPg6x8cq6QkUKvBgRuMBuO3ihKg5dfRMT3hOz3jdogp3DxjKVjg6u9tL5P
-        pChs0DP54/vjhOsBv1ppLpBNU7eS8swzbf7HnWNzBexb7HAApybd3/oLO27v2UMhQ6JraFw+32GX
-        h/E4ttZvrG9uMkQcttxpRTb7J/MYGxhM/iP8GodslGowMNW4UIPLLvaI5lrLaYyFxgeeJf3l4eEP
-        jFmRLG8DAAA=
+        H4sIAAAAAAAA/3VTTW/bMAz9K4KQw4Ylhd0uQ+drgV22Q4f1tCQQVImxtcqiJ1FpiiD/fVQ+kI9t
+        vkh67/GRouiN7NGCl400XmcLk4QhAE2mk6kcS2eZ6FOrqrp+aL8OaPsv67vv928/W3h8xPU31tDb
+        AEUFKekWGIjoC6BTcol0IIYMBgLeNbPNUU+wLsxuaeRsHgR/m/1SvnkJMjCQcnYuGz4/VHM5Phdw
+        aNSGwCpH0Keimp34K79T2Er7DEX88b6qxv9S/MqJ3NIZTQ7DPvlTB8KFFToDInX4moQWT0jaC1yK
+        0c5JvHbOdAJ+Z+2TIA5IuS902VIXAYR3gW1KseLdqK6qSnwQo7vDyh7v2cRRJwIK0muBUViXDOZA
+        Qg+Dd2BvRKnkR34+ZHdciE+4L+FmLi+vsz0dF/stIwu5XeyfRHM5UTYhez+WiXBQETQPAD8IBKso
+        xyAPROJrAb/HhdoCW/h0xPJuAJqNdGHIpAhfIDD5+VN9y/m06UAZTlCaqi4l1ZFn2v6PO8aWDDB0
+        0EPUXk37v/Untu6u2e1YYqZzqL6trrDTxXhcOxdeXGgvHBLEFU+CIlf6J8uYWx1t+WPCEmJplGoB
+        mWo9PmtfujgA2HMt21in24A8a+bQw+0fbKHFtI8DAAA=
     headers:
       anthropic-organization-id:
       - DUMMY
@@ -902,25 +906,25 @@ interactions:
       anthropic-ratelimit-input-tokens-remaining:
       - DUMMY
       anthropic-ratelimit-input-tokens-reset:
-      - '2026-10-15T22:27:26Z'
+      - '2026-10-23T20:47:30Z'
       anthropic-ratelimit-output-tokens-limit:
       - DUMMY
       anthropic-ratelimit-output-tokens-remaining:
       - DUMMY
       anthropic-ratelimit-output-tokens-reset:
-      - '2026-10-15T22:27:27Z'
+      - '2026-10-23T20:47:30Z'
       anthropic-ratelimit-requests-limit:
       - DUMMY
       anthropic-ratelimit-requests-remaining:
       - DUMMY
       anthropic-ratelimit-requests-reset:
-      - '2026-10-15T22:27:26Z'
+      - '2026-10-23T20:47:28Z'
       anthropic-ratelimit-tokens-limit:
       - DUMMY
       anthropic-ratelimit-tokens-remaining:
       - DUMMY
       anthropic-ratelimit-tokens-reset:
-      - '2026-10-15T22:27:26Z'
+      - '2026-10-23T20:47:30Z'
       anthropic-workspace-id:
       - DUMMY
       cf-cache-status:
@@ -941,6 +945,8 @@ interactions:
       - DUMMY
       server:
       - cloudflare
+      server-timing:
+      - x-originResponse;dur=3212
       strict-transport-security:
       - max-age=31536000; includeSubDomains; preload
       traceresponse:
@@ -1062,7 +1068,7 @@ interactions:
       host:
       - DUMMY
       user-agent:
-      - litellm/1.105.1
+      - litellm/1.105.2
       x-api-key:
       - DUMMY
     method: POST
@@ -1070,12 +1076,12 @@ interactions:
   response:
     body:
       string: !!binary |
-        H4sIAAAAAAAA/3WRy07DMBBF/8XrVGpKAyJbkBBij3gIWcYeHFNnHOxxKar674xLoz5QV4nuOeNx
-        btaiDwa8aIX2KhuYpIAINGkmjaiEMwz6ZOW0rm/sPKz0HB5uvz9ns5en50dY3LFDPwMUC1JSFjiI
-        wZdApeQSKSSOdEACfmtf16NPsCpk+2jFPS6D0yA2b3+ycghRtJi9r0SiMMgIiq/GKqCRlCOKHUjw
-        lQF59tA2wEf4NGZ5e7V2LRwOmSSFBSDD5vrqgvcp3YHUvIBcQHmsTEfO2Jxj42zZAEMHPUTlZdP/
-        9/e07k7pphIh02F0eZLsP4tr7BwuHNqj+QRxyTVKcqU9Ueo3KpryJ/EDYqlJWgiMrA/vypcOBwBz
-        6PIxximLIZHTuwY3v+vqHtUnAgAA
+        H4sIAAAAAAAA/3WRXUvDMBSG/0uuN1gZVeyteCFeCQ4vREJs3rVh6UlNToYy9t89mSv7EK9a3uc5
+        OenbnRqChVeNar3JFvMUiMDzel6rmXJWwJA6vaiq++5pDDw8P7zk6nWF9RLIK3H4e0SxkJLpIEEM
+        vgQmJZfYEEvUBmLIW/O2m3zGVyGHR6MeaRtcC7V//5WNI0TVUPZ+phKHUUcYuZqoIKs5R1JHkPCZ
+        QTJ7blvIET5NWT5crdkpR2NmzWEDEljf3S5ln2l76FYWsAukL5XFxAXb/9g0WzZg7DEgGq/r4a9/
+        olV/TfczFTKfRzdXyemzpMbe0cZRdzGfELdSo2ZX2lOlfmuiLX+S1oilJt0hCOp8+DC+dDgC9tyV
+        Y6wzHYXErj02uP8Be+JSWScCAAA=
     headers:
       anthropic-organization-id:
       - DUMMY
@@ -1084,25 +1090,25 @@ interactions:
       anthropic-ratelimit-input-tokens-remaining:
       - DUMMY
       anthropic-ratelimit-input-tokens-reset:
-      - '2026-10-15T22:27:29Z'
+      - '2026-10-23T20:47:32Z'
       anthropic-ratelimit-output-tokens-limit:
       - DUMMY
       anthropic-ratelimit-output-tokens-remaining:
       - DUMMY
       anthropic-ratelimit-output-tokens-reset:
-      - '2026-10-15T22:27:28Z'
+      - '2026-10-23T20:47:32Z'
       anthropic-ratelimit-requests-limit:
       - DUMMY
       anthropic-ratelimit-requests-remaining:
       - DUMMY
       anthropic-ratelimit-requests-reset:
-      - '2026-10-15T22:27:28Z'
+      - '2026-10-23T20:47:31Z'
       anthropic-ratelimit-tokens-limit:
       - DUMMY
       anthropic-ratelimit-tokens-remaining:
       - DUMMY
       anthropic-ratelimit-tokens-reset:
-      - '2026-10-15T22:27:28Z'
+      - '2026-10-23T20:47:32Z'
       anthropic-workspace-id:
       - DUMMY
       cf-cache-status:
@@ -1123,6 +1129,8 @@ interactions:
       - DUMMY
       server:
       - cloudflare
+      server-timing:
+      - x-originResponse;dur=1882
       strict-transport-security:
       - max-age=31536000; includeSubDomains; preload
       traceresponse:
@@ -1246,7 +1254,7 @@ interactions:
       host:
       - DUMMY
       user-agent:
-      - litellm/1.105.1
+      - litellm/1.105.2
       x-api-key:
       - DUMMY
     method: POST
@@ -1254,12 +1262,12 @@ interactions:
   response:
     body:
       string: !!binary |
-        H4sIAAAAAAAA/3WRW0sDMRCF/0rJcyu7tRXcRxUFnwR9UiSkyTQbmp2syUQqpf/dSe3Si/Qp4Xxn
-        LjnZiC4Y8KIR2qtsYJICItBkPpmLsXCGQZesrOr63s7C2j2+LabLu4fZ7Hr5/nr7zB766aG4ICVl
-        gYUYfBFUSi6RQmJJByTgW/OxGfwE60J2RyOenLXeoR29eMWGnEY6XInt51+pcghRNJi9H4tEoZcR
-        FC/KhYBGUo4o9iDBVwbUcOI2wC18GrS8W7TZCId9JklhBcjwpqpqnqd0C1LzAHIB5amlGjhjc4kN
-        tWUC9C10EJWX8+6//0Dr9pxuxyJkOpbq6Zl0eBen2jpccYAnDRLEb6dBkivxifIbRkVTPhaXEEtO
-        0kJgZH1YKF9C7AHMsZfbGKcshkRO7yPc/gKJfmbDNgIAAA==
+        H4sIAAAAAAAA/3WRS2sDIRSF/0pwnZSZQLKYbaFdlEC2pRSxeutInKvRa2kS8t97TTPkUbpSznfu
+        w+NBDMGAF53QXhUDsxwQgWaL2UJMhTMMhmxl07aP9iXG+f5pu9+uXtf75S6kzcAe2kWoLshZWWAh
+        BV8FlbPLpJBY0gEJ+Na9HUY/wXclp6MTz85a79BO1l6xoeSJDg/i+P5bqhxCEh0W76ciU4gygeJF
+        uRDQSCoJxRlk2BZADTduA9zC51Erp0W7g3AYC0kKG0CGy6ZpeZ7SPUjNA8gFlLeWZuSMzX9srK0T
+        IPYwQFJeLoa//gtt+3t6nIpQ6Fpq53fS5V2cau9wwwHeNMiQvpwGSa7GJ+pvGJVM/Vj8hFRzkhYC
+        I+vDh/I1xAhgrr3cxjhlMWRy+hzh8Qd+j4DPNgIAAA==
     headers:
       anthropic-organization-id:
       - DUMMY
@@ -1268,25 +1276,25 @@ interactions:
       anthropic-ratelimit-input-tokens-remaining:
       - DUMMY
       anthropic-ratelimit-input-tokens-reset:
-      - '2026-10-15T22:27:30Z'
+      - '2026-10-23T20:47:34Z'
       anthropic-ratelimit-output-tokens-limit:
       - DUMMY
       anthropic-ratelimit-output-tokens-remaining:
       - DUMMY
       anthropic-ratelimit-output-tokens-reset:
-      - '2026-10-15T22:27:30Z'
+      - '2026-10-23T20:47:34Z'
       anthropic-ratelimit-requests-limit:
       - DUMMY
       anthropic-ratelimit-requests-remaining:
       - DUMMY
       anthropic-ratelimit-requests-reset:
-      - '2026-10-15T22:27:29Z'
+      - '2026-10-23T20:47:33Z'
       anthropic-ratelimit-tokens-limit:
       - DUMMY
       anthropic-ratelimit-tokens-remaining:
       - DUMMY
       anthropic-ratelimit-tokens-reset:
-      - '2026-10-15T22:27:30Z'
+      - '2026-10-23T20:47:34Z'
       anthropic-workspace-id:
       - DUMMY
       cf-cache-status:
@@ -1307,6 +1315,8 @@ interactions:
       - DUMMY
       server:
       - cloudflare
+      server-timing:
+      - x-originResponse;dur=1691
       strict-transport-security:
       - max-age=31536000; includeSubDomains; preload
       traceresponse:

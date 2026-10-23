@@ -94,11 +94,11 @@ interactions:
       across diverse document analysis tasks.\\n</conclusion>\"},{\"role\":\"user\",\"content\":\"<introduction>\\nBelow
       you will find a list of document paragraphs and a list of concepts.\\n</introduction>\\n\\n<guidance_on_task_structure>\\nAll
       structured information in these instructions is provided using semantic XML
-      tags. Field names correspond directly to tag names (e.g., concept_name, paragraph_text,
-      sentence_text, additional_context, etc.).\\n</guidance_on_task_structure>\\n\\n<private_reasoning>\\nUse
-      private deliberation to plan, evaluate evidence, and verify decisions. Do not
-      reveal any intermediate analysis, notes, or steps. Only output the JSON according
-      to the format specified within <answer_format></answer_format> tags.\\n\\nFollow
+      tags. Field names correspond directly to tag names (e.g., concept_name, additional_context,
+      etc.).\\n</guidance_on_task_structure>\\n\\n<private_reasoning>\\nUse private
+      deliberation to plan, evaluate evidence, and verify decisions. Do not reveal
+      any intermediate analysis, notes, or steps. Only output the JSON according to
+      the format specified within <answer_format></answer_format> tags.\\n\\nFollow
       this internal three-stage process:\\n\\n1. Plan\\n    - Internally restate each
       concept in one sentence.\\n    - List 3-5 concrete lexical/semantic cues for
       relevance aligned with the concept description (include indicators of definition,
@@ -118,9 +118,8 @@ interactions:
       disclose any plan, evidence, or internal notes - only the JSON array defined
       within <answer_format></answer_format> tags.\\n</private_reasoning>\\n\\n<task_description>\\nYour
       task is to:\\n1. Read through the document paragraphs provided.\\n    - Each
-      paragraph is identified by a paragraph ID (for example, \\\"P0\\\", \\\"P1\\\",
-      etc.) specified within <paragraph_id></paragraph_id> tags, followed by the full
-      text of the paragraph specified within <paragraph_text></paragraph_text> tags.\\n
+      paragraph is given with its full text within <paragraph></paragraph> tags, whose
+      id attribute holds its paragraph ID (for example, \\\"P0\\\", \\\"P1\\\", etc.).\\n
       \   - Note that paragraphs are listed in the same order they appear in the original
       document.\\n    - You may be working with document fragments rather than complete
       documents. Focus on extracting information from the available content without
@@ -266,222 +265,124 @@ interactions:
       \   <amount_of_extracted_items>This concept must have exactly one extracted
       item, never zero or multiple items.</amount_of_extracted_items>\\n\\n    <extracted_item_type>dict
       (must be exactly as specified)</extracted_item_type>\\n</concept>\\n\\n</concepts>\\n\\n<document_paragraphs>\\nDOCUMENT
-      PARAGRAPHS:\\n    <paragraph id=\\\"P0\\\">\\n        <paragraph_id>P0</paragraph_id>\\n
-      \       \\n        <paragraph_text>\\n        Non-Disclosure Agreement (NDA)\\n
-      \       </paragraph_text>\\n    </paragraph>\\n\\n    <paragraph id=\\\"P1\\\">\\n
-      \       <paragraph_id>P1</paragraph_id>\\n        \\n        <paragraph_text>\\n
-      \       This Non-Disclosure Agreement (the \\\"Agreement\\\") is made and entered
-      into as of July 16, 2024, by and between:\\n        </paragraph_text>\\n    </paragraph>\\n\\n
-      \   <paragraph id=\\\"P2\\\">\\n        <paragraph_id>P2</paragraph_id>\\n        \\n
-      \       <paragraph_text>\\n        Party A:\\n        </paragraph_text>\\n    </paragraph>\\n\\n
-      \   <paragraph id=\\\"P3\\\">\\n        <paragraph_id>P3</paragraph_id>\\n        \\n
-      \       <paragraph_text>\\n        _____\\n        </paragraph_text>\\n    </paragraph>\\n\\n
-      \   <paragraph id=\\\"P4\\\">\\n        <paragraph_id>P4</paragraph_id>\\n        \\n
-      \       <paragraph_text>\\n        _____\\n        </paragraph_text>\\n    </paragraph>\\n\\n
-      \   <paragraph id=\\\"P5\\\">\\n        <paragraph_id>P5</paragraph_id>\\n        \\n
-      \       <paragraph_text>\\n        _____\\n        </paragraph_text>\\n    </paragraph>\\n\\n
-      \   <paragraph id=\\\"P6\\\">\\n        <paragraph_id>P6</paragraph_id>\\n        \\n
-      \       <paragraph_text>\\n        Contact: _____\\n        </paragraph_text>\\n
-      \   </paragraph>\\n\\n    <paragraph id=\\\"P7\\\">\\n        <paragraph_id>P7</paragraph_id>\\n
-      \       \\n        <paragraph_text>\\n        Phone: _____\\n        </paragraph_text>\\n
-      \   </paragraph>\\n\\n    <paragraph id=\\\"P8\\\">\\n        <paragraph_id>P8</paragraph_id>\\n
-      \       \\n        <paragraph_text>\\n        Email: _____\\n        </paragraph_text>\\n
-      \   </paragraph>\\n\\n    <paragraph id=\\\"P9\\\">\\n        <paragraph_id>P9</paragraph_id>\\n
-      \       \\n        <paragraph_text>\\n        Party B:\\n        </paragraph_text>\\n
-      \   </paragraph>\\n\\n    <paragraph id=\\\"P10\\\">\\n        <paragraph_id>P10</paragraph_id>\\n
-      \       \\n        <paragraph_text>\\n        Example.Com LLC\\n        </paragraph_text>\\n
-      \   </paragraph>\\n\\n    <paragraph id=\\\"P11\\\">\\n        <paragraph_id>P11</paragraph_id>\\n
-      \       \\n        <paragraph_text>\\n        5678 Random Drive\\n        </paragraph_text>\\n
-      \   </paragraph>\\n\\n    <paragraph id=\\\"P12\\\">\\n        <paragraph_id>P12</paragraph_id>\\n
-      \       \\n        <paragraph_text>\\n        New York, NY 00000\\n        </paragraph_text>\\n
-      \   </paragraph>\\n\\n    <paragraph id=\\\"P13\\\">\\n        <paragraph_id>P13</paragraph_id>\\n
-      \       \\n        <paragraph_text>\\n        Contact: Jane Doe, Managing Partner\\n
-      \       </paragraph_text>\\n    </paragraph>\\n\\n    <paragraph id=\\\"P14\\\">\\n
-      \       <paragraph_id>P14</paragraph_id>\\n        \\n        <paragraph_text>\\n
-      \       Phone: (012) 345-6789\\n        </paragraph_text>\\n    </paragraph>\\n\\n
-      \   <paragraph id=\\\"P15\\\">\\n        <paragraph_id>P15</paragraph_id>\\n
-      \       \\n        <paragraph_text>\\n        Email: jane.doe@example.com\\n
-      \       </paragraph_text>\\n    </paragraph>\\n\\n    <paragraph id=\\\"P16\\\">\\n
-      \       <paragraph_id>P16</paragraph_id>\\n        \\n        <paragraph_text>\\n
-      \       1. Purpose:\\n        </paragraph_text>\\n    </paragraph>\\n\\n    <paragraph
-      id=\\\"P17\\\">\\n        <paragraph_id>P17</paragraph_id>\\n        \\n        <paragraph_text>\\n
-      \       The purpose of this Agreement is to protect the confidential information
-      that may be disclosed between the parties during discussions and engagements
-      regarding potential business collaborations and partnerships.\\n        </paragraph_text>\\n
-      \   </paragraph>\\n\\n    <paragraph id=\\\"P18\\\">\\n        <paragraph_id>P18</paragraph_id>\\n
-      \       \\n        <paragraph_text>\\n        2. Definition of Confidential
-      Information:\\n        </paragraph_text>\\n    </paragraph>\\n\\n    <paragraph
-      id=\\\"P19\\\">\\n        <paragraph_id>P19</paragraph_id>\\n        \\n        <paragraph_text>\\n
-      \       For purposes of this Agreement, \\\"Confidential Information\\\" means
-      any and all non-public information, conveyed in all forms, whether in oral,
-      written, electronic, or other form or media, whether or not marked, designated,
+      PARAGRAPHS:\\n<paragraph id=\\\"P0\\\">Non-Disclosure Agreement (NDA)</paragraph>\\n<paragraph
+      id=\\\"P1\\\">This Non-Disclosure Agreement (the \\\"Agreement\\\") is made
+      and entered into as of July 16, 2024, by and between:</paragraph>\\n<paragraph
+      id=\\\"P2\\\">Party A:</paragraph>\\n<paragraph id=\\\"P3\\\">_____</paragraph>\\n<paragraph
+      id=\\\"P4\\\">_____</paragraph>\\n<paragraph id=\\\"P5\\\">_____</paragraph>\\n<paragraph
+      id=\\\"P6\\\">Contact: _____</paragraph>\\n<paragraph id=\\\"P7\\\">Phone: _____</paragraph>\\n<paragraph
+      id=\\\"P8\\\">Email: _____</paragraph>\\n<paragraph id=\\\"P9\\\">Party B:</paragraph>\\n<paragraph
+      id=\\\"P10\\\">Example.Com LLC</paragraph>\\n<paragraph id=\\\"P11\\\">5678
+      Random Drive</paragraph>\\n<paragraph id=\\\"P12\\\">New York, NY 00000</paragraph>\\n<paragraph
+      id=\\\"P13\\\">Contact: Jane Doe, Managing Partner</paragraph>\\n<paragraph
+      id=\\\"P14\\\">Phone: (012) 345-6789</paragraph>\\n<paragraph id=\\\"P15\\\">Email:
+      jane.doe@example.com</paragraph>\\n<paragraph id=\\\"P16\\\">1. Purpose:</paragraph>\\n<paragraph
+      id=\\\"P17\\\">The purpose of this Agreement is to protect the confidential
+      information that may be disclosed between the parties during discussions and
+      engagements regarding potential business collaborations and partnerships.</paragraph>\\n<paragraph
+      id=\\\"P18\\\">2. Definition of Confidential Information:</paragraph>\\n<paragraph
+      id=\\\"P19\\\">For purposes of this Agreement, \\\"Confidential Information\\\"
+      means any and all non-public information, conveyed in all forms, whether in
+      oral, written, electronic, or other form or media, whether or not marked, designated,
       or otherwise identified as \\\"confidential,\\\" that has been or may be disclosed
       to, accessed by, or observed by Receiving Party, which (i) has actual or potential
       economic value by virtue of not being generally known to, and not being readily
       ascertainable by proper means by, other persons who can obtain economic value
       from its disclosure or use, or (ii) is subject to reasonable efforts by Disclosing
-      Party to maintain its secrecy and confidentiality.\\n        </paragraph_text>\\n
-      \   </paragraph>\\n\\n    <paragraph id=\\\"P20\\\">\\n        <paragraph_id>P20</paragraph_id>\\n
-      \       \\n        <paragraph_text>\\n        Confidential Information includes,
-      but is not limited to, the following categories: (1) business information (business
-      plans, strategies, and models), (2) technical information (technical specifications
-      and documentation, research and development activities), (3) customer and market
-      information (customer lists and contact information, sales histories and patterns),
-      (4) personnel and internal information (employee lists and contact information,
-      employment agreements and personnel files), (5) intellectual property (trade
-      secrets and know-how, patents and patent applications, copyrights and copyright
-      applications, trademarks and trademark applications), (6) strategic information
-      (merger and acquisition plans, competitive analyses and strategies). Software
-      code shall also be included into the confidential information.\\n        </paragraph_text>\\n
-      \   </paragraph>\\n\\n    <paragraph id=\\\"P21\\\">\\n        <paragraph_id>P21</paragraph_id>\\n
-      \       \\n        <paragraph_text>\\n        Confidential Information shall
-      not include information that: (a) is or becomes generally available to the public
-      other than as a result of disclosure by Receiving Party or its Representatives;
-      (b) was available to Receiving Party on a non-confidential basis prior to its
-      disclosure by Disclosing Party; (c) becomes available to Receiving Party on
-      a non-confidential basis from a person other than Disclosing Party who is not
-      otherwise bound by a confidentiality obligation to Disclosing Party; or (d)
-      was independently developed by Receiving Party without reference to or use of
-      any Confidential Information. The name of the dog of the Receiving Party is
-      Bob.\\n        </paragraph_text>\\n    </paragraph>\\n\\n    <paragraph id=\\\"P22\\\">\\n
-      \       <paragraph_id>P22</paragraph_id>\\n        \\n        <paragraph_text>\\n
-      \       The designation of information as Confidential Information shall not
-      be determinative of whether such information constitutes a trade secret under
-      applicable law. All Confidential Information shall remain the exclusive property
-      of Disclosing Party, and Receiving Party shall have no rights, by license or
-      otherwise, to use the Confidential Information except as expressly provided
-      herein.\\n        </paragraph_text>\\n    </paragraph>\\n\\n    <paragraph id=\\\"P23\\\">\\n
-      \       <paragraph_id>P23</paragraph_id>\\n        \\n        <paragraph_text>\\n
-      \       3. Obligations of Receiving Party:\\n        </paragraph_text>\\n    </paragraph>\\n\\n
-      \   <paragraph id=\\\"P24\\\">\\n        <paragraph_id>P24</paragraph_id>\\n
-      \       \\n        <paragraph_text>\\n        The party receiving Confidential
-      Information (\\\"Receiving Party\\\") shall:\\n        </paragraph_text>\\n
-      \   </paragraph>\\n\\n    <paragraph id=\\\"P25\\\">\\n        <paragraph_id>P25</paragraph_id>\\n
-      \       \\n        <paragraph_text>\\n        a. Maintain the confidentiality
-      of the Confidential Information and not disclose it to any third party without
-      the prior written consent of the Disclosing Party.\\n        </paragraph_text>\\n
-      \   </paragraph>\\n\\n    <paragraph id=\\\"P26\\\">\\n        <paragraph_id>P26</paragraph_id>\\n
-      \       \\n        <paragraph_text>\\n        b. Use the Confidential Information
-      solely for the purpose of evaluating or engaging in the potential business collaboration.\\n
-      \       </paragraph_text>\\n    </paragraph>\\n\\n    <paragraph id=\\\"P27\\\">\\n
-      \       <paragraph_id>P27</paragraph_id>\\n        \\n        <paragraph_text>\\n
-      \       c. Take all necessary precautions to protect the confidentiality of
-      the Confidential Information, which shall be no less than the precautions it
-      takes to protect its own confidential information.\\n        </paragraph_text>\\n
-      \   </paragraph>\\n\\n    <paragraph id=\\\"P28\\\">\\n        <paragraph_id>P28</paragraph_id>\\n
-      \       \\n        <paragraph_text>\\n        4. Exclusions from Confidential
-      Information:\\n        </paragraph_text>\\n    </paragraph>\\n\\n    <paragraph
-      id=\\\"P29\\\">\\n        <paragraph_id>P29</paragraph_id>\\n        \\n        <paragraph_text>\\n
-      \       Confidential Information does not include information that:\\n        </paragraph_text>\\n
-      \   </paragraph>\\n\\n    <paragraph id=\\\"P30\\\">\\n        <paragraph_id>P30</paragraph_id>\\n
-      \       \\n        <paragraph_text>\\n        a. Is or becomes publicly known
-      through no wrongful act of the Receiving Party.\\n        </paragraph_text>\\n
-      \   </paragraph>\\n\\n    <paragraph id=\\\"P31\\\">\\n        <paragraph_id>P31</paragraph_id>\\n
-      \       \\n        <paragraph_text>\\n        b. Is already known to the Receiving
-      Party at the time of disclosure.\\n        </paragraph_text>\\n    </paragraph>\\n\\n
-      \   <paragraph id=\\\"P32\\\">\\n        <paragraph_id>P32</paragraph_id>\\n
-      \       \\n        <paragraph_text>\\n        c. Is lawfully received from a
-      third party without breach of this Agreement.\\n        </paragraph_text>\\n
-      \   </paragraph>\\n\\n    <paragraph id=\\\"P33\\\">\\n        <paragraph_id>P33</paragraph_id>\\n
-      \       \\n        <paragraph_text>\\n        d. Is independently developed
-      by the Receiving Party without use of or reference to the Disclosing Party's
-      Confidential Information.\\n        </paragraph_text>\\n    </paragraph>\\n\\n
-      \   <paragraph id=\\\"P34\\\">\\n        <paragraph_id>P34</paragraph_id>\\n
-      \       \\n        <paragraph_text>\\n        6. Return of Materials:\\n        </paragraph_text>\\n
-      \   </paragraph>\\n\\n    <paragraph id=\\\"P35\\\">\\n        <paragraph_id>P35</paragraph_id>\\n
-      \       \\n        <paragraph_text>\\n        Upon termination of this Agreement
-      or upon request, the Receiving Party shall return all materials containing Confidential
-      Information to the Disclosing Party or destroy them, at the Disclosing Party's
-      discretion.\\n        </paragraph_text>\\n    </paragraph>\\n\\n    <paragraph
-      id=\\\"P36\\\">\\n        <paragraph_id>P36</paragraph_id>\\n        \\n        <paragraph_text>\\n
-      \       5. Liability:\\n        </paragraph_text>\\n    </paragraph>\\n\\n    <paragraph
-      id=\\\"P37\\\">\\n        <paragraph_id>P37</paragraph_id>\\n        \\n        <paragraph_text>\\n
-      \       a. Total Liability Cap:\\n        </paragraph_text>\\n    </paragraph>\\n\\n
-      \   <paragraph id=\\\"P38\\\">\\n        <paragraph_id>P38</paragraph_id>\\n
-      \       \\n        <paragraph_text>\\n        The total liability of either
-      party for any and all claims arising out of or related to this Agreement, whether
-      in contract, tort, or otherwise, shall not exceed the greater of (i) $100,000
-      or (ii) the total amount paid by the Receiving Party to the Disclosing Party
-      under any separate business agreement between the parties during the twelve
-      (12) months preceding the event giving rise to the claim. This limitation of
-      liability is cumulative and not per incident.\\n        </paragraph_text>\\n
-      \   </paragraph>\\n\\n    <paragraph id=\\\"P39\\\">\\n        <paragraph_id>P39</paragraph_id>\\n
-      \       \\n        <paragraph_text>\\n        b. Penalties for Breach:\\n        </paragraph_text>\\n
-      \   </paragraph>\\n\\n    <paragraph id=\\\"P40\\\">\\n        <paragraph_id>P40</paragraph_id>\\n
-      \       \\n        <paragraph_text>\\n        In the event of a breach of this
-      Agreement by the Receiving Party, the Disclosing Party shall be entitled to
-      seek injunctive relief in addition to any other remedy available at law or in
-      equity. The Receiving Party acknowledges that a breach of this Agreement may
-      cause irreparable harm to the Disclosing Party for which monetary damages would
-      be an inadequate remedy. In addition to injunctive relief, the Receiving Party
-      shall be liable for liquidated damages in the amount of $25,000 for each instance
-      of unauthorized disclosure or use of Confidential Information, which the parties
-      agree represents a reasonable estimate of the damages likely to be suffered
-      and not a penalty.\\n        </paragraph_text>\\n    </paragraph>\\n\\n    <paragraph
-      id=\\\"P41\\\">\\n        <paragraph_id>P41</paragraph_id>\\n        \\n        <paragraph_text>\\n
-      \       7. No License:\\n        </paragraph_text>\\n    </paragraph>\\n\\n
-      \   <paragraph id=\\\"P42\\\">\\n        <paragraph_id>P42</paragraph_id>\\n
-      \       \\n        <paragraph_text>\\n        Nothing in this Agreement shall
-      be construed as granting any rights to the Receiving Party, by license or otherwise,
-      to any of the Disclosing Party\u2019s Confidential Information, except as expressly
-      set forth in this Agreement.\\n        </paragraph_text>\\n    </paragraph>\\n\\n
-      \   <paragraph id=\\\"P43\\\">\\n        <paragraph_id>P43</paragraph_id>\\n
-      \       \\n        <paragraph_text>\\n        8. Governing Law and Disputes:\\n
-      \       </paragraph_text>\\n    </paragraph>\\n\\n    <paragraph id=\\\"P44\\\">\\n
-      \       <paragraph_id>P44</paragraph_id>\\n        \\n        <paragraph_text>\\n
-      \       This Agreement shall be governed by and construed in accordance with
-      the laws of the State of California, without regard to its conflict of law principles.\\n
-      \       </paragraph_text>\\n    </paragraph>\\n\\n    <paragraph id=\\\"P45\\\">\\n
-      \       <paragraph_id>P45</paragraph_id>\\n        \\n        <paragraph_text>\\n
-      \       All disputes shall be resolved by the courts of the State of California.
-      This Agreement shall remain in effect for a period of five (5) years from the
-      date of signing this agreement.\\n        </paragraph_text>\\n    </paragraph>\\n\\n
-      \   <paragraph id=\\\"P46\\\">\\n        <paragraph_id>P46</paragraph_id>\\n
-      \       \\n        <paragraph_text>\\n        9. Miscellaneous:\\n        </paragraph_text>\\n
-      \   </paragraph>\\n\\n    <paragraph id=\\\"P47\\\">\\n        <paragraph_id>P47</paragraph_id>\\n
-      \       \\n        <paragraph_text>\\n        a. This Agreement constitutes
+      Party to maintain its secrecy and confidentiality.</paragraph>\\n<paragraph
+      id=\\\"P20\\\">Confidential Information includes, but is not limited to, the
+      following categories: (1) business information (business plans, strategies,
+      and models), (2) technical information (technical specifications and documentation,
+      research and development activities), (3) customer and market information (customer
+      lists and contact information, sales histories and patterns), (4) personnel
+      and internal information (employee lists and contact information, employment
+      agreements and personnel files), (5) intellectual property (trade secrets and
+      know-how, patents and patent applications, copyrights and copyright applications,
+      trademarks and trademark applications), (6) strategic information (merger and
+      acquisition plans, competitive analyses and strategies). Software code shall
+      also be included into the confidential information.</paragraph>\\n<paragraph
+      id=\\\"P21\\\">Confidential Information shall not include information that:
+      (a) is or becomes generally available to the public other than as a result of
+      disclosure by Receiving Party or its Representatives; (b) was available to Receiving
+      Party on a non-confidential basis prior to its disclosure by Disclosing Party;
+      (c) becomes available to Receiving Party on a non-confidential basis from a
+      person other than Disclosing Party who is not otherwise bound by a confidentiality
+      obligation to Disclosing Party; or (d) was independently developed by Receiving
+      Party without reference to or use of any Confidential Information. The name
+      of the dog of the Receiving Party is Bob.</paragraph>\\n<paragraph id=\\\"P22\\\">The
+      designation of information as Confidential Information shall not be determinative
+      of whether such information constitutes a trade secret under applicable law.
+      All Confidential Information shall remain the exclusive property of Disclosing
+      Party, and Receiving Party shall have no rights, by license or otherwise, to
+      use the Confidential Information except as expressly provided herein.</paragraph>\\n<paragraph
+      id=\\\"P23\\\">3. Obligations of Receiving Party:</paragraph>\\n<paragraph id=\\\"P24\\\">The
+      party receiving Confidential Information (\\\"Receiving Party\\\") shall:</paragraph>\\n<paragraph
+      id=\\\"P25\\\">a. Maintain the confidentiality of the Confidential Information
+      and not disclose it to any third party without the prior written consent of
+      the Disclosing Party.</paragraph>\\n<paragraph id=\\\"P26\\\">b. Use the Confidential
+      Information solely for the purpose of evaluating or engaging in the potential
+      business collaboration.</paragraph>\\n<paragraph id=\\\"P27\\\">c. Take all
+      necessary precautions to protect the confidentiality of the Confidential Information,
+      which shall be no less than the precautions it takes to protect its own confidential
+      information.</paragraph>\\n<paragraph id=\\\"P28\\\">4. Exclusions from Confidential
+      Information:</paragraph>\\n<paragraph id=\\\"P29\\\">Confidential Information
+      does not include information that:</paragraph>\\n<paragraph id=\\\"P30\\\">a.
+      Is or becomes publicly known through no wrongful act of the Receiving Party.</paragraph>\\n<paragraph
+      id=\\\"P31\\\">b. Is already known to the Receiving Party at the time of disclosure.</paragraph>\\n<paragraph
+      id=\\\"P32\\\">c. Is lawfully received from a third party without breach of
+      this Agreement.</paragraph>\\n<paragraph id=\\\"P33\\\">d. Is independently
+      developed by the Receiving Party without use of or reference to the Disclosing
+      Party's Confidential Information.</paragraph>\\n<paragraph id=\\\"P34\\\">6.
+      Return of Materials:</paragraph>\\n<paragraph id=\\\"P35\\\">Upon termination
+      of this Agreement or upon request, the Receiving Party shall return all materials
+      containing Confidential Information to the Disclosing Party or destroy them,
+      at the Disclosing Party's discretion.</paragraph>\\n<paragraph id=\\\"P36\\\">5.
+      Liability:</paragraph>\\n<paragraph id=\\\"P37\\\">a. Total Liability Cap:</paragraph>\\n<paragraph
+      id=\\\"P38\\\">The total liability of either party for any and all claims arising
+      out of or related to this Agreement, whether in contract, tort, or otherwise,
+      shall not exceed the greater of (i) $100,000 or (ii) the total amount paid by
+      the Receiving Party to the Disclosing Party under any separate business agreement
+      between the parties during the twelve (12) months preceding the event giving
+      rise to the claim. This limitation of liability is cumulative and not per incident.</paragraph>\\n<paragraph
+      id=\\\"P39\\\">b. Penalties for Breach:</paragraph>\\n<paragraph id=\\\"P40\\\">In
+      the event of a breach of this Agreement by the Receiving Party, the Disclosing
+      Party shall be entitled to seek injunctive relief in addition to any other remedy
+      available at law or in equity. The Receiving Party acknowledges that a breach
+      of this Agreement may cause irreparable harm to the Disclosing Party for which
+      monetary damages would be an inadequate remedy. In addition to injunctive relief,
+      the Receiving Party shall be liable for liquidated damages in the amount of
+      $25,000 for each instance of unauthorized disclosure or use of Confidential
+      Information, which the parties agree represents a reasonable estimate of the
+      damages likely to be suffered and not a penalty.</paragraph>\\n<paragraph id=\\\"P41\\\">7.
+      No License:</paragraph>\\n<paragraph id=\\\"P42\\\">Nothing in this Agreement
+      shall be construed as granting any rights to the Receiving Party, by license
+      or otherwise, to any of the Disclosing Party\u2019s Confidential Information,
+      except as expressly set forth in this Agreement.</paragraph>\\n<paragraph id=\\\"P43\\\">8.
+      Governing Law and Disputes:</paragraph>\\n<paragraph id=\\\"P44\\\">This Agreement
+      shall be governed by and construed in accordance with the laws of the State
+      of California, without regard to its conflict of law principles.</paragraph>\\n<paragraph
+      id=\\\"P45\\\">All disputes shall be resolved by the courts of the State of
+      California. This Agreement shall remain in effect for a period of five (5) years
+      from the date of signing this agreement.</paragraph>\\n<paragraph id=\\\"P46\\\">9.
+      Miscellaneous:</paragraph>\\n<paragraph id=\\\"P47\\\">a. This Agreement constitutes
       the entire agreement between the parties with respect to the subject matter
       hereof and supersedes all prior or contemporaneous oral or written agreements
-      concerning such subject matter.\\n        </paragraph_text>\\n    </paragraph>\\n\\n
-      \   <paragraph id=\\\"P48\\\">\\n        <paragraph_id>P48</paragraph_id>\\n
-      \       \\n        <paragraph_text>\\n        b. Any amendments or modifications
-      to this Agreement must be made in writing and signed by both parties.\\n        </paragraph_text>\\n
-      \   </paragraph>\\n\\n    <paragraph id=\\\"P49\\\">\\n        <paragraph_id>P49</paragraph_id>\\n
-      \       \\n        <paragraph_text>\\n        c. If any provision of this Agreement
-      is found to be unenforceable, the remainder shall be enforced as fully as possible
-      and the unenforceable provision shall be deemed modified to the limited extent
-      required to permit its enforcement in a manner most closely representing the
-      intention of the parties.\\n        </paragraph_text>\\n    </paragraph>\\n\\n
-      \   <paragraph id=\\\"P50\\\">\\n        <paragraph_id>P50</paragraph_id>\\n
-      \       \\n        <paragraph_text>\\n        d. The Disclosing Party shall
-      be a good person to execute this contract.\\n        </paragraph_text>\\n    </paragraph>\\n\\n
-      \   <paragraph id=\\\"P51\\\">\\n        <paragraph_id>P51</paragraph_id>\\n
-      \       \\n        <paragraph_text>\\n        IN WITNESS WHEREOF, the parties
-      hereto have executed this Non-Disclosure Agreement as of the date first above
-      written.\\n        </paragraph_text>\\n    </paragraph>\\n\\n    <paragraph
-      id=\\\"P52\\\">\\n        <paragraph_id>P52</paragraph_id>\\n        \\n        <paragraph_text>\\n
-      \       _____\\n        </paragraph_text>\\n    </paragraph>\\n\\n    <paragraph
-      id=\\\"P53\\\">\\n        <paragraph_id>P53</paragraph_id>\\n        \\n        <paragraph_text>\\n
-      \       By: ___________________________\\n        </paragraph_text>\\n    </paragraph>\\n\\n
-      \   <paragraph id=\\\"P54\\\">\\n        <paragraph_id>P54</paragraph_id>\\n
-      \       \\n        <paragraph_text>\\n        Name: _____\\n        </paragraph_text>\\n
-      \   </paragraph>\\n\\n    <paragraph id=\\\"P55\\\">\\n        <paragraph_id>P55</paragraph_id>\\n
-      \       \\n        <paragraph_text>\\n        Title: _____\\n        </paragraph_text>\\n
-      \   </paragraph>\\n\\n    <paragraph id=\\\"P56\\\">\\n        <paragraph_id>P56</paragraph_id>\\n
-      \       \\n        <paragraph_text>\\n        Date: ___________________________\\n
-      \       </paragraph_text>\\n    </paragraph>\\n\\n    <paragraph id=\\\"P57\\\">\\n
-      \       <paragraph_id>P57</paragraph_id>\\n        \\n        <paragraph_text>\\n
-      \       Example.Com LLC\\n        </paragraph_text>\\n    </paragraph>\\n\\n
-      \   <paragraph id=\\\"P58\\\">\\n        <paragraph_id>P58</paragraph_id>\\n
-      \       \\n        <paragraph_text>\\n        By: ___________________________\\n
-      \       </paragraph_text>\\n    </paragraph>\\n\\n    <paragraph id=\\\"P59\\\">\\n
-      \       <paragraph_id>P59</paragraph_id>\\n        \\n        <paragraph_text>\\n
-      \       Name: Jane Doe\\n        </paragraph_text>\\n    </paragraph>\\n\\n
-      \   <paragraph id=\\\"P60\\\">\\n        <paragraph_id>P60</paragraph_id>\\n
-      \       \\n        <paragraph_text>\\n        Title: Managing Partner\\n        </paragraph_text>\\n
-      \   </paragraph>\\n\\n    <paragraph id=\\\"P61\\\">\\n        <paragraph_id>P61</paragraph_id>\\n
-      \       \\n        <paragraph_text>\\n        Date: ___________________________\\n
-      \       </paragraph_text>\\n    </paragraph>\\n\\n</document_paragraphs>\"}],\"model\":\"gpt-6-luna\"}"
+      concerning such subject matter.</paragraph>\\n<paragraph id=\\\"P48\\\">b. Any
+      amendments or modifications to this Agreement must be made in writing and signed
+      by both parties.</paragraph>\\n<paragraph id=\\\"P49\\\">c. If any provision
+      of this Agreement is found to be unenforceable, the remainder shall be enforced
+      as fully as possible and the unenforceable provision shall be deemed modified
+      to the limited extent required to permit its enforcement in a manner most closely
+      representing the intention of the parties.</paragraph>\\n<paragraph id=\\\"P50\\\">d.
+      The Disclosing Party shall be a good person to execute this contract.</paragraph>\\n<paragraph
+      id=\\\"P51\\\">IN WITNESS WHEREOF, the parties hereto have executed this Non-Disclosure
+      Agreement as of the date first above written.</paragraph>\\n<paragraph id=\\\"P52\\\">_____</paragraph>\\n<paragraph
+      id=\\\"P53\\\">By: ___________________________</paragraph>\\n<paragraph id=\\\"P54\\\">Name:
+      _____</paragraph>\\n<paragraph id=\\\"P55\\\">Title: _____</paragraph>\\n<paragraph
+      id=\\\"P56\\\">Date: ___________________________</paragraph>\\n<paragraph id=\\\"P57\\\">Example.Com
+      LLC</paragraph>\\n<paragraph id=\\\"P58\\\">By: ___________________________</paragraph>\\n<paragraph
+      id=\\\"P59\\\">Name: Jane Doe</paragraph>\\n<paragraph id=\\\"P60\\\">Title:
+      Managing Partner</paragraph>\\n<paragraph id=\\\"P61\\\">Date: ___________________________</paragraph>\\n</document_paragraphs>\"}],\"model\":\"gpt-6-luna\"}"
     headers:
       accept:
       - application/json
@@ -492,9 +393,11 @@ interactions:
       connection:
       - keep-alive
       content-length:
-      - '38976'
+      - '31004'
       content-type:
       - application/json
+      cookie:
+      - DUMMY
       host:
       - DUMMY
       user-agent:
@@ -524,17 +427,17 @@ interactions:
   response:
     body:
       string: !!binary |
-        H4sIAAAAAAAA/3VUwU7jMBC99yssn1PUpmrD7g0tsHsChNDugVSRa09Ss64d2RMoi/rvO05Ikwq4
-        WPF7M88z4+e8TRjjWvHvjMutQLmrzfRKXl89rH559fNu+c9mL7f73/fXJfy5v0pvL3gSM9zmCST2
-        WWfSUR6gdrajpQeBEFXn2bc0O19k6bIldk6BiWlVjdPV1DRWvGdsnZYQiHqkLWNv7Rprswr2BM+S
-        HtlBCKICwvogAr0zEeEiBB1QWOTJQEpnEWxb7mNuSTwujOWRkFBjoVVOZM5/zHKe9CTs0QtJbRQa
-        YRdixGPHHRW6wGdhGoj0CI24ERswp3k9dXN5kfMxuB42h2Qs/tQE1KWWIk63q/JhC0w52eyoJ6YD
-        g31ttNRoXhnSCooJduPs9FIHaVxoPLCLygO08cIqFgADcw0y6r/UimAtjMZX5jZGV+1JgZXOM6ST
-        auFRQzg7Tqary0MJHmh8BQWIyot6S2P82G3O72YnqS00H3d/7P3QfbR7+l6P75DOa4KI3rGNMSNC
-        WOuwqzmevZ70U+z9Umqrw7YgSwbyJ3kgoKt5yx5oXbf+a04sxWtPjsYC3V9oZbPVctkJ8sHrAz1P
-        F+8sUi1mlJdl58knkoUCFNqEkYm5FHJLZhtEF6ssOSGLF09WHCJW6fnyGCEapd3AzSajKXws+rMC
-        uglpWw0qafql/kDI+Iao8tqD0vJ0MkOYh/jL+CrseB1txTyAf6b/QUHO8/HKFJSiMd2j5uE10IMs
-        6F4r8LXX7cuOrpgcJv8BIGKF99AEAAA=
+        H4sIAAAAAAAA/3VUXW/bIBR9z69APDtV3E352Fu3VJOmqV2lSZsWRxaBa4cOAwPcpary33vBdeyo
+        7Qsy99x7fO/hwNOEECoF/UQo37PAG6um1/zrLfu9Onyzt7/+rf98vxNNwy6vzWd9Zx3NYoXZ3QMP
+        fdUFN1gHQRrdwdwBCxBZ88XqcrFc5qt5AhojQMWy2obpfKpazV4q9kZy8AhtcEvIU1pjb1rAAcOz
+        rI804D2rAWN9EgadUTFCmffSB6YDzQaQGx1Ap3Y3hUbyuBBSRICDDaUUBYIF/TIraNaDcAiOcRyj
+        lAEaHzM2HXZi6BIfmGohwqNojCu2A3Ve10M366uCjoPbYXPMxuT3rQ+ykpxFdbsuf+6BCMPbBmci
+        0hM4WCW5DOqRBFxBEEZujJ6upefK+NYBuaodQMpnWhAPwRPTBmJ2StaJ2ZNgiHUm4LESlKWSArMl
+        U0TqyrgmJV2c1Ol6c1CBA5SwtMyx2jG7RylfT1zQH7Oz0hTKxwqc5j92H2mP39vxOeL/Ws+if3Sr
+        1AhgWpvQzRH/vZ30SvaeqaSWfl+iLT16FH3gg7E0oUdct8mD7ZmtKKrRoDeC+QuJdj5b5h0hHfw+
+        wHm+fEED9qJGdflqlb1BWQoITCo/MjLljO/RcAPph/kiOwPL/w7tOGR8XOT5KYO1QpoBm01GKrxu
+        +q0GOoWkrkc9LN7lHwAe7xF2bh0Iyc+VGdIcxGfjvbTTcaSOqQf3gG9CGSS4eGQCKtaq7mJT/+jx
+        UpZ4rjU462S63dEVk+PkGS0waALUBAAA
     headers:
       access-control-expose-headers:
       - X-Request-ID
@@ -557,15 +460,13 @@ interactions:
       openai-organization:
       - DUMMY
       openai-processing-ms:
-      - '3931'
+      - '2481'
       openai-project:
       - DUMMY
       openai-version:
       - '2020-10-01'
       server:
       - cloudflare
-      set-cookie:
-      - DUMMY
       strict-transport-security:
       - max-age=31536000; includeSubDomains; preload
       transfer-encoding:
@@ -585,7 +486,7 @@ interactions:
       x-ratelimit-reset-requests:
       - 6ms
       x-ratelimit-reset-tokens:
-      - 56ms
+      - 45ms
       x-request-id:
       - DUMMY
     status:
@@ -687,11 +588,11 @@ interactions:
       you will find a list of document paragraphs (including sentences) and a list
       of concepts.\\n</introduction>\\n\\n<guidance_on_task_structure>\\nAll structured
       information in these instructions is provided using semantic XML tags. Field
-      names correspond directly to tag names (e.g., concept_name, paragraph_text,
-      sentence_text, additional_context, etc.).\\n</guidance_on_task_structure>\\n\\n<private_reasoning>\\nUse
-      private deliberation to plan, evaluate evidence, and verify decisions. Do not
-      reveal any intermediate analysis, notes, or steps. Only output the JSON according
-      to the format specified within <answer_format></answer_format> tags.\\n\\nFollow
+      names correspond directly to tag names (e.g., concept_name, additional_context,
+      etc.).\\n</guidance_on_task_structure>\\n\\n<private_reasoning>\\nUse private
+      deliberation to plan, evaluate evidence, and verify decisions. Do not reveal
+      any intermediate analysis, notes, or steps. Only output the JSON according to
+      the format specified within <answer_format></answer_format> tags.\\n\\nFollow
       this internal three-stage process:\\n\\n1. Plan\\n    - Internally restate each
       concept in one sentence.\\n    - List 3-5 concrete lexical/semantic cues for
       relevance aligned with the concept description (include indicators of definition,
@@ -712,16 +613,15 @@ interactions:
       evidence, or internal notes - only the JSON array defined within <answer_format></answer_format>
       tags.\\n</private_reasoning>\\n\\n<task_description>\\nYour task is to:\\n1.
       Read through the provided document paragraphs and their sentences.\\n    - Each
-      paragraph is identified by a paragraph ID (for example, \\\"P0\\\", \\\"P1\\\",
-      etc.) specified within <paragraph_id></paragraph_id> tags.\\n    - Each paragraph
-      includes sentences, each identified by a sentence ID (for example, \\\"P0-S0\\\",
-      \\\"P0-S1\\\", etc.) specified within <sentence_id></sentence_id> tags, followed
-      by the full text of the sentence specified within <sentence_text></sentence_text>
-      tags.\\n    - Note that paragraphs are listed in the same order they appear
-      in the original document.\\n    - You may be working with document fragments
-      rather than complete documents. Focus on extracting information from the available
-      content without making assumptions about missing parts.\\n2. Identify whether
-      each concept in the concepts list is addressed within the document paragraphs.\\n
+      paragraph is given within <paragraph></paragraph> tags, whose id attribute holds
+      its paragraph ID (for example, \\\"P0\\\", \\\"P1\\\", etc.).\\n    - Each paragraph
+      includes sentences, each given with its full text within <sentence></sentence>
+      tags, whose id attribute holds its sentence ID (for example, \\\"P0-S0\\\",
+      \\\"P0-S1\\\", etc.).\\n    - Note that paragraphs are listed in the same order
+      they appear in the original document.\\n    - You may be working with document
+      fragments rather than complete documents. Focus on extracting information from
+      the available content without making assumptions about missing parts.\\n2. Identify
+      whether each concept in the concepts list is addressed within the document paragraphs.\\n
       \   - Each concept is identified by a concept ID (for example, \\\"C0\\\", \\\"C1\\\",
       etc.) specified within <concept_id></concept_id> tags.\\n    - Each concept
       is described by a concept name specified within <concept_name></concept_name>
@@ -874,401 +774,154 @@ interactions:
       \   <amount_of_extracted_items>This concept may have zero, one, or multiple
       extracted items.</amount_of_extracted_items>\\n\\n    <extracted_item_type>dict
       (must be exactly as specified)</extracted_item_type>\\n</concept>\\n\\n</concepts>\\n\\n<document_paragraphs>\\nDOCUMENT
-      PARAGRAPHS INCLUDING SENTENCES:\\n    <paragraph id=\\\"P0\\\">\\n        <paragraph_id>P0</paragraph_id>\\n
-      \       \\n        <paragraph_sentences>\\n            <sentence id=\\\"P0-S0\\\">\\n
-      \               <sentence_id>P0-S0</sentence_id>\\n                \\n                <sentence_text>\\n
-      \               Non-Disclosure Agreement (NDA)\\n                </sentence_text>\\n
-      \           </sentence>\\n        </paragraph_sentences>\\n    </paragraph>\\n\\n
-      \   <paragraph id=\\\"P1\\\">\\n        <paragraph_id>P1</paragraph_id>\\n        \\n
-      \       <paragraph_sentences>\\n            <sentence id=\\\"P1-S0\\\">\\n                <sentence_id>P1-S0</sentence_id>\\n
-      \               \\n                <sentence_text>\\n                This Non-Disclosure
-      Agreement (the \\\"Agreement\\\") is made and entered into as of July 16, 2024,
-      by and between:\\n                </sentence_text>\\n            </sentence>\\n
-      \       </paragraph_sentences>\\n    </paragraph>\\n\\n    <paragraph id=\\\"P2\\\">\\n
-      \       <paragraph_id>P2</paragraph_id>\\n        \\n        <paragraph_sentences>\\n
-      \           <sentence id=\\\"P2-S0\\\">\\n                <sentence_id>P2-S0</sentence_id>\\n
-      \               \\n                <sentence_text>\\n                Party A:\\n
-      \               </sentence_text>\\n            </sentence>\\n        </paragraph_sentences>\\n
-      \   </paragraph>\\n\\n    <paragraph id=\\\"P3\\\">\\n        <paragraph_id>P3</paragraph_id>\\n
-      \       \\n        <paragraph_sentences>\\n            <sentence id=\\\"P3-S0\\\">\\n
-      \               <sentence_id>P3-S0</sentence_id>\\n                \\n                <sentence_text>\\n
-      \               _____\\n                </sentence_text>\\n            </sentence>\\n
-      \       </paragraph_sentences>\\n    </paragraph>\\n\\n    <paragraph id=\\\"P4\\\">\\n
-      \       <paragraph_id>P4</paragraph_id>\\n        \\n        <paragraph_sentences>\\n
-      \           <sentence id=\\\"P4-S0\\\">\\n                <sentence_id>P4-S0</sentence_id>\\n
-      \               \\n                <sentence_text>\\n                _____\\n
-      \               </sentence_text>\\n            </sentence>\\n        </paragraph_sentences>\\n
-      \   </paragraph>\\n\\n    <paragraph id=\\\"P5\\\">\\n        <paragraph_id>P5</paragraph_id>\\n
-      \       \\n        <paragraph_sentences>\\n            <sentence id=\\\"P5-S0\\\">\\n
-      \               <sentence_id>P5-S0</sentence_id>\\n                \\n                <sentence_text>\\n
-      \               _____\\n                </sentence_text>\\n            </sentence>\\n
-      \       </paragraph_sentences>\\n    </paragraph>\\n\\n    <paragraph id=\\\"P6\\\">\\n
-      \       <paragraph_id>P6</paragraph_id>\\n        \\n        <paragraph_sentences>\\n
-      \           <sentence id=\\\"P6-S0\\\">\\n                <sentence_id>P6-S0</sentence_id>\\n
-      \               \\n                <sentence_text>\\n                Contact:
-      _____\\n                </sentence_text>\\n            </sentence>\\n        </paragraph_sentences>\\n
-      \   </paragraph>\\n\\n    <paragraph id=\\\"P7\\\">\\n        <paragraph_id>P7</paragraph_id>\\n
-      \       \\n        <paragraph_sentences>\\n            <sentence id=\\\"P7-S0\\\">\\n
-      \               <sentence_id>P7-S0</sentence_id>\\n                \\n                <sentence_text>\\n
-      \               Phone: _____\\n                </sentence_text>\\n            </sentence>\\n
-      \       </paragraph_sentences>\\n    </paragraph>\\n\\n    <paragraph id=\\\"P8\\\">\\n
-      \       <paragraph_id>P8</paragraph_id>\\n        \\n        <paragraph_sentences>\\n
-      \           <sentence id=\\\"P8-S0\\\">\\n                <sentence_id>P8-S0</sentence_id>\\n
-      \               \\n                <sentence_text>\\n                Email:
-      _____\\n                </sentence_text>\\n            </sentence>\\n        </paragraph_sentences>\\n
-      \   </paragraph>\\n\\n    <paragraph id=\\\"P9\\\">\\n        <paragraph_id>P9</paragraph_id>\\n
-      \       \\n        <paragraph_sentences>\\n            <sentence id=\\\"P9-S0\\\">\\n
-      \               <sentence_id>P9-S0</sentence_id>\\n                \\n                <sentence_text>\\n
-      \               Party B:\\n                </sentence_text>\\n            </sentence>\\n
-      \       </paragraph_sentences>\\n    </paragraph>\\n\\n    <paragraph id=\\\"P10\\\">\\n
-      \       <paragraph_id>P10</paragraph_id>\\n        \\n        <paragraph_sentences>\\n
-      \           <sentence id=\\\"P10-S0\\\">\\n                <sentence_id>P10-S0</sentence_id>\\n
-      \               \\n                <sentence_text>\\n                Example.Com
-      LLC\\n                </sentence_text>\\n            </sentence>\\n        </paragraph_sentences>\\n
-      \   </paragraph>\\n\\n    <paragraph id=\\\"P11\\\">\\n        <paragraph_id>P11</paragraph_id>\\n
-      \       \\n        <paragraph_sentences>\\n            <sentence id=\\\"P11-S0\\\">\\n
-      \               <sentence_id>P11-S0</sentence_id>\\n                \\n                <sentence_text>\\n
-      \               5678 Random Drive\\n                </sentence_text>\\n            </sentence>\\n
-      \       </paragraph_sentences>\\n    </paragraph>\\n\\n    <paragraph id=\\\"P12\\\">\\n
-      \       <paragraph_id>P12</paragraph_id>\\n        \\n        <paragraph_sentences>\\n
-      \           <sentence id=\\\"P12-S0\\\">\\n                <sentence_id>P12-S0</sentence_id>\\n
-      \               \\n                <sentence_text>\\n                New York,
-      NY 00000\\n                </sentence_text>\\n            </sentence>\\n        </paragraph_sentences>\\n
-      \   </paragraph>\\n\\n    <paragraph id=\\\"P13\\\">\\n        <paragraph_id>P13</paragraph_id>\\n
-      \       \\n        <paragraph_sentences>\\n            <sentence id=\\\"P13-S0\\\">\\n
-      \               <sentence_id>P13-S0</sentence_id>\\n                \\n                <sentence_text>\\n
-      \               Contact: Jane Doe, Managing Partner\\n                </sentence_text>\\n
-      \           </sentence>\\n        </paragraph_sentences>\\n    </paragraph>\\n\\n
-      \   <paragraph id=\\\"P14\\\">\\n        <paragraph_id>P14</paragraph_id>\\n
-      \       \\n        <paragraph_sentences>\\n            <sentence id=\\\"P14-S0\\\">\\n
-      \               <sentence_id>P14-S0</sentence_id>\\n                \\n                <sentence_text>\\n
-      \               Phone: (012) 345-6789\\n                </sentence_text>\\n
-      \           </sentence>\\n        </paragraph_sentences>\\n    </paragraph>\\n\\n
-      \   <paragraph id=\\\"P15\\\">\\n        <paragraph_id>P15</paragraph_id>\\n
-      \       \\n        <paragraph_sentences>\\n            <sentence id=\\\"P15-S0\\\">\\n
-      \               <sentence_id>P15-S0</sentence_id>\\n                \\n                <sentence_text>\\n
-      \               Email: jane.doe@example.com\\n                </sentence_text>\\n
-      \           </sentence>\\n        </paragraph_sentences>\\n    </paragraph>\\n\\n
-      \   <paragraph id=\\\"P16\\\">\\n        <paragraph_id>P16</paragraph_id>\\n
-      \       \\n        <paragraph_sentences>\\n            <sentence id=\\\"P16-S0\\\">\\n
-      \               <sentence_id>P16-S0</sentence_id>\\n                \\n                <sentence_text>\\n
-      \               1. Purpose:\\n                </sentence_text>\\n            </sentence>\\n
-      \       </paragraph_sentences>\\n    </paragraph>\\n\\n    <paragraph id=\\\"P17\\\">\\n
-      \       <paragraph_id>P17</paragraph_id>\\n        \\n        <paragraph_sentences>\\n
-      \           <sentence id=\\\"P17-S0\\\">\\n                <sentence_id>P17-S0</sentence_id>\\n
-      \               \\n                <sentence_text>\\n                The purpose
-      of this Agreement is to protect the confidential information that may be disclosed
-      between the parties during discussions and engagements regarding potential business
-      collaborations and partnerships.\\n                </sentence_text>\\n            </sentence>\\n
-      \       </paragraph_sentences>\\n    </paragraph>\\n\\n    <paragraph id=\\\"P18\\\">\\n
-      \       <paragraph_id>P18</paragraph_id>\\n        \\n        <paragraph_sentences>\\n
-      \           <sentence id=\\\"P18-S0\\\">\\n                <sentence_id>P18-S0</sentence_id>\\n
-      \               \\n                <sentence_text>\\n                2. Definition
-      of Confidential Information:\\n                </sentence_text>\\n            </sentence>\\n
-      \       </paragraph_sentences>\\n    </paragraph>\\n\\n    <paragraph id=\\\"P19\\\">\\n
-      \       <paragraph_id>P19</paragraph_id>\\n        \\n        <paragraph_sentences>\\n
-      \           <sentence id=\\\"P19-S0\\\">\\n                <sentence_id>P19-S0</sentence_id>\\n
-      \               \\n                <sentence_text>\\n                For purposes
-      of this Agreement, \\\"Confidential Information\\\" means any and all non-public
-      information, conveyed in all forms, whether in oral, written, electronic, or
-      other form or media, whether or not marked, designated, or otherwise identified
-      as \\\"confidential,\\\" that has been or may be disclosed to, accessed by,
-      or observed by Receiving Party, which (i) has actual or potential economic value
-      by virtue of not being generally known to, and not being readily ascertainable
-      by proper means by, other persons who can obtain economic value from its disclosure
-      or use, or (ii) is subject to reasonable efforts by Disclosing Party to maintain
-      its secrecy and confidentiality.\\n                </sentence_text>\\n            </sentence>\\n
-      \       </paragraph_sentences>\\n    </paragraph>\\n\\n    <paragraph id=\\\"P20\\\">\\n
-      \       <paragraph_id>P20</paragraph_id>\\n        \\n        <paragraph_sentences>\\n
-      \           <sentence id=\\\"P20-S0\\\">\\n                <sentence_id>P20-S0</sentence_id>\\n
-      \               \\n                <sentence_text>\\n                Confidential
-      Information includes, but is not limited to, the following categories: (1) business
-      information (business plans, strategies, and models), (2) technical information
-      (technical specifications and documentation, research and development activities),
-      (3) customer and market information (customer lists and contact information,
-      sales histories and patterns), (4) personnel and internal information (employee
-      lists and contact information, employment agreements and personnel files), (5)
-      intellectual property (trade secrets and know-how, patents and patent applications,
-      copyrights and copyright applications, trademarks and trademark applications),
-      (6) strategic information (merger and acquisition plans, competitive analyses
-      and strategies).\\n                </sentence_text>\\n            </sentence>\\n
-      \           <sentence id=\\\"P20-S1\\\">\\n                <sentence_id>P20-S1</sentence_id>\\n
-      \               \\n                <sentence_text>\\n                Software
-      code shall also be included into the confidential information.\\n                </sentence_text>\\n
-      \           </sentence>\\n        </paragraph_sentences>\\n    </paragraph>\\n\\n
-      \   <paragraph id=\\\"P21\\\">\\n        <paragraph_id>P21</paragraph_id>\\n
-      \       \\n        <paragraph_sentences>\\n            <sentence id=\\\"P21-S0\\\">\\n
-      \               <sentence_id>P21-S0</sentence_id>\\n                \\n                <sentence_text>\\n
-      \               Confidential Information shall not include information that:\\n
-      \               </sentence_text>\\n            </sentence>\\n            <sentence
-      id=\\\"P21-S1\\\">\\n                <sentence_id>P21-S1</sentence_id>\\n                \\n
-      \               <sentence_text>\\n                (a) is or becomes generally
-      available to the public other than as a result of disclosure by Receiving Party
-      or its Representatives;\\n                </sentence_text>\\n            </sentence>\\n
-      \           <sentence id=\\\"P21-S2\\\">\\n                <sentence_id>P21-S2</sentence_id>\\n
-      \               \\n                <sentence_text>\\n                (b) was
-      available to Receiving Party on a non-confidential basis prior to its disclosure
-      by Disclosing Party;\\n                </sentence_text>\\n            </sentence>\\n
-      \           <sentence id=\\\"P21-S3\\\">\\n                <sentence_id>P21-S3</sentence_id>\\n
-      \               \\n                <sentence_text>\\n                (c) becomes
-      available to Receiving Party on a non-confidential basis from a person other
-      than Disclosing Party who is not otherwise bound by a confidentiality obligation
-      to Disclosing Party; or (d) was independently developed by Receiving Party without
-      reference to or use of any Confidential Information.\\n                </sentence_text>\\n
-      \           </sentence>\\n            <sentence id=\\\"P21-S4\\\">\\n                <sentence_id>P21-S4</sentence_id>\\n
-      \               \\n                <sentence_text>\\n                The name
-      of the dog of the Receiving Party is Bob.\\n                </sentence_text>\\n
-      \           </sentence>\\n        </paragraph_sentences>\\n    </paragraph>\\n\\n
-      \   <paragraph id=\\\"P22\\\">\\n        <paragraph_id>P22</paragraph_id>\\n
-      \       \\n        <paragraph_sentences>\\n            <sentence id=\\\"P22-S0\\\">\\n
-      \               <sentence_id>P22-S0</sentence_id>\\n                \\n                <sentence_text>\\n
-      \               The designation of information as Confidential Information shall
-      not be determinative of whether such information constitutes a trade secret
-      under applicable law.\\n                </sentence_text>\\n            </sentence>\\n
-      \           <sentence id=\\\"P22-S1\\\">\\n                <sentence_id>P22-S1</sentence_id>\\n
-      \               \\n                <sentence_text>\\n                All Confidential
-      Information shall remain the exclusive property of Disclosing Party, and Receiving
-      Party shall have no rights, by license or otherwise, to use the Confidential
-      Information except as expressly provided herein.\\n                </sentence_text>\\n
-      \           </sentence>\\n        </paragraph_sentences>\\n    </paragraph>\\n\\n
-      \   <paragraph id=\\\"P23\\\">\\n        <paragraph_id>P23</paragraph_id>\\n
-      \       \\n        <paragraph_sentences>\\n            <sentence id=\\\"P23-S0\\\">\\n
-      \               <sentence_id>P23-S0</sentence_id>\\n                \\n                <sentence_text>\\n
-      \               3. Obligations of Receiving Party:\\n                </sentence_text>\\n
-      \           </sentence>\\n        </paragraph_sentences>\\n    </paragraph>\\n\\n
-      \   <paragraph id=\\\"P24\\\">\\n        <paragraph_id>P24</paragraph_id>\\n
-      \       \\n        <paragraph_sentences>\\n            <sentence id=\\\"P24-S0\\\">\\n
-      \               <sentence_id>P24-S0</sentence_id>\\n                \\n                <sentence_text>\\n
-      \               The party receiving Confidential Information (\\\"Receiving
-      Party\\\") shall:\\n                </sentence_text>\\n            </sentence>\\n
-      \       </paragraph_sentences>\\n    </paragraph>\\n\\n    <paragraph id=\\\"P25\\\">\\n
-      \       <paragraph_id>P25</paragraph_id>\\n        \\n        <paragraph_sentences>\\n
-      \           <sentence id=\\\"P25-S0\\\">\\n                <sentence_id>P25-S0</sentence_id>\\n
-      \               \\n                <sentence_text>\\n                a. Maintain
-      the confidentiality of the Confidential Information and not disclose it to any
-      third party without the prior written consent of the Disclosing Party.\\n                </sentence_text>\\n
-      \           </sentence>\\n        </paragraph_sentences>\\n    </paragraph>\\n\\n
-      \   <paragraph id=\\\"P26\\\">\\n        <paragraph_id>P26</paragraph_id>\\n
-      \       \\n        <paragraph_sentences>\\n            <sentence id=\\\"P26-S0\\\">\\n
-      \               <sentence_id>P26-S0</sentence_id>\\n                \\n                <sentence_text>\\n
-      \               b. Use the Confidential Information solely for the purpose of
-      evaluating or engaging in the potential business collaboration.\\n                </sentence_text>\\n
-      \           </sentence>\\n        </paragraph_sentences>\\n    </paragraph>\\n\\n
-      \   <paragraph id=\\\"P27\\\">\\n        <paragraph_id>P27</paragraph_id>\\n
-      \       \\n        <paragraph_sentences>\\n            <sentence id=\\\"P27-S0\\\">\\n
-      \               <sentence_id>P27-S0</sentence_id>\\n                \\n                <sentence_text>\\n
-      \               c. Take all necessary precautions to protect the confidentiality
-      of the Confidential Information, which shall be no less than the precautions
-      it takes to protect its own confidential information.\\n                </sentence_text>\\n
-      \           </sentence>\\n        </paragraph_sentences>\\n    </paragraph>\\n\\n
-      \   <paragraph id=\\\"P28\\\">\\n        <paragraph_id>P28</paragraph_id>\\n
-      \       \\n        <paragraph_sentences>\\n            <sentence id=\\\"P28-S0\\\">\\n
-      \               <sentence_id>P28-S0</sentence_id>\\n                \\n                <sentence_text>\\n
-      \               4. Exclusions from Confidential Information:\\n                </sentence_text>\\n
-      \           </sentence>\\n        </paragraph_sentences>\\n    </paragraph>\\n\\n
-      \   <paragraph id=\\\"P29\\\">\\n        <paragraph_id>P29</paragraph_id>\\n
-      \       \\n        <paragraph_sentences>\\n            <sentence id=\\\"P29-S0\\\">\\n
-      \               <sentence_id>P29-S0</sentence_id>\\n                \\n                <sentence_text>\\n
-      \               Confidential Information does not include information that:\\n
-      \               </sentence_text>\\n            </sentence>\\n        </paragraph_sentences>\\n
-      \   </paragraph>\\n\\n    <paragraph id=\\\"P30\\\">\\n        <paragraph_id>P30</paragraph_id>\\n
-      \       \\n        <paragraph_sentences>\\n            <sentence id=\\\"P30-S0\\\">\\n
-      \               <sentence_id>P30-S0</sentence_id>\\n                \\n                <sentence_text>\\n
-      \               a. Is or becomes publicly known through no wrongful act of the
-      Receiving Party.\\n                </sentence_text>\\n            </sentence>\\n
-      \       </paragraph_sentences>\\n    </paragraph>\\n\\n    <paragraph id=\\\"P31\\\">\\n
-      \       <paragraph_id>P31</paragraph_id>\\n        \\n        <paragraph_sentences>\\n
-      \           <sentence id=\\\"P31-S0\\\">\\n                <sentence_id>P31-S0</sentence_id>\\n
-      \               \\n                <sentence_text>\\n                b. Is already
-      known to the Receiving Party at the time of disclosure.\\n                </sentence_text>\\n
-      \           </sentence>\\n        </paragraph_sentences>\\n    </paragraph>\\n\\n
-      \   <paragraph id=\\\"P32\\\">\\n        <paragraph_id>P32</paragraph_id>\\n
-      \       \\n        <paragraph_sentences>\\n            <sentence id=\\\"P32-S0\\\">\\n
-      \               <sentence_id>P32-S0</sentence_id>\\n                \\n                <sentence_text>\\n
-      \               c. Is lawfully received from a third party without breach of
-      this Agreement.\\n                </sentence_text>\\n            </sentence>\\n
-      \       </paragraph_sentences>\\n    </paragraph>\\n\\n    <paragraph id=\\\"P33\\\">\\n
-      \       <paragraph_id>P33</paragraph_id>\\n        \\n        <paragraph_sentences>\\n
-      \           <sentence id=\\\"P33-S0\\\">\\n                <sentence_id>P33-S0</sentence_id>\\n
-      \               \\n                <sentence_text>\\n                d. Is independently
-      developed by the Receiving Party without use of or reference to the Disclosing
-      Party's Confidential Information.\\n                </sentence_text>\\n            </sentence>\\n
-      \       </paragraph_sentences>\\n    </paragraph>\\n\\n    <paragraph id=\\\"P34\\\">\\n
-      \       <paragraph_id>P34</paragraph_id>\\n        \\n        <paragraph_sentences>\\n
-      \           <sentence id=\\\"P34-S0\\\">\\n                <sentence_id>P34-S0</sentence_id>\\n
-      \               \\n                <sentence_text>\\n                6. Return
-      of Materials:\\n                </sentence_text>\\n            </sentence>\\n
-      \       </paragraph_sentences>\\n    </paragraph>\\n\\n    <paragraph id=\\\"P35\\\">\\n
-      \       <paragraph_id>P35</paragraph_id>\\n        \\n        <paragraph_sentences>\\n
-      \           <sentence id=\\\"P35-S0\\\">\\n                <sentence_id>P35-S0</sentence_id>\\n
-      \               \\n                <sentence_text>\\n                Upon termination
-      of this Agreement or upon request, the Receiving Party shall return all materials
-      containing Confidential Information to the Disclosing Party or destroy them,
-      at the Disclosing Party's discretion.\\n                </sentence_text>\\n
-      \           </sentence>\\n        </paragraph_sentences>\\n    </paragraph>\\n\\n
-      \   <paragraph id=\\\"P36\\\">\\n        <paragraph_id>P36</paragraph_id>\\n
-      \       \\n        <paragraph_sentences>\\n            <sentence id=\\\"P36-S0\\\">\\n
-      \               <sentence_id>P36-S0</sentence_id>\\n                \\n                <sentence_text>\\n
-      \               5. Liability:\\n                </sentence_text>\\n            </sentence>\\n
-      \       </paragraph_sentences>\\n    </paragraph>\\n\\n    <paragraph id=\\\"P37\\\">\\n
-      \       <paragraph_id>P37</paragraph_id>\\n        \\n        <paragraph_sentences>\\n
-      \           <sentence id=\\\"P37-S0\\\">\\n                <sentence_id>P37-S0</sentence_id>\\n
-      \               \\n                <sentence_text>\\n                a.\\n                </sentence_text>\\n
-      \           </sentence>\\n            <sentence id=\\\"P37-S1\\\">\\n                <sentence_id>P37-S1</sentence_id>\\n
-      \               \\n                <sentence_text>\\n                Total Liability
-      Cap:\\n                </sentence_text>\\n            </sentence>\\n        </paragraph_sentences>\\n
-      \   </paragraph>\\n\\n    <paragraph id=\\\"P38\\\">\\n        <paragraph_id>P38</paragraph_id>\\n
-      \       \\n        <paragraph_sentences>\\n            <sentence id=\\\"P38-S0\\\">\\n
-      \               <sentence_id>P38-S0</sentence_id>\\n                \\n                <sentence_text>\\n
-      \               The total liability of either party for any and all claims arising
-      out of or related to this Agreement, whether in contract, tort, or otherwise,
-      shall not exceed the greater of (i) $100,000 or (ii) the total amount paid by
-      the Receiving Party to the Disclosing Party under any separate business agreement
-      between the parties during the twelve (12) months preceding the event giving
-      rise to the claim.\\n                </sentence_text>\\n            </sentence>\\n
-      \           <sentence id=\\\"P38-S1\\\">\\n                <sentence_id>P38-S1</sentence_id>\\n
-      \               \\n                <sentence_text>\\n                This limitation
-      of liability is cumulative and not per incident.\\n                </sentence_text>\\n
-      \           </sentence>\\n        </paragraph_sentences>\\n    </paragraph>\\n\\n
-      \   <paragraph id=\\\"P39\\\">\\n        <paragraph_id>P39</paragraph_id>\\n
-      \       \\n        <paragraph_sentences>\\n            <sentence id=\\\"P39-S0\\\">\\n
-      \               <sentence_id>P39-S0</sentence_id>\\n                \\n                <sentence_text>\\n
-      \               b. Penalties for Breach:\\n                </sentence_text>\\n
-      \           </sentence>\\n        </paragraph_sentences>\\n    </paragraph>\\n\\n
-      \   <paragraph id=\\\"P40\\\">\\n        <paragraph_id>P40</paragraph_id>\\n
-      \       \\n        <paragraph_sentences>\\n            <sentence id=\\\"P40-S0\\\">\\n
-      \               <sentence_id>P40-S0</sentence_id>\\n                \\n                <sentence_text>\\n
-      \               In the event of a breach of this Agreement by the Receiving
-      Party, the Disclosing Party shall be entitled to seek injunctive relief in addition
-      to any other remedy available at law or in equity.\\n                </sentence_text>\\n
-      \           </sentence>\\n            <sentence id=\\\"P40-S1\\\">\\n                <sentence_id>P40-S1</sentence_id>\\n
-      \               \\n                <sentence_text>\\n                The Receiving
-      Party acknowledges that a breach of this Agreement may cause irreparable harm
-      to the Disclosing Party for which monetary damages would be an inadequate remedy.\\n
-      \               </sentence_text>\\n            </sentence>\\n            <sentence
-      id=\\\"P40-S2\\\">\\n                <sentence_id>P40-S2</sentence_id>\\n                \\n
-      \               <sentence_text>\\n                In addition to injunctive
-      relief, the Receiving Party shall be liable for liquidated damages in the amount
-      of $25,000 for each instance of unauthorized disclosure or use of Confidential
-      Information, which the parties agree represents a reasonable estimate of the
-      damages likely to be suffered and not a penalty.\\n                </sentence_text>\\n
-      \           </sentence>\\n        </paragraph_sentences>\\n    </paragraph>\\n\\n
-      \   <paragraph id=\\\"P41\\\">\\n        <paragraph_id>P41</paragraph_id>\\n
-      \       \\n        <paragraph_sentences>\\n            <sentence id=\\\"P41-S0\\\">\\n
-      \               <sentence_id>P41-S0</sentence_id>\\n                \\n                <sentence_text>\\n
-      \               7. No License:\\n                </sentence_text>\\n            </sentence>\\n
-      \       </paragraph_sentences>\\n    </paragraph>\\n\\n    <paragraph id=\\\"P42\\\">\\n
-      \       <paragraph_id>P42</paragraph_id>\\n        \\n        <paragraph_sentences>\\n
-      \           <sentence id=\\\"P42-S0\\\">\\n                <sentence_id>P42-S0</sentence_id>\\n
-      \               \\n                <sentence_text>\\n                Nothing
-      in this Agreement shall be construed as granting any rights to the Receiving
-      Party, by license or otherwise, to any of the Disclosing Party\u2019s Confidential
-      Information, except as expressly set forth in this Agreement.\\n                </sentence_text>\\n
-      \           </sentence>\\n        </paragraph_sentences>\\n    </paragraph>\\n\\n
-      \   <paragraph id=\\\"P43\\\">\\n        <paragraph_id>P43</paragraph_id>\\n
-      \       \\n        <paragraph_sentences>\\n            <sentence id=\\\"P43-S0\\\">\\n
-      \               <sentence_id>P43-S0</sentence_id>\\n                \\n                <sentence_text>\\n
-      \               8. Governing Law and Disputes:\\n                </sentence_text>\\n
-      \           </sentence>\\n        </paragraph_sentences>\\n    </paragraph>\\n\\n
-      \   <paragraph id=\\\"P44\\\">\\n        <paragraph_id>P44</paragraph_id>\\n
-      \       \\n        <paragraph_sentences>\\n            <sentence id=\\\"P44-S0\\\">\\n
-      \               <sentence_id>P44-S0</sentence_id>\\n                \\n                <sentence_text>\\n
-      \               This Agreement shall be governed by and construed in accordance
-      with the laws of the State of California, without regard to its conflict of
-      law principles.\\n                </sentence_text>\\n            </sentence>\\n
-      \       </paragraph_sentences>\\n    </paragraph>\\n\\n    <paragraph id=\\\"P45\\\">\\n
-      \       <paragraph_id>P45</paragraph_id>\\n        \\n        <paragraph_sentences>\\n
-      \           <sentence id=\\\"P45-S0\\\">\\n                <sentence_id>P45-S0</sentence_id>\\n
-      \               \\n                <sentence_text>\\n                All disputes
-      shall be resolved by the courts of the State of California.\\n                </sentence_text>\\n
-      \           </sentence>\\n            <sentence id=\\\"P45-S1\\\">\\n                <sentence_id>P45-S1</sentence_id>\\n
-      \               \\n                <sentence_text>\\n                This Agreement
-      shall remain in effect for a period of five (5) years from the date of signing
-      this agreement.\\n                </sentence_text>\\n            </sentence>\\n
-      \       </paragraph_sentences>\\n    </paragraph>\\n\\n    <paragraph id=\\\"P46\\\">\\n
-      \       <paragraph_id>P46</paragraph_id>\\n        \\n        <paragraph_sentences>\\n
-      \           <sentence id=\\\"P46-S0\\\">\\n                <sentence_id>P46-S0</sentence_id>\\n
-      \               \\n                <sentence_text>\\n                9. Miscellaneous:\\n
-      \               </sentence_text>\\n            </sentence>\\n        </paragraph_sentences>\\n
-      \   </paragraph>\\n\\n    <paragraph id=\\\"P47\\\">\\n        <paragraph_id>P47</paragraph_id>\\n
-      \       \\n        <paragraph_sentences>\\n            <sentence id=\\\"P47-S0\\\">\\n
-      \               <sentence_id>P47-S0</sentence_id>\\n                \\n                <sentence_text>\\n
-      \               a. This Agreement constitutes the entire agreement between the
-      parties with respect to the subject matter hereof and supersedes all prior or
-      contemporaneous oral or written agreements concerning such subject matter.\\n
-      \               </sentence_text>\\n            </sentence>\\n        </paragraph_sentences>\\n
-      \   </paragraph>\\n\\n    <paragraph id=\\\"P48\\\">\\n        <paragraph_id>P48</paragraph_id>\\n
-      \       \\n        <paragraph_sentences>\\n            <sentence id=\\\"P48-S0\\\">\\n
-      \               <sentence_id>P48-S0</sentence_id>\\n                \\n                <sentence_text>\\n
-      \               b. Any amendments or modifications to this Agreement must be
-      made in writing and signed by both parties.\\n                </sentence_text>\\n
-      \           </sentence>\\n        </paragraph_sentences>\\n    </paragraph>\\n\\n
-      \   <paragraph id=\\\"P49\\\">\\n        <paragraph_id>P49</paragraph_id>\\n
-      \       \\n        <paragraph_sentences>\\n            <sentence id=\\\"P49-S0\\\">\\n
-      \               <sentence_id>P49-S0</sentence_id>\\n                \\n                <sentence_text>\\n
-      \               c. If any provision of this Agreement is found to be unenforceable,
-      the remainder shall be enforced as fully as possible and the unenforceable provision
-      shall be deemed modified to the limited extent required to permit its enforcement
-      in a manner most closely representing the intention of the parties.\\n                </sentence_text>\\n
-      \           </sentence>\\n        </paragraph_sentences>\\n    </paragraph>\\n\\n
-      \   <paragraph id=\\\"P50\\\">\\n        <paragraph_id>P50</paragraph_id>\\n
-      \       \\n        <paragraph_sentences>\\n            <sentence id=\\\"P50-S0\\\">\\n
-      \               <sentence_id>P50-S0</sentence_id>\\n                \\n                <sentence_text>\\n
-      \               d. The Disclosing Party shall be a good person to execute this
-      contract.\\n                </sentence_text>\\n            </sentence>\\n        </paragraph_sentences>\\n
-      \   </paragraph>\\n\\n    <paragraph id=\\\"P51\\\">\\n        <paragraph_id>P51</paragraph_id>\\n
-      \       \\n        <paragraph_sentences>\\n            <sentence id=\\\"P51-S0\\\">\\n
-      \               <sentence_id>P51-S0</sentence_id>\\n                \\n                <sentence_text>\\n
-      \               IN WITNESS WHEREOF, the parties hereto have executed this Non-Disclosure
-      Agreement as of the date first above written.\\n                </sentence_text>\\n
-      \           </sentence>\\n        </paragraph_sentences>\\n    </paragraph>\\n\\n
-      \   <paragraph id=\\\"P52\\\">\\n        <paragraph_id>P52</paragraph_id>\\n
-      \       \\n        <paragraph_sentences>\\n            <sentence id=\\\"P52-S0\\\">\\n
-      \               <sentence_id>P52-S0</sentence_id>\\n                \\n                <sentence_text>\\n
-      \               _____\\n                </sentence_text>\\n            </sentence>\\n
-      \       </paragraph_sentences>\\n    </paragraph>\\n\\n    <paragraph id=\\\"P53\\\">\\n
-      \       <paragraph_id>P53</paragraph_id>\\n        \\n        <paragraph_sentences>\\n
-      \           <sentence id=\\\"P53-S0\\\">\\n                <sentence_id>P53-S0</sentence_id>\\n
-      \               \\n                <sentence_text>\\n                By: ___________________________\\n
-      \               </sentence_text>\\n            </sentence>\\n        </paragraph_sentences>\\n
-      \   </paragraph>\\n\\n    <paragraph id=\\\"P54\\\">\\n        <paragraph_id>P54</paragraph_id>\\n
-      \       \\n        <paragraph_sentences>\\n            <sentence id=\\\"P54-S0\\\">\\n
-      \               <sentence_id>P54-S0</sentence_id>\\n                \\n                <sentence_text>\\n
-      \               Name: _____\\n                </sentence_text>\\n            </sentence>\\n
-      \       </paragraph_sentences>\\n    </paragraph>\\n\\n    <paragraph id=\\\"P55\\\">\\n
-      \       <paragraph_id>P55</paragraph_id>\\n        \\n        <paragraph_sentences>\\n
-      \           <sentence id=\\\"P55-S0\\\">\\n                <sentence_id>P55-S0</sentence_id>\\n
-      \               \\n                <sentence_text>\\n                Title:
-      _____\\n                </sentence_text>\\n            </sentence>\\n        </paragraph_sentences>\\n
-      \   </paragraph>\\n\\n    <paragraph id=\\\"P56\\\">\\n        <paragraph_id>P56</paragraph_id>\\n
-      \       \\n        <paragraph_sentences>\\n            <sentence id=\\\"P56-S0\\\">\\n
-      \               <sentence_id>P56-S0</sentence_id>\\n                \\n                <sentence_text>\\n
-      \               Date: ___________________________\\n                </sentence_text>\\n
-      \           </sentence>\\n        </paragraph_sentences>\\n    </paragraph>\\n\\n
-      \   <paragraph id=\\\"P57\\\">\\n        <paragraph_id>P57</paragraph_id>\\n
-      \       \\n        <paragraph_sentences>\\n            <sentence id=\\\"P57-S0\\\">\\n
-      \               <sentence_id>P57-S0</sentence_id>\\n                \\n                <sentence_text>\\n
-      \               Example.Com LLC\\n                </sentence_text>\\n            </sentence>\\n
-      \       </paragraph_sentences>\\n    </paragraph>\\n\\n    <paragraph id=\\\"P58\\\">\\n
-      \       <paragraph_id>P58</paragraph_id>\\n        \\n        <paragraph_sentences>\\n
-      \           <sentence id=\\\"P58-S0\\\">\\n                <sentence_id>P58-S0</sentence_id>\\n
-      \               \\n                <sentence_text>\\n                By: ___________________________\\n
-      \               </sentence_text>\\n            </sentence>\\n        </paragraph_sentences>\\n
-      \   </paragraph>\\n\\n    <paragraph id=\\\"P59\\\">\\n        <paragraph_id>P59</paragraph_id>\\n
-      \       \\n        <paragraph_sentences>\\n            <sentence id=\\\"P59-S0\\\">\\n
-      \               <sentence_id>P59-S0</sentence_id>\\n                \\n                <sentence_text>\\n
-      \               Name: Jane Doe\\n                </sentence_text>\\n            </sentence>\\n
-      \       </paragraph_sentences>\\n    </paragraph>\\n\\n    <paragraph id=\\\"P60\\\">\\n
-      \       <paragraph_id>P60</paragraph_id>\\n        \\n        <paragraph_sentences>\\n
-      \           <sentence id=\\\"P60-S0\\\">\\n                <sentence_id>P60-S0</sentence_id>\\n
-      \               \\n                <sentence_text>\\n                Title:
-      Managing Partner\\n                </sentence_text>\\n            </sentence>\\n
-      \       </paragraph_sentences>\\n    </paragraph>\\n\\n    <paragraph id=\\\"P61\\\">\\n
-      \       <paragraph_id>P61</paragraph_id>\\n        \\n        <paragraph_sentences>\\n
-      \           <sentence id=\\\"P61-S0\\\">\\n                <sentence_id>P61-S0</sentence_id>\\n
-      \               \\n                <sentence_text>\\n                Date: ___________________________\\n
-      \               </sentence_text>\\n            </sentence>\\n        </paragraph_sentences>\\n
-      \   </paragraph>\\n\\n</document_paragraphs>\"}],\"model\":\"gpt-6-luna\"}"
+      PARAGRAPHS INCLUDING SENTENCES:\\n<paragraph id=\\\"P0\\\">\\n<sentence id=\\\"P0-S0\\\">Non-Disclosure
+      Agreement (NDA)</sentence>\\n</paragraph>\\n<paragraph id=\\\"P1\\\">\\n<sentence
+      id=\\\"P1-S0\\\">This Non-Disclosure Agreement (the \\\"Agreement\\\") is made
+      and entered into as of July 16, 2024, by and between:</sentence>\\n</paragraph>\\n<paragraph
+      id=\\\"P2\\\">\\n<sentence id=\\\"P2-S0\\\">Party A:</sentence>\\n</paragraph>\\n<paragraph
+      id=\\\"P3\\\">\\n<sentence id=\\\"P3-S0\\\">_____</sentence>\\n</paragraph>\\n<paragraph
+      id=\\\"P4\\\">\\n<sentence id=\\\"P4-S0\\\">_____</sentence>\\n</paragraph>\\n<paragraph
+      id=\\\"P5\\\">\\n<sentence id=\\\"P5-S0\\\">_____</sentence>\\n</paragraph>\\n<paragraph
+      id=\\\"P6\\\">\\n<sentence id=\\\"P6-S0\\\">Contact: _____</sentence>\\n</paragraph>\\n<paragraph
+      id=\\\"P7\\\">\\n<sentence id=\\\"P7-S0\\\">Phone: _____</sentence>\\n</paragraph>\\n<paragraph
+      id=\\\"P8\\\">\\n<sentence id=\\\"P8-S0\\\">Email: _____</sentence>\\n</paragraph>\\n<paragraph
+      id=\\\"P9\\\">\\n<sentence id=\\\"P9-S0\\\">Party B:</sentence>\\n</paragraph>\\n<paragraph
+      id=\\\"P10\\\">\\n<sentence id=\\\"P10-S0\\\">Example.Com LLC</sentence>\\n</paragraph>\\n<paragraph
+      id=\\\"P11\\\">\\n<sentence id=\\\"P11-S0\\\">5678 Random Drive</sentence>\\n</paragraph>\\n<paragraph
+      id=\\\"P12\\\">\\n<sentence id=\\\"P12-S0\\\">New York, NY 00000</sentence>\\n</paragraph>\\n<paragraph
+      id=\\\"P13\\\">\\n<sentence id=\\\"P13-S0\\\">Contact: Jane Doe, Managing Partner</sentence>\\n</paragraph>\\n<paragraph
+      id=\\\"P14\\\">\\n<sentence id=\\\"P14-S0\\\">Phone: (012) 345-6789</sentence>\\n</paragraph>\\n<paragraph
+      id=\\\"P15\\\">\\n<sentence id=\\\"P15-S0\\\">Email: jane.doe@example.com</sentence>\\n</paragraph>\\n<paragraph
+      id=\\\"P16\\\">\\n<sentence id=\\\"P16-S0\\\">1. Purpose:</sentence>\\n</paragraph>\\n<paragraph
+      id=\\\"P17\\\">\\n<sentence id=\\\"P17-S0\\\">The purpose of this Agreement
+      is to protect the confidential information that may be disclosed between the
+      parties during discussions and engagements regarding potential business collaborations
+      and partnerships.</sentence>\\n</paragraph>\\n<paragraph id=\\\"P18\\\">\\n<sentence
+      id=\\\"P18-S0\\\">2. Definition of Confidential Information:</sentence>\\n</paragraph>\\n<paragraph
+      id=\\\"P19\\\">\\n<sentence id=\\\"P19-S0\\\">For purposes of this Agreement,
+      \\\"Confidential Information\\\" means any and all non-public information, conveyed
+      in all forms, whether in oral, written, electronic, or other form or media,
+      whether or not marked, designated, or otherwise identified as \\\"confidential,\\\"
+      that has been or may be disclosed to, accessed by, or observed by Receiving
+      Party, which (i) has actual or potential economic value by virtue of not being
+      generally known to, and not being readily ascertainable by proper means by,
+      other persons who can obtain economic value from its disclosure or use, or (ii)
+      is subject to reasonable efforts by Disclosing Party to maintain its secrecy
+      and confidentiality.</sentence>\\n</paragraph>\\n<paragraph id=\\\"P20\\\">\\n<sentence
+      id=\\\"P20-S0\\\">Confidential Information includes, but is not limited to,
+      the following categories: (1) business information (business plans, strategies,
+      and models), (2) technical information (technical specifications and documentation,
+      research and development activities), (3) customer and market information (customer
+      lists and contact information, sales histories and patterns), (4) personnel
+      and internal information (employee lists and contact information, employment
+      agreements and personnel files), (5) intellectual property (trade secrets and
+      know-how, patents and patent applications, copyrights and copyright applications,
+      trademarks and trademark applications), (6) strategic information (merger and
+      acquisition plans, competitive analyses and strategies).</sentence>\\n<sentence
+      id=\\\"P20-S1\\\">Software code shall also be included into the confidential
+      information.</sentence>\\n</paragraph>\\n<paragraph id=\\\"P21\\\">\\n<sentence
+      id=\\\"P21-S0\\\">Confidential Information shall not include information that:</sentence>\\n<sentence
+      id=\\\"P21-S1\\\">(a) is or becomes generally available to the public other
+      than as a result of disclosure by Receiving Party or its Representatives;</sentence>\\n<sentence
+      id=\\\"P21-S2\\\">(b) was available to Receiving Party on a non-confidential
+      basis prior to its disclosure by Disclosing Party;</sentence>\\n<sentence id=\\\"P21-S3\\\">(c)
+      becomes available to Receiving Party on a non-confidential basis from a person
+      other than Disclosing Party who is not otherwise bound by a confidentiality
+      obligation to Disclosing Party; or (d) was independently developed by Receiving
+      Party without reference to or use of any Confidential Information.</sentence>\\n<sentence
+      id=\\\"P21-S4\\\">The name of the dog of the Receiving Party is Bob.</sentence>\\n</paragraph>\\n<paragraph
+      id=\\\"P22\\\">\\n<sentence id=\\\"P22-S0\\\">The designation of information
+      as Confidential Information shall not be determinative of whether such information
+      constitutes a trade secret under applicable law.</sentence>\\n<sentence id=\\\"P22-S1\\\">All
+      Confidential Information shall remain the exclusive property of Disclosing Party,
+      and Receiving Party shall have no rights, by license or otherwise, to use the
+      Confidential Information except as expressly provided herein.</sentence>\\n</paragraph>\\n<paragraph
+      id=\\\"P23\\\">\\n<sentence id=\\\"P23-S0\\\">3. Obligations of Receiving Party:</sentence>\\n</paragraph>\\n<paragraph
+      id=\\\"P24\\\">\\n<sentence id=\\\"P24-S0\\\">The party receiving Confidential
+      Information (\\\"Receiving Party\\\") shall:</sentence>\\n</paragraph>\\n<paragraph
+      id=\\\"P25\\\">\\n<sentence id=\\\"P25-S0\\\">a. Maintain the confidentiality
+      of the Confidential Information and not disclose it to any third party without
+      the prior written consent of the Disclosing Party.</sentence>\\n</paragraph>\\n<paragraph
+      id=\\\"P26\\\">\\n<sentence id=\\\"P26-S0\\\">b. Use the Confidential Information
+      solely for the purpose of evaluating or engaging in the potential business collaboration.</sentence>\\n</paragraph>\\n<paragraph
+      id=\\\"P27\\\">\\n<sentence id=\\\"P27-S0\\\">c. Take all necessary precautions
+      to protect the confidentiality of the Confidential Information, which shall
+      be no less than the precautions it takes to protect its own confidential information.</sentence>\\n</paragraph>\\n<paragraph
+      id=\\\"P28\\\">\\n<sentence id=\\\"P28-S0\\\">4. Exclusions from Confidential
+      Information:</sentence>\\n</paragraph>\\n<paragraph id=\\\"P29\\\">\\n<sentence
+      id=\\\"P29-S0\\\">Confidential Information does not include information that:</sentence>\\n</paragraph>\\n<paragraph
+      id=\\\"P30\\\">\\n<sentence id=\\\"P30-S0\\\">a. Is or becomes publicly known
+      through no wrongful act of the Receiving Party.</sentence>\\n</paragraph>\\n<paragraph
+      id=\\\"P31\\\">\\n<sentence id=\\\"P31-S0\\\">b. Is already known to the Receiving
+      Party at the time of disclosure.</sentence>\\n</paragraph>\\n<paragraph id=\\\"P32\\\">\\n<sentence
+      id=\\\"P32-S0\\\">c. Is lawfully received from a third party without breach
+      of this Agreement.</sentence>\\n</paragraph>\\n<paragraph id=\\\"P33\\\">\\n<sentence
+      id=\\\"P33-S0\\\">d. Is independently developed by the Receiving Party without
+      use of or reference to the Disclosing Party's Confidential Information.</sentence>\\n</paragraph>\\n<paragraph
+      id=\\\"P34\\\">\\n<sentence id=\\\"P34-S0\\\">6. Return of Materials:</sentence>\\n</paragraph>\\n<paragraph
+      id=\\\"P35\\\">\\n<sentence id=\\\"P35-S0\\\">Upon termination of this Agreement
+      or upon request, the Receiving Party shall return all materials containing Confidential
+      Information to the Disclosing Party or destroy them, at the Disclosing Party's
+      discretion.</sentence>\\n</paragraph>\\n<paragraph id=\\\"P36\\\">\\n<sentence
+      id=\\\"P36-S0\\\">5. Liability:</sentence>\\n</paragraph>\\n<paragraph id=\\\"P37\\\">\\n<sentence
+      id=\\\"P37-S0\\\">a.</sentence>\\n<sentence id=\\\"P37-S1\\\">Total Liability
+      Cap:</sentence>\\n</paragraph>\\n<paragraph id=\\\"P38\\\">\\n<sentence id=\\\"P38-S0\\\">The
+      total liability of either party for any and all claims arising out of or related
+      to this Agreement, whether in contract, tort, or otherwise, shall not exceed
+      the greater of (i) $100,000 or (ii) the total amount paid by the Receiving Party
+      to the Disclosing Party under any separate business agreement between the parties
+      during the twelve (12) months preceding the event giving rise to the claim.</sentence>\\n<sentence
+      id=\\\"P38-S1\\\">This limitation of liability is cumulative and not per incident.</sentence>\\n</paragraph>\\n<paragraph
+      id=\\\"P39\\\">\\n<sentence id=\\\"P39-S0\\\">b. Penalties for Breach:</sentence>\\n</paragraph>\\n<paragraph
+      id=\\\"P40\\\">\\n<sentence id=\\\"P40-S0\\\">In the event of a breach of this
+      Agreement by the Receiving Party, the Disclosing Party shall be entitled to
+      seek injunctive relief in addition to any other remedy available at law or in
+      equity.</sentence>\\n<sentence id=\\\"P40-S1\\\">The Receiving Party acknowledges
+      that a breach of this Agreement may cause irreparable harm to the Disclosing
+      Party for which monetary damages would be an inadequate remedy.</sentence>\\n<sentence
+      id=\\\"P40-S2\\\">In addition to injunctive relief, the Receiving Party shall
+      be liable for liquidated damages in the amount of $25,000 for each instance
+      of unauthorized disclosure or use of Confidential Information, which the parties
+      agree represents a reasonable estimate of the damages likely to be suffered
+      and not a penalty.</sentence>\\n</paragraph>\\n<paragraph id=\\\"P41\\\">\\n<sentence
+      id=\\\"P41-S0\\\">7. No License:</sentence>\\n</paragraph>\\n<paragraph id=\\\"P42\\\">\\n<sentence
+      id=\\\"P42-S0\\\">Nothing in this Agreement shall be construed as granting any
+      rights to the Receiving Party, by license or otherwise, to any of the Disclosing
+      Party\u2019s Confidential Information, except as expressly set forth in this
+      Agreement.</sentence>\\n</paragraph>\\n<paragraph id=\\\"P43\\\">\\n<sentence
+      id=\\\"P43-S0\\\">8. Governing Law and Disputes:</sentence>\\n</paragraph>\\n<paragraph
+      id=\\\"P44\\\">\\n<sentence id=\\\"P44-S0\\\">This Agreement shall be governed
+      by and construed in accordance with the laws of the State of California, without
+      regard to its conflict of law principles.</sentence>\\n</paragraph>\\n<paragraph
+      id=\\\"P45\\\">\\n<sentence id=\\\"P45-S0\\\">All disputes shall be resolved
+      by the courts of the State of California.</sentence>\\n<sentence id=\\\"P45-S1\\\">This
+      Agreement shall remain in effect for a period of five (5) years from the date
+      of signing this agreement.</sentence>\\n</paragraph>\\n<paragraph id=\\\"P46\\\">\\n<sentence
+      id=\\\"P46-S0\\\">9. Miscellaneous:</sentence>\\n</paragraph>\\n<paragraph id=\\\"P47\\\">\\n<sentence
+      id=\\\"P47-S0\\\">a. This Agreement constitutes the entire agreement between
+      the parties with respect to the subject matter hereof and supersedes all prior
+      or contemporaneous oral or written agreements concerning such subject matter.</sentence>\\n</paragraph>\\n<paragraph
+      id=\\\"P48\\\">\\n<sentence id=\\\"P48-S0\\\">b. Any amendments or modifications
+      to this Agreement must be made in writing and signed by both parties.</sentence>\\n</paragraph>\\n<paragraph
+      id=\\\"P49\\\">\\n<sentence id=\\\"P49-S0\\\">c. If any provision of this Agreement
+      is found to be unenforceable, the remainder shall be enforced as fully as possible
+      and the unenforceable provision shall be deemed modified to the limited extent
+      required to permit its enforcement in a manner most closely representing the
+      intention of the parties.</sentence>\\n</paragraph>\\n<paragraph id=\\\"P50\\\">\\n<sentence
+      id=\\\"P50-S0\\\">d. The Disclosing Party shall be a good person to execute
+      this contract.</sentence>\\n</paragraph>\\n<paragraph id=\\\"P51\\\">\\n<sentence
+      id=\\\"P51-S0\\\">IN WITNESS WHEREOF, the parties hereto have executed this
+      Non-Disclosure Agreement as of the date first above written.</sentence>\\n</paragraph>\\n<paragraph
+      id=\\\"P52\\\">\\n<sentence id=\\\"P52-S0\\\">_____</sentence>\\n</paragraph>\\n<paragraph
+      id=\\\"P53\\\">\\n<sentence id=\\\"P53-S0\\\">By: ___________________________</sentence>\\n</paragraph>\\n<paragraph
+      id=\\\"P54\\\">\\n<sentence id=\\\"P54-S0\\\">Name: _____</sentence>\\n</paragraph>\\n<paragraph
+      id=\\\"P55\\\">\\n<sentence id=\\\"P55-S0\\\">Title: _____</sentence>\\n</paragraph>\\n<paragraph
+      id=\\\"P56\\\">\\n<sentence id=\\\"P56-S0\\\">Date: ___________________________</sentence>\\n</paragraph>\\n<paragraph
+      id=\\\"P57\\\">\\n<sentence id=\\\"P57-S0\\\">Example.Com LLC</sentence>\\n</paragraph>\\n<paragraph
+      id=\\\"P58\\\">\\n<sentence id=\\\"P58-S0\\\">By: ___________________________</sentence>\\n</paragraph>\\n<paragraph
+      id=\\\"P59\\\">\\n<sentence id=\\\"P59-S0\\\">Name: Jane Doe</sentence>\\n</paragraph>\\n<paragraph
+      id=\\\"P60\\\">\\n<sentence id=\\\"P60-S0\\\">Title: Managing Partner</sentence>\\n</paragraph>\\n<paragraph
+      id=\\\"P61\\\">\\n<sentence id=\\\"P61-S0\\\">Date: ___________________________</sentence>\\n</paragraph>\\n</document_paragraphs>\"}],\"model\":\"gpt-6-luna\"}"
     headers:
       accept:
       - application/json
@@ -1279,7 +932,7 @@ interactions:
       connection:
       - keep-alive
       content-length:
-      - '56014'
+      - '35043'
       content-type:
       - application/json
       cookie:
@@ -1313,21 +966,22 @@ interactions:
   response:
     body:
       string: !!binary |
-        H4sIAAAAAAAA/7VWUW/aMBB+51dYeQ4VBChlfWvVTpP2UG1U2lYQMvaRuHPszHagXdX/vrNTSLKC
-        pgnxEsX33Z0/f+fk7qVDSCR49IFELKOO5YXs3rDbm2/s/mr8fdCHq/Xd9OOvHxn7Pf10/3szjGIf
-        oZePwNw26oxpjAMntKpgZoA68Fn740kyvhiMk0kAcs1B+rC0cN3zriwVfYvItGBgEXrAJSEv4em5
-        KQ5PaO7FW0sO1tIU0LZ1QqPR0lsiaq2wjioXxTXItHKgAt2HmcLk/kHIzAMMCrcQfIbgLLruzaJ4
-        C8KTM5ThMRbCQW69x0OF7TJUjmsqS/Bww+rtki5BtuO20LVWK8GRk6BSuOfdrrXHFFimtNTpPvBW
-        KIrM9yCfIaWSXPt6iAMu00wYTu6occ/kC0jqy2b3+CHHIACZgvHHb+LzevEaN7V4LK0TK8FC1krU
-        aQaEpgYgx/MSDiuhwBKqOCmMdniNLGENOYhQK23ykCDGBZMlFyolzguCiVsOIY3VK7ehBjANh0ti
-        ATOugkI+HeqwFF5kfMuFq3bmNMcrZC8J5dzgfUJCzsvSLYIsXFgmtS0xp/deltZz9jwlFlWbSrPL
-        AAJet6UUNsMcqV6DUZ6tpJuAapeB8ecLUpbIx3k1z1p6zyIDKzCA9VogARSLFtn7i/Pyd4X2RO2u
-        8l1/vKemdYQF/03gi+D7riipUnS/9tqFb5W+Xfz/JZj0jiaY9ALB+ADUPx330fHcR6cUd3BxNMHB
-        xSkJDo+v/vBw9T2UnI778Hjuw5OKe/y3P/z3t18vdvY3W1jj+7zZhXH/0lLf/VUpZQOgSmlX/VI9
-        mXlnK8C24+PPHP+vCxwqLE4Y2MWt00UU0Fd8zsMEUbaGggh7S46d3emfENL2e+NkVGWM6nGlxs+H
-        kzfUIRnZCOwPxsN4T9IFB0eFtI1BJGKUZTgw1MGD83HcAhcbg+NE7TEZjEY7D4qtTtdYr9PQ4T3r
-        fQQqjbAD1VmSi+TgBjXA/CCE1AsDXLC2NrWbAT/3HXLbVSRQjiyYNQ51CyfA+Kph66elrCazyD5b
-        nKoWWNoUTGFEGM/8xei8dv4AvE93o5UKAAA=
+        H4sIAAAAAAAA/7VXTW/bMAy951cIPjtFPpzG2a0r1mLAthZdDsOaIFBlxlYnS54k9wNF//souYnt
+        NcEwGL44ER9JPZE0/PQyICTgSfCBBCyjluWFGH5il1fs4urr758f4/EZe0olP8t/TC9v+Nn1tyB0
+        EeruHpjdRZ0whXFguZIVzDRQCy7reL6YzON4vIg9kKsEhAtLCzs8HYpS0reITHEGBqFbXBLy4p+O
+        m0zgCc2jcGfJwRiaAtp2TmjUSjhLQI3hxlJpg7AGmZIWpKd7u5KY3D0IWTmAQWE3PFkhuArOR6sg
+        3IHwZDVleIwNt5Ab53FbYfsMleMDFSU4uGF1dkHvQLTjdtC5klueICdOBbfP+11rjyWwTCqh0kPg
+        BZcUmR9AvkBKBTl3/eBHXJYZ1wm5pto+kxsQ1LXNHPBDjr4AZAnaHb+Jr+vFa9isxX1pLN9y5rNW
+        RV1mQGiqAXI8L0lgyyUYwhoVIFxulc59DKEyITwvlEGnpLQcf6wihVYWJ86jGozVHBfcogs3TChT
+        aggxDRNlwmVKrKsesnif2qitfaQakEACJ+QzphRG4eoBNO7kajMsfG3qzCYkWM077lrlkyQ0xwlE
+        c+rCpNtR0McK4qYorcPcStkMtDurr2SJfKwr5kmr3KtAwxY0YLs2uDXWihbZ+7l5+btBB6L2k3w9
+        nh9oaR1hwL0S+IcnhyaUVCmG30ftvrc63+79fxNcdCe46JPgZNSZ4GTkCYZHoHF/3Gfduc/6LO50
+        0pngdNIrwbg7wfho9x3UX/ej7pMbHZ/cqJrcY9Ckv2NF3Y8V9TkzUfe3Lpodr/us15np/r2Iev1e
+        RN1fyCjulWD3D1r07w9avdjb32x+jf/XTemL+5eGOsktSyEaAJVS2Ur7OTLrwa4AO5mNMo2bbINK
+        3qCsR+lsrCoCj77ic+1le9lS4gGqtBzltFW/wKedj+fzKmFQXxEa8OhN1QcWuYgGEO/jWik3CVjK
+        hWlo/4BRlqFG38eOp6fzsAVuHjUq+NpjFo9qD4qCUdXYaNCownvShwhUFUIN2OAwmxzdoAaYu3sg
+        9UJDgnK2VZraTYO7ah1z2/fDUw4M6Ae8R21QNmvXM1TbtBTVZSgwzwYvMhtsbAq60NzfiNxYDF4H
+        fwApWqfGCA4AAA==
     headers:
       access-control-expose-headers:
       - X-Request-ID
@@ -1350,7 +1004,7 @@ interactions:
       openai-organization:
       - DUMMY
       openai-processing-ms:
-      - '9848'
+      - '6210'
       openai-project:
       - DUMMY
       openai-version:
@@ -1376,7 +1030,7 @@ interactions:
       x-ratelimit-reset-requests:
       - 6ms
       x-ratelimit-reset-tokens:
-      - 81ms
+      - 51ms
       x-request-id:
       - DUMMY
     status:
@@ -1477,11 +1131,11 @@ interactions:
       across diverse document analysis tasks.\\n</conclusion>\"},{\"role\":\"user\",\"content\":\"<introduction>\\nBelow
       you will find a list of document paragraphs and a list of concepts.\\n</introduction>\\n\\n<guidance_on_task_structure>\\nAll
       structured information in these instructions is provided using semantic XML
-      tags. Field names correspond directly to tag names (e.g., concept_name, paragraph_text,
-      sentence_text, additional_context, etc.).\\n</guidance_on_task_structure>\\n\\n<private_reasoning>\\nUse
-      private deliberation to plan, evaluate evidence, and verify decisions. Do not
-      reveal any intermediate analysis, notes, or steps. Only output the JSON according
-      to the format specified within <answer_format></answer_format> tags.\\n\\nFollow
+      tags. Field names correspond directly to tag names (e.g., concept_name, additional_context,
+      etc.).\\n</guidance_on_task_structure>\\n\\n<private_reasoning>\\nUse private
+      deliberation to plan, evaluate evidence, and verify decisions. Do not reveal
+      any intermediate analysis, notes, or steps. Only output the JSON according to
+      the format specified within <answer_format></answer_format> tags.\\n\\nFollow
       this internal three-stage process:\\n\\n1. Plan\\n    - Internally restate each
       concept in one sentence.\\n    - List 3-5 concrete lexical/semantic cues for
       relevance aligned with the concept description (include indicators of definition,
@@ -1501,9 +1155,8 @@ interactions:
       disclose any plan, evidence, or internal notes - only the JSON array defined
       within <answer_format></answer_format> tags.\\n</private_reasoning>\\n\\n<task_description>\\nYour
       task is to:\\n1. Read through the document paragraphs provided.\\n    - Each
-      paragraph is identified by a paragraph ID (for example, \\\"P0\\\", \\\"P1\\\",
-      etc.) specified within <paragraph_id></paragraph_id> tags, followed by the full
-      text of the paragraph specified within <paragraph_text></paragraph_text> tags.\\n
+      paragraph is given with its full text within <paragraph></paragraph> tags, whose
+      id attribute holds its paragraph ID (for example, \\\"P0\\\", \\\"P1\\\", etc.).\\n
       \   - Note that paragraphs are listed in the same order they appear in the original
       document.\\n    - You may be working with document fragments rather than complete
       documents. Focus on extracting information from the available content without
@@ -1649,222 +1302,124 @@ interactions:
       \   <amount_of_extracted_items>This concept must have exactly one extracted
       item, never zero or multiple items.</amount_of_extracted_items>\\n\\n    <extracted_item_type>dict
       (must be exactly as specified)</extracted_item_type>\\n</concept>\\n\\n</concepts>\\n\\n<document_paragraphs>\\nDOCUMENT
-      PARAGRAPHS:\\n    <paragraph id=\\\"P0\\\">\\n        <paragraph_id>P0</paragraph_id>\\n
-      \       \\n        <paragraph_text>\\n        Non-Disclosure Agreement (NDA)\\n
-      \       </paragraph_text>\\n    </paragraph>\\n\\n    <paragraph id=\\\"P1\\\">\\n
-      \       <paragraph_id>P1</paragraph_id>\\n        \\n        <paragraph_text>\\n
-      \       This Non-Disclosure Agreement (the \\\"Agreement\\\") is made and entered
-      into as of July 16, 2024, by and between:\\n        </paragraph_text>\\n    </paragraph>\\n\\n
-      \   <paragraph id=\\\"P2\\\">\\n        <paragraph_id>P2</paragraph_id>\\n        \\n
-      \       <paragraph_text>\\n        Party A:\\n        </paragraph_text>\\n    </paragraph>\\n\\n
-      \   <paragraph id=\\\"P3\\\">\\n        <paragraph_id>P3</paragraph_id>\\n        \\n
-      \       <paragraph_text>\\n        _____\\n        </paragraph_text>\\n    </paragraph>\\n\\n
-      \   <paragraph id=\\\"P4\\\">\\n        <paragraph_id>P4</paragraph_id>\\n        \\n
-      \       <paragraph_text>\\n        _____\\n        </paragraph_text>\\n    </paragraph>\\n\\n
-      \   <paragraph id=\\\"P5\\\">\\n        <paragraph_id>P5</paragraph_id>\\n        \\n
-      \       <paragraph_text>\\n        _____\\n        </paragraph_text>\\n    </paragraph>\\n\\n
-      \   <paragraph id=\\\"P6\\\">\\n        <paragraph_id>P6</paragraph_id>\\n        \\n
-      \       <paragraph_text>\\n        Contact: _____\\n        </paragraph_text>\\n
-      \   </paragraph>\\n\\n    <paragraph id=\\\"P7\\\">\\n        <paragraph_id>P7</paragraph_id>\\n
-      \       \\n        <paragraph_text>\\n        Phone: _____\\n        </paragraph_text>\\n
-      \   </paragraph>\\n\\n    <paragraph id=\\\"P8\\\">\\n        <paragraph_id>P8</paragraph_id>\\n
-      \       \\n        <paragraph_text>\\n        Email: _____\\n        </paragraph_text>\\n
-      \   </paragraph>\\n\\n    <paragraph id=\\\"P9\\\">\\n        <paragraph_id>P9</paragraph_id>\\n
-      \       \\n        <paragraph_text>\\n        Party B:\\n        </paragraph_text>\\n
-      \   </paragraph>\\n\\n    <paragraph id=\\\"P10\\\">\\n        <paragraph_id>P10</paragraph_id>\\n
-      \       \\n        <paragraph_text>\\n        Example.Com LLC\\n        </paragraph_text>\\n
-      \   </paragraph>\\n\\n    <paragraph id=\\\"P11\\\">\\n        <paragraph_id>P11</paragraph_id>\\n
-      \       \\n        <paragraph_text>\\n        5678 Random Drive\\n        </paragraph_text>\\n
-      \   </paragraph>\\n\\n    <paragraph id=\\\"P12\\\">\\n        <paragraph_id>P12</paragraph_id>\\n
-      \       \\n        <paragraph_text>\\n        New York, NY 00000\\n        </paragraph_text>\\n
-      \   </paragraph>\\n\\n    <paragraph id=\\\"P13\\\">\\n        <paragraph_id>P13</paragraph_id>\\n
-      \       \\n        <paragraph_text>\\n        Contact: Jane Doe, Managing Partner\\n
-      \       </paragraph_text>\\n    </paragraph>\\n\\n    <paragraph id=\\\"P14\\\">\\n
-      \       <paragraph_id>P14</paragraph_id>\\n        \\n        <paragraph_text>\\n
-      \       Phone: (012) 345-6789\\n        </paragraph_text>\\n    </paragraph>\\n\\n
-      \   <paragraph id=\\\"P15\\\">\\n        <paragraph_id>P15</paragraph_id>\\n
-      \       \\n        <paragraph_text>\\n        Email: jane.doe@example.com\\n
-      \       </paragraph_text>\\n    </paragraph>\\n\\n    <paragraph id=\\\"P16\\\">\\n
-      \       <paragraph_id>P16</paragraph_id>\\n        \\n        <paragraph_text>\\n
-      \       1. Purpose:\\n        </paragraph_text>\\n    </paragraph>\\n\\n    <paragraph
-      id=\\\"P17\\\">\\n        <paragraph_id>P17</paragraph_id>\\n        \\n        <paragraph_text>\\n
-      \       The purpose of this Agreement is to protect the confidential information
-      that may be disclosed between the parties during discussions and engagements
-      regarding potential business collaborations and partnerships.\\n        </paragraph_text>\\n
-      \   </paragraph>\\n\\n    <paragraph id=\\\"P18\\\">\\n        <paragraph_id>P18</paragraph_id>\\n
-      \       \\n        <paragraph_text>\\n        2. Definition of Confidential
-      Information:\\n        </paragraph_text>\\n    </paragraph>\\n\\n    <paragraph
-      id=\\\"P19\\\">\\n        <paragraph_id>P19</paragraph_id>\\n        \\n        <paragraph_text>\\n
-      \       For purposes of this Agreement, \\\"Confidential Information\\\" means
-      any and all non-public information, conveyed in all forms, whether in oral,
-      written, electronic, or other form or media, whether or not marked, designated,
+      PARAGRAPHS:\\n<paragraph id=\\\"P0\\\">Non-Disclosure Agreement (NDA)</paragraph>\\n<paragraph
+      id=\\\"P1\\\">This Non-Disclosure Agreement (the \\\"Agreement\\\") is made
+      and entered into as of July 16, 2024, by and between:</paragraph>\\n<paragraph
+      id=\\\"P2\\\">Party A:</paragraph>\\n<paragraph id=\\\"P3\\\">_____</paragraph>\\n<paragraph
+      id=\\\"P4\\\">_____</paragraph>\\n<paragraph id=\\\"P5\\\">_____</paragraph>\\n<paragraph
+      id=\\\"P6\\\">Contact: _____</paragraph>\\n<paragraph id=\\\"P7\\\">Phone: _____</paragraph>\\n<paragraph
+      id=\\\"P8\\\">Email: _____</paragraph>\\n<paragraph id=\\\"P9\\\">Party B:</paragraph>\\n<paragraph
+      id=\\\"P10\\\">Example.Com LLC</paragraph>\\n<paragraph id=\\\"P11\\\">5678
+      Random Drive</paragraph>\\n<paragraph id=\\\"P12\\\">New York, NY 00000</paragraph>\\n<paragraph
+      id=\\\"P13\\\">Contact: Jane Doe, Managing Partner</paragraph>\\n<paragraph
+      id=\\\"P14\\\">Phone: (012) 345-6789</paragraph>\\n<paragraph id=\\\"P15\\\">Email:
+      jane.doe@example.com</paragraph>\\n<paragraph id=\\\"P16\\\">1. Purpose:</paragraph>\\n<paragraph
+      id=\\\"P17\\\">The purpose of this Agreement is to protect the confidential
+      information that may be disclosed between the parties during discussions and
+      engagements regarding potential business collaborations and partnerships.</paragraph>\\n<paragraph
+      id=\\\"P18\\\">2. Definition of Confidential Information:</paragraph>\\n<paragraph
+      id=\\\"P19\\\">For purposes of this Agreement, \\\"Confidential Information\\\"
+      means any and all non-public information, conveyed in all forms, whether in
+      oral, written, electronic, or other form or media, whether or not marked, designated,
       or otherwise identified as \\\"confidential,\\\" that has been or may be disclosed
       to, accessed by, or observed by Receiving Party, which (i) has actual or potential
       economic value by virtue of not being generally known to, and not being readily
       ascertainable by proper means by, other persons who can obtain economic value
       from its disclosure or use, or (ii) is subject to reasonable efforts by Disclosing
-      Party to maintain its secrecy and confidentiality.\\n        </paragraph_text>\\n
-      \   </paragraph>\\n\\n    <paragraph id=\\\"P20\\\">\\n        <paragraph_id>P20</paragraph_id>\\n
-      \       \\n        <paragraph_text>\\n        Confidential Information includes,
-      but is not limited to, the following categories: (1) business information (business
-      plans, strategies, and models), (2) technical information (technical specifications
-      and documentation, research and development activities), (3) customer and market
-      information (customer lists and contact information, sales histories and patterns),
-      (4) personnel and internal information (employee lists and contact information,
-      employment agreements and personnel files), (5) intellectual property (trade
-      secrets and know-how, patents and patent applications, copyrights and copyright
-      applications, trademarks and trademark applications), (6) strategic information
-      (merger and acquisition plans, competitive analyses and strategies). Software
-      code shall also be included into the confidential information.\\n        </paragraph_text>\\n
-      \   </paragraph>\\n\\n    <paragraph id=\\\"P21\\\">\\n        <paragraph_id>P21</paragraph_id>\\n
-      \       \\n        <paragraph_text>\\n        Confidential Information shall
-      not include information that: (a) is or becomes generally available to the public
-      other than as a result of disclosure by Receiving Party or its Representatives;
-      (b) was available to Receiving Party on a non-confidential basis prior to its
-      disclosure by Disclosing Party; (c) becomes available to Receiving Party on
-      a non-confidential basis from a person other than Disclosing Party who is not
-      otherwise bound by a confidentiality obligation to Disclosing Party; or (d)
-      was independently developed by Receiving Party without reference to or use of
-      any Confidential Information. The name of the dog of the Receiving Party is
-      Bob.\\n        </paragraph_text>\\n    </paragraph>\\n\\n    <paragraph id=\\\"P22\\\">\\n
-      \       <paragraph_id>P22</paragraph_id>\\n        \\n        <paragraph_text>\\n
-      \       The designation of information as Confidential Information shall not
-      be determinative of whether such information constitutes a trade secret under
-      applicable law. All Confidential Information shall remain the exclusive property
-      of Disclosing Party, and Receiving Party shall have no rights, by license or
-      otherwise, to use the Confidential Information except as expressly provided
-      herein.\\n        </paragraph_text>\\n    </paragraph>\\n\\n    <paragraph id=\\\"P23\\\">\\n
-      \       <paragraph_id>P23</paragraph_id>\\n        \\n        <paragraph_text>\\n
-      \       3. Obligations of Receiving Party:\\n        </paragraph_text>\\n    </paragraph>\\n\\n
-      \   <paragraph id=\\\"P24\\\">\\n        <paragraph_id>P24</paragraph_id>\\n
-      \       \\n        <paragraph_text>\\n        The party receiving Confidential
-      Information (\\\"Receiving Party\\\") shall:\\n        </paragraph_text>\\n
-      \   </paragraph>\\n\\n    <paragraph id=\\\"P25\\\">\\n        <paragraph_id>P25</paragraph_id>\\n
-      \       \\n        <paragraph_text>\\n        a. Maintain the confidentiality
-      of the Confidential Information and not disclose it to any third party without
-      the prior written consent of the Disclosing Party.\\n        </paragraph_text>\\n
-      \   </paragraph>\\n\\n    <paragraph id=\\\"P26\\\">\\n        <paragraph_id>P26</paragraph_id>\\n
-      \       \\n        <paragraph_text>\\n        b. Use the Confidential Information
-      solely for the purpose of evaluating or engaging in the potential business collaboration.\\n
-      \       </paragraph_text>\\n    </paragraph>\\n\\n    <paragraph id=\\\"P27\\\">\\n
-      \       <paragraph_id>P27</paragraph_id>\\n        \\n        <paragraph_text>\\n
-      \       c. Take all necessary precautions to protect the confidentiality of
-      the Confidential Information, which shall be no less than the precautions it
-      takes to protect its own confidential information.\\n        </paragraph_text>\\n
-      \   </paragraph>\\n\\n    <paragraph id=\\\"P28\\\">\\n        <paragraph_id>P28</paragraph_id>\\n
-      \       \\n        <paragraph_text>\\n        4. Exclusions from Confidential
-      Information:\\n        </paragraph_text>\\n    </paragraph>\\n\\n    <paragraph
-      id=\\\"P29\\\">\\n        <paragraph_id>P29</paragraph_id>\\n        \\n        <paragraph_text>\\n
-      \       Confidential Information does not include information that:\\n        </paragraph_text>\\n
-      \   </paragraph>\\n\\n    <paragraph id=\\\"P30\\\">\\n        <paragraph_id>P30</paragraph_id>\\n
-      \       \\n        <paragraph_text>\\n        a. Is or becomes publicly known
-      through no wrongful act of the Receiving Party.\\n        </paragraph_text>\\n
-      \   </paragraph>\\n\\n    <paragraph id=\\\"P31\\\">\\n        <paragraph_id>P31</paragraph_id>\\n
-      \       \\n        <paragraph_text>\\n        b. Is already known to the Receiving
-      Party at the time of disclosure.\\n        </paragraph_text>\\n    </paragraph>\\n\\n
-      \   <paragraph id=\\\"P32\\\">\\n        <paragraph_id>P32</paragraph_id>\\n
-      \       \\n        <paragraph_text>\\n        c. Is lawfully received from a
-      third party without breach of this Agreement.\\n        </paragraph_text>\\n
-      \   </paragraph>\\n\\n    <paragraph id=\\\"P33\\\">\\n        <paragraph_id>P33</paragraph_id>\\n
-      \       \\n        <paragraph_text>\\n        d. Is independently developed
-      by the Receiving Party without use of or reference to the Disclosing Party's
-      Confidential Information.\\n        </paragraph_text>\\n    </paragraph>\\n\\n
-      \   <paragraph id=\\\"P34\\\">\\n        <paragraph_id>P34</paragraph_id>\\n
-      \       \\n        <paragraph_text>\\n        6. Return of Materials:\\n        </paragraph_text>\\n
-      \   </paragraph>\\n\\n    <paragraph id=\\\"P35\\\">\\n        <paragraph_id>P35</paragraph_id>\\n
-      \       \\n        <paragraph_text>\\n        Upon termination of this Agreement
-      or upon request, the Receiving Party shall return all materials containing Confidential
-      Information to the Disclosing Party or destroy them, at the Disclosing Party's
-      discretion.\\n        </paragraph_text>\\n    </paragraph>\\n\\n    <paragraph
-      id=\\\"P36\\\">\\n        <paragraph_id>P36</paragraph_id>\\n        \\n        <paragraph_text>\\n
-      \       5. Liability:\\n        </paragraph_text>\\n    </paragraph>\\n\\n    <paragraph
-      id=\\\"P37\\\">\\n        <paragraph_id>P37</paragraph_id>\\n        \\n        <paragraph_text>\\n
-      \       a. Total Liability Cap:\\n        </paragraph_text>\\n    </paragraph>\\n\\n
-      \   <paragraph id=\\\"P38\\\">\\n        <paragraph_id>P38</paragraph_id>\\n
-      \       \\n        <paragraph_text>\\n        The total liability of either
-      party for any and all claims arising out of or related to this Agreement, whether
-      in contract, tort, or otherwise, shall not exceed the greater of (i) $100,000
-      or (ii) the total amount paid by the Receiving Party to the Disclosing Party
-      under any separate business agreement between the parties during the twelve
-      (12) months preceding the event giving rise to the claim. This limitation of
-      liability is cumulative and not per incident.\\n        </paragraph_text>\\n
-      \   </paragraph>\\n\\n    <paragraph id=\\\"P39\\\">\\n        <paragraph_id>P39</paragraph_id>\\n
-      \       \\n        <paragraph_text>\\n        b. Penalties for Breach:\\n        </paragraph_text>\\n
-      \   </paragraph>\\n\\n    <paragraph id=\\\"P40\\\">\\n        <paragraph_id>P40</paragraph_id>\\n
-      \       \\n        <paragraph_text>\\n        In the event of a breach of this
-      Agreement by the Receiving Party, the Disclosing Party shall be entitled to
-      seek injunctive relief in addition to any other remedy available at law or in
-      equity. The Receiving Party acknowledges that a breach of this Agreement may
-      cause irreparable harm to the Disclosing Party for which monetary damages would
-      be an inadequate remedy. In addition to injunctive relief, the Receiving Party
-      shall be liable for liquidated damages in the amount of $25,000 for each instance
-      of unauthorized disclosure or use of Confidential Information, which the parties
-      agree represents a reasonable estimate of the damages likely to be suffered
-      and not a penalty.\\n        </paragraph_text>\\n    </paragraph>\\n\\n    <paragraph
-      id=\\\"P41\\\">\\n        <paragraph_id>P41</paragraph_id>\\n        \\n        <paragraph_text>\\n
-      \       7. No License:\\n        </paragraph_text>\\n    </paragraph>\\n\\n
-      \   <paragraph id=\\\"P42\\\">\\n        <paragraph_id>P42</paragraph_id>\\n
-      \       \\n        <paragraph_text>\\n        Nothing in this Agreement shall
-      be construed as granting any rights to the Receiving Party, by license or otherwise,
-      to any of the Disclosing Party\u2019s Confidential Information, except as expressly
-      set forth in this Agreement.\\n        </paragraph_text>\\n    </paragraph>\\n\\n
-      \   <paragraph id=\\\"P43\\\">\\n        <paragraph_id>P43</paragraph_id>\\n
-      \       \\n        <paragraph_text>\\n        8. Governing Law and Disputes:\\n
-      \       </paragraph_text>\\n    </paragraph>\\n\\n    <paragraph id=\\\"P44\\\">\\n
-      \       <paragraph_id>P44</paragraph_id>\\n        \\n        <paragraph_text>\\n
-      \       This Agreement shall be governed by and construed in accordance with
-      the laws of the State of California, without regard to its conflict of law principles.\\n
-      \       </paragraph_text>\\n    </paragraph>\\n\\n    <paragraph id=\\\"P45\\\">\\n
-      \       <paragraph_id>P45</paragraph_id>\\n        \\n        <paragraph_text>\\n
-      \       All disputes shall be resolved by the courts of the State of California.
-      This Agreement shall remain in effect for a period of five (5) years from the
-      date of signing this agreement.\\n        </paragraph_text>\\n    </paragraph>\\n\\n
-      \   <paragraph id=\\\"P46\\\">\\n        <paragraph_id>P46</paragraph_id>\\n
-      \       \\n        <paragraph_text>\\n        9. Miscellaneous:\\n        </paragraph_text>\\n
-      \   </paragraph>\\n\\n    <paragraph id=\\\"P47\\\">\\n        <paragraph_id>P47</paragraph_id>\\n
-      \       \\n        <paragraph_text>\\n        a. This Agreement constitutes
+      Party to maintain its secrecy and confidentiality.</paragraph>\\n<paragraph
+      id=\\\"P20\\\">Confidential Information includes, but is not limited to, the
+      following categories: (1) business information (business plans, strategies,
+      and models), (2) technical information (technical specifications and documentation,
+      research and development activities), (3) customer and market information (customer
+      lists and contact information, sales histories and patterns), (4) personnel
+      and internal information (employee lists and contact information, employment
+      agreements and personnel files), (5) intellectual property (trade secrets and
+      know-how, patents and patent applications, copyrights and copyright applications,
+      trademarks and trademark applications), (6) strategic information (merger and
+      acquisition plans, competitive analyses and strategies). Software code shall
+      also be included into the confidential information.</paragraph>\\n<paragraph
+      id=\\\"P21\\\">Confidential Information shall not include information that:
+      (a) is or becomes generally available to the public other than as a result of
+      disclosure by Receiving Party or its Representatives; (b) was available to Receiving
+      Party on a non-confidential basis prior to its disclosure by Disclosing Party;
+      (c) becomes available to Receiving Party on a non-confidential basis from a
+      person other than Disclosing Party who is not otherwise bound by a confidentiality
+      obligation to Disclosing Party; or (d) was independently developed by Receiving
+      Party without reference to or use of any Confidential Information. The name
+      of the dog of the Receiving Party is Bob.</paragraph>\\n<paragraph id=\\\"P22\\\">The
+      designation of information as Confidential Information shall not be determinative
+      of whether such information constitutes a trade secret under applicable law.
+      All Confidential Information shall remain the exclusive property of Disclosing
+      Party, and Receiving Party shall have no rights, by license or otherwise, to
+      use the Confidential Information except as expressly provided herein.</paragraph>\\n<paragraph
+      id=\\\"P23\\\">3. Obligations of Receiving Party:</paragraph>\\n<paragraph id=\\\"P24\\\">The
+      party receiving Confidential Information (\\\"Receiving Party\\\") shall:</paragraph>\\n<paragraph
+      id=\\\"P25\\\">a. Maintain the confidentiality of the Confidential Information
+      and not disclose it to any third party without the prior written consent of
+      the Disclosing Party.</paragraph>\\n<paragraph id=\\\"P26\\\">b. Use the Confidential
+      Information solely for the purpose of evaluating or engaging in the potential
+      business collaboration.</paragraph>\\n<paragraph id=\\\"P27\\\">c. Take all
+      necessary precautions to protect the confidentiality of the Confidential Information,
+      which shall be no less than the precautions it takes to protect its own confidential
+      information.</paragraph>\\n<paragraph id=\\\"P28\\\">4. Exclusions from Confidential
+      Information:</paragraph>\\n<paragraph id=\\\"P29\\\">Confidential Information
+      does not include information that:</paragraph>\\n<paragraph id=\\\"P30\\\">a.
+      Is or becomes publicly known through no wrongful act of the Receiving Party.</paragraph>\\n<paragraph
+      id=\\\"P31\\\">b. Is already known to the Receiving Party at the time of disclosure.</paragraph>\\n<paragraph
+      id=\\\"P32\\\">c. Is lawfully received from a third party without breach of
+      this Agreement.</paragraph>\\n<paragraph id=\\\"P33\\\">d. Is independently
+      developed by the Receiving Party without use of or reference to the Disclosing
+      Party's Confidential Information.</paragraph>\\n<paragraph id=\\\"P34\\\">6.
+      Return of Materials:</paragraph>\\n<paragraph id=\\\"P35\\\">Upon termination
+      of this Agreement or upon request, the Receiving Party shall return all materials
+      containing Confidential Information to the Disclosing Party or destroy them,
+      at the Disclosing Party's discretion.</paragraph>\\n<paragraph id=\\\"P36\\\">5.
+      Liability:</paragraph>\\n<paragraph id=\\\"P37\\\">a. Total Liability Cap:</paragraph>\\n<paragraph
+      id=\\\"P38\\\">The total liability of either party for any and all claims arising
+      out of or related to this Agreement, whether in contract, tort, or otherwise,
+      shall not exceed the greater of (i) $100,000 or (ii) the total amount paid by
+      the Receiving Party to the Disclosing Party under any separate business agreement
+      between the parties during the twelve (12) months preceding the event giving
+      rise to the claim. This limitation of liability is cumulative and not per incident.</paragraph>\\n<paragraph
+      id=\\\"P39\\\">b. Penalties for Breach:</paragraph>\\n<paragraph id=\\\"P40\\\">In
+      the event of a breach of this Agreement by the Receiving Party, the Disclosing
+      Party shall be entitled to seek injunctive relief in addition to any other remedy
+      available at law or in equity. The Receiving Party acknowledges that a breach
+      of this Agreement may cause irreparable harm to the Disclosing Party for which
+      monetary damages would be an inadequate remedy. In addition to injunctive relief,
+      the Receiving Party shall be liable for liquidated damages in the amount of
+      $25,000 for each instance of unauthorized disclosure or use of Confidential
+      Information, which the parties agree represents a reasonable estimate of the
+      damages likely to be suffered and not a penalty.</paragraph>\\n<paragraph id=\\\"P41\\\">7.
+      No License:</paragraph>\\n<paragraph id=\\\"P42\\\">Nothing in this Agreement
+      shall be construed as granting any rights to the Receiving Party, by license
+      or otherwise, to any of the Disclosing Party\u2019s Confidential Information,
+      except as expressly set forth in this Agreement.</paragraph>\\n<paragraph id=\\\"P43\\\">8.
+      Governing Law and Disputes:</paragraph>\\n<paragraph id=\\\"P44\\\">This Agreement
+      shall be governed by and construed in accordance with the laws of the State
+      of California, without regard to its conflict of law principles.</paragraph>\\n<paragraph
+      id=\\\"P45\\\">All disputes shall be resolved by the courts of the State of
+      California. This Agreement shall remain in effect for a period of five (5) years
+      from the date of signing this agreement.</paragraph>\\n<paragraph id=\\\"P46\\\">9.
+      Miscellaneous:</paragraph>\\n<paragraph id=\\\"P47\\\">a. This Agreement constitutes
       the entire agreement between the parties with respect to the subject matter
       hereof and supersedes all prior or contemporaneous oral or written agreements
-      concerning such subject matter.\\n        </paragraph_text>\\n    </paragraph>\\n\\n
-      \   <paragraph id=\\\"P48\\\">\\n        <paragraph_id>P48</paragraph_id>\\n
-      \       \\n        <paragraph_text>\\n        b. Any amendments or modifications
-      to this Agreement must be made in writing and signed by both parties.\\n        </paragraph_text>\\n
-      \   </paragraph>\\n\\n    <paragraph id=\\\"P49\\\">\\n        <paragraph_id>P49</paragraph_id>\\n
-      \       \\n        <paragraph_text>\\n        c. If any provision of this Agreement
-      is found to be unenforceable, the remainder shall be enforced as fully as possible
-      and the unenforceable provision shall be deemed modified to the limited extent
-      required to permit its enforcement in a manner most closely representing the
-      intention of the parties.\\n        </paragraph_text>\\n    </paragraph>\\n\\n
-      \   <paragraph id=\\\"P50\\\">\\n        <paragraph_id>P50</paragraph_id>\\n
-      \       \\n        <paragraph_text>\\n        d. The Disclosing Party shall
-      be a good person to execute this contract.\\n        </paragraph_text>\\n    </paragraph>\\n\\n
-      \   <paragraph id=\\\"P51\\\">\\n        <paragraph_id>P51</paragraph_id>\\n
-      \       \\n        <paragraph_text>\\n        IN WITNESS WHEREOF, the parties
-      hereto have executed this Non-Disclosure Agreement as of the date first above
-      written.\\n        </paragraph_text>\\n    </paragraph>\\n\\n    <paragraph
-      id=\\\"P52\\\">\\n        <paragraph_id>P52</paragraph_id>\\n        \\n        <paragraph_text>\\n
-      \       _____\\n        </paragraph_text>\\n    </paragraph>\\n\\n    <paragraph
-      id=\\\"P53\\\">\\n        <paragraph_id>P53</paragraph_id>\\n        \\n        <paragraph_text>\\n
-      \       By: ___________________________\\n        </paragraph_text>\\n    </paragraph>\\n\\n
-      \   <paragraph id=\\\"P54\\\">\\n        <paragraph_id>P54</paragraph_id>\\n
-      \       \\n        <paragraph_text>\\n        Name: _____\\n        </paragraph_text>\\n
-      \   </paragraph>\\n\\n    <paragraph id=\\\"P55\\\">\\n        <paragraph_id>P55</paragraph_id>\\n
-      \       \\n        <paragraph_text>\\n        Title: _____\\n        </paragraph_text>\\n
-      \   </paragraph>\\n\\n    <paragraph id=\\\"P56\\\">\\n        <paragraph_id>P56</paragraph_id>\\n
-      \       \\n        <paragraph_text>\\n        Date: ___________________________\\n
-      \       </paragraph_text>\\n    </paragraph>\\n\\n    <paragraph id=\\\"P57\\\">\\n
-      \       <paragraph_id>P57</paragraph_id>\\n        \\n        <paragraph_text>\\n
-      \       Example.Com LLC\\n        </paragraph_text>\\n    </paragraph>\\n\\n
-      \   <paragraph id=\\\"P58\\\">\\n        <paragraph_id>P58</paragraph_id>\\n
-      \       \\n        <paragraph_text>\\n        By: ___________________________\\n
-      \       </paragraph_text>\\n    </paragraph>\\n\\n    <paragraph id=\\\"P59\\\">\\n
-      \       <paragraph_id>P59</paragraph_id>\\n        \\n        <paragraph_text>\\n
-      \       Name: Jane Doe\\n        </paragraph_text>\\n    </paragraph>\\n\\n
-      \   <paragraph id=\\\"P60\\\">\\n        <paragraph_id>P60</paragraph_id>\\n
-      \       \\n        <paragraph_text>\\n        Title: Managing Partner\\n        </paragraph_text>\\n
-      \   </paragraph>\\n\\n    <paragraph id=\\\"P61\\\">\\n        <paragraph_id>P61</paragraph_id>\\n
-      \       \\n        <paragraph_text>\\n        Date: ___________________________\\n
-      \       </paragraph_text>\\n    </paragraph>\\n\\n</document_paragraphs>\"}],\"model\":\"gpt-6-luna\"}"
+      concerning such subject matter.</paragraph>\\n<paragraph id=\\\"P48\\\">b. Any
+      amendments or modifications to this Agreement must be made in writing and signed
+      by both parties.</paragraph>\\n<paragraph id=\\\"P49\\\">c. If any provision
+      of this Agreement is found to be unenforceable, the remainder shall be enforced
+      as fully as possible and the unenforceable provision shall be deemed modified
+      to the limited extent required to permit its enforcement in a manner most closely
+      representing the intention of the parties.</paragraph>\\n<paragraph id=\\\"P50\\\">d.
+      The Disclosing Party shall be a good person to execute this contract.</paragraph>\\n<paragraph
+      id=\\\"P51\\\">IN WITNESS WHEREOF, the parties hereto have executed this Non-Disclosure
+      Agreement as of the date first above written.</paragraph>\\n<paragraph id=\\\"P52\\\">_____</paragraph>\\n<paragraph
+      id=\\\"P53\\\">By: ___________________________</paragraph>\\n<paragraph id=\\\"P54\\\">Name:
+      _____</paragraph>\\n<paragraph id=\\\"P55\\\">Title: _____</paragraph>\\n<paragraph
+      id=\\\"P56\\\">Date: ___________________________</paragraph>\\n<paragraph id=\\\"P57\\\">Example.Com
+      LLC</paragraph>\\n<paragraph id=\\\"P58\\\">By: ___________________________</paragraph>\\n<paragraph
+      id=\\\"P59\\\">Name: Jane Doe</paragraph>\\n<paragraph id=\\\"P60\\\">Title:
+      Managing Partner</paragraph>\\n<paragraph id=\\\"P61\\\">Date: ___________________________</paragraph>\\n</document_paragraphs>\"}],\"model\":\"gpt-6-luna\"}"
     headers:
       accept:
       - application/json
@@ -1875,7 +1430,7 @@ interactions:
       connection:
       - keep-alive
       content-length:
-      - '38976'
+      - '31004'
       content-type:
       - application/json
       cookie:
@@ -1909,17 +1464,17 @@ interactions:
   response:
     body:
       string: !!binary |
-        H4sIAAAAAAAA/3VUTU8bMRC951dYPieI0Ia0vdECFwSqRE9lo5WxZzdDHXtrjykI5b937CXZjYCL
-        tX5vvv1mXyZCSDTym5B6rUhvOju70JcXqBbN7W1apMvf1/bm6u+Xs+/Xxp1cnctp9vD3D6Bp53Wk
-        PfsBoXc9rQMoghx1vvx6svzyafn5uBAbb8Bmt7aj2enMJqdePdYeNUSm7vgqxEs5c23OwBPDxb8g
-        G4hRtcDYzojB4G1GpIoRIylHcjqQ2jsCV8q9qxwHz4cQVSY0dFSjqZis5I/jSk53JDxRUJrbqJFg
-        E7PFXc/tI/SGj8omyPQIzbhV92AP/XbUzflZJcfgarhsp+PgDykSNqhVnm5f5a81CON12nBPAqOA
-        p86iRrLPgvgEI5S48W52jlFbH1MAcdYGgGKvnBERKAqfSHD/DRqGUVmkZ+HvLbYlUxSND4I4U6cC
-        IcSj/WT6ugI0EIDHV7OBaoPq1jzGt91W8ufxgWuB5uPu971v+49y5+/V+A05X4oqa8cla0eEcs5T
-        X3POvZrsprjTS4MO47pmSUbWJ2sgku9kYbd8ror+0oGkZBdY0VST/wMl7PJ0segDykHrAz2fn76y
-        xLXYkd9yOZ++E7I2QAptHIlYaqXXLLZxzpPpAVn/CyzFwWLYCZUM+hExGY3gbcXvZe/Hg64ddbX4
-        MP5A6LxAXHYXwKA+HMtgFiD/Lz4y279FqVhGCI/8M6hZdiG/l4FGJdtvtIzPkbex5kdtIXQBy1pn
-        SUy2k/8lY4+ozQQAAA==
+        H4sIAAAAAAAA/3VUTW/bMAy951cIOjtFXHSN01uxDj2t3YB2h8WBoci0rUyWDH10yYr891FyHTto
+        exEkPpIiH5/0OiOEipLeEMob5njbyfk3fv+4A+/bX9+ffz/9483jVXr1LNvV4f6np0mI0NsdcDdE
+        XXCNceCEVj3MDTAHIWu6XF0us+xy8SUCrS5BhrC6c/PrufSKvUU0WnCwCK3xSMhrXENtqoQ9mhfJ
+        YGnBWlYD2gYnNBotg4Uya4V1TDmajCDXyoGK5a5zhcnDQkgeAA6dK0SZI5jTr4ucJgMIe2cYxzYK
+        4aC1wWPdY6cMveMLkx4CPLEGu2RbkOdxA/Rwd5vTqXEzHo7JNPnOWycqwVlgt6/yqQFSau5b7IkI
+        S2DfScGFkwficIWSMPKg1fxOWC619QbIbW0Aoj9TJQFkaCuFbcASjZs6JrfEadIZ7XCyBJmpRIkB
+        gkkiVKVNG50uTgT15RmowACyWHTMsNqwrkE23zed0x+Ls9BoSqcknCg49pt4xv1mOkq8z1sWJKS8
+        lBOAKaVd30e4ezMbyBxkUwmFHReoTIsyRSlYpzsa0SOumyhDf6Ysimy0KA+n/0BMe73I0j4hHSU/
+        wmmavaEOa5GTuHS1Sj5IWZTgmJB2omXKGW9Qc5M7l1lyBhZ/DSpy9BifBvOl0BNgNqHgfcUf3d7T
+        I1Q96Sr7NP8I8PCOsOzOQCn4OS2jm4HwbXzmdppFrJhaMC/4JxROgAnzKqFiXvYPm9qDxUdZ4FBr
+        MJ0R8XUHScyOs//vLrR81AQAAA==
     headers:
       access-control-expose-headers:
       - X-Request-ID
@@ -1942,7 +1497,7 @@ interactions:
       openai-organization:
       - DUMMY
       openai-processing-ms:
-      - '3010'
+      - '1970'
       openai-project:
       - DUMMY
       openai-version:
@@ -1968,7 +1523,7 @@ interactions:
       x-ratelimit-reset-requests:
       - 6ms
       x-ratelimit-reset-tokens:
-      - 56ms
+      - 45ms
       x-request-id:
       - DUMMY
     status:
@@ -2070,11 +1625,11 @@ interactions:
       you will find a list of document paragraphs (including sentences) and a list
       of concepts.\\n</introduction>\\n\\n<guidance_on_task_structure>\\nAll structured
       information in these instructions is provided using semantic XML tags. Field
-      names correspond directly to tag names (e.g., concept_name, paragraph_text,
-      sentence_text, additional_context, etc.).\\n</guidance_on_task_structure>\\n\\n<private_reasoning>\\nUse
-      private deliberation to plan, evaluate evidence, and verify decisions. Do not
-      reveal any intermediate analysis, notes, or steps. Only output the JSON according
-      to the format specified within <answer_format></answer_format> tags.\\n\\nFollow
+      names correspond directly to tag names (e.g., concept_name, additional_context,
+      etc.).\\n</guidance_on_task_structure>\\n\\n<private_reasoning>\\nUse private
+      deliberation to plan, evaluate evidence, and verify decisions. Do not reveal
+      any intermediate analysis, notes, or steps. Only output the JSON according to
+      the format specified within <answer_format></answer_format> tags.\\n\\nFollow
       this internal three-stage process:\\n\\n1. Plan\\n    - Internally restate each
       concept in one sentence.\\n    - List 3-5 concrete lexical/semantic cues for
       relevance aligned with the concept description (include indicators of definition,
@@ -2095,16 +1650,15 @@ interactions:
       evidence, or internal notes - only the JSON array defined within <answer_format></answer_format>
       tags.\\n</private_reasoning>\\n\\n<task_description>\\nYour task is to:\\n1.
       Read through the provided document paragraphs and their sentences.\\n    - Each
-      paragraph is identified by a paragraph ID (for example, \\\"P0\\\", \\\"P1\\\",
-      etc.) specified within <paragraph_id></paragraph_id> tags.\\n    - Each paragraph
-      includes sentences, each identified by a sentence ID (for example, \\\"P0-S0\\\",
-      \\\"P0-S1\\\", etc.) specified within <sentence_id></sentence_id> tags, followed
-      by the full text of the sentence specified within <sentence_text></sentence_text>
-      tags.\\n    - Note that paragraphs are listed in the same order they appear
-      in the original document.\\n    - You may be working with document fragments
-      rather than complete documents. Focus on extracting information from the available
-      content without making assumptions about missing parts.\\n2. Identify whether
-      each concept in the concepts list is addressed within the document paragraphs.\\n
+      paragraph is given within <paragraph></paragraph> tags, whose id attribute holds
+      its paragraph ID (for example, \\\"P0\\\", \\\"P1\\\", etc.).\\n    - Each paragraph
+      includes sentences, each given with its full text within <sentence></sentence>
+      tags, whose id attribute holds its sentence ID (for example, \\\"P0-S0\\\",
+      \\\"P0-S1\\\", etc.).\\n    - Note that paragraphs are listed in the same order
+      they appear in the original document.\\n    - You may be working with document
+      fragments rather than complete documents. Focus on extracting information from
+      the available content without making assumptions about missing parts.\\n2. Identify
+      whether each concept in the concepts list is addressed within the document paragraphs.\\n
       \   - Each concept is identified by a concept ID (for example, \\\"C0\\\", \\\"C1\\\",
       etc.) specified within <concept_id></concept_id> tags.\\n    - Each concept
       is described by a concept name specified within <concept_name></concept_name>
@@ -2257,401 +1811,154 @@ interactions:
       \   <amount_of_extracted_items>This concept may have zero, one, or multiple
       extracted items.</amount_of_extracted_items>\\n\\n    <extracted_item_type>dict
       (must be exactly as specified)</extracted_item_type>\\n</concept>\\n\\n</concepts>\\n\\n<document_paragraphs>\\nDOCUMENT
-      PARAGRAPHS INCLUDING SENTENCES:\\n    <paragraph id=\\\"P0\\\">\\n        <paragraph_id>P0</paragraph_id>\\n
-      \       \\n        <paragraph_sentences>\\n            <sentence id=\\\"P0-S0\\\">\\n
-      \               <sentence_id>P0-S0</sentence_id>\\n                \\n                <sentence_text>\\n
-      \               Non-Disclosure Agreement (NDA)\\n                </sentence_text>\\n
-      \           </sentence>\\n        </paragraph_sentences>\\n    </paragraph>\\n\\n
-      \   <paragraph id=\\\"P1\\\">\\n        <paragraph_id>P1</paragraph_id>\\n        \\n
-      \       <paragraph_sentences>\\n            <sentence id=\\\"P1-S0\\\">\\n                <sentence_id>P1-S0</sentence_id>\\n
-      \               \\n                <sentence_text>\\n                This Non-Disclosure
-      Agreement (the \\\"Agreement\\\") is made and entered into as of July 16, 2024,
-      by and between:\\n                </sentence_text>\\n            </sentence>\\n
-      \       </paragraph_sentences>\\n    </paragraph>\\n\\n    <paragraph id=\\\"P2\\\">\\n
-      \       <paragraph_id>P2</paragraph_id>\\n        \\n        <paragraph_sentences>\\n
-      \           <sentence id=\\\"P2-S0\\\">\\n                <sentence_id>P2-S0</sentence_id>\\n
-      \               \\n                <sentence_text>\\n                Party A:\\n
-      \               </sentence_text>\\n            </sentence>\\n        </paragraph_sentences>\\n
-      \   </paragraph>\\n\\n    <paragraph id=\\\"P3\\\">\\n        <paragraph_id>P3</paragraph_id>\\n
-      \       \\n        <paragraph_sentences>\\n            <sentence id=\\\"P3-S0\\\">\\n
-      \               <sentence_id>P3-S0</sentence_id>\\n                \\n                <sentence_text>\\n
-      \               _____\\n                </sentence_text>\\n            </sentence>\\n
-      \       </paragraph_sentences>\\n    </paragraph>\\n\\n    <paragraph id=\\\"P4\\\">\\n
-      \       <paragraph_id>P4</paragraph_id>\\n        \\n        <paragraph_sentences>\\n
-      \           <sentence id=\\\"P4-S0\\\">\\n                <sentence_id>P4-S0</sentence_id>\\n
-      \               \\n                <sentence_text>\\n                _____\\n
-      \               </sentence_text>\\n            </sentence>\\n        </paragraph_sentences>\\n
-      \   </paragraph>\\n\\n    <paragraph id=\\\"P5\\\">\\n        <paragraph_id>P5</paragraph_id>\\n
-      \       \\n        <paragraph_sentences>\\n            <sentence id=\\\"P5-S0\\\">\\n
-      \               <sentence_id>P5-S0</sentence_id>\\n                \\n                <sentence_text>\\n
-      \               _____\\n                </sentence_text>\\n            </sentence>\\n
-      \       </paragraph_sentences>\\n    </paragraph>\\n\\n    <paragraph id=\\\"P6\\\">\\n
-      \       <paragraph_id>P6</paragraph_id>\\n        \\n        <paragraph_sentences>\\n
-      \           <sentence id=\\\"P6-S0\\\">\\n                <sentence_id>P6-S0</sentence_id>\\n
-      \               \\n                <sentence_text>\\n                Contact:
-      _____\\n                </sentence_text>\\n            </sentence>\\n        </paragraph_sentences>\\n
-      \   </paragraph>\\n\\n    <paragraph id=\\\"P7\\\">\\n        <paragraph_id>P7</paragraph_id>\\n
-      \       \\n        <paragraph_sentences>\\n            <sentence id=\\\"P7-S0\\\">\\n
-      \               <sentence_id>P7-S0</sentence_id>\\n                \\n                <sentence_text>\\n
-      \               Phone: _____\\n                </sentence_text>\\n            </sentence>\\n
-      \       </paragraph_sentences>\\n    </paragraph>\\n\\n    <paragraph id=\\\"P8\\\">\\n
-      \       <paragraph_id>P8</paragraph_id>\\n        \\n        <paragraph_sentences>\\n
-      \           <sentence id=\\\"P8-S0\\\">\\n                <sentence_id>P8-S0</sentence_id>\\n
-      \               \\n                <sentence_text>\\n                Email:
-      _____\\n                </sentence_text>\\n            </sentence>\\n        </paragraph_sentences>\\n
-      \   </paragraph>\\n\\n    <paragraph id=\\\"P9\\\">\\n        <paragraph_id>P9</paragraph_id>\\n
-      \       \\n        <paragraph_sentences>\\n            <sentence id=\\\"P9-S0\\\">\\n
-      \               <sentence_id>P9-S0</sentence_id>\\n                \\n                <sentence_text>\\n
-      \               Party B:\\n                </sentence_text>\\n            </sentence>\\n
-      \       </paragraph_sentences>\\n    </paragraph>\\n\\n    <paragraph id=\\\"P10\\\">\\n
-      \       <paragraph_id>P10</paragraph_id>\\n        \\n        <paragraph_sentences>\\n
-      \           <sentence id=\\\"P10-S0\\\">\\n                <sentence_id>P10-S0</sentence_id>\\n
-      \               \\n                <sentence_text>\\n                Example.Com
-      LLC\\n                </sentence_text>\\n            </sentence>\\n        </paragraph_sentences>\\n
-      \   </paragraph>\\n\\n    <paragraph id=\\\"P11\\\">\\n        <paragraph_id>P11</paragraph_id>\\n
-      \       \\n        <paragraph_sentences>\\n            <sentence id=\\\"P11-S0\\\">\\n
-      \               <sentence_id>P11-S0</sentence_id>\\n                \\n                <sentence_text>\\n
-      \               5678 Random Drive\\n                </sentence_text>\\n            </sentence>\\n
-      \       </paragraph_sentences>\\n    </paragraph>\\n\\n    <paragraph id=\\\"P12\\\">\\n
-      \       <paragraph_id>P12</paragraph_id>\\n        \\n        <paragraph_sentences>\\n
-      \           <sentence id=\\\"P12-S0\\\">\\n                <sentence_id>P12-S0</sentence_id>\\n
-      \               \\n                <sentence_text>\\n                New York,
-      NY 00000\\n                </sentence_text>\\n            </sentence>\\n        </paragraph_sentences>\\n
-      \   </paragraph>\\n\\n    <paragraph id=\\\"P13\\\">\\n        <paragraph_id>P13</paragraph_id>\\n
-      \       \\n        <paragraph_sentences>\\n            <sentence id=\\\"P13-S0\\\">\\n
-      \               <sentence_id>P13-S0</sentence_id>\\n                \\n                <sentence_text>\\n
-      \               Contact: Jane Doe, Managing Partner\\n                </sentence_text>\\n
-      \           </sentence>\\n        </paragraph_sentences>\\n    </paragraph>\\n\\n
-      \   <paragraph id=\\\"P14\\\">\\n        <paragraph_id>P14</paragraph_id>\\n
-      \       \\n        <paragraph_sentences>\\n            <sentence id=\\\"P14-S0\\\">\\n
-      \               <sentence_id>P14-S0</sentence_id>\\n                \\n                <sentence_text>\\n
-      \               Phone: (012) 345-6789\\n                </sentence_text>\\n
-      \           </sentence>\\n        </paragraph_sentences>\\n    </paragraph>\\n\\n
-      \   <paragraph id=\\\"P15\\\">\\n        <paragraph_id>P15</paragraph_id>\\n
-      \       \\n        <paragraph_sentences>\\n            <sentence id=\\\"P15-S0\\\">\\n
-      \               <sentence_id>P15-S0</sentence_id>\\n                \\n                <sentence_text>\\n
-      \               Email: jane.doe@example.com\\n                </sentence_text>\\n
-      \           </sentence>\\n        </paragraph_sentences>\\n    </paragraph>\\n\\n
-      \   <paragraph id=\\\"P16\\\">\\n        <paragraph_id>P16</paragraph_id>\\n
-      \       \\n        <paragraph_sentences>\\n            <sentence id=\\\"P16-S0\\\">\\n
-      \               <sentence_id>P16-S0</sentence_id>\\n                \\n                <sentence_text>\\n
-      \               1. Purpose:\\n                </sentence_text>\\n            </sentence>\\n
-      \       </paragraph_sentences>\\n    </paragraph>\\n\\n    <paragraph id=\\\"P17\\\">\\n
-      \       <paragraph_id>P17</paragraph_id>\\n        \\n        <paragraph_sentences>\\n
-      \           <sentence id=\\\"P17-S0\\\">\\n                <sentence_id>P17-S0</sentence_id>\\n
-      \               \\n                <sentence_text>\\n                The purpose
-      of this Agreement is to protect the confidential information that may be disclosed
-      between the parties during discussions and engagements regarding potential business
-      collaborations and partnerships.\\n                </sentence_text>\\n            </sentence>\\n
-      \       </paragraph_sentences>\\n    </paragraph>\\n\\n    <paragraph id=\\\"P18\\\">\\n
-      \       <paragraph_id>P18</paragraph_id>\\n        \\n        <paragraph_sentences>\\n
-      \           <sentence id=\\\"P18-S0\\\">\\n                <sentence_id>P18-S0</sentence_id>\\n
-      \               \\n                <sentence_text>\\n                2. Definition
-      of Confidential Information:\\n                </sentence_text>\\n            </sentence>\\n
-      \       </paragraph_sentences>\\n    </paragraph>\\n\\n    <paragraph id=\\\"P19\\\">\\n
-      \       <paragraph_id>P19</paragraph_id>\\n        \\n        <paragraph_sentences>\\n
-      \           <sentence id=\\\"P19-S0\\\">\\n                <sentence_id>P19-S0</sentence_id>\\n
-      \               \\n                <sentence_text>\\n                For purposes
-      of this Agreement, \\\"Confidential Information\\\" means any and all non-public
-      information, conveyed in all forms, whether in oral, written, electronic, or
-      other form or media, whether or not marked, designated, or otherwise identified
-      as \\\"confidential,\\\" that has been or may be disclosed to, accessed by,
-      or observed by Receiving Party, which (i) has actual or potential economic value
-      by virtue of not being generally known to, and not being readily ascertainable
-      by proper means by, other persons who can obtain economic value from its disclosure
-      or use, or (ii) is subject to reasonable efforts by Disclosing Party to maintain
-      its secrecy and confidentiality.\\n                </sentence_text>\\n            </sentence>\\n
-      \       </paragraph_sentences>\\n    </paragraph>\\n\\n    <paragraph id=\\\"P20\\\">\\n
-      \       <paragraph_id>P20</paragraph_id>\\n        \\n        <paragraph_sentences>\\n
-      \           <sentence id=\\\"P20-S0\\\">\\n                <sentence_id>P20-S0</sentence_id>\\n
-      \               \\n                <sentence_text>\\n                Confidential
-      Information includes, but is not limited to, the following categories: (1) business
-      information (business plans, strategies, and models), (2) technical information
-      (technical specifications and documentation, research and development activities),
-      (3) customer and market information (customer lists and contact information,
-      sales histories and patterns), (4) personnel and internal information (employee
-      lists and contact information, employment agreements and personnel files), (5)
-      intellectual property (trade secrets and know-how, patents and patent applications,
-      copyrights and copyright applications, trademarks and trademark applications),
-      (6) strategic information (merger and acquisition plans, competitive analyses
-      and strategies).\\n                </sentence_text>\\n            </sentence>\\n
-      \           <sentence id=\\\"P20-S1\\\">\\n                <sentence_id>P20-S1</sentence_id>\\n
-      \               \\n                <sentence_text>\\n                Software
-      code shall also be included into the confidential information.\\n                </sentence_text>\\n
-      \           </sentence>\\n        </paragraph_sentences>\\n    </paragraph>\\n\\n
-      \   <paragraph id=\\\"P21\\\">\\n        <paragraph_id>P21</paragraph_id>\\n
-      \       \\n        <paragraph_sentences>\\n            <sentence id=\\\"P21-S0\\\">\\n
-      \               <sentence_id>P21-S0</sentence_id>\\n                \\n                <sentence_text>\\n
-      \               Confidential Information shall not include information that:\\n
-      \               </sentence_text>\\n            </sentence>\\n            <sentence
-      id=\\\"P21-S1\\\">\\n                <sentence_id>P21-S1</sentence_id>\\n                \\n
-      \               <sentence_text>\\n                (a) is or becomes generally
-      available to the public other than as a result of disclosure by Receiving Party
-      or its Representatives;\\n                </sentence_text>\\n            </sentence>\\n
-      \           <sentence id=\\\"P21-S2\\\">\\n                <sentence_id>P21-S2</sentence_id>\\n
-      \               \\n                <sentence_text>\\n                (b) was
-      available to Receiving Party on a non-confidential basis prior to its disclosure
-      by Disclosing Party;\\n                </sentence_text>\\n            </sentence>\\n
-      \           <sentence id=\\\"P21-S3\\\">\\n                <sentence_id>P21-S3</sentence_id>\\n
-      \               \\n                <sentence_text>\\n                (c) becomes
-      available to Receiving Party on a non-confidential basis from a person other
-      than Disclosing Party who is not otherwise bound by a confidentiality obligation
-      to Disclosing Party; or (d) was independently developed by Receiving Party without
-      reference to or use of any Confidential Information.\\n                </sentence_text>\\n
-      \           </sentence>\\n            <sentence id=\\\"P21-S4\\\">\\n                <sentence_id>P21-S4</sentence_id>\\n
-      \               \\n                <sentence_text>\\n                The name
-      of the dog of the Receiving Party is Bob.\\n                </sentence_text>\\n
-      \           </sentence>\\n        </paragraph_sentences>\\n    </paragraph>\\n\\n
-      \   <paragraph id=\\\"P22\\\">\\n        <paragraph_id>P22</paragraph_id>\\n
-      \       \\n        <paragraph_sentences>\\n            <sentence id=\\\"P22-S0\\\">\\n
-      \               <sentence_id>P22-S0</sentence_id>\\n                \\n                <sentence_text>\\n
-      \               The designation of information as Confidential Information shall
-      not be determinative of whether such information constitutes a trade secret
-      under applicable law.\\n                </sentence_text>\\n            </sentence>\\n
-      \           <sentence id=\\\"P22-S1\\\">\\n                <sentence_id>P22-S1</sentence_id>\\n
-      \               \\n                <sentence_text>\\n                All Confidential
-      Information shall remain the exclusive property of Disclosing Party, and Receiving
-      Party shall have no rights, by license or otherwise, to use the Confidential
-      Information except as expressly provided herein.\\n                </sentence_text>\\n
-      \           </sentence>\\n        </paragraph_sentences>\\n    </paragraph>\\n\\n
-      \   <paragraph id=\\\"P23\\\">\\n        <paragraph_id>P23</paragraph_id>\\n
-      \       \\n        <paragraph_sentences>\\n            <sentence id=\\\"P23-S0\\\">\\n
-      \               <sentence_id>P23-S0</sentence_id>\\n                \\n                <sentence_text>\\n
-      \               3. Obligations of Receiving Party:\\n                </sentence_text>\\n
-      \           </sentence>\\n        </paragraph_sentences>\\n    </paragraph>\\n\\n
-      \   <paragraph id=\\\"P24\\\">\\n        <paragraph_id>P24</paragraph_id>\\n
-      \       \\n        <paragraph_sentences>\\n            <sentence id=\\\"P24-S0\\\">\\n
-      \               <sentence_id>P24-S0</sentence_id>\\n                \\n                <sentence_text>\\n
-      \               The party receiving Confidential Information (\\\"Receiving
-      Party\\\") shall:\\n                </sentence_text>\\n            </sentence>\\n
-      \       </paragraph_sentences>\\n    </paragraph>\\n\\n    <paragraph id=\\\"P25\\\">\\n
-      \       <paragraph_id>P25</paragraph_id>\\n        \\n        <paragraph_sentences>\\n
-      \           <sentence id=\\\"P25-S0\\\">\\n                <sentence_id>P25-S0</sentence_id>\\n
-      \               \\n                <sentence_text>\\n                a. Maintain
-      the confidentiality of the Confidential Information and not disclose it to any
-      third party without the prior written consent of the Disclosing Party.\\n                </sentence_text>\\n
-      \           </sentence>\\n        </paragraph_sentences>\\n    </paragraph>\\n\\n
-      \   <paragraph id=\\\"P26\\\">\\n        <paragraph_id>P26</paragraph_id>\\n
-      \       \\n        <paragraph_sentences>\\n            <sentence id=\\\"P26-S0\\\">\\n
-      \               <sentence_id>P26-S0</sentence_id>\\n                \\n                <sentence_text>\\n
-      \               b. Use the Confidential Information solely for the purpose of
-      evaluating or engaging in the potential business collaboration.\\n                </sentence_text>\\n
-      \           </sentence>\\n        </paragraph_sentences>\\n    </paragraph>\\n\\n
-      \   <paragraph id=\\\"P27\\\">\\n        <paragraph_id>P27</paragraph_id>\\n
-      \       \\n        <paragraph_sentences>\\n            <sentence id=\\\"P27-S0\\\">\\n
-      \               <sentence_id>P27-S0</sentence_id>\\n                \\n                <sentence_text>\\n
-      \               c. Take all necessary precautions to protect the confidentiality
-      of the Confidential Information, which shall be no less than the precautions
-      it takes to protect its own confidential information.\\n                </sentence_text>\\n
-      \           </sentence>\\n        </paragraph_sentences>\\n    </paragraph>\\n\\n
-      \   <paragraph id=\\\"P28\\\">\\n        <paragraph_id>P28</paragraph_id>\\n
-      \       \\n        <paragraph_sentences>\\n            <sentence id=\\\"P28-S0\\\">\\n
-      \               <sentence_id>P28-S0</sentence_id>\\n                \\n                <sentence_text>\\n
-      \               4. Exclusions from Confidential Information:\\n                </sentence_text>\\n
-      \           </sentence>\\n        </paragraph_sentences>\\n    </paragraph>\\n\\n
-      \   <paragraph id=\\\"P29\\\">\\n        <paragraph_id>P29</paragraph_id>\\n
-      \       \\n        <paragraph_sentences>\\n            <sentence id=\\\"P29-S0\\\">\\n
-      \               <sentence_id>P29-S0</sentence_id>\\n                \\n                <sentence_text>\\n
-      \               Confidential Information does not include information that:\\n
-      \               </sentence_text>\\n            </sentence>\\n        </paragraph_sentences>\\n
-      \   </paragraph>\\n\\n    <paragraph id=\\\"P30\\\">\\n        <paragraph_id>P30</paragraph_id>\\n
-      \       \\n        <paragraph_sentences>\\n            <sentence id=\\\"P30-S0\\\">\\n
-      \               <sentence_id>P30-S0</sentence_id>\\n                \\n                <sentence_text>\\n
-      \               a. Is or becomes publicly known through no wrongful act of the
-      Receiving Party.\\n                </sentence_text>\\n            </sentence>\\n
-      \       </paragraph_sentences>\\n    </paragraph>\\n\\n    <paragraph id=\\\"P31\\\">\\n
-      \       <paragraph_id>P31</paragraph_id>\\n        \\n        <paragraph_sentences>\\n
-      \           <sentence id=\\\"P31-S0\\\">\\n                <sentence_id>P31-S0</sentence_id>\\n
-      \               \\n                <sentence_text>\\n                b. Is already
-      known to the Receiving Party at the time of disclosure.\\n                </sentence_text>\\n
-      \           </sentence>\\n        </paragraph_sentences>\\n    </paragraph>\\n\\n
-      \   <paragraph id=\\\"P32\\\">\\n        <paragraph_id>P32</paragraph_id>\\n
-      \       \\n        <paragraph_sentences>\\n            <sentence id=\\\"P32-S0\\\">\\n
-      \               <sentence_id>P32-S0</sentence_id>\\n                \\n                <sentence_text>\\n
-      \               c. Is lawfully received from a third party without breach of
-      this Agreement.\\n                </sentence_text>\\n            </sentence>\\n
-      \       </paragraph_sentences>\\n    </paragraph>\\n\\n    <paragraph id=\\\"P33\\\">\\n
-      \       <paragraph_id>P33</paragraph_id>\\n        \\n        <paragraph_sentences>\\n
-      \           <sentence id=\\\"P33-S0\\\">\\n                <sentence_id>P33-S0</sentence_id>\\n
-      \               \\n                <sentence_text>\\n                d. Is independently
-      developed by the Receiving Party without use of or reference to the Disclosing
-      Party's Confidential Information.\\n                </sentence_text>\\n            </sentence>\\n
-      \       </paragraph_sentences>\\n    </paragraph>\\n\\n    <paragraph id=\\\"P34\\\">\\n
-      \       <paragraph_id>P34</paragraph_id>\\n        \\n        <paragraph_sentences>\\n
-      \           <sentence id=\\\"P34-S0\\\">\\n                <sentence_id>P34-S0</sentence_id>\\n
-      \               \\n                <sentence_text>\\n                6. Return
-      of Materials:\\n                </sentence_text>\\n            </sentence>\\n
-      \       </paragraph_sentences>\\n    </paragraph>\\n\\n    <paragraph id=\\\"P35\\\">\\n
-      \       <paragraph_id>P35</paragraph_id>\\n        \\n        <paragraph_sentences>\\n
-      \           <sentence id=\\\"P35-S0\\\">\\n                <sentence_id>P35-S0</sentence_id>\\n
-      \               \\n                <sentence_text>\\n                Upon termination
-      of this Agreement or upon request, the Receiving Party shall return all materials
-      containing Confidential Information to the Disclosing Party or destroy them,
-      at the Disclosing Party's discretion.\\n                </sentence_text>\\n
-      \           </sentence>\\n        </paragraph_sentences>\\n    </paragraph>\\n\\n
-      \   <paragraph id=\\\"P36\\\">\\n        <paragraph_id>P36</paragraph_id>\\n
-      \       \\n        <paragraph_sentences>\\n            <sentence id=\\\"P36-S0\\\">\\n
-      \               <sentence_id>P36-S0</sentence_id>\\n                \\n                <sentence_text>\\n
-      \               5. Liability:\\n                </sentence_text>\\n            </sentence>\\n
-      \       </paragraph_sentences>\\n    </paragraph>\\n\\n    <paragraph id=\\\"P37\\\">\\n
-      \       <paragraph_id>P37</paragraph_id>\\n        \\n        <paragraph_sentences>\\n
-      \           <sentence id=\\\"P37-S0\\\">\\n                <sentence_id>P37-S0</sentence_id>\\n
-      \               \\n                <sentence_text>\\n                a.\\n                </sentence_text>\\n
-      \           </sentence>\\n            <sentence id=\\\"P37-S1\\\">\\n                <sentence_id>P37-S1</sentence_id>\\n
-      \               \\n                <sentence_text>\\n                Total Liability
-      Cap:\\n                </sentence_text>\\n            </sentence>\\n        </paragraph_sentences>\\n
-      \   </paragraph>\\n\\n    <paragraph id=\\\"P38\\\">\\n        <paragraph_id>P38</paragraph_id>\\n
-      \       \\n        <paragraph_sentences>\\n            <sentence id=\\\"P38-S0\\\">\\n
-      \               <sentence_id>P38-S0</sentence_id>\\n                \\n                <sentence_text>\\n
-      \               The total liability of either party for any and all claims arising
-      out of or related to this Agreement, whether in contract, tort, or otherwise,
-      shall not exceed the greater of (i) $100,000 or (ii) the total amount paid by
-      the Receiving Party to the Disclosing Party under any separate business agreement
-      between the parties during the twelve (12) months preceding the event giving
-      rise to the claim.\\n                </sentence_text>\\n            </sentence>\\n
-      \           <sentence id=\\\"P38-S1\\\">\\n                <sentence_id>P38-S1</sentence_id>\\n
-      \               \\n                <sentence_text>\\n                This limitation
-      of liability is cumulative and not per incident.\\n                </sentence_text>\\n
-      \           </sentence>\\n        </paragraph_sentences>\\n    </paragraph>\\n\\n
-      \   <paragraph id=\\\"P39\\\">\\n        <paragraph_id>P39</paragraph_id>\\n
-      \       \\n        <paragraph_sentences>\\n            <sentence id=\\\"P39-S0\\\">\\n
-      \               <sentence_id>P39-S0</sentence_id>\\n                \\n                <sentence_text>\\n
-      \               b. Penalties for Breach:\\n                </sentence_text>\\n
-      \           </sentence>\\n        </paragraph_sentences>\\n    </paragraph>\\n\\n
-      \   <paragraph id=\\\"P40\\\">\\n        <paragraph_id>P40</paragraph_id>\\n
-      \       \\n        <paragraph_sentences>\\n            <sentence id=\\\"P40-S0\\\">\\n
-      \               <sentence_id>P40-S0</sentence_id>\\n                \\n                <sentence_text>\\n
-      \               In the event of a breach of this Agreement by the Receiving
-      Party, the Disclosing Party shall be entitled to seek injunctive relief in addition
-      to any other remedy available at law or in equity.\\n                </sentence_text>\\n
-      \           </sentence>\\n            <sentence id=\\\"P40-S1\\\">\\n                <sentence_id>P40-S1</sentence_id>\\n
-      \               \\n                <sentence_text>\\n                The Receiving
-      Party acknowledges that a breach of this Agreement may cause irreparable harm
-      to the Disclosing Party for which monetary damages would be an inadequate remedy.\\n
-      \               </sentence_text>\\n            </sentence>\\n            <sentence
-      id=\\\"P40-S2\\\">\\n                <sentence_id>P40-S2</sentence_id>\\n                \\n
-      \               <sentence_text>\\n                In addition to injunctive
-      relief, the Receiving Party shall be liable for liquidated damages in the amount
-      of $25,000 for each instance of unauthorized disclosure or use of Confidential
-      Information, which the parties agree represents a reasonable estimate of the
-      damages likely to be suffered and not a penalty.\\n                </sentence_text>\\n
-      \           </sentence>\\n        </paragraph_sentences>\\n    </paragraph>\\n\\n
-      \   <paragraph id=\\\"P41\\\">\\n        <paragraph_id>P41</paragraph_id>\\n
-      \       \\n        <paragraph_sentences>\\n            <sentence id=\\\"P41-S0\\\">\\n
-      \               <sentence_id>P41-S0</sentence_id>\\n                \\n                <sentence_text>\\n
-      \               7. No License:\\n                </sentence_text>\\n            </sentence>\\n
-      \       </paragraph_sentences>\\n    </paragraph>\\n\\n    <paragraph id=\\\"P42\\\">\\n
-      \       <paragraph_id>P42</paragraph_id>\\n        \\n        <paragraph_sentences>\\n
-      \           <sentence id=\\\"P42-S0\\\">\\n                <sentence_id>P42-S0</sentence_id>\\n
-      \               \\n                <sentence_text>\\n                Nothing
-      in this Agreement shall be construed as granting any rights to the Receiving
-      Party, by license or otherwise, to any of the Disclosing Party\u2019s Confidential
-      Information, except as expressly set forth in this Agreement.\\n                </sentence_text>\\n
-      \           </sentence>\\n        </paragraph_sentences>\\n    </paragraph>\\n\\n
-      \   <paragraph id=\\\"P43\\\">\\n        <paragraph_id>P43</paragraph_id>\\n
-      \       \\n        <paragraph_sentences>\\n            <sentence id=\\\"P43-S0\\\">\\n
-      \               <sentence_id>P43-S0</sentence_id>\\n                \\n                <sentence_text>\\n
-      \               8. Governing Law and Disputes:\\n                </sentence_text>\\n
-      \           </sentence>\\n        </paragraph_sentences>\\n    </paragraph>\\n\\n
-      \   <paragraph id=\\\"P44\\\">\\n        <paragraph_id>P44</paragraph_id>\\n
-      \       \\n        <paragraph_sentences>\\n            <sentence id=\\\"P44-S0\\\">\\n
-      \               <sentence_id>P44-S0</sentence_id>\\n                \\n                <sentence_text>\\n
-      \               This Agreement shall be governed by and construed in accordance
-      with the laws of the State of California, without regard to its conflict of
-      law principles.\\n                </sentence_text>\\n            </sentence>\\n
-      \       </paragraph_sentences>\\n    </paragraph>\\n\\n    <paragraph id=\\\"P45\\\">\\n
-      \       <paragraph_id>P45</paragraph_id>\\n        \\n        <paragraph_sentences>\\n
-      \           <sentence id=\\\"P45-S0\\\">\\n                <sentence_id>P45-S0</sentence_id>\\n
-      \               \\n                <sentence_text>\\n                All disputes
-      shall be resolved by the courts of the State of California.\\n                </sentence_text>\\n
-      \           </sentence>\\n            <sentence id=\\\"P45-S1\\\">\\n                <sentence_id>P45-S1</sentence_id>\\n
-      \               \\n                <sentence_text>\\n                This Agreement
-      shall remain in effect for a period of five (5) years from the date of signing
-      this agreement.\\n                </sentence_text>\\n            </sentence>\\n
-      \       </paragraph_sentences>\\n    </paragraph>\\n\\n    <paragraph id=\\\"P46\\\">\\n
-      \       <paragraph_id>P46</paragraph_id>\\n        \\n        <paragraph_sentences>\\n
-      \           <sentence id=\\\"P46-S0\\\">\\n                <sentence_id>P46-S0</sentence_id>\\n
-      \               \\n                <sentence_text>\\n                9. Miscellaneous:\\n
-      \               </sentence_text>\\n            </sentence>\\n        </paragraph_sentences>\\n
-      \   </paragraph>\\n\\n    <paragraph id=\\\"P47\\\">\\n        <paragraph_id>P47</paragraph_id>\\n
-      \       \\n        <paragraph_sentences>\\n            <sentence id=\\\"P47-S0\\\">\\n
-      \               <sentence_id>P47-S0</sentence_id>\\n                \\n                <sentence_text>\\n
-      \               a. This Agreement constitutes the entire agreement between the
-      parties with respect to the subject matter hereof and supersedes all prior or
-      contemporaneous oral or written agreements concerning such subject matter.\\n
-      \               </sentence_text>\\n            </sentence>\\n        </paragraph_sentences>\\n
-      \   </paragraph>\\n\\n    <paragraph id=\\\"P48\\\">\\n        <paragraph_id>P48</paragraph_id>\\n
-      \       \\n        <paragraph_sentences>\\n            <sentence id=\\\"P48-S0\\\">\\n
-      \               <sentence_id>P48-S0</sentence_id>\\n                \\n                <sentence_text>\\n
-      \               b. Any amendments or modifications to this Agreement must be
-      made in writing and signed by both parties.\\n                </sentence_text>\\n
-      \           </sentence>\\n        </paragraph_sentences>\\n    </paragraph>\\n\\n
-      \   <paragraph id=\\\"P49\\\">\\n        <paragraph_id>P49</paragraph_id>\\n
-      \       \\n        <paragraph_sentences>\\n            <sentence id=\\\"P49-S0\\\">\\n
-      \               <sentence_id>P49-S0</sentence_id>\\n                \\n                <sentence_text>\\n
-      \               c. If any provision of this Agreement is found to be unenforceable,
-      the remainder shall be enforced as fully as possible and the unenforceable provision
-      shall be deemed modified to the limited extent required to permit its enforcement
-      in a manner most closely representing the intention of the parties.\\n                </sentence_text>\\n
-      \           </sentence>\\n        </paragraph_sentences>\\n    </paragraph>\\n\\n
-      \   <paragraph id=\\\"P50\\\">\\n        <paragraph_id>P50</paragraph_id>\\n
-      \       \\n        <paragraph_sentences>\\n            <sentence id=\\\"P50-S0\\\">\\n
-      \               <sentence_id>P50-S0</sentence_id>\\n                \\n                <sentence_text>\\n
-      \               d. The Disclosing Party shall be a good person to execute this
-      contract.\\n                </sentence_text>\\n            </sentence>\\n        </paragraph_sentences>\\n
-      \   </paragraph>\\n\\n    <paragraph id=\\\"P51\\\">\\n        <paragraph_id>P51</paragraph_id>\\n
-      \       \\n        <paragraph_sentences>\\n            <sentence id=\\\"P51-S0\\\">\\n
-      \               <sentence_id>P51-S0</sentence_id>\\n                \\n                <sentence_text>\\n
-      \               IN WITNESS WHEREOF, the parties hereto have executed this Non-Disclosure
-      Agreement as of the date first above written.\\n                </sentence_text>\\n
-      \           </sentence>\\n        </paragraph_sentences>\\n    </paragraph>\\n\\n
-      \   <paragraph id=\\\"P52\\\">\\n        <paragraph_id>P52</paragraph_id>\\n
-      \       \\n        <paragraph_sentences>\\n            <sentence id=\\\"P52-S0\\\">\\n
-      \               <sentence_id>P52-S0</sentence_id>\\n                \\n                <sentence_text>\\n
-      \               _____\\n                </sentence_text>\\n            </sentence>\\n
-      \       </paragraph_sentences>\\n    </paragraph>\\n\\n    <paragraph id=\\\"P53\\\">\\n
-      \       <paragraph_id>P53</paragraph_id>\\n        \\n        <paragraph_sentences>\\n
-      \           <sentence id=\\\"P53-S0\\\">\\n                <sentence_id>P53-S0</sentence_id>\\n
-      \               \\n                <sentence_text>\\n                By: ___________________________\\n
-      \               </sentence_text>\\n            </sentence>\\n        </paragraph_sentences>\\n
-      \   </paragraph>\\n\\n    <paragraph id=\\\"P54\\\">\\n        <paragraph_id>P54</paragraph_id>\\n
-      \       \\n        <paragraph_sentences>\\n            <sentence id=\\\"P54-S0\\\">\\n
-      \               <sentence_id>P54-S0</sentence_id>\\n                \\n                <sentence_text>\\n
-      \               Name: _____\\n                </sentence_text>\\n            </sentence>\\n
-      \       </paragraph_sentences>\\n    </paragraph>\\n\\n    <paragraph id=\\\"P55\\\">\\n
-      \       <paragraph_id>P55</paragraph_id>\\n        \\n        <paragraph_sentences>\\n
-      \           <sentence id=\\\"P55-S0\\\">\\n                <sentence_id>P55-S0</sentence_id>\\n
-      \               \\n                <sentence_text>\\n                Title:
-      _____\\n                </sentence_text>\\n            </sentence>\\n        </paragraph_sentences>\\n
-      \   </paragraph>\\n\\n    <paragraph id=\\\"P56\\\">\\n        <paragraph_id>P56</paragraph_id>\\n
-      \       \\n        <paragraph_sentences>\\n            <sentence id=\\\"P56-S0\\\">\\n
-      \               <sentence_id>P56-S0</sentence_id>\\n                \\n                <sentence_text>\\n
-      \               Date: ___________________________\\n                </sentence_text>\\n
-      \           </sentence>\\n        </paragraph_sentences>\\n    </paragraph>\\n\\n
-      \   <paragraph id=\\\"P57\\\">\\n        <paragraph_id>P57</paragraph_id>\\n
-      \       \\n        <paragraph_sentences>\\n            <sentence id=\\\"P57-S0\\\">\\n
-      \               <sentence_id>P57-S0</sentence_id>\\n                \\n                <sentence_text>\\n
-      \               Example.Com LLC\\n                </sentence_text>\\n            </sentence>\\n
-      \       </paragraph_sentences>\\n    </paragraph>\\n\\n    <paragraph id=\\\"P58\\\">\\n
-      \       <paragraph_id>P58</paragraph_id>\\n        \\n        <paragraph_sentences>\\n
-      \           <sentence id=\\\"P58-S0\\\">\\n                <sentence_id>P58-S0</sentence_id>\\n
-      \               \\n                <sentence_text>\\n                By: ___________________________\\n
-      \               </sentence_text>\\n            </sentence>\\n        </paragraph_sentences>\\n
-      \   </paragraph>\\n\\n    <paragraph id=\\\"P59\\\">\\n        <paragraph_id>P59</paragraph_id>\\n
-      \       \\n        <paragraph_sentences>\\n            <sentence id=\\\"P59-S0\\\">\\n
-      \               <sentence_id>P59-S0</sentence_id>\\n                \\n                <sentence_text>\\n
-      \               Name: Jane Doe\\n                </sentence_text>\\n            </sentence>\\n
-      \       </paragraph_sentences>\\n    </paragraph>\\n\\n    <paragraph id=\\\"P60\\\">\\n
-      \       <paragraph_id>P60</paragraph_id>\\n        \\n        <paragraph_sentences>\\n
-      \           <sentence id=\\\"P60-S0\\\">\\n                <sentence_id>P60-S0</sentence_id>\\n
-      \               \\n                <sentence_text>\\n                Title:
-      Managing Partner\\n                </sentence_text>\\n            </sentence>\\n
-      \       </paragraph_sentences>\\n    </paragraph>\\n\\n    <paragraph id=\\\"P61\\\">\\n
-      \       <paragraph_id>P61</paragraph_id>\\n        \\n        <paragraph_sentences>\\n
-      \           <sentence id=\\\"P61-S0\\\">\\n                <sentence_id>P61-S0</sentence_id>\\n
-      \               \\n                <sentence_text>\\n                Date: ___________________________\\n
-      \               </sentence_text>\\n            </sentence>\\n        </paragraph_sentences>\\n
-      \   </paragraph>\\n\\n</document_paragraphs>\"}],\"model\":\"gpt-6-luna\"}"
+      PARAGRAPHS INCLUDING SENTENCES:\\n<paragraph id=\\\"P0\\\">\\n<sentence id=\\\"P0-S0\\\">Non-Disclosure
+      Agreement (NDA)</sentence>\\n</paragraph>\\n<paragraph id=\\\"P1\\\">\\n<sentence
+      id=\\\"P1-S0\\\">This Non-Disclosure Agreement (the \\\"Agreement\\\") is made
+      and entered into as of July 16, 2024, by and between:</sentence>\\n</paragraph>\\n<paragraph
+      id=\\\"P2\\\">\\n<sentence id=\\\"P2-S0\\\">Party A:</sentence>\\n</paragraph>\\n<paragraph
+      id=\\\"P3\\\">\\n<sentence id=\\\"P3-S0\\\">_____</sentence>\\n</paragraph>\\n<paragraph
+      id=\\\"P4\\\">\\n<sentence id=\\\"P4-S0\\\">_____</sentence>\\n</paragraph>\\n<paragraph
+      id=\\\"P5\\\">\\n<sentence id=\\\"P5-S0\\\">_____</sentence>\\n</paragraph>\\n<paragraph
+      id=\\\"P6\\\">\\n<sentence id=\\\"P6-S0\\\">Contact: _____</sentence>\\n</paragraph>\\n<paragraph
+      id=\\\"P7\\\">\\n<sentence id=\\\"P7-S0\\\">Phone: _____</sentence>\\n</paragraph>\\n<paragraph
+      id=\\\"P8\\\">\\n<sentence id=\\\"P8-S0\\\">Email: _____</sentence>\\n</paragraph>\\n<paragraph
+      id=\\\"P9\\\">\\n<sentence id=\\\"P9-S0\\\">Party B:</sentence>\\n</paragraph>\\n<paragraph
+      id=\\\"P10\\\">\\n<sentence id=\\\"P10-S0\\\">Example.Com LLC</sentence>\\n</paragraph>\\n<paragraph
+      id=\\\"P11\\\">\\n<sentence id=\\\"P11-S0\\\">5678 Random Drive</sentence>\\n</paragraph>\\n<paragraph
+      id=\\\"P12\\\">\\n<sentence id=\\\"P12-S0\\\">New York, NY 00000</sentence>\\n</paragraph>\\n<paragraph
+      id=\\\"P13\\\">\\n<sentence id=\\\"P13-S0\\\">Contact: Jane Doe, Managing Partner</sentence>\\n</paragraph>\\n<paragraph
+      id=\\\"P14\\\">\\n<sentence id=\\\"P14-S0\\\">Phone: (012) 345-6789</sentence>\\n</paragraph>\\n<paragraph
+      id=\\\"P15\\\">\\n<sentence id=\\\"P15-S0\\\">Email: jane.doe@example.com</sentence>\\n</paragraph>\\n<paragraph
+      id=\\\"P16\\\">\\n<sentence id=\\\"P16-S0\\\">1. Purpose:</sentence>\\n</paragraph>\\n<paragraph
+      id=\\\"P17\\\">\\n<sentence id=\\\"P17-S0\\\">The purpose of this Agreement
+      is to protect the confidential information that may be disclosed between the
+      parties during discussions and engagements regarding potential business collaborations
+      and partnerships.</sentence>\\n</paragraph>\\n<paragraph id=\\\"P18\\\">\\n<sentence
+      id=\\\"P18-S0\\\">2. Definition of Confidential Information:</sentence>\\n</paragraph>\\n<paragraph
+      id=\\\"P19\\\">\\n<sentence id=\\\"P19-S0\\\">For purposes of this Agreement,
+      \\\"Confidential Information\\\" means any and all non-public information, conveyed
+      in all forms, whether in oral, written, electronic, or other form or media,
+      whether or not marked, designated, or otherwise identified as \\\"confidential,\\\"
+      that has been or may be disclosed to, accessed by, or observed by Receiving
+      Party, which (i) has actual or potential economic value by virtue of not being
+      generally known to, and not being readily ascertainable by proper means by,
+      other persons who can obtain economic value from its disclosure or use, or (ii)
+      is subject to reasonable efforts by Disclosing Party to maintain its secrecy
+      and confidentiality.</sentence>\\n</paragraph>\\n<paragraph id=\\\"P20\\\">\\n<sentence
+      id=\\\"P20-S0\\\">Confidential Information includes, but is not limited to,
+      the following categories: (1) business information (business plans, strategies,
+      and models), (2) technical information (technical specifications and documentation,
+      research and development activities), (3) customer and market information (customer
+      lists and contact information, sales histories and patterns), (4) personnel
+      and internal information (employee lists and contact information, employment
+      agreements and personnel files), (5) intellectual property (trade secrets and
+      know-how, patents and patent applications, copyrights and copyright applications,
+      trademarks and trademark applications), (6) strategic information (merger and
+      acquisition plans, competitive analyses and strategies).</sentence>\\n<sentence
+      id=\\\"P20-S1\\\">Software code shall also be included into the confidential
+      information.</sentence>\\n</paragraph>\\n<paragraph id=\\\"P21\\\">\\n<sentence
+      id=\\\"P21-S0\\\">Confidential Information shall not include information that:</sentence>\\n<sentence
+      id=\\\"P21-S1\\\">(a) is or becomes generally available to the public other
+      than as a result of disclosure by Receiving Party or its Representatives;</sentence>\\n<sentence
+      id=\\\"P21-S2\\\">(b) was available to Receiving Party on a non-confidential
+      basis prior to its disclosure by Disclosing Party;</sentence>\\n<sentence id=\\\"P21-S3\\\">(c)
+      becomes available to Receiving Party on a non-confidential basis from a person
+      other than Disclosing Party who is not otherwise bound by a confidentiality
+      obligation to Disclosing Party; or (d) was independently developed by Receiving
+      Party without reference to or use of any Confidential Information.</sentence>\\n<sentence
+      id=\\\"P21-S4\\\">The name of the dog of the Receiving Party is Bob.</sentence>\\n</paragraph>\\n<paragraph
+      id=\\\"P22\\\">\\n<sentence id=\\\"P22-S0\\\">The designation of information
+      as Confidential Information shall not be determinative of whether such information
+      constitutes a trade secret under applicable law.</sentence>\\n<sentence id=\\\"P22-S1\\\">All
+      Confidential Information shall remain the exclusive property of Disclosing Party,
+      and Receiving Party shall have no rights, by license or otherwise, to use the
+      Confidential Information except as expressly provided herein.</sentence>\\n</paragraph>\\n<paragraph
+      id=\\\"P23\\\">\\n<sentence id=\\\"P23-S0\\\">3. Obligations of Receiving Party:</sentence>\\n</paragraph>\\n<paragraph
+      id=\\\"P24\\\">\\n<sentence id=\\\"P24-S0\\\">The party receiving Confidential
+      Information (\\\"Receiving Party\\\") shall:</sentence>\\n</paragraph>\\n<paragraph
+      id=\\\"P25\\\">\\n<sentence id=\\\"P25-S0\\\">a. Maintain the confidentiality
+      of the Confidential Information and not disclose it to any third party without
+      the prior written consent of the Disclosing Party.</sentence>\\n</paragraph>\\n<paragraph
+      id=\\\"P26\\\">\\n<sentence id=\\\"P26-S0\\\">b. Use the Confidential Information
+      solely for the purpose of evaluating or engaging in the potential business collaboration.</sentence>\\n</paragraph>\\n<paragraph
+      id=\\\"P27\\\">\\n<sentence id=\\\"P27-S0\\\">c. Take all necessary precautions
+      to protect the confidentiality of the Confidential Information, which shall
+      be no less than the precautions it takes to protect its own confidential information.</sentence>\\n</paragraph>\\n<paragraph
+      id=\\\"P28\\\">\\n<sentence id=\\\"P28-S0\\\">4. Exclusions from Confidential
+      Information:</sentence>\\n</paragraph>\\n<paragraph id=\\\"P29\\\">\\n<sentence
+      id=\\\"P29-S0\\\">Confidential Information does not include information that:</sentence>\\n</paragraph>\\n<paragraph
+      id=\\\"P30\\\">\\n<sentence id=\\\"P30-S0\\\">a. Is or becomes publicly known
+      through no wrongful act of the Receiving Party.</sentence>\\n</paragraph>\\n<paragraph
+      id=\\\"P31\\\">\\n<sentence id=\\\"P31-S0\\\">b. Is already known to the Receiving
+      Party at the time of disclosure.</sentence>\\n</paragraph>\\n<paragraph id=\\\"P32\\\">\\n<sentence
+      id=\\\"P32-S0\\\">c. Is lawfully received from a third party without breach
+      of this Agreement.</sentence>\\n</paragraph>\\n<paragraph id=\\\"P33\\\">\\n<sentence
+      id=\\\"P33-S0\\\">d. Is independently developed by the Receiving Party without
+      use of or reference to the Disclosing Party's Confidential Information.</sentence>\\n</paragraph>\\n<paragraph
+      id=\\\"P34\\\">\\n<sentence id=\\\"P34-S0\\\">6. Return of Materials:</sentence>\\n</paragraph>\\n<paragraph
+      id=\\\"P35\\\">\\n<sentence id=\\\"P35-S0\\\">Upon termination of this Agreement
+      or upon request, the Receiving Party shall return all materials containing Confidential
+      Information to the Disclosing Party or destroy them, at the Disclosing Party's
+      discretion.</sentence>\\n</paragraph>\\n<paragraph id=\\\"P36\\\">\\n<sentence
+      id=\\\"P36-S0\\\">5. Liability:</sentence>\\n</paragraph>\\n<paragraph id=\\\"P37\\\">\\n<sentence
+      id=\\\"P37-S0\\\">a.</sentence>\\n<sentence id=\\\"P37-S1\\\">Total Liability
+      Cap:</sentence>\\n</paragraph>\\n<paragraph id=\\\"P38\\\">\\n<sentence id=\\\"P38-S0\\\">The
+      total liability of either party for any and all claims arising out of or related
+      to this Agreement, whether in contract, tort, or otherwise, shall not exceed
+      the greater of (i) $100,000 or (ii) the total amount paid by the Receiving Party
+      to the Disclosing Party under any separate business agreement between the parties
+      during the twelve (12) months preceding the event giving rise to the claim.</sentence>\\n<sentence
+      id=\\\"P38-S1\\\">This limitation of liability is cumulative and not per incident.</sentence>\\n</paragraph>\\n<paragraph
+      id=\\\"P39\\\">\\n<sentence id=\\\"P39-S0\\\">b. Penalties for Breach:</sentence>\\n</paragraph>\\n<paragraph
+      id=\\\"P40\\\">\\n<sentence id=\\\"P40-S0\\\">In the event of a breach of this
+      Agreement by the Receiving Party, the Disclosing Party shall be entitled to
+      seek injunctive relief in addition to any other remedy available at law or in
+      equity.</sentence>\\n<sentence id=\\\"P40-S1\\\">The Receiving Party acknowledges
+      that a breach of this Agreement may cause irreparable harm to the Disclosing
+      Party for which monetary damages would be an inadequate remedy.</sentence>\\n<sentence
+      id=\\\"P40-S2\\\">In addition to injunctive relief, the Receiving Party shall
+      be liable for liquidated damages in the amount of $25,000 for each instance
+      of unauthorized disclosure or use of Confidential Information, which the parties
+      agree represents a reasonable estimate of the damages likely to be suffered
+      and not a penalty.</sentence>\\n</paragraph>\\n<paragraph id=\\\"P41\\\">\\n<sentence
+      id=\\\"P41-S0\\\">7. No License:</sentence>\\n</paragraph>\\n<paragraph id=\\\"P42\\\">\\n<sentence
+      id=\\\"P42-S0\\\">Nothing in this Agreement shall be construed as granting any
+      rights to the Receiving Party, by license or otherwise, to any of the Disclosing
+      Party\u2019s Confidential Information, except as expressly set forth in this
+      Agreement.</sentence>\\n</paragraph>\\n<paragraph id=\\\"P43\\\">\\n<sentence
+      id=\\\"P43-S0\\\">8. Governing Law and Disputes:</sentence>\\n</paragraph>\\n<paragraph
+      id=\\\"P44\\\">\\n<sentence id=\\\"P44-S0\\\">This Agreement shall be governed
+      by and construed in accordance with the laws of the State of California, without
+      regard to its conflict of law principles.</sentence>\\n</paragraph>\\n<paragraph
+      id=\\\"P45\\\">\\n<sentence id=\\\"P45-S0\\\">All disputes shall be resolved
+      by the courts of the State of California.</sentence>\\n<sentence id=\\\"P45-S1\\\">This
+      Agreement shall remain in effect for a period of five (5) years from the date
+      of signing this agreement.</sentence>\\n</paragraph>\\n<paragraph id=\\\"P46\\\">\\n<sentence
+      id=\\\"P46-S0\\\">9. Miscellaneous:</sentence>\\n</paragraph>\\n<paragraph id=\\\"P47\\\">\\n<sentence
+      id=\\\"P47-S0\\\">a. This Agreement constitutes the entire agreement between
+      the parties with respect to the subject matter hereof and supersedes all prior
+      or contemporaneous oral or written agreements concerning such subject matter.</sentence>\\n</paragraph>\\n<paragraph
+      id=\\\"P48\\\">\\n<sentence id=\\\"P48-S0\\\">b. Any amendments or modifications
+      to this Agreement must be made in writing and signed by both parties.</sentence>\\n</paragraph>\\n<paragraph
+      id=\\\"P49\\\">\\n<sentence id=\\\"P49-S0\\\">c. If any provision of this Agreement
+      is found to be unenforceable, the remainder shall be enforced as fully as possible
+      and the unenforceable provision shall be deemed modified to the limited extent
+      required to permit its enforcement in a manner most closely representing the
+      intention of the parties.</sentence>\\n</paragraph>\\n<paragraph id=\\\"P50\\\">\\n<sentence
+      id=\\\"P50-S0\\\">d. The Disclosing Party shall be a good person to execute
+      this contract.</sentence>\\n</paragraph>\\n<paragraph id=\\\"P51\\\">\\n<sentence
+      id=\\\"P51-S0\\\">IN WITNESS WHEREOF, the parties hereto have executed this
+      Non-Disclosure Agreement as of the date first above written.</sentence>\\n</paragraph>\\n<paragraph
+      id=\\\"P52\\\">\\n<sentence id=\\\"P52-S0\\\">_____</sentence>\\n</paragraph>\\n<paragraph
+      id=\\\"P53\\\">\\n<sentence id=\\\"P53-S0\\\">By: ___________________________</sentence>\\n</paragraph>\\n<paragraph
+      id=\\\"P54\\\">\\n<sentence id=\\\"P54-S0\\\">Name: _____</sentence>\\n</paragraph>\\n<paragraph
+      id=\\\"P55\\\">\\n<sentence id=\\\"P55-S0\\\">Title: _____</sentence>\\n</paragraph>\\n<paragraph
+      id=\\\"P56\\\">\\n<sentence id=\\\"P56-S0\\\">Date: ___________________________</sentence>\\n</paragraph>\\n<paragraph
+      id=\\\"P57\\\">\\n<sentence id=\\\"P57-S0\\\">Example.Com LLC</sentence>\\n</paragraph>\\n<paragraph
+      id=\\\"P58\\\">\\n<sentence id=\\\"P58-S0\\\">By: ___________________________</sentence>\\n</paragraph>\\n<paragraph
+      id=\\\"P59\\\">\\n<sentence id=\\\"P59-S0\\\">Name: Jane Doe</sentence>\\n</paragraph>\\n<paragraph
+      id=\\\"P60\\\">\\n<sentence id=\\\"P60-S0\\\">Title: Managing Partner</sentence>\\n</paragraph>\\n<paragraph
+      id=\\\"P61\\\">\\n<sentence id=\\\"P61-S0\\\">Date: ___________________________</sentence>\\n</paragraph>\\n</document_paragraphs>\"}],\"model\":\"gpt-6-luna\"}"
     headers:
       accept:
       - application/json
@@ -2662,7 +1969,7 @@ interactions:
       connection:
       - keep-alive
       content-length:
-      - '56014'
+      - '35043'
       content-type:
       - application/json
       cookie:
@@ -2696,21 +2003,21 @@ interactions:
   response:
     body:
       string: !!binary |
-        H4sIAAAAAAAA/61WzW4aMRC+8xTWnpcIFgi0typKpKiVGrWol4CQsYddp157Y3v5aYTU1+jr9Uk6
-        9gK7JORAxWVlzzc/n2cM/l5ahESCRx9JxDLqWF7I9i27u5W/Pg9Sdj+HZa98Xn36npUPo/WP+fBr
-        FPsIPX8C5vZRV0xjHDihVQUzA9SBz9odfkiGo96w3wtArjlIH5YWrn3dlqWiu4hMCwYWoUfcEvIS
-        vp6b4rBGcyfeW3KwlqaAtr0TGo2W3hJRa4V1VLkorkGmlQMV6D5OFCb3H0ImHmBQuJngEwQn0U1n
-        EsV7ENbOUIbHmAkHufUejxV2yFA5LqkswcMNq7dLOgd5HLeHbrRaCI6cBJXCbQ5Va48xsExpqdNT
-        4J1QFJmfQL5ASiW58fMQ77iMM2E4eaDGbcg3kNSPzZ7wQ46hAWQMxh+/iU/rzTZu9uKptE4sBAtZ
-        q6aOMyA0NQA5npcURju8OpawRguIUAtt8hAUE1gXBmcsN2hmsuRgidULt6IGMIpDTKjihHLuvRDE
-        k86FbyOucoGpPSzFcym4v4WE0xzvi70i945QaTWxgE6pXoJRQqVE0lUI4cIWpQOyBFVikcrBejOT
-        2pZYLbg53792Efp3xNuDgJdvLoXN0Nnhwb2bAPv39x9/4NDPEs+r0SetOl/l9C2+OhrCJDKwAAM4
-        xBlmwQ7SInt7m15ej+1E1OF+P3ROzLkOsOB/J7gQfFcII9rfMWjaDNrG/0+gOzybQXd4WQrJ+U1I
-        sAvdS1IYnE9hcNku9JKzKfSSC1MYnU9hFCjEZLe+5FD659+Lfqem49fJJen0z6fTv+yA+udf0/6g
-        0ZHBiQHVm4N9Zwt7XE+bTzdWKy31kkGVUjYAqpR21T+oLz1t7Y+7lwkLofBveIZKxKIswaffOl1E
-        Ad3idxpkR3mkJCJ8nHKUA07/hJC22xkmgypjVGucGr9OrneoQzKyEdjtDbrxiaQzDo4KaRvqJWKU
-        Zagyjqom8RE6WxkUIbVLrYZoyYVuAK1GF95yPlW+6hA+hHWWpFH/dYEaYF47IXF8rblgx52p3Qx4
-        qfie22EegXJkwSxRB87wzTR+ZhwWtJSVmIvsxqIQm+FgUzCFEUHR+WvR2rb+AdXPxcnICgAA
+        H4sIAAAAAAAA/7VWyW7bMBC9+ysIneXAVuzI7TXoBhRN2hi5xIZBk2OJKUUKJOVsyL93SMWW1Mgo
+        CsMXQZo3M3yzSHovA0IiwaOPJGI5dawo5fAT+3IlR89X2Xidrr9W1zfb22f28/ZHAnOdRrGP0Ot7
+        YG4XdcY0xoETWtUwM0Ad+Kzj9EOSzmbJKA1AoTlIH5aVbngxlJWibxG5FgwsQnf4SMhLuHpuisMj
+        mkfxzlKAtTQDtO2c0Gi09JaIWiuso8pFcQMyrRyoQPduoTC5vxCy8ACD0q0EXyC4iC5HiyjegfDo
+        DGVYxko4KKz3uKuxfYbacUtlBR5uWb1d0jXIbtwOutRqIzhyElQK97Q/tfGYA8uVljrrAz8LRZF5
+        D/IdMirJpZ+HOOAyz4Xh5Joa90R+gaR+bLbHDzmGBpA5GF9+G182D69xuxf3lXViI1jIWjd1ngOh
+        mQEosF5SGu1wdSxhrRYQoTbaFCEoJvCI5Jlw8gntTFYcLHG+HZi240qo4sTqjXugBjAhhziYDGQV
+        1oVhXFgmta0Qdpq4UHmJlQuwZ+SbI1RaTSwgHWzXWvhZ4F0h0OATcVrgptmY2BIYloUZM70Fo4TK
+        iKQPtZOwZeUAT7VaVnUJ3g64h2spbI5R2uVgfMmhoxWWoRHK6t4Hb+ebfNYZwyIysAEDOMYVksYe
+        0jJ/v08vfw+uJ2q/4dfjtGfUTYQF/6rgjeB9m0vqFMObUXcfOhvR3Yn/JZiMjiaYjALB+AA0Ph33
+        6fHcp6ds7nlyNMHz5KQEZ8cTnJ2S4OT49ZzgDianIzg5nuDkpB08/iWZTA++4B76xwvePOztb7bw
+        jPfLtnpAapWlXrWoSsoWQJXSrv6Ee57Lwa43O6WyEQo//ysUQxaVEaoP63QZBfQVr8ugfKqOmInw
+        /1igInH6N4S06ThN64RRo7Ia+GI6fkMdcpGtuFkyi3tSrjg4KqRtyaeIUZajzGmfOYk74OrBoAhq
+        PBo1RisudAsYtFrwnnHf6XV78I/aZEkms4MHNADz2g15lwa4YN2+NG4GvFQ95LYfRqAcWTBb1KEr
+        FAjGD4zDhlayFpORfbIoBFc41QxMaURQlH4nBq+DP3MfjuhICwAA
     headers:
       access-control-expose-headers:
       - X-Request-ID
@@ -2733,7 +2040,7 @@ interactions:
       openai-organization:
       - DUMMY
       openai-processing-ms:
-      - '8629'
+      - '5917'
       openai-project:
       - DUMMY
       openai-version:
@@ -2759,7 +2066,7 @@ interactions:
       x-ratelimit-reset-requests:
       - 6ms
       x-ratelimit-reset-tokens:
-      - 81ms
+      - 51ms
       x-request-id:
       - DUMMY
     status:
@@ -2860,11 +2167,11 @@ interactions:
       across diverse document analysis tasks.\\n</conclusion>\"},{\"role\":\"user\",\"content\":\"<introduction>\\nBelow
       you will find document text and a list of concepts.\\n</introduction>\\n\\n<guidance_on_task_structure>\\nAll
       structured information in these instructions is provided using semantic XML
-      tags. Field names correspond directly to tag names (e.g., concept_name, paragraph_text,
-      sentence_text, additional_context, etc.).\\n</guidance_on_task_structure>\\n\\n<private_reasoning>\\nUse
-      private deliberation to plan, evaluate evidence, and verify decisions. Do not
-      reveal any intermediate analysis, notes, or steps. Only output the JSON according
-      to the format specified within <answer_format></answer_format> tags.\\n\\nFollow
+      tags. Field names correspond directly to tag names (e.g., concept_name, additional_context,
+      etc.).\\n</guidance_on_task_structure>\\n\\n<private_reasoning>\\nUse private
+      deliberation to plan, evaluate evidence, and verify decisions. Do not reveal
+      any intermediate analysis, notes, or steps. Only output the JSON according to
+      the format specified within <answer_format></answer_format> tags.\\n\\nFollow
       this internal three-stage process:\\n\\n1. Plan\\n    - Internally restate each
       concept in one sentence.\\n    - List 3-5 concrete lexical/semantic cues for
       relevance aligned with the concept description (include indicators of definition,
@@ -3101,7 +2408,7 @@ interactions:
       connection:
       - keep-alive
       content-length:
-      - '26242'
+      - '26211'
       content-type:
       - application/json
       cookie:
@@ -3135,14 +2442,14 @@ interactions:
   response:
     body:
       string: !!binary |
-        H4sIAAAAAAAA/3WS3WrjMBCF7/MURtdOieMm7va2tLRQKIWFwsbBaKWJo1aRhDTuppS8+46UHzu0
-        vRFovpnhzJn5HGUZU5JdZ0ysOYqN0+NbcXfbFerJ3k9fWuPEAz5vpUN8+SMef7M8Vti/ryDwWHUh
-        LNUBKmv2WHjgCLFrUf2aVldlNZsmsLESdCxrHY7nY90ZfqhYWyUgEFrQN8s+0xu1GQlbCk/yY2QD
-        IfAWKHZMoqC3OkYYD0EF5AZZ3kNhDYJJche1oebxybI6AgEOGyVrgjW7mdQsP0LYoueCxmgUwibE
-        jMUywl1tlsP2HlZd4HEs02k9ANwYizzakgZbHsjuNMpKGRXWDbkVyDqSF9A6luiO3mWypjubljlP
-        ZmOD9g1S29mkKPcNWb+GHlfTA0SSoodlV7P8m46NBORKh4G9THCxJhtOtUU5r/Iz2PzzZFKfUc4v
-        y1MG76SyPZuMBiZ81fydgL1ByrR9l8vix/49EHG7pNx5kEqcG9OneYjH/FPaaRtJMQvg3+lSG1Tg
-        48YkrHin9+fGwkegU2lorS1451W6uXgUo93oP3ZoLmhqAwAA
+        H4sIAAAAAAAA/3WSTU8CMRCG7/yKTc+LWUC+vBljjAc18WZYsqntAJXSbtpZBAn/3Wn52CXKpUnn
+        mZm8887sWknClGR3CRMLjmJV6vajeHpz3U95+/485v6na/Fju1y/bl/62X3F0lBhP79A4KnqRliq
+        A1TWHLBwwBFC185w3B2ORt1OL4KVlaBD2bzE9qCtK8OPFQurBHhCE/omyS6+QZuRsKFwlp4iK/Ce
+        z4FipyQKOqtDhHHvlUdukKU1FNYgmCh3khtqHp4kyQMQUGKhZE4wZw9ZztIThA06LmiMQiGsfMiY
+        TAPc52babO9gVnkexjKV1g3AjbHIgy1xsOmR7M+jzJRRflGQW56sI3kebcki3dM7jdZUF9Oy0pHZ
+        WKBdQmzbz7LhoSGr11Dj0fgIkaToZtl4kP7TsZCAXGnfsJcJLhZkw7m20xsM0wtYfDsyqc7oDXp1
+        Bq+ksjXLWg0T/mr+T8DBIGXmDf2jq/1rIMJ2SXnpQCpxaUyd5iAc87W08zaiYubBrelSC1TgwsYk
+        zHilD+fG/NbTqRS01jm40ql4c+EoWvvWL3nGPVZqAwAA
     headers:
       access-control-expose-headers:
       - X-Request-ID
@@ -3165,7 +2472,7 @@ interactions:
       openai-organization:
       - DUMMY
       openai-processing-ms:
-      - '2215'
+      - '1820'
       openai-project:
       - DUMMY
       openai-version:
@@ -3292,11 +2599,11 @@ interactions:
       across diverse document analysis tasks.\\n</conclusion>\"},{\"role\":\"user\",\"content\":\"<introduction>\\nBelow
       you will find document text and a list of concepts.\\n</introduction>\\n\\n<guidance_on_task_structure>\\nAll
       structured information in these instructions is provided using semantic XML
-      tags. Field names correspond directly to tag names (e.g., concept_name, paragraph_text,
-      sentence_text, additional_context, etc.).\\n</guidance_on_task_structure>\\n\\n<private_reasoning>\\nUse
-      private deliberation to plan, evaluate evidence, and verify decisions. Do not
-      reveal any intermediate analysis, notes, or steps. Only output the JSON according
-      to the format specified within <answer_format></answer_format> tags.\\n\\nFollow
+      tags. Field names correspond directly to tag names (e.g., concept_name, additional_context,
+      etc.).\\n</guidance_on_task_structure>\\n\\n<private_reasoning>\\nUse private
+      deliberation to plan, evaluate evidence, and verify decisions. Do not reveal
+      any intermediate analysis, notes, or steps. Only output the JSON according to
+      the format specified within <answer_format></answer_format> tags.\\n\\nFollow
       this internal three-stage process:\\n\\n1. Plan\\n    - Internally restate each
       concept in one sentence.\\n    - List 3-5 concrete lexical/semantic cues for
       relevance aligned with the concept description (include indicators of definition,
@@ -3533,7 +2840,7 @@ interactions:
       connection:
       - keep-alive
       content-length:
-      - '26296'
+      - '26265'
       content-type:
       - application/json
       cookie:
@@ -3567,14 +2874,15 @@ interactions:
   response:
     body:
       string: !!binary |
-        H4sIAAAAAAAA/31SyU7DMBC99ysin1OU0JIAV1YJcYADB0gVGWeaGhw7sidsVf+dsbskFYssWfK8
-        N+M3b2Y5iiImK3YaMbHgKJpWjS/E5cX71Y3M1NfdFNLz6aNNbut5c3dzLR5Y7DPM8wsI3GYdCEN5
-        gNLoNSwscARfNc1PDvPjSX40DUBjKlA+rW5xnI1Vp/kmY2GkAEfQEz2jaBlur01X8EHhJN5GGnCO
-        10CxLYmC1igfYdw56ZBrZHEPCqMRdJD7tCz8U0CLpawKdlqws6RgccHgAy0XpLqUCI0jyHMVfwYV
-        HkQ05lXqOroHIVug4GxFZ/iRhXnnuG9Qd0oNAK61Qe4NCi3ONshq19RcaukWJfnmyEQS6tC0LKAr
-        umfBpG6vb9Zash1LNK8Qyh4labYuyPqB9HCab1EkLWqQl54cxr+ULCtALpUbOM0EFwuyqC86yfJ4
-        DyzfLRnYMybZNNsxeFdJ02PJaODCT9G/CVg7RGMYaPjngx4QfuYkvbVQSbFvTU+z4Bf7L9puHkEy
-        c2DfaGtLlGD9zCqY806tV4+5T0d7VNJga7CtlWH//FqMVqNv3Ow/d3YDAAA=
+        H4sIAAAAAAAA/3WTTW/bMAyG7/kVhs5OYTfNx3YriqLoZS12aLHFgaHIdKJFkQyJXjsU+e+jZDty
+        sPUiyHxI+vVL+mOSJExW7GvCxJ6jODZqei8envAxa75t6x8/4eUwu33D+uX5/nH+mjmW+gqz/QUC
+        h6orYagOUBrdYWGBI/iu+fLL9XK1us7nARxNBcqX7RqcLqaq1byv2BspwBFa02OSfITTa9MVvFM4
+        S4fIEZzjO6DYkERBa5SPMO6cdMg1sjRCYTSCDnLXhabm/kiSwgMBDZayKggW7C4rWDpAeEfLBX1G
+        KRGOzmesO3bu0CUqvgXVc3ZnzEHqXfIdhGyAopsh9dRdwjPdN2OFFurWce+MbpUaAa61Qe6dDd5s
+        enI6u1FLLd2+JMMduU9f6NA0LNATnZvgbnthGGsszQtLNAcIbedZ3tvL4iQjzm9WPUXSokZ1+Xwg
+        Fy3LCpBL5UYjYoKLPVkZm84Wy/QClm+WjI4Zs8VNHDpvK2kiyyYjF/4V/T8BnUM0mpGGbPbpCyIQ
+        fkVIemOhkuLSmphmwf8Rn6Wd5xEkMwf2N617iRKsn1kFNW9Vt7PM/XG0byUNdge2sTIsrl+LyWny
+        F2VqjCWvAwAA
     headers:
       access-control-expose-headers:
       - X-Request-ID
@@ -3597,7 +2905,7 @@ interactions:
       openai-organization:
       - DUMMY
       openai-processing-ms:
-      - '3523'
+      - '2536'
       openai-project:
       - DUMMY
       openai-version:

@@ -88,58 +88,58 @@ interactions:
       you will find a list of consecutively ordered paragraphs from a document and
       a list of aspects.\n</introduction>\n\n<guidance_on_task_structure>\nAll structured
       information in these instructions is provided using semantic XML tags. Field
-      names correspond directly to tag names (e.g., aspect_name, paragraph_text, sentence_text,
-      additional_context, etc.).\n</guidance_on_task_structure>\n\n<private_reasoning>\nUse
-      private deliberation to plan, evaluate evidence, and verify decisions. Do not
-      reveal any intermediate analysis, notes, or steps. Only output the JSON specified
-      within <answer_format></answer_format> tags.\n\nFollow this internal three-stage
-      process:\n\n1. Plan\n    - Internally restate each aspect in one sentence.\n    -
-      List 3-5 concrete lexical/semantic cues for relevance, including indicators
-      of prohibition, requirement, exception, conditionals, and negations.\n    -
-      Define internal inclusion/exclusion criteria for borderline matches.\n\n2. Evidence
-      triage\n    - For each paragraph, generate candidate matches to aspects.\n    -
-      Collect minimal sufficient textual evidence privately and note negation, hypothetical,
-      or conditional forms.\n    - Prefer precision over recall; include only high-confidence
-      matches and omit weak or ambiguous ones.\n\n3. Consistency pass\n   - Deduplicate
-      paragraph IDs within each aspect and preserve the original order.\n\nNever disclose
-      any plan, evidence, or internal notes - only the JSON array defined within <answer_format></answer_format>
+      names correspond directly to tag names (e.g., aspect_name, additional_context,
+      etc.).\n</guidance_on_task_structure>\n\n<private_reasoning>\nUse private deliberation
+      to plan, evaluate evidence, and verify decisions. Do not reveal any intermediate
+      analysis, notes, or steps. Only output the JSON specified within <answer_format></answer_format>
+      tags.\n\nFollow this internal three-stage process:\n\n1. Plan\n    - Internally
+      restate each aspect in one sentence.\n    - List 3-5 concrete lexical/semantic
+      cues for relevance, including indicators of prohibition, requirement, exception,
+      conditionals, and negations.\n    - Define internal inclusion/exclusion criteria
+      for borderline matches.\n\n2. Evidence triage\n    - For each paragraph, generate
+      candidate matches to aspects.\n    - Collect minimal sufficient textual evidence
+      privately and note negation, hypothetical, or conditional forms.\n    - Prefer
+      precision over recall; include only high-confidence matches and omit weak or
+      ambiguous ones.\n\n3. Consistency pass\n   - Deduplicate paragraph IDs within
+      each aspect and preserve the original order.\n\nNever disclose any plan, evidence,
+      or internal notes - only the JSON array defined within <answer_format></answer_format>
       tags.\n</private_reasoning>\n\n<task_description>\nYour task is to:\n\n1. Read
       and understand the aspects\n    - Each aspect is identified by an Aspect ID
       (for example, \"A0\", \"A1\", etc.) specified within <aspect_id></aspect_id>
       tags, includes a name specified within <aspect_name></aspect_name> tags, and
       has a description specified within <aspect_description></aspect_description>
       tags.\n    - Aspects describe themes, topics, or criteria that might be addressed
-      in the paragraphs.\n\n2. Examine each paragraph\n    - Each paragraph is identified
-      by a paragraph ID (for example, \"P0\", \"P1\", etc.) specified within <paragraph_id></paragraph_id>
-      tags, followed by the full text of the paragraph specified within <paragraph_text></paragraph_text>
-      tags.\n    - Note that paragraphs are listed in the same order they appear in
-      the original document; therefore, context from surrounding paragraphs may influence
-      whether a particular paragraph is relevant to an aspect.\n    - You may be working
-      with document fragments rather than complete documents. Focus on extracting
-      information from the available content without making assumptions about missing
-      parts.\n\n3. Map paragraphs to aspects\n    - A paragraph can address one, multiple,
-      or none of the aspects.\n    - If a paragraph clearly relates to an aspect (based
-      on the aspect''s name and description), include that paragraph''s ID under the
-      aspect''s list of paragraph IDs.\n    - If a paragraph does not relate to an
-      aspect, do not include it under that aspect''s list.\n    - Apply cross-paragraph
-      reasoning when needed (e.g., headings, lists, references like \"above\", \"this
-      section\"): use surrounding context to disambiguate; if unresolved, omit.\n    -
-      Treat negations, exceptions, and conditionals carefully: relevance can be present
-      in prohibitions or restrictions.\n    - Prefer minimal sufficient evidence:\n        --
-      base the mapping on the most relevant paragraphs; avoid tangential mentions.\n    -
-      Favor precision over recall; when uncertain, exclude rather than speculate.\n\n4.
-      Produce the final answer in the JSON format specified within <answer_format></answer_format>
-      tags\n    - Your output must be a JSON array of objects, each object corresponding
-      to a single aspect.\n    - For each aspect (in the order they are provided),
-      include:\n        -- aspect_id: The aspect''s unique identifier, e.g., \"A0\".\n        --
-      paragraph_ids: An array of the paragraph IDs that address or relate to the aspect,
-      e.g., [\"P0\", \"P2\"].\n        -- If an aspect has no related paragraphs,
-      still include it with an empty paragraph_ids array ([]).\n- Do not add extra
-      commentary, code block markers, or any other formatting beyond the JSON array.\n-
-      Internally verify before finalizing:\n    -- Each provided aspect appears once,
-      in order, with the correct \"aspect_id\".\n    -- \"paragraph_ids\" contains
-      only valid paragraph IDs.\n    -- The structure exactly matches the format specified
-      within <answer_format></answer_format> tags (no extra keys or commentary).\n</task_description>\n\n<output_constraints>\n-
+      in the paragraphs.\n\n2. Examine each paragraph\n    - Each paragraph is given
+      with its full text within <paragraph></paragraph> tags, whose id attribute holds
+      its paragraph ID (for example, \"P0\", \"P1\", etc.).\n    - Note that paragraphs
+      are listed in the same order they appear in the original document; therefore,
+      context from surrounding paragraphs may influence whether a particular paragraph
+      is relevant to an aspect.\n    - You may be working with document fragments
+      rather than complete documents. Focus on extracting information from the available
+      content without making assumptions about missing parts.\n\n3. Map paragraphs
+      to aspects\n    - A paragraph can address one, multiple, or none of the aspects.\n    -
+      If a paragraph clearly relates to an aspect (based on the aspect''s name and
+      description), include that paragraph''s ID under the aspect''s list of paragraph
+      IDs.\n    - If a paragraph does not relate to an aspect, do not include it under
+      that aspect''s list.\n    - Apply cross-paragraph reasoning when needed (e.g.,
+      headings, lists, references like \"above\", \"this section\"): use surrounding
+      context to disambiguate; if unresolved, omit.\n    - Treat negations, exceptions,
+      and conditionals carefully: relevance can be present in prohibitions or restrictions.\n    -
+      Prefer minimal sufficient evidence:\n        -- base the mapping on the most
+      relevant paragraphs; avoid tangential mentions.\n    - Favor precision over
+      recall; when uncertain, exclude rather than speculate.\n\n4. Produce the final
+      answer in the JSON format specified within <answer_format></answer_format> tags\n    -
+      Your output must be a JSON array of objects, each object corresponding to a
+      single aspect.\n    - For each aspect (in the order they are provided), include:\n        --
+      aspect_id: The aspect''s unique identifier, e.g., \"A0\".\n        -- paragraph_ids:
+      An array of the paragraph IDs that address or relate to the aspect, e.g., [\"P0\",
+      \"P2\"].\n        -- If an aspect has no related paragraphs, still include it
+      with an empty paragraph_ids array ([]).\n- Do not add extra commentary, code
+      block markers, or any other formatting beyond the JSON array.\n- Internally
+      verify before finalizing:\n    -- Each provided aspect appears once, in order,
+      with the correct \"aspect_id\".\n    -- \"paragraph_ids\" contains only valid
+      paragraph IDs.\n    -- The structure exactly matches the format specified within
+      <answer_format></answer_format> tags (no extra keys or commentary).\n</task_description>\n\n<output_constraints>\n-
       No additional text:\n    -- Do not include any headers, explanations, or text
       outside of the JSON array.\n    -- Do not wrap your JSON response in backticks
       or any other formatting characters.\n- Private deliberation only:\n    -- Do
@@ -156,23 +156,16 @@ interactions:
       id=\"A2\">\n        <aspect_id>A2</aspect_id>\n        \n        <aspect_name>Products
       and Services</aspect_name>\n        \n        <aspect_description>\n        Information
       about the company''s products, services, and offerings\n        </aspect_description>\n    </aspect>\n\n</aspects>\n\n<document_paragraphs>\nDOCUMENT
-      PARAGRAPHS:\n    <paragraph id=\"P0\">\n        <paragraph_id>P0</paragraph_id>\n        \n        <paragraph_text>\n        TechCorp
-      is a leading software development company founded in 2015 with headquarters
-      in San Francisco.\n        </paragraph_text>\n    </paragraph>\n\n    <paragraph
-      id=\"P1\">\n        <paragraph_id>P1</paragraph_id>\n        \n        <paragraph_text>\n        The
-      company specializes in cloud-based solutions and has grown to 500 employees
-      across 12 countries.\n        </paragraph_text>\n    </paragraph>\n\n    <paragraph
-      id=\"P2\">\n        <paragraph_id>P2</paragraph_id>\n        \n        <paragraph_text>\n        Their
-      flagship product, CloudManager Pro, serves over 10,000 enterprise clients worldwide.\n        </paragraph_text>\n    </paragraph>\n\n    <paragraph
-      id=\"P3\">\n        <paragraph_id>P3</paragraph_id>\n        \n        <paragraph_text>\n        TechCorp
-      reported $50 million in revenue for 2023, representing a 25% growth from the
-      previous year.\n        </paragraph_text>\n    </paragraph>\n\n    <paragraph
-      id=\"P4\">\n        <paragraph_id>P4</paragraph_id>\n        \n        <paragraph_text>\n        The
-      company is known for its innovative AI-powered analytics platform and excellent
-      customer support.\n        </paragraph_text>\n    </paragraph>\n\n    <paragraph
-      id=\"P5\">\n        <paragraph_id>P5</paragraph_id>\n        \n        <paragraph_text>\n        They
-      recently expanded into the European market and plan to launch three new products
-      in 2024.\n        </paragraph_text>\n    </paragraph>\n\n</document_paragraphs>"}],"model":"gpt-6-luna"}'
+      PARAGRAPHS:\n<paragraph id=\"P0\">TechCorp is a leading software development
+      company founded in 2015 with headquarters in San Francisco.</paragraph>\n<paragraph
+      id=\"P1\">The company specializes in cloud-based solutions and has grown to
+      500 employees across 12 countries.</paragraph>\n<paragraph id=\"P2\">Their flagship
+      product, CloudManager Pro, serves over 10,000 enterprise clients worldwide.</paragraph>\n<paragraph
+      id=\"P3\">TechCorp reported $50 million in revenue for 2023, representing a
+      25% growth from the previous year.</paragraph>\n<paragraph id=\"P4\">The company
+      is known for its innovative AI-powered analytics platform and excellent customer
+      support.</paragraph>\n<paragraph id=\"P5\">They recently expanded into the European
+      market and plan to launch three new products in 2024.</paragraph>\n</document_paragraphs>"}],"model":"gpt-6-luna"}'
     headers:
       accept:
       - application/json
@@ -183,7 +176,7 @@ interactions:
       connection:
       - keep-alive
       content-length:
-      - '15173'
+      - '14309'
       content-type:
       - application/json
       cookie:
@@ -217,15 +210,15 @@ interactions:
   response:
     body:
       string: !!binary |
-        H4sIAAAAAAAA/42TUW+bMBDH3/MpkJ/JBAmEpm9Tt8eqVbtpk0KEPPsCbh3bss26qsp335lAIGq7
-        7sWI+939Oe7ve5lFERGcXEaENdSzvZHzrz+fC3n14PIvF1dJdpdd32R3T/fFzn778f2RxKFC/3oA
-        5oeqT0xjHXih1REzC9RDUE2LdVqsslW27sBec5ChrDZ+vprLVtG+otGCgUO0wdcoeunO0Jvi8AfD
-        STxE9uAcrQFjQxIGrZYhQqhzwnmqPIlHyLTyoLp2N6VC8XBEUYnZBn+jErxEVpLPSUnigRlqaW2p
-        aRC7wDcluQ0JyG7TkmxD4iH+p176kd7y/3QWH+mkfV+L/pn1z3zQL9V2OhELu9bR4IRqpZwAqpT2
-        NDjZebHtyeE0/Z1QwjUVGuzQbZyo89qQjh7w3HZutmcGEWPxfvjK60foZBfrPD0KkvHmjDhdZz31
-        2IscwTLN8vgNyYqDp0K6yZUgjLIG+ER0uSriM1g9WeFhkpFfpKcM2nKhR5bMJlN43fRbDRwnJFQ9
-        +ULy/gdGwBgYXJ7KWOCCnY9mTLMQNvC9tJMfXcvEgf2N61V5ATZ4xmFHW3ncEeKenYd9hcbWYI0V
-        3aKEazE7zP4CpguZsx8EAAA=
+        H4sIAAAAAAAA/42TTW/bMAyG7/kVhs7OEMdp0u02DENRDMV62QcQB4YqMbY2RVIleutQ5L+PUuza
+        wdZ1FwnmQ1I0X/JxlmVMSfYmY6LlKA5Oz9+Lq8/w4cF8vCmLm6uvd9f3vLPlp9X9l/DumuUxwt59
+        A4FD1CthKQ5QWXPCwgNHiFmLzevl5vJyXa4SOFgJOoY1Dufrue4M7yNaqwQEQlv6zLLHdMbajIQH
+        Mi/ywXKAEHgDZBucyOitjhbGQ1ABuUGWj1BYg2BSudvKUPJ4ZFlF3o5+o1ayIlaxt4uK5QNz3PPG
+        c9cSDpFvK3YbHYjdFhXbRcdj/s98xUv5yv/Ls3wpT9HXtezvVX9fDPkrs5t2xMO+CzwqYTqtJ4Ab
+        Y5FHJZMWu54cn7q/V0aFtiaBA6lNHQ1oHUv0SOcuqdmdCcScp/nAGu13SGlpIno52Tg5E1xe9BSp
+        Fj2CclEM5CxlLQG50mEyEkxw0YIcY4tyvcnPYP3TK4SJx6oYh4x3UtmRLWaTLvxZ9N8KOHVImWb6
+        wvLZB0YgBDhantp5kEqct2Z08xA38Dm3Jz1SySyA/0HrVaMCHzWTsOedPu0IC78CwqEmYRvwzqu0
+        KHEsZsfZb2UBQuMfBAAA
     headers:
       access-control-expose-headers:
       - X-Request-ID
@@ -248,7 +241,7 @@ interactions:
       openai-organization:
       - DUMMY
       openai-processing-ms:
-      - '2019'
+      - '3132'
       openai-project:
       - DUMMY
       openai-version:
@@ -272,9 +265,9 @@ interactions:
       x-ratelimit-remaining-tokens:
       - DUMMY
       x-ratelimit-reset-requests:
-      - 12ms
+      - 6ms
       x-ratelimit-reset-tokens:
-      - 110ms
+      - 20ms
       x-request-id:
       - DUMMY
     status:

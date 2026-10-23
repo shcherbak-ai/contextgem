@@ -4121,7 +4121,7 @@ class TestExtraction(BaseTest):
                     for paragraph_position, texts in enumerate(sentence_texts[:2]):
                         for sentence_position, text in enumerate(texts):
                             sentence_id = f"P{paragraph_position}-S{sentence_position}"
-                            assert f"<sentence_id>{sentence_id}</sentence_id>" in prompt
+                            assert f'<sentence id="{sentence_id}">' in prompt
                             assert text in prompt
                     assert paragraph_texts[2] not in prompt
 
@@ -4760,11 +4760,9 @@ class TestExtraction(BaseTest):
             prompt = kwargs["messages"][-1]["content"]
             concept_ids = re.findall(r"<concept_id>(C\d+)</concept_id>", prompt)
             aspect_ids = re.findall(r"<aspect_id>(A\d+)</aspect_id>", prompt)
-            n_paragraphs = len(re.findall(r"<paragraph_id>P\d+</paragraph_id>", prompt))
+            n_paragraphs = len(re.findall(r'<paragraph id="P\d+">', prompt))
             assert n_paragraphs >= 2
-            with_sentences = bool(
-                re.search(r"<sentence_id>P\d+-S\d+</sentence_id>", prompt)
-            )
+            with_sentences = bool(re.search(r'<sentence id="P\d+-S\d+">', prompt))
             content: list[dict[str, Any]] = []
             for concept_id in concept_ids:
                 references: dict[str, Any] = (
@@ -6232,7 +6230,7 @@ class TestExtraction(BaseTest):
                 content = [
                     {"concept_id": i, "extracted_items": []} for i in concept_ids
                 ]
-            elif "<sentence_id>" in prompt:
+            elif "<sentence id=" in prompt:
                 content = [{"aspect_id": i, "paragraphs": []} for i in aspect_ids]
             else:
                 content = [

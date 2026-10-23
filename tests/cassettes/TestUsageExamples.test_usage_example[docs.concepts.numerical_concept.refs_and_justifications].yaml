@@ -87,35 +87,34 @@ interactions:
       across diverse document analysis tasks.\n</conclusion>"},{"role":"user","content":"<introduction>\nBelow
       you will find a list of document paragraphs and a list of concepts.\n</introduction>\n\n<guidance_on_task_structure>\nAll
       structured information in these instructions is provided using semantic XML
-      tags. Field names correspond directly to tag names (e.g., concept_name, paragraph_text,
-      sentence_text, additional_context, etc.).\n</guidance_on_task_structure>\n\n<private_reasoning>\nUse
-      private deliberation to plan, evaluate evidence, and verify decisions. Do not
-      reveal any intermediate analysis, notes, or steps. Only output the JSON according
-      to the format specified within <answer_format></answer_format> tags.\n\nFollow
-      this internal three-stage process:\n\n1. Plan\n    - Internally restate each
-      concept in one sentence.\n    - List 3-5 concrete lexical/semantic cues for
-      relevance aligned with the concept description (include indicators of definition,
-      obligation, permission, exception, conditionals, and negations).\n    - If a
-      concept specifies a structure, rating scale, or available labels, align inclusion/exclusion
-      criteria with those constraints.\n    - For each concept, plan how to synthesize
-      the output value from the available evidence even when no literal span is present.\n\n2.
-      Evidence triage\n    - Evaluate the provided content at paragraph level; derive
-      candidate extractions/values for the concepts (explicit or inferred from context).\n    -
-      Collect minimal sufficient evidence privately and note negated, hypothetical,
-      or conditional forms.\n    - Prefer precision over recall; include only high-confidence
-      items and omit weak or ambiguous ones.\n\n3. Consistency pass\n    - Ensure
-      all extracted items strictly match required types and any specified structure,
-      rating scales, or label constraints.\n    - Deduplicate referenced paragraph
-      IDs and preserve their original order.\n    - Ensure justifications align with
-      the item''s evidence and stance, and comply with length and language constraints.\n\nNever
-      disclose any plan, evidence, or internal notes - only the JSON array defined
-      within <answer_format></answer_format> tags.\n</private_reasoning>\n\n<task_description>\nYour
-      task is to:\n1. Read through the document paragraphs provided.\n    - Each paragraph
-      is identified by a paragraph ID (for example, \"P0\", \"P1\", etc.) specified
-      within <paragraph_id></paragraph_id> tags, followed by the full text of the
-      paragraph specified within <paragraph_text></paragraph_text> tags.\n    - Note
-      that paragraphs are listed in the same order they appear in the original document.\n    -
-      You may be working with document fragments rather than complete documents. Focus
+      tags. Field names correspond directly to tag names (e.g., concept_name, additional_context,
+      etc.).\n</guidance_on_task_structure>\n\n<private_reasoning>\nUse private deliberation
+      to plan, evaluate evidence, and verify decisions. Do not reveal any intermediate
+      analysis, notes, or steps. Only output the JSON according to the format specified
+      within <answer_format></answer_format> tags.\n\nFollow this internal three-stage
+      process:\n\n1. Plan\n    - Internally restate each concept in one sentence.\n    -
+      List 3-5 concrete lexical/semantic cues for relevance aligned with the concept
+      description (include indicators of definition, obligation, permission, exception,
+      conditionals, and negations).\n    - If a concept specifies a structure, rating
+      scale, or available labels, align inclusion/exclusion criteria with those constraints.\n    -
+      For each concept, plan how to synthesize the output value from the available
+      evidence even when no literal span is present.\n\n2. Evidence triage\n    -
+      Evaluate the provided content at paragraph level; derive candidate extractions/values
+      for the concepts (explicit or inferred from context).\n    - Collect minimal
+      sufficient evidence privately and note negated, hypothetical, or conditional
+      forms.\n    - Prefer precision over recall; include only high-confidence items
+      and omit weak or ambiguous ones.\n\n3. Consistency pass\n    - Ensure all extracted
+      items strictly match required types and any specified structure, rating scales,
+      or label constraints.\n    - Deduplicate referenced paragraph IDs and preserve
+      their original order.\n    - Ensure justifications align with the item''s evidence
+      and stance, and comply with length and language constraints.\n\nNever disclose
+      any plan, evidence, or internal notes - only the JSON array defined within <answer_format></answer_format>
+      tags.\n</private_reasoning>\n\n<task_description>\nYour task is to:\n1. Read
+      through the document paragraphs provided.\n    - Each paragraph is given with
+      its full text within <paragraph></paragraph> tags, whose id attribute holds
+      its paragraph ID (for example, \"P0\", \"P1\", etc.).\n    - Note that paragraphs
+      are listed in the same order they appear in the original document.\n    - You
+      may be working with document fragments rather than complete documents. Focus
       on extracting information from the available content without making assumptions
       about missing parts.\n2. Identify whether each concept in the concepts list
       is addressed within the document paragraphs.\n    - Each concept is identified
@@ -245,18 +244,11 @@ interactions:
       by multiplying units sold by their price\n    </concept_description>\n\n    <amount_of_extracted_items>This
       concept may have zero or one extracted item, never multiple items.</amount_of_extracted_items>\n\n    <extracted_item_type>int
       or float (must be exactly as specified)</extracted_item_type>\n</concept>\n\n</concepts>\n\n<document_paragraphs>\nDOCUMENT
-      PARAGRAPHS:\n    <paragraph id=\"P0\">\n        <paragraph_id>P0</paragraph_id>\n        \n        <paragraph_text>\n        Quarterly
-      Sales Report - Q2 2023\n        </paragraph_text>\n    </paragraph>\n\n    <paragraph
-      id=\"P1\">\n        <paragraph_id>P1</paragraph_id>\n        \n        <paragraph_text>\n        Product
-      A: Sold 450 units at $75 each\n        </paragraph_text>\n    </paragraph>\n\n    <paragraph
-      id=\"P2\">\n        <paragraph_id>P2</paragraph_id>\n        \n        <paragraph_text>\n        Product
-      B: Sold 320 units at $125 each\n        </paragraph_text>\n    </paragraph>\n\n    <paragraph
-      id=\"P3\">\n        <paragraph_id>P3</paragraph_id>\n        \n        <paragraph_text>\n        Product
-      C: Sold 180 units at $95 each\n        </paragraph_text>\n    </paragraph>\n\n    <paragraph
-      id=\"P4\">\n        <paragraph_id>P4</paragraph_id>\n        \n        <paragraph_text>\n        Marketing
-      expenses: $28,500\n        </paragraph_text>\n    </paragraph>\n\n    <paragraph
-      id=\"P5\">\n        <paragraph_id>P5</paragraph_id>\n        \n        <paragraph_text>\n        Operating
-      costs: $42,700\n        </paragraph_text>\n    </paragraph>\n\n</document_paragraphs>"}],"model":"gpt-6-luna"}'
+      PARAGRAPHS:\n<paragraph id=\"P0\">Quarterly Sales Report - Q2 2023</paragraph>\n<paragraph
+      id=\"P1\">Product A: Sold 450 units at $75 each</paragraph>\n<paragraph id=\"P2\">Product
+      B: Sold 320 units at $125 each</paragraph>\n<paragraph id=\"P3\">Product C:
+      Sold 180 units at $95 each</paragraph>\n<paragraph id=\"P4\">Marketing expenses:
+      $28,500</paragraph>\n<paragraph id=\"P5\">Operating costs: $42,700</paragraph>\n</document_paragraphs>"}],"model":"gpt-6-luna"}'
     headers:
       accept:
       - application/json
@@ -267,7 +259,7 @@ interactions:
       connection:
       - keep-alive
       content-length:
-      - '22190'
+      - '21326'
       content-type:
       - application/json
       cookie:
@@ -301,17 +293,17 @@ interactions:
   response:
     body:
       string: !!binary |
-        H4sIAAAAAAAA/3VUTW/bMAy951cIQg8b4Ba2E9tJr0Ox7TCgwHYY2gSGJtOJWlvy9JGlKPLfR8mJ
-        7aDtRbH5Hhnq8dGvM0KoqOgtoXzHLG+75vru90vxXd59+8pt88DS7vD88MPk27TLEvOTRj5D/XkC
-        bs9ZN1xhHlihZA9zDcyCr5oUq6TIF3kaB6BVFTQ+bdvZ6/y6cZKdMnZKcDAIPeIrIa/h9L3JCg4Y
-        Dvkh0oIxbAsYO5MwqFXjI5QZI4xl0tJoBLmSFmRo93Etsbg/CFl7gENnS1GtEVzTL/GaRmcQDlYz
-        jtcohYXWeMZjjw0VeuKeNQ48vIqXWRxNoSdnrKgFZ16b/j9+Kcsa8tcxbUE3L0TDHqQDIgyxOyDG
-        tUTVQ7TWqiXA+I50WlWO21uyyGLipLCGMEuuiqyHP13N51GRxZ8jMk+nhCQdGIs4imPPYLIiyXLK
-        Wg2kpIiSQKqVJozY0C52dLWKI7zezaBQf0MNNWhAGcuOabbVrNuhnCe16H2CdGTdp6ff+ZpuzunH
-        /iG84/NmOjIs6wzzVpGuaSYAkxI78nIGs2xOyHGwRy2kMLsSHWjQjjhyY1VHA3rEcxPs5i4cRFHb
-        Fm1g1TOEsot0mfcF6WjtEU6K+QkN6kzyFtkqeqdkWYFlojETz1KOcqO3xqLzvIguwPKfRueNjHSV
-        5AODuUqoEYtnExXeNv1eA71CQm4n/Wcf1h8B7lcGO+80VIJfKjPSNPgvxEe0YRyhY2pA73H9SytA
-        +5FVUDPX9DtMzYvB/StxrlvQnRZhkb0rZsfZfz4JPd2/BAAA
+        H4sIAAAAAAAA/3VTzW7bMAy+5ykEYcAubmHnz0mPG7aehgVbsR3iwFAlJlEqS55+0gZFnmMPtBcb
+        ZSexg60XWeRH0hS/j68DQqgU9I5QvmWeV7W6+cTvfyymfv8tE7sPm/zZ/3z4/uWp/lrtP6/vaRIz
+        zOMOuD9n3XKDeeCl0S3MLTAPsWqWz4f5bDbN5g1QGQEqpm1qfzO9UUGzU8bWSA4OoSWahLw2Z+xN
+        C3hBd5qcPRU4xzaAvnMQOq1R0UOZc9J5pj1NOpAb7UE37S4LjcXjQUgRAQ61L6UoECzox7SgyRmE
+        F28Zx2eU0kPlYsSyxS4V2sA9UwEiPE9nkzTpQ7vgvFxLzuJs2n88GM8U+RWY9WDVgVjYgw5ApCN+
+        C8SFipg1CVp6R5xRglRBeVkrCYI8HggwviW1NSJw/97hDcd2R8aTlPz5Td7lk4SMhu09G6LBtCDZ
+        rHXM0fbx71Jv0EoT7Pb28uC2YQtrsIBTKWtm2cayeovTOT2eLjIMx6jF8PQdFXR1Tj+2l8bG+6rP
+        AJYNjkXmdVCqBzCtsaM4nYb71Qk5XtheSy3dtkRBOVQXMui8qWmDHvFcNeoJV4KgOJ4KWfXmCZqy
+        4yybtgVpp9QOzibjE9pMp5c3zE+yuy5ZCvBMKteTIOXIC0qlKzqa5skVWD5bFFIXMczH00sEC0Ka
+        DksHvSn82/T/GmgnhNT2+h+9Wb8DeNwA7Ly2ICS/nkwXZiEu/FthFzqajqkDu0dZll6CjZQJWDMU
+        cbvp7uBwnUrkdQMW5dvsZVTF4Dj4CwmvtzCOBAAA
     headers:
       access-control-expose-headers:
       - X-Request-ID
@@ -334,7 +326,7 @@ interactions:
       openai-organization:
       - DUMMY
       openai-processing-ms:
-      - '1717'
+      - '2164'
       openai-project:
       - DUMMY
       openai-version:
@@ -358,9 +350,9 @@ interactions:
       x-ratelimit-remaining-tokens:
       - DUMMY
       x-ratelimit-reset-requests:
-      - 24ms
+      - 6ms
       x-ratelimit-reset-tokens:
-      - 238ms
+      - 55ms
       x-request-id:
       - DUMMY
     status:

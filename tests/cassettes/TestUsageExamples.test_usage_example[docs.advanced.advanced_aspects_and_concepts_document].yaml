@@ -88,58 +88,58 @@ interactions:
       you will find a list of consecutively ordered paragraphs from a document and
       a list of aspects.\n</introduction>\n\n<guidance_on_task_structure>\nAll structured
       information in these instructions is provided using semantic XML tags. Field
-      names correspond directly to tag names (e.g., aspect_name, paragraph_text, sentence_text,
-      additional_context, etc.).\n</guidance_on_task_structure>\n\n<private_reasoning>\nUse
-      private deliberation to plan, evaluate evidence, and verify decisions. Do not
-      reveal any intermediate analysis, notes, or steps. Only output the JSON specified
-      within <answer_format></answer_format> tags.\n\nFollow this internal three-stage
-      process:\n\n1. Plan\n    - Internally restate each aspect in one sentence.\n    -
-      List 3-5 concrete lexical/semantic cues for relevance, including indicators
-      of prohibition, requirement, exception, conditionals, and negations.\n    -
-      Define internal inclusion/exclusion criteria for borderline matches.\n\n2. Evidence
-      triage\n    - For each paragraph, generate candidate matches to aspects.\n    -
-      Collect minimal sufficient textual evidence privately and note negation, hypothetical,
-      or conditional forms.\n    - Prefer precision over recall; include only high-confidence
-      matches and omit weak or ambiguous ones.\n\n3. Consistency pass\n   - Deduplicate
-      paragraph IDs within each aspect and preserve the original order.\n\nNever disclose
-      any plan, evidence, or internal notes - only the JSON array defined within <answer_format></answer_format>
+      names correspond directly to tag names (e.g., aspect_name, additional_context,
+      etc.).\n</guidance_on_task_structure>\n\n<private_reasoning>\nUse private deliberation
+      to plan, evaluate evidence, and verify decisions. Do not reveal any intermediate
+      analysis, notes, or steps. Only output the JSON specified within <answer_format></answer_format>
+      tags.\n\nFollow this internal three-stage process:\n\n1. Plan\n    - Internally
+      restate each aspect in one sentence.\n    - List 3-5 concrete lexical/semantic
+      cues for relevance, including indicators of prohibition, requirement, exception,
+      conditionals, and negations.\n    - Define internal inclusion/exclusion criteria
+      for borderline matches.\n\n2. Evidence triage\n    - For each paragraph, generate
+      candidate matches to aspects.\n    - Collect minimal sufficient textual evidence
+      privately and note negation, hypothetical, or conditional forms.\n    - Prefer
+      precision over recall; include only high-confidence matches and omit weak or
+      ambiguous ones.\n\n3. Consistency pass\n   - Deduplicate paragraph IDs within
+      each aspect and preserve the original order.\n\nNever disclose any plan, evidence,
+      or internal notes - only the JSON array defined within <answer_format></answer_format>
       tags.\n</private_reasoning>\n\n<task_description>\nYour task is to:\n\n1. Read
       and understand the aspects\n    - Each aspect is identified by an Aspect ID
       (for example, \"A0\", \"A1\", etc.) specified within <aspect_id></aspect_id>
       tags, includes a name specified within <aspect_name></aspect_name> tags, and
       has a description specified within <aspect_description></aspect_description>
       tags.\n    - Aspects describe themes, topics, or criteria that might be addressed
-      in the paragraphs.\n\n2. Examine each paragraph\n    - Each paragraph is identified
-      by a paragraph ID (for example, \"P0\", \"P1\", etc.) specified within <paragraph_id></paragraph_id>
-      tags, followed by the full text of the paragraph specified within <paragraph_text></paragraph_text>
-      tags.\n    - Note that paragraphs are listed in the same order they appear in
-      the original document; therefore, context from surrounding paragraphs may influence
-      whether a particular paragraph is relevant to an aspect.\n    - You may be working
-      with document fragments rather than complete documents. Focus on extracting
-      information from the available content without making assumptions about missing
-      parts.\n\n3. Map paragraphs to aspects\n    - A paragraph can address one, multiple,
-      or none of the aspects.\n    - If a paragraph clearly relates to an aspect (based
-      on the aspect''s name and description), include that paragraph''s ID under the
-      aspect''s list of paragraph IDs.\n    - If a paragraph does not relate to an
-      aspect, do not include it under that aspect''s list.\n    - Apply cross-paragraph
-      reasoning when needed (e.g., headings, lists, references like \"above\", \"this
-      section\"): use surrounding context to disambiguate; if unresolved, omit.\n    -
-      Treat negations, exceptions, and conditionals carefully: relevance can be present
-      in prohibitions or restrictions.\n    - Prefer minimal sufficient evidence:\n        --
-      base the mapping on the most relevant paragraphs; avoid tangential mentions.\n    -
-      Favor precision over recall; when uncertain, exclude rather than speculate.\n\n4.
-      Produce the final answer in the JSON format specified within <answer_format></answer_format>
-      tags\n    - Your output must be a JSON array of objects, each object corresponding
-      to a single aspect.\n    - For each aspect (in the order they are provided),
-      include:\n        -- aspect_id: The aspect''s unique identifier, e.g., \"A0\".\n        --
-      paragraph_ids: An array of the paragraph IDs that address or relate to the aspect,
-      e.g., [\"P0\", \"P2\"].\n        -- If an aspect has no related paragraphs,
-      still include it with an empty paragraph_ids array ([]).\n- Do not add extra
-      commentary, code block markers, or any other formatting beyond the JSON array.\n-
-      Internally verify before finalizing:\n    -- Each provided aspect appears once,
-      in order, with the correct \"aspect_id\".\n    -- \"paragraph_ids\" contains
-      only valid paragraph IDs.\n    -- The structure exactly matches the format specified
-      within <answer_format></answer_format> tags (no extra keys or commentary).\n</task_description>\n\n<output_constraints>\n-
+      in the paragraphs.\n\n2. Examine each paragraph\n    - Each paragraph is given
+      with its full text within <paragraph></paragraph> tags, whose id attribute holds
+      its paragraph ID (for example, \"P0\", \"P1\", etc.).\n    - Note that paragraphs
+      are listed in the same order they appear in the original document; therefore,
+      context from surrounding paragraphs may influence whether a particular paragraph
+      is relevant to an aspect.\n    - You may be working with document fragments
+      rather than complete documents. Focus on extracting information from the available
+      content without making assumptions about missing parts.\n\n3. Map paragraphs
+      to aspects\n    - A paragraph can address one, multiple, or none of the aspects.\n    -
+      If a paragraph clearly relates to an aspect (based on the aspect''s name and
+      description), include that paragraph''s ID under the aspect''s list of paragraph
+      IDs.\n    - If a paragraph does not relate to an aspect, do not include it under
+      that aspect''s list.\n    - Apply cross-paragraph reasoning when needed (e.g.,
+      headings, lists, references like \"above\", \"this section\"): use surrounding
+      context to disambiguate; if unresolved, omit.\n    - Treat negations, exceptions,
+      and conditionals carefully: relevance can be present in prohibitions or restrictions.\n    -
+      Prefer minimal sufficient evidence:\n        -- base the mapping on the most
+      relevant paragraphs; avoid tangential mentions.\n    - Favor precision over
+      recall; when uncertain, exclude rather than speculate.\n\n4. Produce the final
+      answer in the JSON format specified within <answer_format></answer_format> tags\n    -
+      Your output must be a JSON array of objects, each object corresponding to a
+      single aspect.\n    - For each aspect (in the order they are provided), include:\n        --
+      aspect_id: The aspect''s unique identifier, e.g., \"A0\".\n        -- paragraph_ids:
+      An array of the paragraph IDs that address or relate to the aspect, e.g., [\"P0\",
+      \"P2\"].\n        -- If an aspect has no related paragraphs, still include it
+      with an empty paragraph_ids array ([]).\n- Do not add extra commentary, code
+      block markers, or any other formatting beyond the JSON array.\n- Internally
+      verify before finalizing:\n    -- Each provided aspect appears once, in order,
+      with the correct \"aspect_id\".\n    -- \"paragraph_ids\" contains only valid
+      paragraph IDs.\n    -- The structure exactly matches the format specified within
+      <answer_format></answer_format> tags (no extra keys or commentary).\n</task_description>\n\n<output_constraints>\n-
       No additional text:\n    -- Do not include any headers, explanations, or text
       outside of the JSON array.\n    -- Do not wrap your JSON response in backticks
       or any other formatting characters.\n- Private deliberation only:\n    -- Do
@@ -150,62 +150,31 @@ interactions:
       ASPECTS:\n    <aspect id=\"A0\">\n        <aspect_id>A0</aspect_id>\n        \n        <aspect_name>Data
       Collection</aspect_name>\n        \n        <aspect_description>\n        Information
       about what types of data are collected from users\n        </aspect_description>\n    </aspect>\n\n</aspects>\n\n<document_paragraphs>\nDOCUMENT
-      PARAGRAPHS:\n    <paragraph id=\"P0\">\n        <paragraph_id>P0</paragraph_id>\n        \n        <paragraph_text>\n        Privacy
-      Policy\n        </paragraph_text>\n    </paragraph>\n\n    <paragraph id=\"P1\">\n        <paragraph_id>P1</paragraph_id>\n        \n        <paragraph_text>\n        Last
-      Updated: March 15, 2024\n        </paragraph_text>\n    </paragraph>\n\n    <paragraph
-      id=\"P2\">\n        <paragraph_id>P2</paragraph_id>\n        \n        <paragraph_text>\n        1.
-      Data Collection\n        </paragraph_text>\n    </paragraph>\n\n    <paragraph
-      id=\"P3\">\n        <paragraph_id>P3</paragraph_id>\n        \n        <paragraph_text>\n        We
-      collect various types of information from our users, including:\n        </paragraph_text>\n    </paragraph>\n\n    <paragraph
-      id=\"P4\">\n        <paragraph_id>P4</paragraph_id>\n        \n        <paragraph_text>\n        -
-      Personal information (name, email address, phone number)\n        </paragraph_text>\n    </paragraph>\n\n    <paragraph
-      id=\"P5\">\n        <paragraph_id>P5</paragraph_id>\n        \n        <paragraph_text>\n        -
-      Device information (IP address, browser type, operating system)\n        </paragraph_text>\n    </paragraph>\n\n    <paragraph
-      id=\"P6\">\n        <paragraph_id>P6</paragraph_id>\n        \n        <paragraph_text>\n        -
-      Usage data (pages visited, time spent on site)\n        </paragraph_text>\n    </paragraph>\n\n    <paragraph
-      id=\"P7\">\n        <paragraph_id>P7</paragraph_id>\n        \n        <paragraph_text>\n        -
-      Location data (with your consent)\n        </paragraph_text>\n    </paragraph>\n\n    <paragraph
-      id=\"P8\">\n        <paragraph_id>P8</paragraph_id>\n        \n        <paragraph_text>\n        2.
-      Data Usage\n        </paragraph_text>\n    </paragraph>\n\n    <paragraph id=\"P9\">\n        <paragraph_id>P9</paragraph_id>\n        \n        <paragraph_text>\n        We
-      use your information to:\n        </paragraph_text>\n    </paragraph>\n\n    <paragraph
-      id=\"P10\">\n        <paragraph_id>P10</paragraph_id>\n        \n        <paragraph_text>\n        -
-      Provide and improve our services\n        </paragraph_text>\n    </paragraph>\n\n    <paragraph
-      id=\"P11\">\n        <paragraph_id>P11</paragraph_id>\n        \n        <paragraph_text>\n        -
-      Send you marketing communications (if you opt-in)\n        </paragraph_text>\n    </paragraph>\n\n    <paragraph
-      id=\"P12\">\n        <paragraph_id>P12</paragraph_id>\n        \n        <paragraph_text>\n        -
-      Analyze website performance\n        </paragraph_text>\n    </paragraph>\n\n    <paragraph
-      id=\"P13\">\n        <paragraph_id>P13</paragraph_id>\n        \n        <paragraph_text>\n        -
-      Comply with legal obligations\n        </paragraph_text>\n    </paragraph>\n\n    <paragraph
-      id=\"P14\">\n        <paragraph_id>P14</paragraph_id>\n        \n        <paragraph_text>\n        3.
-      Data Sharing\n        </paragraph_text>\n    </paragraph>\n\n    <paragraph
-      id=\"P15\">\n        <paragraph_id>P15</paragraph_id>\n        \n        <paragraph_text>\n        We
-      may share your information with:\n        </paragraph_text>\n    </paragraph>\n\n    <paragraph
-      id=\"P16\">\n        <paragraph_id>P16</paragraph_id>\n        \n        <paragraph_text>\n        -
-      Service providers (for processing payments and analytics)\n        </paragraph_text>\n    </paragraph>\n\n    <paragraph
-      id=\"P17\">\n        <paragraph_id>P17</paragraph_id>\n        \n        <paragraph_text>\n        -
-      Law enforcement (when legally required)\n        </paragraph_text>\n    </paragraph>\n\n    <paragraph
-      id=\"P18\">\n        <paragraph_id>P18</paragraph_id>\n        \n        <paragraph_text>\n        -
-      Business partners (with your explicit consent)\n        </paragraph_text>\n    </paragraph>\n\n    <paragraph
-      id=\"P19\">\n        <paragraph_id>P19</paragraph_id>\n        \n        <paragraph_text>\n        4.
-      Data Retention\n        </paragraph_text>\n    </paragraph>\n\n    <paragraph
-      id=\"P20\">\n        <paragraph_id>P20</paragraph_id>\n        \n        <paragraph_text>\n        We
-      retain personal data for 24 months after your last interaction with our services.
-      Analytics data is kept for 36 months.\n        </paragraph_text>\n    </paragraph>\n\n    <paragraph
-      id=\"P21\">\n        <paragraph_id>P21</paragraph_id>\n        \n        <paragraph_text>\n        5.
-      User Rights\n        </paragraph_text>\n    </paragraph>\n\n    <paragraph id=\"P22\">\n        <paragraph_id>P22</paragraph_id>\n        \n        <paragraph_text>\n        You
-      have the right to:\n        </paragraph_text>\n    </paragraph>\n\n    <paragraph
-      id=\"P23\">\n        <paragraph_id>P23</paragraph_id>\n        \n        <paragraph_text>\n        -
-      Access your personal data\n        </paragraph_text>\n    </paragraph>\n\n    <paragraph
-      id=\"P24\">\n        <paragraph_id>P24</paragraph_id>\n        \n        <paragraph_text>\n        -
-      Request data deletion\n        </paragraph_text>\n    </paragraph>\n\n    <paragraph
-      id=\"P25\">\n        <paragraph_id>P25</paragraph_id>\n        \n        <paragraph_text>\n        -
-      Opt-out of marketing communications\n        </paragraph_text>\n    </paragraph>\n\n    <paragraph
-      id=\"P26\">\n        <paragraph_id>P26</paragraph_id>\n        \n        <paragraph_text>\n        -
-      Lodge a complaint with supervisory authorities\n        </paragraph_text>\n    </paragraph>\n\n    <paragraph
-      id=\"P27\">\n        <paragraph_id>P27</paragraph_id>\n        \n        <paragraph_text>\n        6.
-      Contact Information\n        </paragraph_text>\n    </paragraph>\n\n    <paragraph
-      id=\"P28\">\n        <paragraph_id>P28</paragraph_id>\n        \n        <paragraph_text>\n        For
-      privacy-related inquiries, contact our Data Protection Officer at privacy@example.com\n        </paragraph_text>\n    </paragraph>\n\n</document_paragraphs>"}],"model":"gpt-6-luna"}'
+      PARAGRAPHS:\n<paragraph id=\"P0\">Privacy Policy</paragraph>\n<paragraph id=\"P1\">Last
+      Updated: March 15, 2024</paragraph>\n<paragraph id=\"P2\">1. Data Collection</paragraph>\n<paragraph
+      id=\"P3\">We collect various types of information from our users, including:</paragraph>\n<paragraph
+      id=\"P4\">- Personal information (name, email address, phone number)</paragraph>\n<paragraph
+      id=\"P5\">- Device information (IP address, browser type, operating system)</paragraph>\n<paragraph
+      id=\"P6\">- Usage data (pages visited, time spent on site)</paragraph>\n<paragraph
+      id=\"P7\">- Location data (with your consent)</paragraph>\n<paragraph id=\"P8\">2.
+      Data Usage</paragraph>\n<paragraph id=\"P9\">We use your information to:</paragraph>\n<paragraph
+      id=\"P10\">- Provide and improve our services</paragraph>\n<paragraph id=\"P11\">-
+      Send you marketing communications (if you opt-in)</paragraph>\n<paragraph id=\"P12\">-
+      Analyze website performance</paragraph>\n<paragraph id=\"P13\">- Comply with
+      legal obligations</paragraph>\n<paragraph id=\"P14\">3. Data Sharing</paragraph>\n<paragraph
+      id=\"P15\">We may share your information with:</paragraph>\n<paragraph id=\"P16\">-
+      Service providers (for processing payments and analytics)</paragraph>\n<paragraph
+      id=\"P17\">- Law enforcement (when legally required)</paragraph>\n<paragraph
+      id=\"P18\">- Business partners (with your explicit consent)</paragraph>\n<paragraph
+      id=\"P19\">4. Data Retention</paragraph>\n<paragraph id=\"P20\">We retain personal
+      data for 24 months after your last interaction with our services. Analytics
+      data is kept for 36 months.</paragraph>\n<paragraph id=\"P21\">5. User Rights</paragraph>\n<paragraph
+      id=\"P22\">You have the right to:</paragraph>\n<paragraph id=\"P23\">- Access
+      your personal data</paragraph>\n<paragraph id=\"P24\">- Request data deletion</paragraph>\n<paragraph
+      id=\"P25\">- Opt-out of marketing communications</paragraph>\n<paragraph id=\"P26\">-
+      Lodge a complaint with supervisory authorities</paragraph>\n<paragraph id=\"P27\">6.
+      Contact Information</paragraph>\n<paragraph id=\"P28\">For privacy-related inquiries,
+      contact our Data Protection Officer at privacy@example.com</paragraph>\n</document_paragraphs>"}],"model":"gpt-6-luna"}'
     headers:
       accept:
       - application/json
@@ -216,9 +185,11 @@ interactions:
       connection:
       - keep-alive
       content-length:
-      - '18894'
+      - '15113'
       content-type:
       - application/json
+      cookie:
+      - DUMMY
       host:
       - DUMMY
       user-agent:
@@ -248,14 +219,14 @@ interactions:
   response:
     body:
       string: !!binary |
-        H4sIAAAAAAAA/3WSTU/jMBCG7/0Vkc8t6lfasreVFmkviErsAdRUkbGnicG1LXuyUKH+d8ZuSlIB
-        F1uZZ97J+J15H2QZU5L9ypioOYq906Obh0M+rf7cv/wLUDfju8fD35vbx+nbc57frdkwKuzTMwg8
-        q66EJR2gsuaEhQeOEKtOlteT5WI+X40T2FsJOsoqh6PFSDeGt4raKgGB0IY+s+w9nbE3I+GNwkmf
-        InsIgVdAsXMSBb3VMcJ4CCogN8iGHRTWIJjU7qYwVDweWVZQtqNnlEoWxAr2e1yw4Zk57nnluasJ
-        h8g3BVtPKYHYetbe8/bO23vR3suCbWOhY2G2/U487JrAowOm0boHuDEWeXQwebBtyfHz1TtlVKhL
-        MjaQy/SSgNaxRI90bpOLzYUxzHmaC5ZoXyCVnS3z2akg6ybW4dWqhUit6J5sNZ8Mv6lYSkCudOhN
-        ggkuapCdthtbIuWrVwgXHXUZvJHK9qSDngNfG/7u7yd3lKl6f8h/rN8BIcDRvpbOg1Ti0pUuzUNc
-        +p/SPkeROmYB/H/a6BIV+DguCTve6NNasnAICPuSZlqBd16l3YwbMTgOPgCvunPskgMAAA==
+        H4sIAAAAAAAA/3WSwW7bMAyG73kKQ2dnsOPa7nZbgWwDigE57RIHhioxtlpFEiS5XVvk3UcpTuxg
+        7UWC+JE/qJ98XyQJEZx8SwjrqWcHI5dr9vPP2+/q9cdDd8+LzfNb+euxW7+sN+qe3ZE0VOiHR2D+
+        XPWFaawDL7Q6YWaBegiqef11Vd/eVmUZwUFzkKGsM35ZLeWg6FjRa8HAIdriM0ne4xl6Uxz+YjhL
+        z5EDOEc7wNg5CYNWyxAh1DnhPFWepBNkWnlQsd1to1A8HEnSYLbBb7SCN8ga8j1rSHpmhlraWWp6
+        xC7wbUM2K0xAtinG+2a8y/GuxrtuyC4IHRu1m3diYT84GhxQg5QzQJXSngYHowe7kRwvv94LJVzf
+        orEOXcafOK8NifSI5y66OFwZQ4zFufjW6yeIskWW5SdBMk1swvnqZqQee5GzunxVph9Ithw8FdLN
+        RkEYZT3wmWhR1ekVbF+s8DDLqIr8kkEHLvTEssXMhf+b/qiBk0NCdZNK/bn+BBgDgzvbGgtcsGtn
+        pjQLYfE/S7uMI3ZMHNhn3OrWC7BhZBz2dJCn1STu1Xk4tDjXDqyxIu5n2IrFcfEPWwJCcJYDAAA=
     headers:
       access-control-expose-headers:
       - X-Request-ID
@@ -278,15 +249,13 @@ interactions:
       openai-organization:
       - DUMMY
       openai-processing-ms:
-      - '1611'
+      - '1637'
       openai-project:
       - DUMMY
       openai-version:
       - '2020-10-01'
       server:
       - cloudflare
-      set-cookie:
-      - DUMMY
       strict-transport-security:
       - max-age=31536000; includeSubDomains; preload
       transfer-encoding:
@@ -304,9 +273,9 @@ interactions:
       x-ratelimit-remaining-tokens:
       - DUMMY
       x-ratelimit-reset-requests:
-      - 12ms
+      - 6ms
       x-ratelimit-reset-tokens:
-      - 137ms
+      - 22ms
       x-request-id:
       - DUMMY
     status:
@@ -401,58 +370,58 @@ interactions:
       you will find a list of consecutively ordered paragraphs from a document and
       a list of aspects.\n</introduction>\n\n<guidance_on_task_structure>\nAll structured
       information in these instructions is provided using semantic XML tags. Field
-      names correspond directly to tag names (e.g., aspect_name, paragraph_text, sentence_text,
-      additional_context, etc.).\n</guidance_on_task_structure>\n\n<private_reasoning>\nUse
-      private deliberation to plan, evaluate evidence, and verify decisions. Do not
-      reveal any intermediate analysis, notes, or steps. Only output the JSON specified
-      within <answer_format></answer_format> tags.\n\nFollow this internal three-stage
-      process:\n\n1. Plan\n    - Internally restate each aspect in one sentence.\n    -
-      List 3-5 concrete lexical/semantic cues for relevance, including indicators
-      of prohibition, requirement, exception, conditionals, and negations.\n    -
-      Define internal inclusion/exclusion criteria for borderline matches.\n\n2. Evidence
-      triage\n    - For each paragraph, generate candidate matches to aspects.\n    -
-      Collect minimal sufficient textual evidence privately and note negation, hypothetical,
-      or conditional forms.\n    - Prefer precision over recall; include only high-confidence
-      matches and omit weak or ambiguous ones.\n\n3. Consistency pass\n   - Deduplicate
-      paragraph IDs within each aspect and preserve the original order.\n\nNever disclose
-      any plan, evidence, or internal notes - only the JSON array defined within <answer_format></answer_format>
+      names correspond directly to tag names (e.g., aspect_name, additional_context,
+      etc.).\n</guidance_on_task_structure>\n\n<private_reasoning>\nUse private deliberation
+      to plan, evaluate evidence, and verify decisions. Do not reveal any intermediate
+      analysis, notes, or steps. Only output the JSON specified within <answer_format></answer_format>
+      tags.\n\nFollow this internal three-stage process:\n\n1. Plan\n    - Internally
+      restate each aspect in one sentence.\n    - List 3-5 concrete lexical/semantic
+      cues for relevance, including indicators of prohibition, requirement, exception,
+      conditionals, and negations.\n    - Define internal inclusion/exclusion criteria
+      for borderline matches.\n\n2. Evidence triage\n    - For each paragraph, generate
+      candidate matches to aspects.\n    - Collect minimal sufficient textual evidence
+      privately and note negation, hypothetical, or conditional forms.\n    - Prefer
+      precision over recall; include only high-confidence matches and omit weak or
+      ambiguous ones.\n\n3. Consistency pass\n   - Deduplicate paragraph IDs within
+      each aspect and preserve the original order.\n\nNever disclose any plan, evidence,
+      or internal notes - only the JSON array defined within <answer_format></answer_format>
       tags.\n</private_reasoning>\n\n<task_description>\nYour task is to:\n\n1. Read
       and understand the aspects\n    - Each aspect is identified by an Aspect ID
       (for example, \"A0\", \"A1\", etc.) specified within <aspect_id></aspect_id>
       tags, includes a name specified within <aspect_name></aspect_name> tags, and
       has a description specified within <aspect_description></aspect_description>
       tags.\n    - Aspects describe themes, topics, or criteria that might be addressed
-      in the paragraphs.\n\n2. Examine each paragraph\n    - Each paragraph is identified
-      by a paragraph ID (for example, \"P0\", \"P1\", etc.) specified within <paragraph_id></paragraph_id>
-      tags, followed by the full text of the paragraph specified within <paragraph_text></paragraph_text>
-      tags.\n    - Note that paragraphs are listed in the same order they appear in
-      the original document; therefore, context from surrounding paragraphs may influence
-      whether a particular paragraph is relevant to an aspect.\n    - You may be working
-      with document fragments rather than complete documents. Focus on extracting
-      information from the available content without making assumptions about missing
-      parts.\n\n3. Map paragraphs to aspects\n    - A paragraph can address one, multiple,
-      or none of the aspects.\n    - If a paragraph clearly relates to an aspect (based
-      on the aspect''s name and description), include that paragraph''s ID under the
-      aspect''s list of paragraph IDs.\n    - If a paragraph does not relate to an
-      aspect, do not include it under that aspect''s list.\n    - Apply cross-paragraph
-      reasoning when needed (e.g., headings, lists, references like \"above\", \"this
-      section\"): use surrounding context to disambiguate; if unresolved, omit.\n    -
-      Treat negations, exceptions, and conditionals carefully: relevance can be present
-      in prohibitions or restrictions.\n    - Prefer minimal sufficient evidence:\n        --
-      base the mapping on the most relevant paragraphs; avoid tangential mentions.\n    -
-      Favor precision over recall; when uncertain, exclude rather than speculate.\n\n4.
-      Produce the final answer in the JSON format specified within <answer_format></answer_format>
-      tags\n    - Your output must be a JSON array of objects, each object corresponding
-      to a single aspect.\n    - For each aspect (in the order they are provided),
-      include:\n        -- aspect_id: The aspect''s unique identifier, e.g., \"A0\".\n        --
-      paragraph_ids: An array of the paragraph IDs that address or relate to the aspect,
-      e.g., [\"P0\", \"P2\"].\n        -- If an aspect has no related paragraphs,
-      still include it with an empty paragraph_ids array ([]).\n- Do not add extra
-      commentary, code block markers, or any other formatting beyond the JSON array.\n-
-      Internally verify before finalizing:\n    -- Each provided aspect appears once,
-      in order, with the correct \"aspect_id\".\n    -- \"paragraph_ids\" contains
-      only valid paragraph IDs.\n    -- The structure exactly matches the format specified
-      within <answer_format></answer_format> tags (no extra keys or commentary).\n</task_description>\n\n<output_constraints>\n-
+      in the paragraphs.\n\n2. Examine each paragraph\n    - Each paragraph is given
+      with its full text within <paragraph></paragraph> tags, whose id attribute holds
+      its paragraph ID (for example, \"P0\", \"P1\", etc.).\n    - Note that paragraphs
+      are listed in the same order they appear in the original document; therefore,
+      context from surrounding paragraphs may influence whether a particular paragraph
+      is relevant to an aspect.\n    - You may be working with document fragments
+      rather than complete documents. Focus on extracting information from the available
+      content without making assumptions about missing parts.\n\n3. Map paragraphs
+      to aspects\n    - A paragraph can address one, multiple, or none of the aspects.\n    -
+      If a paragraph clearly relates to an aspect (based on the aspect''s name and
+      description), include that paragraph''s ID under the aspect''s list of paragraph
+      IDs.\n    - If a paragraph does not relate to an aspect, do not include it under
+      that aspect''s list.\n    - Apply cross-paragraph reasoning when needed (e.g.,
+      headings, lists, references like \"above\", \"this section\"): use surrounding
+      context to disambiguate; if unresolved, omit.\n    - Treat negations, exceptions,
+      and conditionals carefully: relevance can be present in prohibitions or restrictions.\n    -
+      Prefer minimal sufficient evidence:\n        -- base the mapping on the most
+      relevant paragraphs; avoid tangential mentions.\n    - Favor precision over
+      recall; when uncertain, exclude rather than speculate.\n\n4. Produce the final
+      answer in the JSON format specified within <answer_format></answer_format> tags\n    -
+      Your output must be a JSON array of objects, each object corresponding to a
+      single aspect.\n    - For each aspect (in the order they are provided), include:\n        --
+      aspect_id: The aspect''s unique identifier, e.g., \"A0\".\n        -- paragraph_ids:
+      An array of the paragraph IDs that address or relate to the aspect, e.g., [\"P0\",
+      \"P2\"].\n        -- If an aspect has no related paragraphs, still include it
+      with an empty paragraph_ids array ([]).\n- Do not add extra commentary, code
+      block markers, or any other formatting beyond the JSON array.\n- Internally
+      verify before finalizing:\n    -- Each provided aspect appears once, in order,
+      with the correct \"aspect_id\".\n    -- \"paragraph_ids\" contains only valid
+      paragraph IDs.\n    -- The structure exactly matches the format specified within
+      <answer_format></answer_format> tags (no extra keys or commentary).\n</task_description>\n\n<output_constraints>\n-
       No additional text:\n    -- Do not include any headers, explanations, or text
       outside of the JSON array.\n    -- Do not wrap your JSON response in backticks
       or any other formatting characters.\n- Private deliberation only:\n    -- Do
@@ -463,62 +432,31 @@ interactions:
       ASPECTS:\n    <aspect id=\"A0\">\n        <aspect_id>A0</aspect_id>\n        \n        <aspect_name>Data
       Retention</aspect_name>\n        \n        <aspect_description>\n        Information
       about how long different types of data are retained\n        </aspect_description>\n    </aspect>\n\n</aspects>\n\n<document_paragraphs>\nDOCUMENT
-      PARAGRAPHS:\n    <paragraph id=\"P0\">\n        <paragraph_id>P0</paragraph_id>\n        \n        <paragraph_text>\n        Privacy
-      Policy\n        </paragraph_text>\n    </paragraph>\n\n    <paragraph id=\"P1\">\n        <paragraph_id>P1</paragraph_id>\n        \n        <paragraph_text>\n        Last
-      Updated: March 15, 2024\n        </paragraph_text>\n    </paragraph>\n\n    <paragraph
-      id=\"P2\">\n        <paragraph_id>P2</paragraph_id>\n        \n        <paragraph_text>\n        1.
-      Data Collection\n        </paragraph_text>\n    </paragraph>\n\n    <paragraph
-      id=\"P3\">\n        <paragraph_id>P3</paragraph_id>\n        \n        <paragraph_text>\n        We
-      collect various types of information from our users, including:\n        </paragraph_text>\n    </paragraph>\n\n    <paragraph
-      id=\"P4\">\n        <paragraph_id>P4</paragraph_id>\n        \n        <paragraph_text>\n        -
-      Personal information (name, email address, phone number)\n        </paragraph_text>\n    </paragraph>\n\n    <paragraph
-      id=\"P5\">\n        <paragraph_id>P5</paragraph_id>\n        \n        <paragraph_text>\n        -
-      Device information (IP address, browser type, operating system)\n        </paragraph_text>\n    </paragraph>\n\n    <paragraph
-      id=\"P6\">\n        <paragraph_id>P6</paragraph_id>\n        \n        <paragraph_text>\n        -
-      Usage data (pages visited, time spent on site)\n        </paragraph_text>\n    </paragraph>\n\n    <paragraph
-      id=\"P7\">\n        <paragraph_id>P7</paragraph_id>\n        \n        <paragraph_text>\n        -
-      Location data (with your consent)\n        </paragraph_text>\n    </paragraph>\n\n    <paragraph
-      id=\"P8\">\n        <paragraph_id>P8</paragraph_id>\n        \n        <paragraph_text>\n        2.
-      Data Usage\n        </paragraph_text>\n    </paragraph>\n\n    <paragraph id=\"P9\">\n        <paragraph_id>P9</paragraph_id>\n        \n        <paragraph_text>\n        We
-      use your information to:\n        </paragraph_text>\n    </paragraph>\n\n    <paragraph
-      id=\"P10\">\n        <paragraph_id>P10</paragraph_id>\n        \n        <paragraph_text>\n        -
-      Provide and improve our services\n        </paragraph_text>\n    </paragraph>\n\n    <paragraph
-      id=\"P11\">\n        <paragraph_id>P11</paragraph_id>\n        \n        <paragraph_text>\n        -
-      Send you marketing communications (if you opt-in)\n        </paragraph_text>\n    </paragraph>\n\n    <paragraph
-      id=\"P12\">\n        <paragraph_id>P12</paragraph_id>\n        \n        <paragraph_text>\n        -
-      Analyze website performance\n        </paragraph_text>\n    </paragraph>\n\n    <paragraph
-      id=\"P13\">\n        <paragraph_id>P13</paragraph_id>\n        \n        <paragraph_text>\n        -
-      Comply with legal obligations\n        </paragraph_text>\n    </paragraph>\n\n    <paragraph
-      id=\"P14\">\n        <paragraph_id>P14</paragraph_id>\n        \n        <paragraph_text>\n        3.
-      Data Sharing\n        </paragraph_text>\n    </paragraph>\n\n    <paragraph
-      id=\"P15\">\n        <paragraph_id>P15</paragraph_id>\n        \n        <paragraph_text>\n        We
-      may share your information with:\n        </paragraph_text>\n    </paragraph>\n\n    <paragraph
-      id=\"P16\">\n        <paragraph_id>P16</paragraph_id>\n        \n        <paragraph_text>\n        -
-      Service providers (for processing payments and analytics)\n        </paragraph_text>\n    </paragraph>\n\n    <paragraph
-      id=\"P17\">\n        <paragraph_id>P17</paragraph_id>\n        \n        <paragraph_text>\n        -
-      Law enforcement (when legally required)\n        </paragraph_text>\n    </paragraph>\n\n    <paragraph
-      id=\"P18\">\n        <paragraph_id>P18</paragraph_id>\n        \n        <paragraph_text>\n        -
-      Business partners (with your explicit consent)\n        </paragraph_text>\n    </paragraph>\n\n    <paragraph
-      id=\"P19\">\n        <paragraph_id>P19</paragraph_id>\n        \n        <paragraph_text>\n        4.
-      Data Retention\n        </paragraph_text>\n    </paragraph>\n\n    <paragraph
-      id=\"P20\">\n        <paragraph_id>P20</paragraph_id>\n        \n        <paragraph_text>\n        We
-      retain personal data for 24 months after your last interaction with our services.
-      Analytics data is kept for 36 months.\n        </paragraph_text>\n    </paragraph>\n\n    <paragraph
-      id=\"P21\">\n        <paragraph_id>P21</paragraph_id>\n        \n        <paragraph_text>\n        5.
-      User Rights\n        </paragraph_text>\n    </paragraph>\n\n    <paragraph id=\"P22\">\n        <paragraph_id>P22</paragraph_id>\n        \n        <paragraph_text>\n        You
-      have the right to:\n        </paragraph_text>\n    </paragraph>\n\n    <paragraph
-      id=\"P23\">\n        <paragraph_id>P23</paragraph_id>\n        \n        <paragraph_text>\n        -
-      Access your personal data\n        </paragraph_text>\n    </paragraph>\n\n    <paragraph
-      id=\"P24\">\n        <paragraph_id>P24</paragraph_id>\n        \n        <paragraph_text>\n        -
-      Request data deletion\n        </paragraph_text>\n    </paragraph>\n\n    <paragraph
-      id=\"P25\">\n        <paragraph_id>P25</paragraph_id>\n        \n        <paragraph_text>\n        -
-      Opt-out of marketing communications\n        </paragraph_text>\n    </paragraph>\n\n    <paragraph
-      id=\"P26\">\n        <paragraph_id>P26</paragraph_id>\n        \n        <paragraph_text>\n        -
-      Lodge a complaint with supervisory authorities\n        </paragraph_text>\n    </paragraph>\n\n    <paragraph
-      id=\"P27\">\n        <paragraph_id>P27</paragraph_id>\n        \n        <paragraph_text>\n        6.
-      Contact Information\n        </paragraph_text>\n    </paragraph>\n\n    <paragraph
-      id=\"P28\">\n        <paragraph_id>P28</paragraph_id>\n        \n        <paragraph_text>\n        For
-      privacy-related inquiries, contact our Data Protection Officer at privacy@example.com\n        </paragraph_text>\n    </paragraph>\n\n</document_paragraphs>"}],"model":"gpt-6-luna"}'
+      PARAGRAPHS:\n<paragraph id=\"P0\">Privacy Policy</paragraph>\n<paragraph id=\"P1\">Last
+      Updated: March 15, 2024</paragraph>\n<paragraph id=\"P2\">1. Data Collection</paragraph>\n<paragraph
+      id=\"P3\">We collect various types of information from our users, including:</paragraph>\n<paragraph
+      id=\"P4\">- Personal information (name, email address, phone number)</paragraph>\n<paragraph
+      id=\"P5\">- Device information (IP address, browser type, operating system)</paragraph>\n<paragraph
+      id=\"P6\">- Usage data (pages visited, time spent on site)</paragraph>\n<paragraph
+      id=\"P7\">- Location data (with your consent)</paragraph>\n<paragraph id=\"P8\">2.
+      Data Usage</paragraph>\n<paragraph id=\"P9\">We use your information to:</paragraph>\n<paragraph
+      id=\"P10\">- Provide and improve our services</paragraph>\n<paragraph id=\"P11\">-
+      Send you marketing communications (if you opt-in)</paragraph>\n<paragraph id=\"P12\">-
+      Analyze website performance</paragraph>\n<paragraph id=\"P13\">- Comply with
+      legal obligations</paragraph>\n<paragraph id=\"P14\">3. Data Sharing</paragraph>\n<paragraph
+      id=\"P15\">We may share your information with:</paragraph>\n<paragraph id=\"P16\">-
+      Service providers (for processing payments and analytics)</paragraph>\n<paragraph
+      id=\"P17\">- Law enforcement (when legally required)</paragraph>\n<paragraph
+      id=\"P18\">- Business partners (with your explicit consent)</paragraph>\n<paragraph
+      id=\"P19\">4. Data Retention</paragraph>\n<paragraph id=\"P20\">We retain personal
+      data for 24 months after your last interaction with our services. Analytics
+      data is kept for 36 months.</paragraph>\n<paragraph id=\"P21\">5. User Rights</paragraph>\n<paragraph
+      id=\"P22\">You have the right to:</paragraph>\n<paragraph id=\"P23\">- Access
+      your personal data</paragraph>\n<paragraph id=\"P24\">- Request data deletion</paragraph>\n<paragraph
+      id=\"P25\">- Opt-out of marketing communications</paragraph>\n<paragraph id=\"P26\">-
+      Lodge a complaint with supervisory authorities</paragraph>\n<paragraph id=\"P27\">6.
+      Contact Information</paragraph>\n<paragraph id=\"P28\">For privacy-related inquiries,
+      contact our Data Protection Officer at privacy@example.com</paragraph>\n</document_paragraphs>"}],"model":"gpt-6-luna"}'
     headers:
       accept:
       - application/json
@@ -529,7 +467,7 @@ interactions:
       connection:
       - keep-alive
       content-length:
-      - '18895'
+      - '15114'
       content-type:
       - application/json
       cookie:
@@ -563,14 +501,14 @@ interactions:
   response:
     body:
       string: !!binary |
-        H4sIAAAAAAAA/3WSTW/bMAyG7/kVhs7OEDdOnOyWw47bclm2IQ4MVaJttY6kSfS2osh/H6V82MHa
-        iwDzeUmTL/k6SRKmJPuYMNFyFEfbTT/9eFksvu0M//pz9/1zXtcFPm522/WvjbZfWBoyzOMTCLxm
-        fRCG8gCV0WcsHHCEUDUr1lmxzPPVPIKjkdCFtMbidDntes0vGa1RAjyhPX0myWt8Q29awl8Kz9Jr
-        5Aje8wYodhVR0JkuRBj3XnnkGlk6QGE0go7t7ktNxcOTJCWpLY1RKVkSK9lmVrL0yix3vHHctoR9
-        4PuSbbM1KQhuH0h6CNJTqQ/jfzmoe8/DjLrvuhHgWhvkwaM45eFCTre5aqWVbyuyzpOP1KtHY1mk
-        J3oP0af+bnRmHTmPFZpniGXnxSI/F2TDTkY4u0CkVrpx2mqRvlGxkoBcdX7kNRNctCCH3Gy+LNI7
-        WP1xCmFQPMxX+U3Be6nMwGaTkQn/9/xWA2eDlG5GVd4tPwAhwNJNVtaBVOLel0HmIBz2e7LbMmLD
-        zIP7TVdboQIXFiah5n13Pj3mXzzCsaKtNuCsU/H+wk1MTpN/LwNf3HYDAAA=
+        H4sIAAAAAAAA/3WSTWvjMBCG7/kVRmenOA5x4r1toRS2sPS2W+JgVGliq1UkoY/dlpL/3pESxw67
+        vQg8zzvjmXfmY5ZlRHDyLSOsp54djJzfsftfi4qvnn7/eAhO/wzlw+vtUyhkqDc1yWOGfn4B5oes
+        G6YxD7zQ6oSZBeohVl2s63K92VSrdQIHzUHGtM74eTWXQdFzRq8FA4doi59Z9pHe2Jvi8IbhIh8i
+        B3COdoCxQYRBq2WMEOqccJ4qT/IRMq08qNTutlFYPD5Z1qDa4Bit4A2yhnwvGpIPzFBLO0tNj9hF
+        vm3I46JGBcLHEqW7KD02ajf9l4V9cDTOqIKUE0CV0p5Gj9KUuzM5XubaCyVc36J1Dn3EXp3XhiR6
+        xHeXfApXoxNj0Xnfev0KqeyyKMpTQTLuZMT12UXisRU5TauHtKuKLQdPhXQTrwmjrAc+5i6W1Tq/
+        gu1fKzxMFNWyvCho4EKPrJhNTPi35/81cDJIqG6sslp+WX8EjIHBo2yNBS7YtTGjzEK87K9kl22k
+        jokD+wfPtvUCbNwYhz0N8nR7xL07D4cW19qBNVakA4xHMTvOPgHuvEqadwMAAA==
     headers:
       access-control-expose-headers:
       - X-Request-ID
@@ -593,7 +531,7 @@ interactions:
       openai-organization:
       - DUMMY
       openai-processing-ms:
-      - '1049'
+      - '1617'
       openai-project:
       - DUMMY
       openai-version:
@@ -617,9 +555,9 @@ interactions:
       x-ratelimit-remaining-tokens:
       - DUMMY
       x-ratelimit-reset-requests:
-      - 12ms
+      - 6ms
       x-ratelimit-reset-tokens:
-      - 137ms
+      - 22ms
       x-request-id:
       - DUMMY
     status:
@@ -714,58 +652,58 @@ interactions:
       you will find a list of consecutively ordered paragraphs from a document and
       a list of aspects.\n</introduction>\n\n<guidance_on_task_structure>\nAll structured
       information in these instructions is provided using semantic XML tags. Field
-      names correspond directly to tag names (e.g., aspect_name, paragraph_text, sentence_text,
-      additional_context, etc.).\n</guidance_on_task_structure>\n\n<private_reasoning>\nUse
-      private deliberation to plan, evaluate evidence, and verify decisions. Do not
-      reveal any intermediate analysis, notes, or steps. Only output the JSON specified
-      within <answer_format></answer_format> tags.\n\nFollow this internal three-stage
-      process:\n\n1. Plan\n    - Internally restate each aspect in one sentence.\n    -
-      List 3-5 concrete lexical/semantic cues for relevance, including indicators
-      of prohibition, requirement, exception, conditionals, and negations.\n    -
-      Define internal inclusion/exclusion criteria for borderline matches.\n\n2. Evidence
-      triage\n    - For each paragraph, generate candidate matches to aspects.\n    -
-      Collect minimal sufficient textual evidence privately and note negation, hypothetical,
-      or conditional forms.\n    - Prefer precision over recall; include only high-confidence
-      matches and omit weak or ambiguous ones.\n\n3. Consistency pass\n   - Deduplicate
-      paragraph IDs within each aspect and preserve the original order.\n\nNever disclose
-      any plan, evidence, or internal notes - only the JSON array defined within <answer_format></answer_format>
+      names correspond directly to tag names (e.g., aspect_name, additional_context,
+      etc.).\n</guidance_on_task_structure>\n\n<private_reasoning>\nUse private deliberation
+      to plan, evaluate evidence, and verify decisions. Do not reveal any intermediate
+      analysis, notes, or steps. Only output the JSON specified within <answer_format></answer_format>
+      tags.\n\nFollow this internal three-stage process:\n\n1. Plan\n    - Internally
+      restate each aspect in one sentence.\n    - List 3-5 concrete lexical/semantic
+      cues for relevance, including indicators of prohibition, requirement, exception,
+      conditionals, and negations.\n    - Define internal inclusion/exclusion criteria
+      for borderline matches.\n\n2. Evidence triage\n    - For each paragraph, generate
+      candidate matches to aspects.\n    - Collect minimal sufficient textual evidence
+      privately and note negation, hypothetical, or conditional forms.\n    - Prefer
+      precision over recall; include only high-confidence matches and omit weak or
+      ambiguous ones.\n\n3. Consistency pass\n   - Deduplicate paragraph IDs within
+      each aspect and preserve the original order.\n\nNever disclose any plan, evidence,
+      or internal notes - only the JSON array defined within <answer_format></answer_format>
       tags.\n</private_reasoning>\n\n<task_description>\nYour task is to:\n\n1. Read
       and understand the aspects\n    - Each aspect is identified by an Aspect ID
       (for example, \"A0\", \"A1\", etc.) specified within <aspect_id></aspect_id>
       tags, includes a name specified within <aspect_name></aspect_name> tags, and
       has a description specified within <aspect_description></aspect_description>
       tags.\n    - Aspects describe themes, topics, or criteria that might be addressed
-      in the paragraphs.\n\n2. Examine each paragraph\n    - Each paragraph is identified
-      by a paragraph ID (for example, \"P0\", \"P1\", etc.) specified within <paragraph_id></paragraph_id>
-      tags, followed by the full text of the paragraph specified within <paragraph_text></paragraph_text>
-      tags.\n    - Note that paragraphs are listed in the same order they appear in
-      the original document; therefore, context from surrounding paragraphs may influence
-      whether a particular paragraph is relevant to an aspect.\n    - You may be working
-      with document fragments rather than complete documents. Focus on extracting
-      information from the available content without making assumptions about missing
-      parts.\n\n3. Map paragraphs to aspects\n    - A paragraph can address one, multiple,
-      or none of the aspects.\n    - If a paragraph clearly relates to an aspect (based
-      on the aspect''s name and description), include that paragraph''s ID under the
-      aspect''s list of paragraph IDs.\n    - If a paragraph does not relate to an
-      aspect, do not include it under that aspect''s list.\n    - Apply cross-paragraph
-      reasoning when needed (e.g., headings, lists, references like \"above\", \"this
-      section\"): use surrounding context to disambiguate; if unresolved, omit.\n    -
-      Treat negations, exceptions, and conditionals carefully: relevance can be present
-      in prohibitions or restrictions.\n    - Prefer minimal sufficient evidence:\n        --
-      base the mapping on the most relevant paragraphs; avoid tangential mentions.\n    -
-      Favor precision over recall; when uncertain, exclude rather than speculate.\n\n4.
-      Produce the final answer in the JSON format specified within <answer_format></answer_format>
-      tags\n    - Your output must be a JSON array of objects, each object corresponding
-      to a single aspect.\n    - For each aspect (in the order they are provided),
-      include:\n        -- aspect_id: The aspect''s unique identifier, e.g., \"A0\".\n        --
-      paragraph_ids: An array of the paragraph IDs that address or relate to the aspect,
-      e.g., [\"P0\", \"P2\"].\n        -- If an aspect has no related paragraphs,
-      still include it with an empty paragraph_ids array ([]).\n- Do not add extra
-      commentary, code block markers, or any other formatting beyond the JSON array.\n-
-      Internally verify before finalizing:\n    -- Each provided aspect appears once,
-      in order, with the correct \"aspect_id\".\n    -- \"paragraph_ids\" contains
-      only valid paragraph IDs.\n    -- The structure exactly matches the format specified
-      within <answer_format></answer_format> tags (no extra keys or commentary).\n</task_description>\n\n<output_constraints>\n-
+      in the paragraphs.\n\n2. Examine each paragraph\n    - Each paragraph is given
+      with its full text within <paragraph></paragraph> tags, whose id attribute holds
+      its paragraph ID (for example, \"P0\", \"P1\", etc.).\n    - Note that paragraphs
+      are listed in the same order they appear in the original document; therefore,
+      context from surrounding paragraphs may influence whether a particular paragraph
+      is relevant to an aspect.\n    - You may be working with document fragments
+      rather than complete documents. Focus on extracting information from the available
+      content without making assumptions about missing parts.\n\n3. Map paragraphs
+      to aspects\n    - A paragraph can address one, multiple, or none of the aspects.\n    -
+      If a paragraph clearly relates to an aspect (based on the aspect''s name and
+      description), include that paragraph''s ID under the aspect''s list of paragraph
+      IDs.\n    - If a paragraph does not relate to an aspect, do not include it under
+      that aspect''s list.\n    - Apply cross-paragraph reasoning when needed (e.g.,
+      headings, lists, references like \"above\", \"this section\"): use surrounding
+      context to disambiguate; if unresolved, omit.\n    - Treat negations, exceptions,
+      and conditionals carefully: relevance can be present in prohibitions or restrictions.\n    -
+      Prefer minimal sufficient evidence:\n        -- base the mapping on the most
+      relevant paragraphs; avoid tangential mentions.\n    - Favor precision over
+      recall; when uncertain, exclude rather than speculate.\n\n4. Produce the final
+      answer in the JSON format specified within <answer_format></answer_format> tags\n    -
+      Your output must be a JSON array of objects, each object corresponding to a
+      single aspect.\n    - For each aspect (in the order they are provided), include:\n        --
+      aspect_id: The aspect''s unique identifier, e.g., \"A0\".\n        -- paragraph_ids:
+      An array of the paragraph IDs that address or relate to the aspect, e.g., [\"P0\",
+      \"P2\"].\n        -- If an aspect has no related paragraphs, still include it
+      with an empty paragraph_ids array ([]).\n- Do not add extra commentary, code
+      block markers, or any other formatting beyond the JSON array.\n- Internally
+      verify before finalizing:\n    -- Each provided aspect appears once, in order,
+      with the correct \"aspect_id\".\n    -- \"paragraph_ids\" contains only valid
+      paragraph IDs.\n    -- The structure exactly matches the format specified within
+      <answer_format></answer_format> tags (no extra keys or commentary).\n</task_description>\n\n<output_constraints>\n-
       No additional text:\n    -- Do not include any headers, explanations, or text
       outside of the JSON array.\n    -- Do not wrap your JSON response in backticks
       or any other formatting characters.\n- Private deliberation only:\n    -- Do
@@ -776,62 +714,31 @@ interactions:
       ASPECTS:\n    <aspect id=\"A0\">\n        <aspect_id>A0</aspect_id>\n        \n        <aspect_name>Data
       Subject Rights</aspect_name>\n        \n        <aspect_description>\n        Information
       about the rights users have regarding their data\n        </aspect_description>\n    </aspect>\n\n</aspects>\n\n<document_paragraphs>\nDOCUMENT
-      PARAGRAPHS:\n    <paragraph id=\"P0\">\n        <paragraph_id>P0</paragraph_id>\n        \n        <paragraph_text>\n        Privacy
-      Policy\n        </paragraph_text>\n    </paragraph>\n\n    <paragraph id=\"P1\">\n        <paragraph_id>P1</paragraph_id>\n        \n        <paragraph_text>\n        Last
-      Updated: March 15, 2024\n        </paragraph_text>\n    </paragraph>\n\n    <paragraph
-      id=\"P2\">\n        <paragraph_id>P2</paragraph_id>\n        \n        <paragraph_text>\n        1.
-      Data Collection\n        </paragraph_text>\n    </paragraph>\n\n    <paragraph
-      id=\"P3\">\n        <paragraph_id>P3</paragraph_id>\n        \n        <paragraph_text>\n        We
-      collect various types of information from our users, including:\n        </paragraph_text>\n    </paragraph>\n\n    <paragraph
-      id=\"P4\">\n        <paragraph_id>P4</paragraph_id>\n        \n        <paragraph_text>\n        -
-      Personal information (name, email address, phone number)\n        </paragraph_text>\n    </paragraph>\n\n    <paragraph
-      id=\"P5\">\n        <paragraph_id>P5</paragraph_id>\n        \n        <paragraph_text>\n        -
-      Device information (IP address, browser type, operating system)\n        </paragraph_text>\n    </paragraph>\n\n    <paragraph
-      id=\"P6\">\n        <paragraph_id>P6</paragraph_id>\n        \n        <paragraph_text>\n        -
-      Usage data (pages visited, time spent on site)\n        </paragraph_text>\n    </paragraph>\n\n    <paragraph
-      id=\"P7\">\n        <paragraph_id>P7</paragraph_id>\n        \n        <paragraph_text>\n        -
-      Location data (with your consent)\n        </paragraph_text>\n    </paragraph>\n\n    <paragraph
-      id=\"P8\">\n        <paragraph_id>P8</paragraph_id>\n        \n        <paragraph_text>\n        2.
-      Data Usage\n        </paragraph_text>\n    </paragraph>\n\n    <paragraph id=\"P9\">\n        <paragraph_id>P9</paragraph_id>\n        \n        <paragraph_text>\n        We
-      use your information to:\n        </paragraph_text>\n    </paragraph>\n\n    <paragraph
-      id=\"P10\">\n        <paragraph_id>P10</paragraph_id>\n        \n        <paragraph_text>\n        -
-      Provide and improve our services\n        </paragraph_text>\n    </paragraph>\n\n    <paragraph
-      id=\"P11\">\n        <paragraph_id>P11</paragraph_id>\n        \n        <paragraph_text>\n        -
-      Send you marketing communications (if you opt-in)\n        </paragraph_text>\n    </paragraph>\n\n    <paragraph
-      id=\"P12\">\n        <paragraph_id>P12</paragraph_id>\n        \n        <paragraph_text>\n        -
-      Analyze website performance\n        </paragraph_text>\n    </paragraph>\n\n    <paragraph
-      id=\"P13\">\n        <paragraph_id>P13</paragraph_id>\n        \n        <paragraph_text>\n        -
-      Comply with legal obligations\n        </paragraph_text>\n    </paragraph>\n\n    <paragraph
-      id=\"P14\">\n        <paragraph_id>P14</paragraph_id>\n        \n        <paragraph_text>\n        3.
-      Data Sharing\n        </paragraph_text>\n    </paragraph>\n\n    <paragraph
-      id=\"P15\">\n        <paragraph_id>P15</paragraph_id>\n        \n        <paragraph_text>\n        We
-      may share your information with:\n        </paragraph_text>\n    </paragraph>\n\n    <paragraph
-      id=\"P16\">\n        <paragraph_id>P16</paragraph_id>\n        \n        <paragraph_text>\n        -
-      Service providers (for processing payments and analytics)\n        </paragraph_text>\n    </paragraph>\n\n    <paragraph
-      id=\"P17\">\n        <paragraph_id>P17</paragraph_id>\n        \n        <paragraph_text>\n        -
-      Law enforcement (when legally required)\n        </paragraph_text>\n    </paragraph>\n\n    <paragraph
-      id=\"P18\">\n        <paragraph_id>P18</paragraph_id>\n        \n        <paragraph_text>\n        -
-      Business partners (with your explicit consent)\n        </paragraph_text>\n    </paragraph>\n\n    <paragraph
-      id=\"P19\">\n        <paragraph_id>P19</paragraph_id>\n        \n        <paragraph_text>\n        4.
-      Data Retention\n        </paragraph_text>\n    </paragraph>\n\n    <paragraph
-      id=\"P20\">\n        <paragraph_id>P20</paragraph_id>\n        \n        <paragraph_text>\n        We
-      retain personal data for 24 months after your last interaction with our services.
-      Analytics data is kept for 36 months.\n        </paragraph_text>\n    </paragraph>\n\n    <paragraph
-      id=\"P21\">\n        <paragraph_id>P21</paragraph_id>\n        \n        <paragraph_text>\n        5.
-      User Rights\n        </paragraph_text>\n    </paragraph>\n\n    <paragraph id=\"P22\">\n        <paragraph_id>P22</paragraph_id>\n        \n        <paragraph_text>\n        You
-      have the right to:\n        </paragraph_text>\n    </paragraph>\n\n    <paragraph
-      id=\"P23\">\n        <paragraph_id>P23</paragraph_id>\n        \n        <paragraph_text>\n        -
-      Access your personal data\n        </paragraph_text>\n    </paragraph>\n\n    <paragraph
-      id=\"P24\">\n        <paragraph_id>P24</paragraph_id>\n        \n        <paragraph_text>\n        -
-      Request data deletion\n        </paragraph_text>\n    </paragraph>\n\n    <paragraph
-      id=\"P25\">\n        <paragraph_id>P25</paragraph_id>\n        \n        <paragraph_text>\n        -
-      Opt-out of marketing communications\n        </paragraph_text>\n    </paragraph>\n\n    <paragraph
-      id=\"P26\">\n        <paragraph_id>P26</paragraph_id>\n        \n        <paragraph_text>\n        -
-      Lodge a complaint with supervisory authorities\n        </paragraph_text>\n    </paragraph>\n\n    <paragraph
-      id=\"P27\">\n        <paragraph_id>P27</paragraph_id>\n        \n        <paragraph_text>\n        6.
-      Contact Information\n        </paragraph_text>\n    </paragraph>\n\n    <paragraph
-      id=\"P28\">\n        <paragraph_id>P28</paragraph_id>\n        \n        <paragraph_text>\n        For
-      privacy-related inquiries, contact our Data Protection Officer at privacy@example.com\n        </paragraph_text>\n    </paragraph>\n\n</document_paragraphs>"}],"model":"gpt-6-luna"}'
+      PARAGRAPHS:\n<paragraph id=\"P0\">Privacy Policy</paragraph>\n<paragraph id=\"P1\">Last
+      Updated: March 15, 2024</paragraph>\n<paragraph id=\"P2\">1. Data Collection</paragraph>\n<paragraph
+      id=\"P3\">We collect various types of information from our users, including:</paragraph>\n<paragraph
+      id=\"P4\">- Personal information (name, email address, phone number)</paragraph>\n<paragraph
+      id=\"P5\">- Device information (IP address, browser type, operating system)</paragraph>\n<paragraph
+      id=\"P6\">- Usage data (pages visited, time spent on site)</paragraph>\n<paragraph
+      id=\"P7\">- Location data (with your consent)</paragraph>\n<paragraph id=\"P8\">2.
+      Data Usage</paragraph>\n<paragraph id=\"P9\">We use your information to:</paragraph>\n<paragraph
+      id=\"P10\">- Provide and improve our services</paragraph>\n<paragraph id=\"P11\">-
+      Send you marketing communications (if you opt-in)</paragraph>\n<paragraph id=\"P12\">-
+      Analyze website performance</paragraph>\n<paragraph id=\"P13\">- Comply with
+      legal obligations</paragraph>\n<paragraph id=\"P14\">3. Data Sharing</paragraph>\n<paragraph
+      id=\"P15\">We may share your information with:</paragraph>\n<paragraph id=\"P16\">-
+      Service providers (for processing payments and analytics)</paragraph>\n<paragraph
+      id=\"P17\">- Law enforcement (when legally required)</paragraph>\n<paragraph
+      id=\"P18\">- Business partners (with your explicit consent)</paragraph>\n<paragraph
+      id=\"P19\">4. Data Retention</paragraph>\n<paragraph id=\"P20\">We retain personal
+      data for 24 months after your last interaction with our services. Analytics
+      data is kept for 36 months.</paragraph>\n<paragraph id=\"P21\">5. User Rights</paragraph>\n<paragraph
+      id=\"P22\">You have the right to:</paragraph>\n<paragraph id=\"P23\">- Access
+      your personal data</paragraph>\n<paragraph id=\"P24\">- Request data deletion</paragraph>\n<paragraph
+      id=\"P25\">- Opt-out of marketing communications</paragraph>\n<paragraph id=\"P26\">-
+      Lodge a complaint with supervisory authorities</paragraph>\n<paragraph id=\"P27\">6.
+      Contact Information</paragraph>\n<paragraph id=\"P28\">For privacy-related inquiries,
+      contact our Data Protection Officer at privacy@example.com</paragraph>\n</document_paragraphs>"}],"model":"gpt-6-luna"}'
     headers:
       accept:
       - application/json
@@ -842,7 +749,7 @@ interactions:
       connection:
       - keep-alive
       content-length:
-      - '18897'
+      - '15116'
       content-type:
       - application/json
       cookie:
@@ -876,15 +783,14 @@ interactions:
   response:
     body:
       string: !!binary |
-        H4sIAAAAAAAA/3WSTW/bMAyG7/kVhs7OEMdfaW89DBi6w9rL2i0ODFVibKWOpErytqLIfx+lxLGD
-        theD5kO+oF7ybRZFRHByHRHWUsf2upt/fXzNi5+7h5ff32/vGe8ffpks/faye3xWtz9I7DvU0w6Y
-        G7q+MIV94ISSR8wMUAdeNSmvkrLIslUWwF5x6Hxbo928mHe9pKeOVgkGFtEaf6PoLXz9bJLDP0wv
-        4iGzB2tpA5gbijBpVOczhForrKPSkXiETEkHMoy7riSK+08UVVit8Rm14BWyitwsKhIPTFNDG0N1
-        i9h6vq7I3TLBisgHyyFIhyAbgnwIiopsvNyhkpvpPAa2vaXeB9l33QRQKZWj3sfgxOZEDue3b4UU
-        tq3RXote43usU5oEesDvJnjZX9hDtMHtuNqpZwiyaZmnR0Ey7m3EySI7UYezdJO+VV7GH0jWHBwV
-        nZ0shDDKWuAT0bQo4wtY/zXCwVixTFfpuYL2XKiRLWYTF94P/dEAR4eEbEaVPPlUfwSMgcbLrbUB
-        LtilM2OZAX/+n5Wd1xEmJhbMH7zt2gkwfmUctrTvjgdK7Kt1sK9xrw0YbUS4Un8Vs8PsP6waUP2c
-        AwAA
+        H4sIAAAAAAAA/3WSwU7jMBCG732KyOcUJQ2k6d5W2sJhL3thOTRVZOxpYnBty3ZgAfXdGbtNk2rh
+        Ek3mmxn9/mc+ZklCBCc/EsI66tneyPma3T0Uf9/46/V7LyrhdurpDta/7n+vb3NG0tChH5+A+aHr
+        imnsAy+0OmJmgXoIU/PlarGsqvJmFcFec5ChrTV+Xs5lr+ipo9OCgUO0wd8k+YjfoE1x+IfpLB0y
+        e3COtoC5oQiTVsuQIdQ54TxVnqQjZFp5UFHuplY4PHySpMZqg89oBK+R1eRnVpN0YIZa2lpqOsQu
+        8E1N/ixyrEhCsBiCYgiuh+BmCMqabMO4Q622Uz0Wdr2jwQfVSzkBVCntafAxOrE9kcP57TuhhOsa
+        tNeh1/ge57UhkR7wu41e9hf2EGNxO77x+hni2CLL8uNAMu5txFV5gh6lyGlbtUy/mNhw8FRIN9kH
+        YZR1wMfevCiX6QVsXq3wMKkoi/xcQXsu9Miy2cSE/zV/JeBokFDtRH/x7fwRMAYGD7cxFrhgl8aM
+        ZRbC9X9Xdt5GVEwc2Bc87cYLsGFjHHa0l8f7JO7Nedg3uNYWrLEiHmk4itlh9gkN4xZLmwMAAA==
     headers:
       access-control-expose-headers:
       - X-Request-ID
@@ -907,7 +813,7 @@ interactions:
       openai-organization:
       - DUMMY
       openai-processing-ms:
-      - '1466'
+      - '1673'
       openai-project:
       - DUMMY
       openai-version:
@@ -931,9 +837,9 @@ interactions:
       x-ratelimit-remaining-tokens:
       - DUMMY
       x-ratelimit-reset-requests:
-      - 12ms
+      - 6ms
       x-ratelimit-reset-tokens:
-      - 137ms
+      - 22ms
       x-request-id:
       - DUMMY
     status:
@@ -1028,43 +934,41 @@ interactions:
       you will find a list of document paragraphs (including sentences) and a list
       of concepts.\n</introduction>\n\n<guidance_on_task_structure>\nAll structured
       information in these instructions is provided using semantic XML tags. Field
-      names correspond directly to tag names (e.g., concept_name, paragraph_text,
-      sentence_text, additional_context, etc.).\n</guidance_on_task_structure>\n\n<private_reasoning>\nUse
-      private deliberation to plan, evaluate evidence, and verify decisions. Do not
-      reveal any intermediate analysis, notes, or steps. Only output the JSON according
-      to the format specified within <answer_format></answer_format> tags.\n\nFollow
-      this internal three-stage process:\n\n1. Plan\n    - Internally restate each
-      concept in one sentence.\n    - List 3-5 concrete lexical/semantic cues for
-      relevance aligned with the concept description (include indicators of definition,
-      obligation, permission, exception, conditionals, and negations).\n    - If a
-      concept specifies a structure, rating scale, or available labels, align inclusion/exclusion
-      criteria with those constraints.\n    - For each concept, plan how to synthesize
-      the output value from the available evidence even when no literal span is present.\n\n2.
-      Evidence triage\n    - Evaluate the provided content at paragraph and sentence
-      levels; derive candidate extractions/values for the concepts (explicit or inferred
-      from context).\n    - Collect minimal sufficient evidence privately and note
-      negated, hypothetical, or conditional forms.\n    - Prefer precision over recall;
-      include only high-confidence items and omit weak or ambiguous ones.\n\n3. Consistency
-      pass\n    - Ensure all extracted items strictly match required types and any
-      specified structure, rating scales, or label constraints.\n    - Deduplicate
-      referenced paragraph and sentence IDs and preserve their original order.\n\nNever
-      disclose any plan, evidence, or internal notes - only the JSON array defined
-      within <answer_format></answer_format> tags.\n</private_reasoning>\n\n<task_description>\nYour
-      task is to:\n1. Read through the provided document paragraphs and their sentences.\n    -
-      Each paragraph is identified by a paragraph ID (for example, \"P0\", \"P1\",
-      etc.) specified within <paragraph_id></paragraph_id> tags.\n    - Each paragraph
-      includes sentences, each identified by a sentence ID (for example, \"P0-S0\",
-      \"P0-S1\", etc.) specified within <sentence_id></sentence_id> tags, followed
-      by the full text of the sentence specified within <sentence_text></sentence_text>
-      tags.\n    - Note that paragraphs are listed in the same order they appear in
-      the original document.\n    - You may be working with document fragments rather
-      than complete documents. Focus on extracting information from the available
-      content without making assumptions about missing parts.\n2. Identify whether
-      each concept in the concepts list is addressed within the document paragraphs.\n    -
-      Each concept is identified by a concept ID (for example, \"C0\", \"C1\", etc.)
-      specified within <concept_id></concept_id> tags.\n    - Each concept is described
-      by a concept name specified within <concept_name></concept_name> tags and a
-      concept description specified within <concept_description></concept_description>
+      names correspond directly to tag names (e.g., concept_name, additional_context,
+      etc.).\n</guidance_on_task_structure>\n\n<private_reasoning>\nUse private deliberation
+      to plan, evaluate evidence, and verify decisions. Do not reveal any intermediate
+      analysis, notes, or steps. Only output the JSON according to the format specified
+      within <answer_format></answer_format> tags.\n\nFollow this internal three-stage
+      process:\n\n1. Plan\n    - Internally restate each concept in one sentence.\n    -
+      List 3-5 concrete lexical/semantic cues for relevance aligned with the concept
+      description (include indicators of definition, obligation, permission, exception,
+      conditionals, and negations).\n    - If a concept specifies a structure, rating
+      scale, or available labels, align inclusion/exclusion criteria with those constraints.\n    -
+      For each concept, plan how to synthesize the output value from the available
+      evidence even when no literal span is present.\n\n2. Evidence triage\n    -
+      Evaluate the provided content at paragraph and sentence levels; derive candidate
+      extractions/values for the concepts (explicit or inferred from context).\n    -
+      Collect minimal sufficient evidence privately and note negated, hypothetical,
+      or conditional forms.\n    - Prefer precision over recall; include only high-confidence
+      items and omit weak or ambiguous ones.\n\n3. Consistency pass\n    - Ensure
+      all extracted items strictly match required types and any specified structure,
+      rating scales, or label constraints.\n    - Deduplicate referenced paragraph
+      and sentence IDs and preserve their original order.\n\nNever disclose any plan,
+      evidence, or internal notes - only the JSON array defined within <answer_format></answer_format>
+      tags.\n</private_reasoning>\n\n<task_description>\nYour task is to:\n1. Read
+      through the provided document paragraphs and their sentences.\n    - Each paragraph
+      is given within <paragraph></paragraph> tags, whose id attribute holds its paragraph
+      ID (for example, \"P0\", \"P1\", etc.).\n    - Each paragraph includes sentences,
+      each given with its full text within <sentence></sentence> tags, whose id attribute
+      holds its sentence ID (for example, \"P0-S0\", \"P0-S1\", etc.).\n    - Note
+      that paragraphs are listed in the same order they appear in the original document.\n    -
+      You may be working with document fragments rather than complete documents. Focus
+      on extracting information from the available content without making assumptions
+      about missing parts.\n2. Identify whether each concept in the concepts list
+      is addressed within the document paragraphs.\n    - Each concept is identified
+      by a concept ID (for example, \"C0\", \"C1\", etc.) specified within <concept_id></concept_id>
+      tags.\n    - Each concept is described by a concept name specified within <concept_name></concept_name>
+      tags and a concept description specified within <concept_description></concept_description>
       tags.\n3. For each concept that appears, extract zero or more items relevant
       to that concept. The item format and structure are specified for each concept.\n    -
       Apply cross-paragraph reasoning when helpful (e.g., headings, lists, references
@@ -1189,24 +1093,15 @@ interactions:
       [\n    str,\n    ...\n  ]\n}\n    </expected_structure>\n\n    <amount_of_extracted_items>This
       concept may have zero, one, or multiple extracted items.</amount_of_extracted_items>\n\n    <extracted_item_type>dict
       (must be exactly as specified)</extracted_item_type>\n</concept>\n\n</concepts>\n\n<document_paragraphs>\nDOCUMENT
-      PARAGRAPHS INCLUDING SENTENCES:\n    <paragraph id=\"P0\">\n        <paragraph_id>P0</paragraph_id>\n        \n        <paragraph_sentences>\n            <sentence
-      id=\"P0-S0\">\n                <sentence_id>P0-S0</sentence_id>\n                \n                <sentence_text>\n                1.
-      Data Collection\n                </sentence_text>\n            </sentence>\n        </paragraph_sentences>\n    </paragraph>\n\n    <paragraph
-      id=\"P1\">\n        <paragraph_id>P1</paragraph_id>\n        \n        <paragraph_sentences>\n            <sentence
-      id=\"P1-S0\">\n                <sentence_id>P1-S0</sentence_id>\n                \n                <sentence_text>\n                We
-      collect various types of information from our users, including:\n                </sentence_text>\n            </sentence>\n        </paragraph_sentences>\n    </paragraph>\n\n    <paragraph
-      id=\"P2\">\n        <paragraph_id>P2</paragraph_id>\n        \n        <paragraph_sentences>\n            <sentence
-      id=\"P2-S0\">\n                <sentence_id>P2-S0</sentence_id>\n                \n                <sentence_text>\n                -
-      Personal information (name, email address, phone number)\n                </sentence_text>\n            </sentence>\n        </paragraph_sentences>\n    </paragraph>\n\n    <paragraph
-      id=\"P3\">\n        <paragraph_id>P3</paragraph_id>\n        \n        <paragraph_sentences>\n            <sentence
-      id=\"P3-S0\">\n                <sentence_id>P3-S0</sentence_id>\n                \n                <sentence_text>\n                -
-      Device information (IP address, browser type, operating system)\n                </sentence_text>\n            </sentence>\n        </paragraph_sentences>\n    </paragraph>\n\n    <paragraph
-      id=\"P4\">\n        <paragraph_id>P4</paragraph_id>\n        \n        <paragraph_sentences>\n            <sentence
-      id=\"P4-S0\">\n                <sentence_id>P4-S0</sentence_id>\n                \n                <sentence_text>\n                -
-      Usage data (pages visited, time spent on site)\n                </sentence_text>\n            </sentence>\n        </paragraph_sentences>\n    </paragraph>\n\n    <paragraph
-      id=\"P5\">\n        <paragraph_id>P5</paragraph_id>\n        \n        <paragraph_sentences>\n            <sentence
-      id=\"P5-S0\">\n                <sentence_id>P5-S0</sentence_id>\n                \n                <sentence_text>\n                -
-      Location data (with your consent)\n                </sentence_text>\n            </sentence>\n        </paragraph_sentences>\n    </paragraph>\n\n</document_paragraphs>"}],"model":"gpt-6-luna"}'
+      PARAGRAPHS INCLUDING SENTENCES:\n<paragraph id=\"P0\">\n<sentence id=\"P0-S0\">1.
+      Data Collection</sentence>\n</paragraph>\n<paragraph id=\"P1\">\n<sentence id=\"P1-S0\">We
+      collect various types of information from our users, including:</sentence>\n</paragraph>\n<paragraph
+      id=\"P2\">\n<sentence id=\"P2-S0\">- Personal information (name, email address,
+      phone number)</sentence>\n</paragraph>\n<paragraph id=\"P3\">\n<sentence id=\"P3-S0\">-
+      Device information (IP address, browser type, operating system)</sentence>\n</paragraph>\n<paragraph
+      id=\"P4\">\n<sentence id=\"P4-S0\">- Usage data (pages visited, time spent on
+      site)</sentence>\n</paragraph>\n<paragraph id=\"P5\">\n<sentence id=\"P5-S0\">-
+      Location data (with your consent)</sentence>\n</paragraph>\n</document_paragraphs>"}],"model":"gpt-6-luna"}'
     headers:
       accept:
       - application/json
@@ -1217,7 +1112,7 @@ interactions:
       connection:
       - keep-alive
       content-length:
-      - '23970'
+      - '22051'
       content-type:
       - application/json
       cookie:
@@ -1251,19 +1146,18 @@ interactions:
   response:
     body:
       string: !!binary |
-        H4sIAAAAAAAA/61VW2vbMBR+z68QetrAGbk4TtvHdWWMjRHoGBtNMIp0EquzJSPJaUPJf++RHV/S
-        uoWOvhjrfOfy6Rzp08OAECoFvSCUJ8zxLE+HV3/2s7NE//2ew+3ken85inafIVJf17/XYk4DH6HX
-        t8BdHfWJa4wDJ7WqYG6AOfBZx/Pz8TwKw7OoBDItIPVh29wNo2FaKHaMSLTkYBG6wSUhD+XXc1MC
-        7tE8CmpLBtayLaCtdkKj0am3UGattI4pR4MW5Fo5UCXdm6XC5P5DyNIDHHIXS7FEcEkvR0sa1CDc
-        O8M4biOWDjLrPW4qrMlQOe5YWoCHO1Zvz8FYrVgaS7XRJ+G1x0+WQVOxNV9lTKaECWFwqz34ItEK
-        iCqyNZge+IfmzM+CCOYY+XAnXUL2ujAEt2uxDx+XtBuyCk5pO+CJkvw13l9gh9MiHjdZWeuCfFvU
-        jAOyNvrOgiFun0NANDYCndSW2L3FVr5evvDDfbn0AlFLdtLiUETP5n/JDIjNcZsEO+C9npRrF4eg
-        O0UDGzCA5yHOmWFbw/LEPmPw8LRcT1RzmhaTHn5tgB9F+SPFsRBGDK/xCK66QYfg/wlM30xg+r4E
-        wjcTCN+XwOzNBGY9BNpFYz/ayjX+r7p6gwXwFHudU0WadgCmlHblfSmVbjWoN1hr20YqaZMY5ROV
-        w+uVdTqnJXoY+LvitbI4kT+aG1RfFzv9D8q0YTQOq4S01eUWnp5PjqhDLmkLzEajKOhJGQtwqEe2
-        I7iUM56gMDax42k0D07A+M7g3euUnYRh48EKIXWLjQadLjwn3Ueg6hBqSofDbP5igRbgXvCRem5A
-        SH7amtbNgH/fXnJr5lFSpqh0Xg5jJ8H4mQnYsCKtXiBaSV6Mg92CyY0snyF/LAaHwSPJaLtkfQcA
-        AA==
+        H4sIAAAAAAAA/61V30/bMBB+719h+WmT0qm/CLBHJjQhoa0aE9tEq8jY18bDsTPbgTLU/31nt2lS
+        CEhMvETxfXe+7+7szw89QqgU9COhPGeeF6Xqn/LPPybu8s/5pRqo1fKM/f3JfqUXNzffTlbHNAkR
+        5vo3cF9HfeAG48BLozcwt8A8hF2Hh8ejw6OjNB1EoDACVAhblr6f9lWl2TYiN5KDQ+gKl4Q8xG/g
+        pgWs0Bzjo6UA59gS0FY7odEaFSyUOSedZ9rTpAG50R50pHs107h5+BAyCwCH0mdSzBCc0U+DGU1q
+        EFbeMo5lZNJD4YLH1Qbb7bBxvGWqggC3rMFegnVGM5VJvTB74bXHF1bALmNjPi2YVIQJYbHUDnya
+        Gw1EV8U12A743HAWZkEE84y8u5M+J1ipwxa8n9G29zzZZ+yB51rylyifTV8gdmLNnQNL/H3ZVddX
+        7Agy00vi7h329GUyVZjy80SmiDpyKx1OR3Qk+y4LIK7Eogm2Ing9Stcs1kl7nBYWYAEPRlYyy5aW
+        lbl7wuDhcbqOqN2xmo46+DUBYTDxR4ptIozoX+BZnLeD1sn/Exi/msD4bQlMXk1g8rYEDl5N4KCD
+        QLPY2be2uMb/eVt4MAGe4iB4ulKqBTCtjY+XNErevFcXWIvcQmrp8gx1FCUkCJfzpqQRXffCXQmi
+        We3pIC0tyrDPvLmBuO1kdLRVTdoIdAOPD4Zb1CMX1YpLxzWyt2UmwKMwuZbyUs54jgq5ix2O08Nk
+        D8zuLN69xmN0PGy0nFVCmgYb9FpdeEq6i8CmQ6gpLQ7D9NkEDcCD8iP10oKQfL81jZuF8NA957ab
+        R6RMUfpu8RXLvAQbZiZgwSq1eYroRvIyHOwSbGllfI/Cseite/8AaiTSOYYHAAA=
     headers:
       access-control-expose-headers:
       - X-Request-ID
@@ -1286,7 +1180,7 @@ interactions:
       openai-organization:
       - DUMMY
       openai-processing-ms:
-      - '3141'
+      - '4204'
       openai-project:
       - DUMMY
       openai-version:
@@ -1310,9 +1204,9 @@ interactions:
       x-ratelimit-remaining-tokens:
       - DUMMY
       x-ratelimit-reset-requests:
-      - 24ms
+      - 6ms
       x-ratelimit-reset-tokens:
-      - 267ms
+      - 32ms
       x-request-id:
       - DUMMY
     status:
@@ -1407,43 +1301,41 @@ interactions:
       you will find a list of document paragraphs (including sentences) and a list
       of concepts.\n</introduction>\n\n<guidance_on_task_structure>\nAll structured
       information in these instructions is provided using semantic XML tags. Field
-      names correspond directly to tag names (e.g., concept_name, paragraph_text,
-      sentence_text, additional_context, etc.).\n</guidance_on_task_structure>\n\n<private_reasoning>\nUse
-      private deliberation to plan, evaluate evidence, and verify decisions. Do not
-      reveal any intermediate analysis, notes, or steps. Only output the JSON according
-      to the format specified within <answer_format></answer_format> tags.\n\nFollow
-      this internal three-stage process:\n\n1. Plan\n    - Internally restate each
-      concept in one sentence.\n    - List 3-5 concrete lexical/semantic cues for
-      relevance aligned with the concept description (include indicators of definition,
-      obligation, permission, exception, conditionals, and negations).\n    - If a
-      concept specifies a structure, rating scale, or available labels, align inclusion/exclusion
-      criteria with those constraints.\n    - For each concept, plan how to synthesize
-      the output value from the available evidence even when no literal span is present.\n\n2.
-      Evidence triage\n    - Evaluate the provided content at paragraph and sentence
-      levels; derive candidate extractions/values for the concepts (explicit or inferred
-      from context).\n    - Collect minimal sufficient evidence privately and note
-      negated, hypothetical, or conditional forms.\n    - Prefer precision over recall;
-      include only high-confidence items and omit weak or ambiguous ones.\n\n3. Consistency
-      pass\n    - Ensure all extracted items strictly match required types and any
-      specified structure, rating scales, or label constraints.\n    - Deduplicate
-      referenced paragraph and sentence IDs and preserve their original order.\n\nNever
-      disclose any plan, evidence, or internal notes - only the JSON array defined
-      within <answer_format></answer_format> tags.\n</private_reasoning>\n\n<task_description>\nYour
-      task is to:\n1. Read through the provided document paragraphs and their sentences.\n    -
-      Each paragraph is identified by a paragraph ID (for example, \"P0\", \"P1\",
-      etc.) specified within <paragraph_id></paragraph_id> tags.\n    - Each paragraph
-      includes sentences, each identified by a sentence ID (for example, \"P0-S0\",
-      \"P0-S1\", etc.) specified within <sentence_id></sentence_id> tags, followed
-      by the full text of the sentence specified within <sentence_text></sentence_text>
-      tags.\n    - Note that paragraphs are listed in the same order they appear in
-      the original document.\n    - You may be working with document fragments rather
-      than complete documents. Focus on extracting information from the available
-      content without making assumptions about missing parts.\n2. Identify whether
-      each concept in the concepts list is addressed within the document paragraphs.\n    -
-      Each concept is identified by a concept ID (for example, \"C0\", \"C1\", etc.)
-      specified within <concept_id></concept_id> tags.\n    - Each concept is described
-      by a concept name specified within <concept_name></concept_name> tags and a
-      concept description specified within <concept_description></concept_description>
+      names correspond directly to tag names (e.g., concept_name, additional_context,
+      etc.).\n</guidance_on_task_structure>\n\n<private_reasoning>\nUse private deliberation
+      to plan, evaluate evidence, and verify decisions. Do not reveal any intermediate
+      analysis, notes, or steps. Only output the JSON according to the format specified
+      within <answer_format></answer_format> tags.\n\nFollow this internal three-stage
+      process:\n\n1. Plan\n    - Internally restate each concept in one sentence.\n    -
+      List 3-5 concrete lexical/semantic cues for relevance aligned with the concept
+      description (include indicators of definition, obligation, permission, exception,
+      conditionals, and negations).\n    - If a concept specifies a structure, rating
+      scale, or available labels, align inclusion/exclusion criteria with those constraints.\n    -
+      For each concept, plan how to synthesize the output value from the available
+      evidence even when no literal span is present.\n\n2. Evidence triage\n    -
+      Evaluate the provided content at paragraph and sentence levels; derive candidate
+      extractions/values for the concepts (explicit or inferred from context).\n    -
+      Collect minimal sufficient evidence privately and note negated, hypothetical,
+      or conditional forms.\n    - Prefer precision over recall; include only high-confidence
+      items and omit weak or ambiguous ones.\n\n3. Consistency pass\n    - Ensure
+      all extracted items strictly match required types and any specified structure,
+      rating scales, or label constraints.\n    - Deduplicate referenced paragraph
+      and sentence IDs and preserve their original order.\n\nNever disclose any plan,
+      evidence, or internal notes - only the JSON array defined within <answer_format></answer_format>
+      tags.\n</private_reasoning>\n\n<task_description>\nYour task is to:\n1. Read
+      through the provided document paragraphs and their sentences.\n    - Each paragraph
+      is given within <paragraph></paragraph> tags, whose id attribute holds its paragraph
+      ID (for example, \"P0\", \"P1\", etc.).\n    - Each paragraph includes sentences,
+      each given with its full text within <sentence></sentence> tags, whose id attribute
+      holds its sentence ID (for example, \"P0-S0\", \"P0-S1\", etc.).\n    - Note
+      that paragraphs are listed in the same order they appear in the original document.\n    -
+      You may be working with document fragments rather than complete documents. Focus
+      on extracting information from the available content without making assumptions
+      about missing parts.\n2. Identify whether each concept in the concepts list
+      is addressed within the document paragraphs.\n    - Each concept is identified
+      by a concept ID (for example, \"C0\", \"C1\", etc.) specified within <concept_id></concept_id>
+      tags.\n    - Each concept is described by a concept name specified within <concept_name></concept_name>
+      tags and a concept description specified within <concept_description></concept_description>
       tags.\n3. For each concept that appears, extract zero or more items relevant
       to that concept. The item format and structure are specified for each concept.\n    -
       Apply cross-paragraph reasoning when helpful (e.g., headings, lists, references
@@ -1567,14 +1459,10 @@ interactions:
       str or null,\n  \"technical_info\": str or null,\n  \"usage_info\": str or null\n}\n    </expected_structure>\n\n    <amount_of_extracted_items>This
       concept may have zero or one extracted item, never multiple items.</amount_of_extracted_items>\n\n    <extracted_item_type>dict
       (must be exactly as specified)</extracted_item_type>\n</concept>\n\n</concepts>\n\n<document_paragraphs>\nDOCUMENT
-      PARAGRAPHS INCLUDING SENTENCES:\n    <paragraph id=\"P0\">\n        <paragraph_id>P0</paragraph_id>\n        \n        <paragraph_sentences>\n            <sentence
-      id=\"P0-S0\">\n                <sentence_id>P0-S0</sentence_id>\n                \n                <sentence_text>\n                4.
-      Data Retention\n                </sentence_text>\n            </sentence>\n        </paragraph_sentences>\n    </paragraph>\n\n    <paragraph
-      id=\"P1\">\n        <paragraph_id>P1</paragraph_id>\n        \n        <paragraph_sentences>\n            <sentence
-      id=\"P1-S0\">\n                <sentence_id>P1-S0</sentence_id>\n                \n                <sentence_text>\n                We
-      retain personal data for 24 months after your last interaction with our services.\n                </sentence_text>\n            </sentence>\n            <sentence
-      id=\"P1-S1\">\n                <sentence_id>P1-S1</sentence_id>\n                \n                <sentence_text>\n                Analytics
-      data is kept for 36 months.\n                </sentence_text>\n            </sentence>\n        </paragraph_sentences>\n    </paragraph>\n\n</document_paragraphs>"}],"model":"gpt-6-luna"}'
+      PARAGRAPHS INCLUDING SENTENCES:\n<paragraph id=\"P0\">\n<sentence id=\"P0-S0\">4.
+      Data Retention</sentence>\n</paragraph>\n<paragraph id=\"P1\">\n<sentence id=\"P1-S0\">We
+      retain personal data for 24 months after your last interaction with our services.</sentence>\n<sentence
+      id=\"P1-S1\">Analytics data is kept for 36 months.</sentence>\n</paragraph>\n</document_paragraphs>"}],"model":"gpt-6-luna"}'
     headers:
       accept:
       - application/json
@@ -1585,7 +1473,7 @@ interactions:
       connection:
       - keep-alive
       content-length:
-      - '22502'
+      - '21616'
       content-type:
       - application/json
       cookie:
@@ -1619,17 +1507,17 @@ interactions:
   response:
     body:
       string: !!binary |
-        H4sIAAAAAAAA/3VUTY/aMBC98yssn6EikA1Kb+2qPa/UHlYlKHKdIXHX2K7tsKAV/73jhHxBycGK
-        5808P8+HP2aEUFHQz4Tyinl+MHLx7fX89GzScvP2PfplVqdj/Pfnq/1qlqsv9ZrOQ4T+/Qe476I+
-        cY1x4IVWLcwtMA+BNdqk0SaJ43TZAAddgAxhpfGLZCFrxa4RlRYcHEJb3BLy0axBmyrghOYmvrEc
-        wDlWAto6JzRaLYOFMueE80x5Oh9ArpUH1cjdZgrJw0JIFgAOxueiyBDM6PMyo/MOhJO3jOM1cuHh
-        4ILHtsV6htbxyGQNAR5Zg92AdVoxmQu11+0Bq5gcUEzlCNt7sOSsa0skc54IlBiOwxySd+ErEhAH
-        9hjS0qvqqD3wSgk+4la1lDdOdUjT6PB1cj08o4PjZT6+ioU9WMCk5IZZVlpmqunFby7/MKpP6Ut0
-        I34a4CCUBn9EcX9Q6/wSLX4s70g6JBpfJny78fYybHr71dbs8X837hQUhlmTXT4HgCmlPQvVaXp0
-        N+uy13XlXijhqhwbH2seOs15bWiDXnDdNV1eTxqXGotz43Ov36ChjddR2hLSYaIGOEqvQ0A9apGj
-        uKdlFzehzAvwTEg3GhXKGa+wpQfSdbKZT8D83WLDDx6rNE57D1YXQg/YcjbKwr3o/wloMyRUObAk
-        yUP+AeBhUlG5sVAIPs3M4GYhPEyP3PpyNIrpdbxyL8CGkhWwZ7Vsnw7qzg7HPse6lmCNFc37Ebpi
-        dpn9Awjazq42BQAA
+        H4sIAAAAAAAA/3VU247bIBB9z1cgnp0qVyfpa7eq9qVdqVVbKY4sFo9jWgIu4OxGq/x7B99wko0f
+        kJkzczjMhbcRIVRk9COhvGCOH0o5/sy//Noc4dGo6uuP9bd/+mf28Pj8oPJi9ftEIx+hn/8Ad13U
+        B64xDpzQqoG5AebAs05Xm9lqvY7jZQ0cdAbSh+1LN47HslKsjSi04GAR2uKWkLd69dpUBq9onkSd
+        5QDWsj2grXNCo9HSWyizVljHlKNRALlWDlQtd5soJPcLIYkHOJQuFVmCYEI/TRIadSC8OsM4XiMV
+        Dg7We2wbrGdoHI9MVuDhgdXbSzBWKyZToXLdHDBbkAOKKSxhuQNDTroyRDLriECJ/jjMIXkRriAe
+        sWCOPi29qo7aAS+U4ANuVUl55VT5NA0On8ft4QkNjudoeBUDORjApKQlM2xvWFlcXvzq8nej+pQ+
+        Ta/EXwZY8KXBH5HdHtQ4P03H3yc3JB0yHV7Gf7vh9hw2vb211Xv83w07BYVh1mSXzwAwpbRjvjp1
+        j+5GXfa6rsyFErZIsfGx5r7TrNMlrdEzrru6y6uLxqWlwblxqdN/oaZdTOO4IaRhogKMs9SiDrXI
+        Qdx8sYzeoUwzcExIOxgVyhkvsKUD6TxeRRdg+mKw4YPHbLWJew9WZUIHbDIaZOFW9HsCmgwJtQ8s
+        y+Vd/gBwP6movDSQCX6ZmeBmwD9M99z6ctSKaTteqRNgfMkyyFklm6eD2pPFsU+xrnswpRH1++G7
+        YnQe/QeQuV/SNgUAAA==
     headers:
       access-control-expose-headers:
       - X-Request-ID
@@ -1652,7 +1540,7 @@ interactions:
       openai-organization:
       - DUMMY
       openai-processing-ms:
-      - '3045'
+      - '2578'
       openai-project:
       - DUMMY
       openai-version:
@@ -1676,9 +1564,9 @@ interactions:
       x-ratelimit-remaining-tokens:
       - DUMMY
       x-ratelimit-reset-requests:
-      - 12ms
+      - 6ms
       x-ratelimit-reset-tokens:
-      - 164ms
+      - 31ms
       x-request-id:
       - DUMMY
     status:
@@ -1773,43 +1661,41 @@ interactions:
       you will find a list of document paragraphs (including sentences) and a list
       of concepts.\n</introduction>\n\n<guidance_on_task_structure>\nAll structured
       information in these instructions is provided using semantic XML tags. Field
-      names correspond directly to tag names (e.g., concept_name, paragraph_text,
-      sentence_text, additional_context, etc.).\n</guidance_on_task_structure>\n\n<private_reasoning>\nUse
-      private deliberation to plan, evaluate evidence, and verify decisions. Do not
-      reveal any intermediate analysis, notes, or steps. Only output the JSON according
-      to the format specified within <answer_format></answer_format> tags.\n\nFollow
-      this internal three-stage process:\n\n1. Plan\n    - Internally restate each
-      concept in one sentence.\n    - List 3-5 concrete lexical/semantic cues for
-      relevance aligned with the concept description (include indicators of definition,
-      obligation, permission, exception, conditionals, and negations).\n    - If a
-      concept specifies a structure, rating scale, or available labels, align inclusion/exclusion
-      criteria with those constraints.\n    - For each concept, plan how to synthesize
-      the output value from the available evidence even when no literal span is present.\n\n2.
-      Evidence triage\n    - Evaluate the provided content at paragraph and sentence
-      levels; derive candidate extractions/values for the concepts (explicit or inferred
-      from context).\n    - Collect minimal sufficient evidence privately and note
-      negated, hypothetical, or conditional forms.\n    - Prefer precision over recall;
-      include only high-confidence items and omit weak or ambiguous ones.\n\n3. Consistency
-      pass\n    - Ensure all extracted items strictly match required types and any
-      specified structure, rating scales, or label constraints.\n    - Deduplicate
-      referenced paragraph and sentence IDs and preserve their original order.\n\nNever
-      disclose any plan, evidence, or internal notes - only the JSON array defined
-      within <answer_format></answer_format> tags.\n</private_reasoning>\n\n<task_description>\nYour
-      task is to:\n1. Read through the provided document paragraphs and their sentences.\n    -
-      Each paragraph is identified by a paragraph ID (for example, \"P0\", \"P1\",
-      etc.) specified within <paragraph_id></paragraph_id> tags.\n    - Each paragraph
-      includes sentences, each identified by a sentence ID (for example, \"P0-S0\",
-      \"P0-S1\", etc.) specified within <sentence_id></sentence_id> tags, followed
-      by the full text of the sentence specified within <sentence_text></sentence_text>
-      tags.\n    - Note that paragraphs are listed in the same order they appear in
-      the original document.\n    - You may be working with document fragments rather
-      than complete documents. Focus on extracting information from the available
-      content without making assumptions about missing parts.\n2. Identify whether
-      each concept in the concepts list is addressed within the document paragraphs.\n    -
-      Each concept is identified by a concept ID (for example, \"C0\", \"C1\", etc.)
-      specified within <concept_id></concept_id> tags.\n    - Each concept is described
-      by a concept name specified within <concept_name></concept_name> tags and a
-      concept description specified within <concept_description></concept_description>
+      names correspond directly to tag names (e.g., concept_name, additional_context,
+      etc.).\n</guidance_on_task_structure>\n\n<private_reasoning>\nUse private deliberation
+      to plan, evaluate evidence, and verify decisions. Do not reveal any intermediate
+      analysis, notes, or steps. Only output the JSON according to the format specified
+      within <answer_format></answer_format> tags.\n\nFollow this internal three-stage
+      process:\n\n1. Plan\n    - Internally restate each concept in one sentence.\n    -
+      List 3-5 concrete lexical/semantic cues for relevance aligned with the concept
+      description (include indicators of definition, obligation, permission, exception,
+      conditionals, and negations).\n    - If a concept specifies a structure, rating
+      scale, or available labels, align inclusion/exclusion criteria with those constraints.\n    -
+      For each concept, plan how to synthesize the output value from the available
+      evidence even when no literal span is present.\n\n2. Evidence triage\n    -
+      Evaluate the provided content at paragraph and sentence levels; derive candidate
+      extractions/values for the concepts (explicit or inferred from context).\n    -
+      Collect minimal sufficient evidence privately and note negated, hypothetical,
+      or conditional forms.\n    - Prefer precision over recall; include only high-confidence
+      items and omit weak or ambiguous ones.\n\n3. Consistency pass\n    - Ensure
+      all extracted items strictly match required types and any specified structure,
+      rating scales, or label constraints.\n    - Deduplicate referenced paragraph
+      and sentence IDs and preserve their original order.\n\nNever disclose any plan,
+      evidence, or internal notes - only the JSON array defined within <answer_format></answer_format>
+      tags.\n</private_reasoning>\n\n<task_description>\nYour task is to:\n1. Read
+      through the provided document paragraphs and their sentences.\n    - Each paragraph
+      is given within <paragraph></paragraph> tags, whose id attribute holds its paragraph
+      ID (for example, \"P0\", \"P1\", etc.).\n    - Each paragraph includes sentences,
+      each given with its full text within <sentence></sentence> tags, whose id attribute
+      holds its sentence ID (for example, \"P0-S0\", \"P0-S1\", etc.).\n    - Note
+      that paragraphs are listed in the same order they appear in the original document.\n    -
+      You may be working with document fragments rather than complete documents. Focus
+      on extracting information from the available content without making assumptions
+      about missing parts.\n2. Identify whether each concept in the concepts list
+      is addressed within the document paragraphs.\n    - Each concept is identified
+      by a concept ID (for example, \"C0\", \"C1\", etc.) specified within <concept_id></concept_id>
+      tags.\n    - Each concept is described by a concept name specified within <concept_name></concept_name>
+      tags and a concept description specified within <concept_description></concept_description>
       tags.\n3. For each concept that appears, extract zero or more items relevant
       to that concept. The item format and structure are specified for each concept.\n    -
       Apply cross-paragraph reasoning when helpful (e.g., headings, lists, references
@@ -1932,24 +1818,13 @@ interactions:
       users regarding their personal data\n    </concept_description>\n\n    <amount_of_extracted_items>This
       concept may have zero, one, or multiple extracted items.</amount_of_extracted_items>\n\n    <extracted_item_type>str
       (must be exactly as specified)</extracted_item_type>\n</concept>\n\n</concepts>\n\n<document_paragraphs>\nDOCUMENT
-      PARAGRAPHS INCLUDING SENTENCES:\n    <paragraph id=\"P0\">\n        <paragraph_id>P0</paragraph_id>\n        \n        <paragraph_sentences>\n            <sentence
-      id=\"P0-S0\">\n                <sentence_id>P0-S0</sentence_id>\n                \n                <sentence_text>\n                5.
-      User Rights\n                </sentence_text>\n            </sentence>\n        </paragraph_sentences>\n    </paragraph>\n\n    <paragraph
-      id=\"P1\">\n        <paragraph_id>P1</paragraph_id>\n        \n        <paragraph_sentences>\n            <sentence
-      id=\"P1-S0\">\n                <sentence_id>P1-S0</sentence_id>\n                \n                <sentence_text>\n                You
-      have the right to:\n                </sentence_text>\n            </sentence>\n        </paragraph_sentences>\n    </paragraph>\n\n    <paragraph
-      id=\"P2\">\n        <paragraph_id>P2</paragraph_id>\n        \n        <paragraph_sentences>\n            <sentence
-      id=\"P2-S0\">\n                <sentence_id>P2-S0</sentence_id>\n                \n                <sentence_text>\n                -
-      Access your personal data\n                </sentence_text>\n            </sentence>\n        </paragraph_sentences>\n    </paragraph>\n\n    <paragraph
-      id=\"P3\">\n        <paragraph_id>P3</paragraph_id>\n        \n        <paragraph_sentences>\n            <sentence
-      id=\"P3-S0\">\n                <sentence_id>P3-S0</sentence_id>\n                \n                <sentence_text>\n                -
-      Request data deletion\n                </sentence_text>\n            </sentence>\n        </paragraph_sentences>\n    </paragraph>\n\n    <paragraph
-      id=\"P4\">\n        <paragraph_id>P4</paragraph_id>\n        \n        <paragraph_sentences>\n            <sentence
-      id=\"P4-S0\">\n                <sentence_id>P4-S0</sentence_id>\n                \n                <sentence_text>\n                -
-      Opt-out of marketing communications\n                </sentence_text>\n            </sentence>\n        </paragraph_sentences>\n    </paragraph>\n\n    <paragraph
-      id=\"P5\">\n        <paragraph_id>P5</paragraph_id>\n        \n        <paragraph_sentences>\n            <sentence
-      id=\"P5-S0\">\n                <sentence_id>P5-S0</sentence_id>\n                \n                <sentence_text>\n                -
-      Lodge a complaint with supervisory authorities\n                </sentence_text>\n            </sentence>\n        </paragraph_sentences>\n    </paragraph>\n\n</document_paragraphs>"}],"model":"gpt-6-luna"}'
+      PARAGRAPHS INCLUDING SENTENCES:\n<paragraph id=\"P0\">\n<sentence id=\"P0-S0\">5.
+      User Rights</sentence>\n</paragraph>\n<paragraph id=\"P1\">\n<sentence id=\"P1-S0\">You
+      have the right to:</sentence>\n</paragraph>\n<paragraph id=\"P2\">\n<sentence
+      id=\"P2-S0\">- Access your personal data</sentence>\n</paragraph>\n<paragraph
+      id=\"P3\">\n<sentence id=\"P3-S0\">- Request data deletion</sentence>\n</paragraph>\n<paragraph
+      id=\"P4\">\n<sentence id=\"P4-S0\">- Opt-out of marketing communications</sentence>\n</paragraph>\n<paragraph
+      id=\"P5\">\n<sentence id=\"P5-S0\">- Lodge a complaint with supervisory authorities</sentence>\n</paragraph>\n</document_paragraphs>"}],"model":"gpt-6-luna"}'
     headers:
       accept:
       - application/json
@@ -1960,7 +1835,7 @@ interactions:
       connection:
       - keep-alive
       content-length:
-      - '23643'
+      - '21724'
       content-type:
       - application/json
       cookie:
@@ -1994,18 +1869,17 @@ interactions:
   response:
     body:
       string: !!binary |
-        H4sIAAAAAAAA/+VWS2/bMAy+51cIOjtDXTsOstswbMOAAh22S4cmMFiZibXakqtH26zofx9lN7bT
-        NcAy9NaDBYsfH59ISdTDhDEuC/6ecVGCE3VTTT9dbGefzy6+Xv2058mXsqzF7/TKpvcLe5bc8ChY
-        6KtfKNzO6p3QZIdOatXBwiA4DF7j+SKeZ2m6SFqg1gVWwWzTuGk2rbyCJ4tSS4GWoEuaMvbQjoGb
-        KvCexCfRTlKjtbBBku2USGh0FSQcrJXWgXI8GkChlUPV0r1cKnIeBsaWARDYuFwWSwKX/OPJkkc7
-        EO+dAUHLyKXD2gaNyw7rPXSKt1B57Bx8ELQIy7baG9agsVpBxQpw0PvtTAyu0SAFzxswsDHQlPsB
-        ngU5aNVT/xbvhXhuYDGkgH5k8RSILKY/aL2rsdFj9P8ETo8mcPoCgWHSywdSh9L+HW88WtdmmtEO
-        a7fiG0h5cjSB5LVSft44pj19a1aDuaaMqw2je6D2SgoI+bdvoADp0QTS1yrAmS42yIC1dy9I5did
-        dCWznu6dW2m12TLwrtRGOolvoRazownM/rEW3U87p//VuLVQAG8htDTlq2oEgFLadecgRFtNdgvc
-        tbG1VNKWOXVK6hKhNVmnG96ijzSu2rbo9zodbwwV2+VOX2PrNp0lWeeQDy14BMfxE+qISzUCFuk8
-        esFlXqADWdlRb+UCREk9sLeNk2we7YH5He0xHDSSOMt6DfCF1AN2Mhll4W/SLxHoMkTXy+AlSw76
-        HwARWjsxbwwWUuxnZlAzGF4yh9T6crSMuQ1Hi/YQnSgTSlbgGnzVvTW43Vp6J+RU1w2axsj2wRF2
-        xeRx8gfi5zUQZwkAAA==
+        H4sIAAAAAAAA/71VS2/bMAy+51cIOjtDaue13bZiyA4DVmyHbWgCg5WZWI0teXq0DYr891F2Yztd
+        iy1Au4sg8eProyjqfsAYlxl/x7jIwYmyKoYfxeL7uZksRqOL3WIrPv2I8w/zn7fxVbm4uuZRsNBX
+        1yjcweqN0GSHTmrVwMIgOAxez2Zv49l8Pp3Oa6DUGRbBbFO54XRYeAUPFrmWAi1Bl3Rk7L5eQ24q
+        wzsSj6KDpERrYYMkOyiR0OgiSDhYK60D5XjUgUIrh6pO93KpyHlYGFsGQGDlUpktCVzy89GSRwcQ
+        75wBQTRS6bC0QeOywVoPjeINFB4bB+8FkbBsp71hFRqrFRQsAwet38bE4BoNUvC0AgMbA1V+HOBR
+        kGet2tQv4qMQjw0shhLQRmYPgchi+I34rvpG++7QyvfR31h/xV8erauJMrrguhNen3FyMuPkpRh/
+        ofbV3jG9ZiWYLRFWG0avoPRKCgj07evzH5/Mf/xS/D/rbIMMWP3wQSrHbqXLmfXU9DfSarNj4F2u
+        jXQS/0MpJieXYvKPpWg29Zn2q/5YoQDeQhhnyhdFDwCltGu6IERbDQ5lPYywtVTS5ilNSZoQYSxZ
+        pyteo3taV/VI9EdTjleGau1Sp7dYux3Ho7hxyLvx28HxLHlAHeVS9OzGs0n0hMs0QweysL25ygWI
+        nOZfa3uWTGfREZje0hVjL+w8iVsN8JnUHTYa9KrwZ9JPJdBUiB5X5yVJnvXfASKMdcq8MphJcVyZ
+        Ts1g+MWeU2uvo86Y29DZ1EPU0CZcWYZr8EXzz3C7s/RHpHSvGzSVkfVnE7pisB/8BiyrFfFjBwAA
     headers:
       access-control-expose-headers:
       - X-Request-ID
@@ -2028,7 +1902,7 @@ interactions:
       openai-organization:
       - DUMMY
       openai-processing-ms:
-      - '3955'
+      - '2768'
       openai-project:
       - DUMMY
       openai-version:
@@ -2052,9 +1926,9 @@ interactions:
       x-ratelimit-remaining-tokens:
       - DUMMY
       x-ratelimit-reset-requests:
-      - 12ms
+      - 6ms
       x-ratelimit-reset-tokens:
-      - 173ms
+      - 31ms
       x-request-id:
       - DUMMY
     status:
@@ -2149,43 +2023,41 @@ interactions:
       you will find a list of document paragraphs (including sentences) and a list
       of concepts.\n</introduction>\n\n<guidance_on_task_structure>\nAll structured
       information in these instructions is provided using semantic XML tags. Field
-      names correspond directly to tag names (e.g., concept_name, paragraph_text,
-      sentence_text, additional_context, etc.).\n</guidance_on_task_structure>\n\n<private_reasoning>\nUse
-      private deliberation to plan, evaluate evidence, and verify decisions. Do not
-      reveal any intermediate analysis, notes, or steps. Only output the JSON according
-      to the format specified within <answer_format></answer_format> tags.\n\nFollow
-      this internal three-stage process:\n\n1. Plan\n    - Internally restate each
-      concept in one sentence.\n    - List 3-5 concrete lexical/semantic cues for
-      relevance aligned with the concept description (include indicators of definition,
-      obligation, permission, exception, conditionals, and negations).\n    - If a
-      concept specifies a structure, rating scale, or available labels, align inclusion/exclusion
-      criteria with those constraints.\n    - For each concept, plan how to synthesize
-      the output value from the available evidence even when no literal span is present.\n\n2.
-      Evidence triage\n    - Evaluate the provided content at paragraph and sentence
-      levels; derive candidate extractions/values for the concepts (explicit or inferred
-      from context).\n    - Collect minimal sufficient evidence privately and note
-      negated, hypothetical, or conditional forms.\n    - Prefer precision over recall;
-      include only high-confidence items and omit weak or ambiguous ones.\n\n3. Consistency
-      pass\n    - Ensure all extracted items strictly match required types and any
-      specified structure, rating scales, or label constraints.\n    - Deduplicate
-      referenced paragraph and sentence IDs and preserve their original order.\n\nNever
-      disclose any plan, evidence, or internal notes - only the JSON array defined
-      within <answer_format></answer_format> tags.\n</private_reasoning>\n\n<task_description>\nYour
-      task is to:\n1. Read through the provided document paragraphs and their sentences.\n    -
-      Each paragraph is identified by a paragraph ID (for example, \"P0\", \"P1\",
-      etc.) specified within <paragraph_id></paragraph_id> tags.\n    - Each paragraph
-      includes sentences, each identified by a sentence ID (for example, \"P0-S0\",
-      \"P0-S1\", etc.) specified within <sentence_id></sentence_id> tags, followed
-      by the full text of the sentence specified within <sentence_text></sentence_text>
-      tags.\n    - Note that paragraphs are listed in the same order they appear in
-      the original document.\n    - You may be working with document fragments rather
-      than complete documents. Focus on extracting information from the available
-      content without making assumptions about missing parts.\n2. Identify whether
-      each concept in the concepts list is addressed within the document paragraphs.\n    -
-      Each concept is identified by a concept ID (for example, \"C0\", \"C1\", etc.)
-      specified within <concept_id></concept_id> tags.\n    - Each concept is described
-      by a concept name specified within <concept_name></concept_name> tags and a
-      concept description specified within <concept_description></concept_description>
+      names correspond directly to tag names (e.g., concept_name, additional_context,
+      etc.).\n</guidance_on_task_structure>\n\n<private_reasoning>\nUse private deliberation
+      to plan, evaluate evidence, and verify decisions. Do not reveal any intermediate
+      analysis, notes, or steps. Only output the JSON according to the format specified
+      within <answer_format></answer_format> tags.\n\nFollow this internal three-stage
+      process:\n\n1. Plan\n    - Internally restate each concept in one sentence.\n    -
+      List 3-5 concrete lexical/semantic cues for relevance aligned with the concept
+      description (include indicators of definition, obligation, permission, exception,
+      conditionals, and negations).\n    - If a concept specifies a structure, rating
+      scale, or available labels, align inclusion/exclusion criteria with those constraints.\n    -
+      For each concept, plan how to synthesize the output value from the available
+      evidence even when no literal span is present.\n\n2. Evidence triage\n    -
+      Evaluate the provided content at paragraph and sentence levels; derive candidate
+      extractions/values for the concepts (explicit or inferred from context).\n    -
+      Collect minimal sufficient evidence privately and note negated, hypothetical,
+      or conditional forms.\n    - Prefer precision over recall; include only high-confidence
+      items and omit weak or ambiguous ones.\n\n3. Consistency pass\n    - Ensure
+      all extracted items strictly match required types and any specified structure,
+      rating scales, or label constraints.\n    - Deduplicate referenced paragraph
+      and sentence IDs and preserve their original order.\n\nNever disclose any plan,
+      evidence, or internal notes - only the JSON array defined within <answer_format></answer_format>
+      tags.\n</private_reasoning>\n\n<task_description>\nYour task is to:\n1. Read
+      through the provided document paragraphs and their sentences.\n    - Each paragraph
+      is given within <paragraph></paragraph> tags, whose id attribute holds its paragraph
+      ID (for example, \"P0\", \"P1\", etc.).\n    - Each paragraph includes sentences,
+      each given with its full text within <sentence></sentence> tags, whose id attribute
+      holds its sentence ID (for example, \"P0-S0\", \"P0-S1\", etc.).\n    - Note
+      that paragraphs are listed in the same order they appear in the original document.\n    -
+      You may be working with document fragments rather than complete documents. Focus
+      on extracting information from the available content without making assumptions
+      about missing parts.\n2. Identify whether each concept in the concepts list
+      is addressed within the document paragraphs.\n    - Each concept is identified
+      by a concept ID (for example, \"C0\", \"C1\", etc.) specified within <concept_id></concept_id>
+      tags.\n    - Each concept is described by a concept name specified within <concept_name></concept_name>
+      tags and a concept description specified within <concept_description></concept_description>
       tags.\n3. For each concept that appears, extract zero or more items relevant
       to that concept. The item format and structure are specified for each concept.\n    -
       Apply cross-paragraph reasoning when helpful (e.g., headings, lists, references
@@ -2308,95 +2180,43 @@ interactions:
       for privacy-related inquiries\n    </concept_description>\n\n    <amount_of_extracted_items>This
       concept may have zero, one, or multiple extracted items.</amount_of_extracted_items>\n\n    <extracted_item_type>str
       (must be exactly as specified)</extracted_item_type>\n</concept>\n\n</concepts>\n\n<document_paragraphs>\nDOCUMENT
-      PARAGRAPHS INCLUDING SENTENCES:\n    <paragraph id=\"P0\">\n        <paragraph_id>P0</paragraph_id>\n        \n        <paragraph_sentences>\n            <sentence
-      id=\"P0-S0\">\n                <sentence_id>P0-S0</sentence_id>\n                \n                <sentence_text>\n                Privacy
-      Policy\n                </sentence_text>\n            </sentence>\n        </paragraph_sentences>\n    </paragraph>\n\n    <paragraph
-      id=\"P1\">\n        <paragraph_id>P1</paragraph_id>\n        \n        <paragraph_sentences>\n            <sentence
-      id=\"P1-S0\">\n                <sentence_id>P1-S0</sentence_id>\n                \n                <sentence_text>\n                Last
-      Updated: March 15, 2024\n                </sentence_text>\n            </sentence>\n        </paragraph_sentences>\n    </paragraph>\n\n    <paragraph
-      id=\"P2\">\n        <paragraph_id>P2</paragraph_id>\n        \n        <paragraph_sentences>\n            <sentence
-      id=\"P2-S0\">\n                <sentence_id>P2-S0</sentence_id>\n                \n                <sentence_text>\n                1.
-      Data Collection\n                </sentence_text>\n            </sentence>\n        </paragraph_sentences>\n    </paragraph>\n\n    <paragraph
-      id=\"P3\">\n        <paragraph_id>P3</paragraph_id>\n        \n        <paragraph_sentences>\n            <sentence
-      id=\"P3-S0\">\n                <sentence_id>P3-S0</sentence_id>\n                \n                <sentence_text>\n                We
-      collect various types of information from our users, including:\n                </sentence_text>\n            </sentence>\n        </paragraph_sentences>\n    </paragraph>\n\n    <paragraph
-      id=\"P4\">\n        <paragraph_id>P4</paragraph_id>\n        \n        <paragraph_sentences>\n            <sentence
-      id=\"P4-S0\">\n                <sentence_id>P4-S0</sentence_id>\n                \n                <sentence_text>\n                -
-      Personal information (name, email address, phone number)\n                </sentence_text>\n            </sentence>\n        </paragraph_sentences>\n    </paragraph>\n\n    <paragraph
-      id=\"P5\">\n        <paragraph_id>P5</paragraph_id>\n        \n        <paragraph_sentences>\n            <sentence
-      id=\"P5-S0\">\n                <sentence_id>P5-S0</sentence_id>\n                \n                <sentence_text>\n                -
-      Device information (IP address, browser type, operating system)\n                </sentence_text>\n            </sentence>\n        </paragraph_sentences>\n    </paragraph>\n\n    <paragraph
-      id=\"P6\">\n        <paragraph_id>P6</paragraph_id>\n        \n        <paragraph_sentences>\n            <sentence
-      id=\"P6-S0\">\n                <sentence_id>P6-S0</sentence_id>\n                \n                <sentence_text>\n                -
-      Usage data (pages visited, time spent on site)\n                </sentence_text>\n            </sentence>\n        </paragraph_sentences>\n    </paragraph>\n\n    <paragraph
-      id=\"P7\">\n        <paragraph_id>P7</paragraph_id>\n        \n        <paragraph_sentences>\n            <sentence
-      id=\"P7-S0\">\n                <sentence_id>P7-S0</sentence_id>\n                \n                <sentence_text>\n                -
-      Location data (with your consent)\n                </sentence_text>\n            </sentence>\n        </paragraph_sentences>\n    </paragraph>\n\n    <paragraph
-      id=\"P8\">\n        <paragraph_id>P8</paragraph_id>\n        \n        <paragraph_sentences>\n            <sentence
-      id=\"P8-S0\">\n                <sentence_id>P8-S0</sentence_id>\n                \n                <sentence_text>\n                2.
-      Data Usage\n                </sentence_text>\n            </sentence>\n        </paragraph_sentences>\n    </paragraph>\n\n    <paragraph
-      id=\"P9\">\n        <paragraph_id>P9</paragraph_id>\n        \n        <paragraph_sentences>\n            <sentence
-      id=\"P9-S0\">\n                <sentence_id>P9-S0</sentence_id>\n                \n                <sentence_text>\n                We
-      use your information to:\n                </sentence_text>\n            </sentence>\n        </paragraph_sentences>\n    </paragraph>\n\n    <paragraph
-      id=\"P10\">\n        <paragraph_id>P10</paragraph_id>\n        \n        <paragraph_sentences>\n            <sentence
-      id=\"P10-S0\">\n                <sentence_id>P10-S0</sentence_id>\n                \n                <sentence_text>\n                -
-      Provide and improve our services\n                </sentence_text>\n            </sentence>\n        </paragraph_sentences>\n    </paragraph>\n\n    <paragraph
-      id=\"P11\">\n        <paragraph_id>P11</paragraph_id>\n        \n        <paragraph_sentences>\n            <sentence
-      id=\"P11-S0\">\n                <sentence_id>P11-S0</sentence_id>\n                \n                <sentence_text>\n                -
-      Send you marketing communications (if you opt-in)\n                </sentence_text>\n            </sentence>\n        </paragraph_sentences>\n    </paragraph>\n\n    <paragraph
-      id=\"P12\">\n        <paragraph_id>P12</paragraph_id>\n        \n        <paragraph_sentences>\n            <sentence
-      id=\"P12-S0\">\n                <sentence_id>P12-S0</sentence_id>\n                \n                <sentence_text>\n                -
-      Analyze website performance\n                </sentence_text>\n            </sentence>\n        </paragraph_sentences>\n    </paragraph>\n\n    <paragraph
-      id=\"P13\">\n        <paragraph_id>P13</paragraph_id>\n        \n        <paragraph_sentences>\n            <sentence
-      id=\"P13-S0\">\n                <sentence_id>P13-S0</sentence_id>\n                \n                <sentence_text>\n                -
-      Comply with legal obligations\n                </sentence_text>\n            </sentence>\n        </paragraph_sentences>\n    </paragraph>\n\n    <paragraph
-      id=\"P14\">\n        <paragraph_id>P14</paragraph_id>\n        \n        <paragraph_sentences>\n            <sentence
-      id=\"P14-S0\">\n                <sentence_id>P14-S0</sentence_id>\n                \n                <sentence_text>\n                3.
-      Data Sharing\n                </sentence_text>\n            </sentence>\n        </paragraph_sentences>\n    </paragraph>\n\n    <paragraph
-      id=\"P15\">\n        <paragraph_id>P15</paragraph_id>\n        \n        <paragraph_sentences>\n            <sentence
-      id=\"P15-S0\">\n                <sentence_id>P15-S0</sentence_id>\n                \n                <sentence_text>\n                We
-      may share your information with:\n                </sentence_text>\n            </sentence>\n        </paragraph_sentences>\n    </paragraph>\n\n    <paragraph
-      id=\"P16\">\n        <paragraph_id>P16</paragraph_id>\n        \n        <paragraph_sentences>\n            <sentence
-      id=\"P16-S0\">\n                <sentence_id>P16-S0</sentence_id>\n                \n                <sentence_text>\n                -
-      Service providers (for processing payments and analytics)\n                </sentence_text>\n            </sentence>\n        </paragraph_sentences>\n    </paragraph>\n\n    <paragraph
-      id=\"P17\">\n        <paragraph_id>P17</paragraph_id>\n        \n        <paragraph_sentences>\n            <sentence
-      id=\"P17-S0\">\n                <sentence_id>P17-S0</sentence_id>\n                \n                <sentence_text>\n                -
-      Law enforcement (when legally required)\n                </sentence_text>\n            </sentence>\n        </paragraph_sentences>\n    </paragraph>\n\n    <paragraph
-      id=\"P18\">\n        <paragraph_id>P18</paragraph_id>\n        \n        <paragraph_sentences>\n            <sentence
-      id=\"P18-S0\">\n                <sentence_id>P18-S0</sentence_id>\n                \n                <sentence_text>\n                -
-      Business partners (with your explicit consent)\n                </sentence_text>\n            </sentence>\n        </paragraph_sentences>\n    </paragraph>\n\n    <paragraph
-      id=\"P19\">\n        <paragraph_id>P19</paragraph_id>\n        \n        <paragraph_sentences>\n            <sentence
-      id=\"P19-S0\">\n                <sentence_id>P19-S0</sentence_id>\n                \n                <sentence_text>\n                4.
-      Data Retention\n                </sentence_text>\n            </sentence>\n        </paragraph_sentences>\n    </paragraph>\n\n    <paragraph
-      id=\"P20\">\n        <paragraph_id>P20</paragraph_id>\n        \n        <paragraph_sentences>\n            <sentence
-      id=\"P20-S0\">\n                <sentence_id>P20-S0</sentence_id>\n                \n                <sentence_text>\n                We
-      retain personal data for 24 months after your last interaction with our services.\n                </sentence_text>\n            </sentence>\n            <sentence
-      id=\"P20-S1\">\n                <sentence_id>P20-S1</sentence_id>\n                \n                <sentence_text>\n                Analytics
-      data is kept for 36 months.\n                </sentence_text>\n            </sentence>\n        </paragraph_sentences>\n    </paragraph>\n\n    <paragraph
-      id=\"P21\">\n        <paragraph_id>P21</paragraph_id>\n        \n        <paragraph_sentences>\n            <sentence
-      id=\"P21-S0\">\n                <sentence_id>P21-S0</sentence_id>\n                \n                <sentence_text>\n                5.
-      User Rights\n                </sentence_text>\n            </sentence>\n        </paragraph_sentences>\n    </paragraph>\n\n    <paragraph
-      id=\"P22\">\n        <paragraph_id>P22</paragraph_id>\n        \n        <paragraph_sentences>\n            <sentence
-      id=\"P22-S0\">\n                <sentence_id>P22-S0</sentence_id>\n                \n                <sentence_text>\n                You
-      have the right to:\n                </sentence_text>\n            </sentence>\n        </paragraph_sentences>\n    </paragraph>\n\n    <paragraph
-      id=\"P23\">\n        <paragraph_id>P23</paragraph_id>\n        \n        <paragraph_sentences>\n            <sentence
-      id=\"P23-S0\">\n                <sentence_id>P23-S0</sentence_id>\n                \n                <sentence_text>\n                -
-      Access your personal data\n                </sentence_text>\n            </sentence>\n        </paragraph_sentences>\n    </paragraph>\n\n    <paragraph
-      id=\"P24\">\n        <paragraph_id>P24</paragraph_id>\n        \n        <paragraph_sentences>\n            <sentence
-      id=\"P24-S0\">\n                <sentence_id>P24-S0</sentence_id>\n                \n                <sentence_text>\n                -
-      Request data deletion\n                </sentence_text>\n            </sentence>\n        </paragraph_sentences>\n    </paragraph>\n\n    <paragraph
-      id=\"P25\">\n        <paragraph_id>P25</paragraph_id>\n        \n        <paragraph_sentences>\n            <sentence
-      id=\"P25-S0\">\n                <sentence_id>P25-S0</sentence_id>\n                \n                <sentence_text>\n                -
-      Opt-out of marketing communications\n                </sentence_text>\n            </sentence>\n        </paragraph_sentences>\n    </paragraph>\n\n    <paragraph
-      id=\"P26\">\n        <paragraph_id>P26</paragraph_id>\n        \n        <paragraph_sentences>\n            <sentence
-      id=\"P26-S0\">\n                <sentence_id>P26-S0</sentence_id>\n                \n                <sentence_text>\n                -
-      Lodge a complaint with supervisory authorities\n                </sentence_text>\n            </sentence>\n        </paragraph_sentences>\n    </paragraph>\n\n    <paragraph
-      id=\"P27\">\n        <paragraph_id>P27</paragraph_id>\n        \n        <paragraph_sentences>\n            <sentence
-      id=\"P27-S0\">\n                <sentence_id>P27-S0</sentence_id>\n                \n                <sentence_text>\n                6.
-      Contact Information\n                </sentence_text>\n            </sentence>\n        </paragraph_sentences>\n    </paragraph>\n\n    <paragraph
-      id=\"P28\">\n        <paragraph_id>P28</paragraph_id>\n        \n        <paragraph_sentences>\n            <sentence
-      id=\"P28-S0\">\n                <sentence_id>P28-S0</sentence_id>\n                \n                <sentence_text>\n                For
-      privacy-related inquiries, contact our Data Protection Officer at privacy@example.com\n                </sentence_text>\n            </sentence>\n        </paragraph_sentences>\n    </paragraph>\n\n</document_paragraphs>"}],"model":"gpt-6-luna"}'
+      PARAGRAPHS INCLUDING SENTENCES:\n<paragraph id=\"P0\">\n<sentence id=\"P0-S0\">Privacy
+      Policy</sentence>\n</paragraph>\n<paragraph id=\"P1\">\n<sentence id=\"P1-S0\">Last
+      Updated: March 15, 2024</sentence>\n</paragraph>\n<paragraph id=\"P2\">\n<sentence
+      id=\"P2-S0\">1. Data Collection</sentence>\n</paragraph>\n<paragraph id=\"P3\">\n<sentence
+      id=\"P3-S0\">We collect various types of information from our users, including:</sentence>\n</paragraph>\n<paragraph
+      id=\"P4\">\n<sentence id=\"P4-S0\">- Personal information (name, email address,
+      phone number)</sentence>\n</paragraph>\n<paragraph id=\"P5\">\n<sentence id=\"P5-S0\">-
+      Device information (IP address, browser type, operating system)</sentence>\n</paragraph>\n<paragraph
+      id=\"P6\">\n<sentence id=\"P6-S0\">- Usage data (pages visited, time spent on
+      site)</sentence>\n</paragraph>\n<paragraph id=\"P7\">\n<sentence id=\"P7-S0\">-
+      Location data (with your consent)</sentence>\n</paragraph>\n<paragraph id=\"P8\">\n<sentence
+      id=\"P8-S0\">2. Data Usage</sentence>\n</paragraph>\n<paragraph id=\"P9\">\n<sentence
+      id=\"P9-S0\">We use your information to:</sentence>\n</paragraph>\n<paragraph
+      id=\"P10\">\n<sentence id=\"P10-S0\">- Provide and improve our services</sentence>\n</paragraph>\n<paragraph
+      id=\"P11\">\n<sentence id=\"P11-S0\">- Send you marketing communications (if
+      you opt-in)</sentence>\n</paragraph>\n<paragraph id=\"P12\">\n<sentence id=\"P12-S0\">-
+      Analyze website performance</sentence>\n</paragraph>\n<paragraph id=\"P13\">\n<sentence
+      id=\"P13-S0\">- Comply with legal obligations</sentence>\n</paragraph>\n<paragraph
+      id=\"P14\">\n<sentence id=\"P14-S0\">3. Data Sharing</sentence>\n</paragraph>\n<paragraph
+      id=\"P15\">\n<sentence id=\"P15-S0\">We may share your information with:</sentence>\n</paragraph>\n<paragraph
+      id=\"P16\">\n<sentence id=\"P16-S0\">- Service providers (for processing payments
+      and analytics)</sentence>\n</paragraph>\n<paragraph id=\"P17\">\n<sentence id=\"P17-S0\">-
+      Law enforcement (when legally required)</sentence>\n</paragraph>\n<paragraph
+      id=\"P18\">\n<sentence id=\"P18-S0\">- Business partners (with your explicit
+      consent)</sentence>\n</paragraph>\n<paragraph id=\"P19\">\n<sentence id=\"P19-S0\">4.
+      Data Retention</sentence>\n</paragraph>\n<paragraph id=\"P20\">\n<sentence id=\"P20-S0\">We
+      retain personal data for 24 months after your last interaction with our services.</sentence>\n<sentence
+      id=\"P20-S1\">Analytics data is kept for 36 months.</sentence>\n</paragraph>\n<paragraph
+      id=\"P21\">\n<sentence id=\"P21-S0\">5. User Rights</sentence>\n</paragraph>\n<paragraph
+      id=\"P22\">\n<sentence id=\"P22-S0\">You have the right to:</sentence>\n</paragraph>\n<paragraph
+      id=\"P23\">\n<sentence id=\"P23-S0\">- Access your personal data</sentence>\n</paragraph>\n<paragraph
+      id=\"P24\">\n<sentence id=\"P24-S0\">- Request data deletion</sentence>\n</paragraph>\n<paragraph
+      id=\"P25\">\n<sentence id=\"P25-S0\">- Opt-out of marketing communications</sentence>\n</paragraph>\n<paragraph
+      id=\"P26\">\n<sentence id=\"P26-S0\">- Lodge a complaint with supervisory authorities</sentence>\n</paragraph>\n<paragraph
+      id=\"P27\">\n<sentence id=\"P27-S0\">6. Contact Information</sentence>\n</paragraph>\n<paragraph
+      id=\"P28\">\n<sentence id=\"P28-S0\">For privacy-related inquiries, contact
+      our Data Protection Officer at privacy@example.com</sentence>\n</paragraph>\n</document_paragraphs>"}],"model":"gpt-6-luna"}'
     headers:
       accept:
       - application/json
@@ -2407,7 +2227,7 @@ interactions:
       connection:
       - keep-alive
       content-length:
-      - '33538'
+      - '24432'
       content-type:
       - application/json
       cookie:
@@ -2441,16 +2261,16 @@ interactions:
   response:
     body:
       string: !!binary |
-        H4sIAAAAAAAA/3VTTY+bMBC951cgn0kVsgmUnqq0q0ptD5UqVZVChGbNBNwQm9omm2iV/94xED62
-        m4sF8+Y9j2fevMw8j4mMffAYL8DyY1XOH39f1l+Db3n+/BfO9UZ/OXzePP6Kn75nm/DAfMdQT3+Q
-        2xvrHVfEQyuUbGGuESw61SCKgyhcreKoAY4qw9LR8srOw3lZS+gYhRIcDUFb+vW8l+Z0tckMzxRe
-        +LfIEY2BHCl2S6KgVqWLMDBGGAvSMn8AuZIWZVPuNpEk7g7PSxzAsbKpyBICE/ZpkTD/BuLZauD0
-        jFRYPBqXsW2xXqFNPEFZYytQaXECfvmIZ3AdcY3pFdtkjXvUSNemFWjINVTFVPqV/F1WX/SP5fvJ
-        Ha8ZBt3r6UNk3U2OMv9Jb92NWdfhp493seafvnfjrtINtQE3TVmX5QgAKZUF54ZmnrsOufYT3Asp
-        TJGSSQw5hqZirKpYg17p3DWOqCdDps6Sx2xq1QEb2XAVLltBNrhvgIMg6lBLtZQj3jqK/Tck0wwt
-        iNKMbMU48ILGP4g+hJE/AdNnTeYYMtaLeNlnQJ0JNWCL2agL/xf9VgFth4TMB5WH1V39AeDO1VR5
-        pTETfNqZIU2jW+J7af04moqZQX2iDU2tQO1GluEe6rJdM2YuhlYkpbnmqGkHml1zrphdZ/8AwIAx
-        s2IEAAA=
+        H4sIAAAAAAAA/3VT227bMAx9z1cYek6GpFku7dOwa7GHrcCADWgcGKzM2GoVyZDoLEWRfx9lO760
+        y4sg8ZCHFHn4MooioVJxEwmZA8l9oSdf5Lc/X59cfvvx/nY2Kxb+t/u++HGfaqSHRzEOEfbhESWd
+        o95Jy3FIypoalg6BMLDOVtdXq/V6uZpVwN6mqENYVtBkOdGlgSYit0qiZ2jDzyh6qc5Qm0nxyObp
+        +GzZo/eQIdvOTmx0VgeLAO+VJzAkxh0orSE0Vbmb2DB5OKIoDoDEghKVxgzG4tM0FuMziEdyIPkb
+        iSLc++CxqbGWoXY8gC6xJvgMBNGds8Td4W5EP3c7/pa7iQqnDiCfP+ARQqtCx9pUNYvDHTrkepIC
+        HGQOinyY81Xei1Htb+6u1oMcryM8hrbwRaVvM9XOTDH5xU0ZItv+89Q9Wntjq9583/aHwflLD0EE
+        ptS6B4AxliC0rZLBtkFO7eB3yiifJ6wtz0LjYXqyhajQE5/bSkjlQBuicCxNSsg+YUX7/nraKEl0
+        ou3g9aIBiUvR/bAWGTAmKRIo7XtiFBJkzqJpY2fz5Wo8AJO/jiXVecwX807eUKbKdth01GvC25r/
+        V0DdIGWyHstF+g6QYRW48MJhquSwL52bw7D5l9zaYVQFC4/uwPpPSKELA0txB6Wud1P4Z897lfBU
+        M3S8H9WCBk2MTqN/LGR915cEAAA=
     headers:
       access-control-expose-headers:
       - X-Request-ID
@@ -2473,7 +2293,7 @@ interactions:
       openai-organization:
       - DUMMY
       openai-processing-ms:
-      - '1622'
+      - '1879'
       openai-project:
       - DUMMY
       openai-version:
@@ -2497,9 +2317,9 @@ interactions:
       x-ratelimit-remaining-tokens:
       - DUMMY
       x-ratelimit-reset-requests:
-      - 12ms
+      - 6ms
       x-ratelimit-reset-tokens:
-      - 244ms
+      - 35ms
       x-request-id:
       - DUMMY
     status:
@@ -2593,46 +2413,45 @@ interactions:
       across diverse document analysis tasks.\n</conclusion>"},{"role":"user","content":"<introduction>\nBelow
       you will find document text and a list of concepts.\n</introduction>\n\n<guidance_on_task_structure>\nAll
       structured information in these instructions is provided using semantic XML
-      tags. Field names correspond directly to tag names (e.g., concept_name, paragraph_text,
-      sentence_text, additional_context, etc.).\n</guidance_on_task_structure>\n\n<private_reasoning>\nUse
-      private deliberation to plan, evaluate evidence, and verify decisions. Do not
-      reveal any intermediate analysis, notes, or steps. Only output the JSON according
-      to the format specified within <answer_format></answer_format> tags.\n\nFollow
-      this internal three-stage process:\n\n1. Plan\n    - Internally restate each
-      concept in one sentence.\n    - List 3-5 concrete lexical/semantic cues for
-      relevance aligned with the concept description (include indicators of definition,
-      obligation, permission, exception, conditionals, and negations).\n    - If a
-      concept specifies a structure, rating scale, or available labels, align inclusion/exclusion
-      criteria with those constraints.\n    - For each concept, plan how to synthesize
-      the output value from the available evidence even when no literal span is present.\n\n2.
-      Evidence triage\n    - Evaluate the provided content holistically; derive candidate
-      extractions/values for the concepts (explicit or inferred from context).\n    -
-      Collect minimal sufficient evidence privately and note negated, hypothetical,
-      or conditional forms.\n    - Prefer precision over recall; include only high-confidence
-      items and omit weak or ambiguous ones.\n\n3. Consistency pass\n    - Ensure
-      all extracted items strictly match required types and any specified structure,
-      rating scales, or label constraints.\n\nNever disclose any plan, evidence, or
-      internal notes - only the JSON array defined within <answer_format></answer_format>
-      tags.\n</private_reasoning>\n\n<task_description>\nYour task is to:\n1. Read
-      through the document text provided.\n2. Identify whether each concept in the
-      concepts list is addressed within the document text.\n    - Each concept is
-      identified by a concept ID (for example, \"C0\", \"C1\", etc.) specified within
-      <concept_id></concept_id> tags.\n    - Each concept is described by a concept
-      name specified within <concept_name></concept_name> tags and a concept description
-      specified within <concept_description></concept_description> tags.\n3. For each
-      concept that appears, extract zero or more items relevant to that concept. The
-      item format and structure are specified for each concept.\n    - Treat negations,
-      exceptions, and conditionals carefully: relevance may involve permissions, prohibitions,
-      requirements, exceptions, thresholds, or ranges; reflect the stance .\n    -
-      Prefer minimal sufficient evidence and value derivation:\n    - Favor precision
-      over recall; when uncertain, avoid speculative extractions or derivations.\n4.
-      Produce a JSON array containing your extracted data, in the provided format.\n    -
-      Internally verify before finalizing:\n        -- Each provided concept appears
-      once, in order, with the correct \"concept_id\".\n        -- The top-level structure
-      matches the format specified within <answer_format></answer_format> tags.\n        --
-      Item values strictly satisfy type and any specified structure/scale/labels constraints.\n        --
-      The structure exactly matches the format specified within <answer_format></answer_format>
-      tags (no extra keys or commentary).\n</task_description>\n\n<concept_extraction_rules>\nIf
+      tags. Field names correspond directly to tag names (e.g., concept_name, additional_context,
+      etc.).\n</guidance_on_task_structure>\n\n<private_reasoning>\nUse private deliberation
+      to plan, evaluate evidence, and verify decisions. Do not reveal any intermediate
+      analysis, notes, or steps. Only output the JSON according to the format specified
+      within <answer_format></answer_format> tags.\n\nFollow this internal three-stage
+      process:\n\n1. Plan\n    - Internally restate each concept in one sentence.\n    -
+      List 3-5 concrete lexical/semantic cues for relevance aligned with the concept
+      description (include indicators of definition, obligation, permission, exception,
+      conditionals, and negations).\n    - If a concept specifies a structure, rating
+      scale, or available labels, align inclusion/exclusion criteria with those constraints.\n    -
+      For each concept, plan how to synthesize the output value from the available
+      evidence even when no literal span is present.\n\n2. Evidence triage\n    -
+      Evaluate the provided content holistically; derive candidate extractions/values
+      for the concepts (explicit or inferred from context).\n    - Collect minimal
+      sufficient evidence privately and note negated, hypothetical, or conditional
+      forms.\n    - Prefer precision over recall; include only high-confidence items
+      and omit weak or ambiguous ones.\n\n3. Consistency pass\n    - Ensure all extracted
+      items strictly match required types and any specified structure, rating scales,
+      or label constraints.\n\nNever disclose any plan, evidence, or internal notes
+      - only the JSON array defined within <answer_format></answer_format> tags.\n</private_reasoning>\n\n<task_description>\nYour
+      task is to:\n1. Read through the document text provided.\n2. Identify whether
+      each concept in the concepts list is addressed within the document text.\n    -
+      Each concept is identified by a concept ID (for example, \"C0\", \"C1\", etc.)
+      specified within <concept_id></concept_id> tags.\n    - Each concept is described
+      by a concept name specified within <concept_name></concept_name> tags and a
+      concept description specified within <concept_description></concept_description>
+      tags.\n3. For each concept that appears, extract zero or more items relevant
+      to that concept. The item format and structure are specified for each concept.\n    -
+      Treat negations, exceptions, and conditionals carefully: relevance may involve
+      permissions, prohibitions, requirements, exceptions, thresholds, or ranges;
+      reflect the stance .\n    - Prefer minimal sufficient evidence and value derivation:\n    -
+      Favor precision over recall; when uncertain, avoid speculative extractions or
+      derivations.\n4. Produce a JSON array containing your extracted data, in the
+      provided format.\n    - Internally verify before finalizing:\n        -- Each
+      provided concept appears once, in order, with the correct \"concept_id\".\n        --
+      The top-level structure matches the format specified within <answer_format></answer_format>
+      tags.\n        -- Item values strictly satisfy type and any specified structure/scale/labels
+      constraints.\n        -- The structure exactly matches the format specified
+      within <answer_format></answer_format> tags (no extra keys or commentary).\n</task_description>\n\n<concept_extraction_rules>\nIf
       a concept is not addressed in the document text, you must still include an entry
       in the final JSON output but with an empty \"extracted_items\" list. However,
       for boolean concepts (with extracted item type \"bool\"), distinguish carefully:\n    -
@@ -2742,7 +2561,7 @@ interactions:
       connection:
       - keep-alive
       content-length:
-      - '19358'
+      - '19327'
       content-type:
       - application/json
       cookie:
@@ -2776,14 +2595,14 @@ interactions:
   response:
     body:
       string: !!binary |
-        H4sIAAAAAAAA/3WSTU/DMAyG7/sVVc4d6j7LOIIAIXHgwAFYpyqk3paRJSVx2Sa0/46TfbQT2yVS
-        /dju69f+bUURkwW7iZiYcxTLUrXv3zaD5/fH5HYxSL6f3l8/7jerF+7c4qXzoFjsK8znAgQeqq6E
-        oTpAafQOCwscwXftpKNOOuz3R6MAlqYA5ctmJbaHbVVpvq+YGynAERrTZxT9htdr0wWsKZzEh8gS
-        nOMzoNghiYLWKB9hJFM65BpZXENhNIIOcseZpub+iaLMAwEl5rLICGbsLslYfICwRssFjZFLhKXz
-        GWO0FUx8wjbTk+YvLEwrx/1oulKqAbjWBrm3Jgw32ZPtcZyp1NLNc3LMkX0k0aEpWaBbeifBnupk
-        YlZaMhxzNF8Q2vbSfnfXkNWrqHG/t4dIUlSz7HoQn+mYF4BcKtewmAku5mTFsbbTG6bxCcxXloyq
-        M7q9tHvM4FUhTc2SVsOE/5rPCdgZJPWsoSG52L8Gwm+YlJcWCilOjanTLPiDvpR23EZQzBzYH7rW
-        HCVYv7ECprxSu5NjbuPoXHJa6wxsaWW4O38UrW3rD6PLbf9uAwAA
+        H4sIAAAAAAAA/3WSTU/DMAyG7/sVVc4dGitqBzeEEEggEAdAYp2qkHhbIEtK4sIQ2n/HyT7aCXaJ
+        VD+2+/q1f3pJwpRkZwkTc45iUev+pbh6vn44b8TyQ97en06fHiXcZRf54ObFXrM0VNjXNxC4rToS
+        luoAlTVrLBxwhND1uDgdFqNRXmQRLKwEHcpmNfbzvm4M31TMrRLgCY3pM0l+4hu0GQlLCg/SbWQB
+        3vMZUGybREFndYgw7r3yyA2ytIXCGgQT5Y5LQ83DkyRlAAJqrJQsCZbsYlCydAthiY4LGqNSCAsf
+        MsboGpiEhFVpJt1fOJg2nofRTKN1B3BjLPJgTRxusiGr3ThTZZSfV+SYJ/tIokdbs0hX9E6iPc3e
+        xKx2ZDhWaN8hts2KLF83ZO0qWnxSbCCSFN0tG2XpPx0rCciV9h2LmeBiTlbsao+zvEj3YPXlyKg2
+        Y5jl+S6DN1LZlg16HRP+av5PwNogZWYdDScH+7dAhA2T8tqBVGLfmDbNQTjoQ2m7bUTFzIP7pGut
+        UIELG5Mw5Y1enxzz357OpaK1zsDVTsW7C0fRW/V+Ad/gUC5uAwAA
     headers:
       access-control-expose-headers:
       - X-Request-ID
@@ -2806,7 +2625,7 @@ interactions:
       openai-organization:
       - DUMMY
       openai-processing-ms:
-      - '1007'
+      - '996'
       openai-project:
       - DUMMY
       openai-version:
@@ -2830,9 +2649,9 @@ interactions:
       x-ratelimit-remaining-tokens:
       - DUMMY
       x-ratelimit-reset-requests:
-      - 12ms
+      - 6ms
       x-ratelimit-reset-tokens:
-      - 141ms
+      - 28ms
       x-request-id:
       - DUMMY
     status:
@@ -2926,46 +2745,45 @@ interactions:
       across diverse document analysis tasks.\n</conclusion>"},{"role":"user","content":"<introduction>\nBelow
       you will find document text and a list of concepts.\n</introduction>\n\n<guidance_on_task_structure>\nAll
       structured information in these instructions is provided using semantic XML
-      tags. Field names correspond directly to tag names (e.g., concept_name, paragraph_text,
-      sentence_text, additional_context, etc.).\n</guidance_on_task_structure>\n\n<private_reasoning>\nUse
-      private deliberation to plan, evaluate evidence, and verify decisions. Do not
-      reveal any intermediate analysis, notes, or steps. Only output the JSON according
-      to the format specified within <answer_format></answer_format> tags.\n\nFollow
-      this internal three-stage process:\n\n1. Plan\n    - Internally restate each
-      concept in one sentence.\n    - List 3-5 concrete lexical/semantic cues for
-      relevance aligned with the concept description (include indicators of definition,
-      obligation, permission, exception, conditionals, and negations).\n    - If a
-      concept specifies a structure, rating scale, or available labels, align inclusion/exclusion
-      criteria with those constraints.\n    - For each concept, plan how to synthesize
-      the output value from the available evidence even when no literal span is present.\n\n2.
-      Evidence triage\n    - Evaluate the provided content holistically; derive candidate
-      extractions/values for the concepts (explicit or inferred from context).\n    -
-      Collect minimal sufficient evidence privately and note negated, hypothetical,
-      or conditional forms.\n    - Prefer precision over recall; include only high-confidence
-      items and omit weak or ambiguous ones.\n\n3. Consistency pass\n    - Ensure
-      all extracted items strictly match required types and any specified structure,
-      rating scales, or label constraints.\n\nNever disclose any plan, evidence, or
-      internal notes - only the JSON array defined within <answer_format></answer_format>
-      tags.\n</private_reasoning>\n\n<task_description>\nYour task is to:\n1. Read
-      through the document text provided.\n2. Identify whether each concept in the
-      concepts list is addressed within the document text.\n    - Each concept is
-      identified by a concept ID (for example, \"C0\", \"C1\", etc.) specified within
-      <concept_id></concept_id> tags.\n    - Each concept is described by a concept
-      name specified within <concept_name></concept_name> tags and a concept description
-      specified within <concept_description></concept_description> tags.\n3. For each
-      concept that appears, extract zero or more items relevant to that concept. The
-      item format and structure are specified for each concept.\n    - Treat negations,
-      exceptions, and conditionals carefully: relevance may involve permissions, prohibitions,
-      requirements, exceptions, thresholds, or ranges; reflect the stance .\n    -
-      Prefer minimal sufficient evidence and value derivation:\n    - Favor precision
-      over recall; when uncertain, avoid speculative extractions or derivations.\n4.
-      Produce a JSON array containing your extracted data, in the provided format.\n    -
-      Internally verify before finalizing:\n        -- Each provided concept appears
-      once, in order, with the correct \"concept_id\".\n        -- The top-level structure
-      matches the format specified within <answer_format></answer_format> tags.\n        --
-      Item values strictly satisfy type and any specified structure/scale/labels constraints.\n        --
-      The structure exactly matches the format specified within <answer_format></answer_format>
-      tags (no extra keys or commentary).\n</task_description>\n\n<concept_extraction_rules>\nIf
+      tags. Field names correspond directly to tag names (e.g., concept_name, additional_context,
+      etc.).\n</guidance_on_task_structure>\n\n<private_reasoning>\nUse private deliberation
+      to plan, evaluate evidence, and verify decisions. Do not reveal any intermediate
+      analysis, notes, or steps. Only output the JSON according to the format specified
+      within <answer_format></answer_format> tags.\n\nFollow this internal three-stage
+      process:\n\n1. Plan\n    - Internally restate each concept in one sentence.\n    -
+      List 3-5 concrete lexical/semantic cues for relevance aligned with the concept
+      description (include indicators of definition, obligation, permission, exception,
+      conditionals, and negations).\n    - If a concept specifies a structure, rating
+      scale, or available labels, align inclusion/exclusion criteria with those constraints.\n    -
+      For each concept, plan how to synthesize the output value from the available
+      evidence even when no literal span is present.\n\n2. Evidence triage\n    -
+      Evaluate the provided content holistically; derive candidate extractions/values
+      for the concepts (explicit or inferred from context).\n    - Collect minimal
+      sufficient evidence privately and note negated, hypothetical, or conditional
+      forms.\n    - Prefer precision over recall; include only high-confidence items
+      and omit weak or ambiguous ones.\n\n3. Consistency pass\n    - Ensure all extracted
+      items strictly match required types and any specified structure, rating scales,
+      or label constraints.\n\nNever disclose any plan, evidence, or internal notes
+      - only the JSON array defined within <answer_format></answer_format> tags.\n</private_reasoning>\n\n<task_description>\nYour
+      task is to:\n1. Read through the document text provided.\n2. Identify whether
+      each concept in the concepts list is addressed within the document text.\n    -
+      Each concept is identified by a concept ID (for example, \"C0\", \"C1\", etc.)
+      specified within <concept_id></concept_id> tags.\n    - Each concept is described
+      by a concept name specified within <concept_name></concept_name> tags and a
+      concept description specified within <concept_description></concept_description>
+      tags.\n3. For each concept that appears, extract zero or more items relevant
+      to that concept. The item format and structure are specified for each concept.\n    -
+      Treat negations, exceptions, and conditionals carefully: relevance may involve
+      permissions, prohibitions, requirements, exceptions, thresholds, or ranges;
+      reflect the stance .\n    - Prefer minimal sufficient evidence and value derivation:\n    -
+      Favor precision over recall; when uncertain, avoid speculative extractions or
+      derivations.\n4. Produce a JSON array containing your extracted data, in the
+      provided format.\n    - Internally verify before finalizing:\n        -- Each
+      provided concept appears once, in order, with the correct \"concept_id\".\n        --
+      The top-level structure matches the format specified within <answer_format></answer_format>
+      tags.\n        -- Item values strictly satisfy type and any specified structure/scale/labels
+      constraints.\n        -- The structure exactly matches the format specified
+      within <answer_format></answer_format> tags (no extra keys or commentary).\n</task_description>\n\n<concept_extraction_rules>\nIf
       a concept is not addressed in the document text, you must still include an entry
       in the final JSON output but with an empty \"extracted_items\" list. However,
       for boolean concepts (with extracted item type \"bool\"), distinguish carefully:\n    -
@@ -3075,7 +2893,7 @@ interactions:
       connection:
       - keep-alive
       content-length:
-      - '19388'
+      - '19357'
       content-type:
       - application/json
       cookie:
@@ -3109,14 +2927,14 @@ interactions:
   response:
     body:
       string: !!binary |
-        H4sIAAAAAAAA/3WTwW7bMAyG73kKQ2d7sOPY6XZri20YBgzbpdgQB4YmMYk2RfIkumtQ5N1HKXHs
-        YO1FQPiR9M+fzPMsSZiS7F3CxI6j2Hc6e//9UH3Bjz8+3B0+HW4frLt7+Pr52+LPYyVzZGmosD9/
-        gcCh6o2wVAeorDlh4YAjhK7F8m2xrBdVXkSwtxJ0KNt2mNWZ7g0/V+ysEuAJrehnkjzHN2gzEp4o
-        nKdDZA/e8y1QbEiioLM6RBj3Xnnk5qTzDIU1CCbKXTWGmocnSZoABHTYKtkQbNh93rB0gPCEjgsa
-        o1UIex8yVg0rqiwvs3k+XzRsHVKPjVlPP+Zg03sehjS91hPAjbHIg0lxzPWZHC+DbZRRfteSd56M
-        JLEebcciPdK7jkb1V7OzzpH12KL9DbFtuazKU0M2LmXE9QCRpOhJ2U1Rpy90bCUgV9pPzGaCix2Z
-        cqktynqZXsH2ryPLxox5eVNeMngvlR1ZPpuY8L/mlwScDFJmO/lC9Wr/EYiwa1LeOZBKXBszpjkI
-        p/1a2mUbUTHz4B7pbltU4MLGJGx4r89/En/wdDgtrXULrnMqXmA4itlx9g9B8RsMeAMAAA==
+        H4sIAAAAAAAA/3WSTY/TMBCG7/0Vkc8JSj9IshwXoVWRuIAESE0VGXuaGFw7sidQtOp/Z+y0TSp2
+        L646z8zknXfmeZEkTEn2LmGi4yiOvc4+iKdv205/eTr56nPx8at8dN/7rdnyT23+yNJQYX/8BIHX
+        qjfCUh2gsmbEwgFHCF2X5cOqrKqi3ERwtBJ0KGt7zIpMD4ZfKjqrBHhCO/qbJM/xDdqMhBOF8/Qa
+        OYL3vAWKXZMo6KwOEca9Vx65QZZOUFiDYKLcXW2oeXiSpA5AQI+NkjXBmr3Pa5ZeIZzQcUFjNArh
+        6EPGbmSBLt9m+Tpb5atNzcboPvyca7Off9rBYfA8jGwGrWeAG2ORB8vi0PsLOd/GPCijfNeQk55s
+        Jekebc8iPdO7j7YNd06w3tEisEH7C2Lbdbkpx4ZsWtGEi+UFIknRs7Iqr9IXOjYSkCvtZ9YzwUVH
+        Ft1ql+uiTO9g88eRgVPGal1OGXyQyk4sX8xM+F/zSwJGg5RpZxoeXu0/ARE2T8p7B1KJe2OmNAfh
+        0F9Lu20jKmYe3G+64gYVuLAxCQc+6PEUmf/r6YwaWmsLrncq3mM4isV58Q+hPMoahgMAAA==
     headers:
       access-control-expose-headers:
       - X-Request-ID
@@ -3139,7 +2957,7 @@ interactions:
       openai-organization:
       - DUMMY
       openai-processing-ms:
-      - '1017'
+      - '1667'
       openai-project:
       - DUMMY
       openai-version:
@@ -3163,9 +2981,9 @@ interactions:
       x-ratelimit-remaining-tokens:
       - DUMMY
       x-ratelimit-reset-requests:
-      - 24ms
+      - 6ms
       x-ratelimit-reset-tokens:
-      - 209ms
+      - 28ms
       x-request-id:
       - DUMMY
     status:

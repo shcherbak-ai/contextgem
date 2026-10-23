@@ -88,58 +88,58 @@ interactions:
       you will find a list of consecutively ordered paragraphs from a document and
       a list of aspects.\n</introduction>\n\n<guidance_on_task_structure>\nAll structured
       information in these instructions is provided using semantic XML tags. Field
-      names correspond directly to tag names (e.g., aspect_name, paragraph_text, sentence_text,
-      additional_context, etc.).\n</guidance_on_task_structure>\n\n<private_reasoning>\nUse
-      private deliberation to plan, evaluate evidence, and verify decisions. Do not
-      reveal any intermediate analysis, notes, or steps. Only output the JSON specified
-      within <answer_format></answer_format> tags.\n\nFollow this internal three-stage
-      process:\n\n1. Plan\n    - Internally restate each aspect in one sentence.\n    -
-      List 3-5 concrete lexical/semantic cues for relevance, including indicators
-      of prohibition, requirement, exception, conditionals, and negations.\n    -
-      Define internal inclusion/exclusion criteria for borderline matches.\n\n2. Evidence
-      triage\n    - For each paragraph, generate candidate matches to aspects.\n    -
-      Collect minimal sufficient textual evidence privately and note negation, hypothetical,
-      or conditional forms.\n    - Prefer precision over recall; include only high-confidence
-      matches and omit weak or ambiguous ones.\n\n3. Consistency pass\n   - Deduplicate
-      paragraph IDs within each aspect and preserve the original order.\n\nNever disclose
-      any plan, evidence, or internal notes - only the JSON array defined within <answer_format></answer_format>
+      names correspond directly to tag names (e.g., aspect_name, additional_context,
+      etc.).\n</guidance_on_task_structure>\n\n<private_reasoning>\nUse private deliberation
+      to plan, evaluate evidence, and verify decisions. Do not reveal any intermediate
+      analysis, notes, or steps. Only output the JSON specified within <answer_format></answer_format>
+      tags.\n\nFollow this internal three-stage process:\n\n1. Plan\n    - Internally
+      restate each aspect in one sentence.\n    - List 3-5 concrete lexical/semantic
+      cues for relevance, including indicators of prohibition, requirement, exception,
+      conditionals, and negations.\n    - Define internal inclusion/exclusion criteria
+      for borderline matches.\n\n2. Evidence triage\n    - For each paragraph, generate
+      candidate matches to aspects.\n    - Collect minimal sufficient textual evidence
+      privately and note negation, hypothetical, or conditional forms.\n    - Prefer
+      precision over recall; include only high-confidence matches and omit weak or
+      ambiguous ones.\n\n3. Consistency pass\n   - Deduplicate paragraph IDs within
+      each aspect and preserve the original order.\n\nNever disclose any plan, evidence,
+      or internal notes - only the JSON array defined within <answer_format></answer_format>
       tags.\n</private_reasoning>\n\n<task_description>\nYour task is to:\n\n1. Read
       and understand the aspects\n    - Each aspect is identified by an Aspect ID
       (for example, \"A0\", \"A1\", etc.) specified within <aspect_id></aspect_id>
       tags, includes a name specified within <aspect_name></aspect_name> tags, and
       has a description specified within <aspect_description></aspect_description>
       tags.\n    - Aspects describe themes, topics, or criteria that might be addressed
-      in the paragraphs.\n\n2. Examine each paragraph\n    - Each paragraph is identified
-      by a paragraph ID (for example, \"P0\", \"P1\", etc.) specified within <paragraph_id></paragraph_id>
-      tags, followed by the full text of the paragraph specified within <paragraph_text></paragraph_text>
-      tags.\n    - Note that paragraphs are listed in the same order they appear in
-      the original document; therefore, context from surrounding paragraphs may influence
-      whether a particular paragraph is relevant to an aspect.\n    - You may be working
-      with document fragments rather than complete documents. Focus on extracting
-      information from the available content without making assumptions about missing
-      parts.\n\n3. Map paragraphs to aspects\n    - A paragraph can address one, multiple,
-      or none of the aspects.\n    - If a paragraph clearly relates to an aspect (based
-      on the aspect''s name and description), include that paragraph''s ID under the
-      aspect''s list of paragraph IDs.\n    - If a paragraph does not relate to an
-      aspect, do not include it under that aspect''s list.\n    - Apply cross-paragraph
-      reasoning when needed (e.g., headings, lists, references like \"above\", \"this
-      section\"): use surrounding context to disambiguate; if unresolved, omit.\n    -
-      Treat negations, exceptions, and conditionals carefully: relevance can be present
-      in prohibitions or restrictions.\n    - Prefer minimal sufficient evidence:\n        --
-      base the mapping on the most relevant paragraphs; avoid tangential mentions.\n    -
-      Favor precision over recall; when uncertain, exclude rather than speculate.\n\n4.
-      Produce the final answer in the JSON format specified within <answer_format></answer_format>
-      tags\n    - Your output must be a JSON array of objects, each object corresponding
-      to a single aspect.\n    - For each aspect (in the order they are provided),
-      include:\n        -- aspect_id: The aspect''s unique identifier, e.g., \"A0\".\n        --
-      paragraph_ids: An array of the paragraph IDs that address or relate to the aspect,
-      e.g., [\"P0\", \"P2\"].\n        -- If an aspect has no related paragraphs,
-      still include it with an empty paragraph_ids array ([]).\n- Do not add extra
-      commentary, code block markers, or any other formatting beyond the JSON array.\n-
-      Internally verify before finalizing:\n    -- Each provided aspect appears once,
-      in order, with the correct \"aspect_id\".\n    -- \"paragraph_ids\" contains
-      only valid paragraph IDs.\n    -- The structure exactly matches the format specified
-      within <answer_format></answer_format> tags (no extra keys or commentary).\n</task_description>\n\n<output_constraints>\n-
+      in the paragraphs.\n\n2. Examine each paragraph\n    - Each paragraph is given
+      with its full text within <paragraph></paragraph> tags, whose id attribute holds
+      its paragraph ID (for example, \"P0\", \"P1\", etc.).\n    - Note that paragraphs
+      are listed in the same order they appear in the original document; therefore,
+      context from surrounding paragraphs may influence whether a particular paragraph
+      is relevant to an aspect.\n    - You may be working with document fragments
+      rather than complete documents. Focus on extracting information from the available
+      content without making assumptions about missing parts.\n\n3. Map paragraphs
+      to aspects\n    - A paragraph can address one, multiple, or none of the aspects.\n    -
+      If a paragraph clearly relates to an aspect (based on the aspect''s name and
+      description), include that paragraph''s ID under the aspect''s list of paragraph
+      IDs.\n    - If a paragraph does not relate to an aspect, do not include it under
+      that aspect''s list.\n    - Apply cross-paragraph reasoning when needed (e.g.,
+      headings, lists, references like \"above\", \"this section\"): use surrounding
+      context to disambiguate; if unresolved, omit.\n    - Treat negations, exceptions,
+      and conditionals carefully: relevance can be present in prohibitions or restrictions.\n    -
+      Prefer minimal sufficient evidence:\n        -- base the mapping on the most
+      relevant paragraphs; avoid tangential mentions.\n    - Favor precision over
+      recall; when uncertain, exclude rather than speculate.\n\n4. Produce the final
+      answer in the JSON format specified within <answer_format></answer_format> tags\n    -
+      Your output must be a JSON array of objects, each object corresponding to a
+      single aspect.\n    - For each aspect (in the order they are provided), include:\n        --
+      aspect_id: The aspect''s unique identifier, e.g., \"A0\".\n        -- paragraph_ids:
+      An array of the paragraph IDs that address or relate to the aspect, e.g., [\"P0\",
+      \"P2\"].\n        -- If an aspect has no related paragraphs, still include it
+      with an empty paragraph_ids array ([]).\n- Do not add extra commentary, code
+      block markers, or any other formatting beyond the JSON array.\n- Internally
+      verify before finalizing:\n    -- Each provided aspect appears once, in order,
+      with the correct \"aspect_id\".\n    -- \"paragraph_ids\" contains only valid
+      paragraph IDs.\n    -- The structure exactly matches the format specified within
+      <answer_format></answer_format> tags (no extra keys or commentary).\n</task_description>\n\n<output_constraints>\n-
       No additional text:\n    -- Do not include any headers, explanations, or text
       outside of the JSON array.\n    -- Do not wrap your JSON response in backticks
       or any other formatting characters.\n- Private deliberation only:\n    -- Do
@@ -150,52 +150,37 @@ interactions:
       ASPECTS:\n    <aspect id=\"A0\">\n        <aspect_id>A0</aspect_id>\n        \n        <aspect_name>Termination
       Provisions</aspect_name>\n        \n        <aspect_description>\n        Analysis
       of contract termination conditions, notice requirements, and severance terms.\n        </aspect_description>\n    </aspect>\n\n</aspects>\n\n<document_paragraphs>\nDOCUMENT
-      PARAGRAPHS:\n    <paragraph id=\"P0\">\n        <paragraph_id>P0</paragraph_id>\n        \n        <paragraph_text>\n        EMPLOYMENT
-      AGREEMENT\n        </paragraph_text>\n    </paragraph>\n\n    <paragraph id=\"P1\">\n        <paragraph_id>P1</paragraph_id>\n        \n        <paragraph_text>\n        This
-      Employment Agreement (the \"Agreement\") is made and entered into as of January
-      15, 2023 (the \"Effective Date\"), by and between ABC Corporation, a Delaware
-      corporation (the \"Company\"), and Jane Smith, an individual (the \"Employee\").\n        </paragraph_text>\n    </paragraph>\n\n    <paragraph
-      id=\"P2\">\n        <paragraph_id>P2</paragraph_id>\n        \n        <paragraph_text>\n        1.
-      EMPLOYMENT TERM\n        </paragraph_text>\n    </paragraph>\n\n    <paragraph
-      id=\"P3\">\n        <paragraph_id>P3</paragraph_id>\n        \n        <paragraph_text>\n        The
-      Company hereby employs the Employee, and the Employee hereby accepts employment
-      with the Company, upon the terms and conditions set forth in this Agreement.
-      The term of this Agreement shall commence on the Effective Date and shall continue
-      for a period of two (2) years, unless earlier terminated in accordance with
-      Section 8 (the \"Term\").\n        </paragraph_text>\n    </paragraph>\n\n    <paragraph
-      id=\"P4\">\n        <paragraph_id>P4</paragraph_id>\n        \n        <paragraph_text>\n        2.
-      POSITION AND DUTIES\n        </paragraph_text>\n    </paragraph>\n\n    <paragraph
-      id=\"P5\">\n        <paragraph_id>P5</paragraph_id>\n        \n        <paragraph_text>\n        During
-      the Term, the Employee shall serve as Chief Technology Officer of the Company,
-      with such duties and responsibilities as are commensurate with such position.\n        </paragraph_text>\n    </paragraph>\n\n    <paragraph
-      id=\"P6\">\n        <paragraph_id>P6</paragraph_id>\n        \n        <paragraph_text>\n        8.
-      TERMINATION\n        </paragraph_text>\n    </paragraph>\n\n    <paragraph id=\"P7\">\n        <paragraph_id>P7</paragraph_id>\n        \n        <paragraph_text>\n        8.1
-      Termination by the Company. The Company may terminate the Employee''s employment
-      for Cause at any time upon written notice. \"Cause\" shall mean: (i) Employee''s
-      material breach of this Agreement; (ii) Employee''s conviction of a felony;
-      or (iii) Employee''s willful misconduct that causes material harm to the Company.\n        </paragraph_text>\n    </paragraph>\n\n    <paragraph
-      id=\"P8\">\n        <paragraph_id>P8</paragraph_id>\n        \n        <paragraph_text>\n        8.2
-      Termination by the Employee. The Employee may terminate employment for Good
-      Reason upon 30 days'' written notice to the Company. \"Good Reason\" shall mean
-      a material reduction in Employee''s base salary or a material diminution in
-      Employee''s duties.\n        </paragraph_text>\n    </paragraph>\n\n    <paragraph
-      id=\"P9\">\n        <paragraph_id>P9</paragraph_id>\n        \n        <paragraph_text>\n        8.3
-      Severance. If the Employee''s employment is terminated by the Company without
-      Cause or by the Employee for Good Reason, the Employee shall be entitled to
-      receive severance pay equal to six (6) months of the Employee''s base salary.\n        </paragraph_text>\n    </paragraph>\n\n    <paragraph
-      id=\"P10\">\n        <paragraph_id>P10</paragraph_id>\n        \n        <paragraph_text>\n        IN
-      WITNESS WHEREOF, the parties have executed this Agreement as of the date first
-      written above.\n        </paragraph_text>\n    </paragraph>\n\n    <paragraph
-      id=\"P11\">\n        <paragraph_id>P11</paragraph_id>\n        \n        <paragraph_text>\n        ABC
-      CORPORATION\n        </paragraph_text>\n    </paragraph>\n\n    <paragraph id=\"P12\">\n        <paragraph_id>P12</paragraph_id>\n        \n        <paragraph_text>\n        By:
-      ______________________\n        </paragraph_text>\n    </paragraph>\n\n    <paragraph
-      id=\"P13\">\n        <paragraph_id>P13</paragraph_id>\n        \n        <paragraph_text>\n        Name:
-      John Johnson\n        </paragraph_text>\n    </paragraph>\n\n    <paragraph
-      id=\"P14\">\n        <paragraph_id>P14</paragraph_id>\n        \n        <paragraph_text>\n        Title:
-      CEO\n        </paragraph_text>\n    </paragraph>\n\n    <paragraph id=\"P15\">\n        <paragraph_id>P15</paragraph_id>\n        \n        <paragraph_text>\n        EMPLOYEE\n        </paragraph_text>\n    </paragraph>\n\n    <paragraph
-      id=\"P16\">\n        <paragraph_id>P16</paragraph_id>\n        \n        <paragraph_text>\n        ______________________\n        </paragraph_text>\n    </paragraph>\n\n    <paragraph
-      id=\"P17\">\n        <paragraph_id>P17</paragraph_id>\n        \n        <paragraph_text>\n        Jane
-      Smith\n        </paragraph_text>\n    </paragraph>\n\n</document_paragraphs>"}],"model":"gpt-6-luna"}'
+      PARAGRAPHS:\n<paragraph id=\"P0\">EMPLOYMENT AGREEMENT</paragraph>\n<paragraph
+      id=\"P1\">This Employment Agreement (the \"Agreement\") is made and entered
+      into as of January 15, 2023 (the \"Effective Date\"), by and between ABC Corporation,
+      a Delaware corporation (the \"Company\"), and Jane Smith, an individual (the
+      \"Employee\").</paragraph>\n<paragraph id=\"P2\">1. EMPLOYMENT TERM</paragraph>\n<paragraph
+      id=\"P3\">The Company hereby employs the Employee, and the Employee hereby accepts
+      employment with the Company, upon the terms and conditions set forth in this
+      Agreement. The term of this Agreement shall commence on the Effective Date and
+      shall continue for a period of two (2) years, unless earlier terminated in accordance
+      with Section 8 (the \"Term\").</paragraph>\n<paragraph id=\"P4\">2. POSITION
+      AND DUTIES</paragraph>\n<paragraph id=\"P5\">During the Term, the Employee shall
+      serve as Chief Technology Officer of the Company, with such duties and responsibilities
+      as are commensurate with such position.</paragraph>\n<paragraph id=\"P6\">8.
+      TERMINATION</paragraph>\n<paragraph id=\"P7\">8.1 Termination by the Company.
+      The Company may terminate the Employee''s employment for Cause at any time upon
+      written notice. \"Cause\" shall mean: (i) Employee''s material breach of this
+      Agreement; (ii) Employee''s conviction of a felony; or (iii) Employee''s willful
+      misconduct that causes material harm to the Company.</paragraph>\n<paragraph
+      id=\"P8\">8.2 Termination by the Employee. The Employee may terminate employment
+      for Good Reason upon 30 days'' written notice to the Company. \"Good Reason\"
+      shall mean a material reduction in Employee''s base salary or a material diminution
+      in Employee''s duties.</paragraph>\n<paragraph id=\"P9\">8.3 Severance. If the
+      Employee''s employment is terminated by the Company without Cause or by the
+      Employee for Good Reason, the Employee shall be entitled to receive severance
+      pay equal to six (6) months of the Employee''s base salary.</paragraph>\n<paragraph
+      id=\"P10\">IN WITNESS WHEREOF, the parties have executed this Agreement as of
+      the date first written above.</paragraph>\n<paragraph id=\"P11\">ABC CORPORATION</paragraph>\n<paragraph
+      id=\"P12\">By: ______________________</paragraph>\n<paragraph id=\"P13\">Name:
+      John Johnson</paragraph>\n<paragraph id=\"P14\">Title: CEO</paragraph>\n<paragraph
+      id=\"P15\">EMPLOYEE</paragraph>\n<paragraph id=\"P16\">______________________</paragraph>\n<paragraph
+      id=\"P17\">Jane Smith</paragraph>\n</document_paragraphs>"}],"model":"gpt-6-luna"}'
     headers:
       accept:
       - application/json
@@ -206,7 +191,7 @@ interactions:
       connection:
       - keep-alive
       content-length:
-      - '17831'
+      - '15447'
       content-type:
       - application/json
       cookie:
@@ -240,14 +225,14 @@ interactions:
   response:
     body:
       string: !!binary |
-        H4sIAAAAAAAA/3WSTW/bMAyG7/kVhs7OkE+n7a0deuphXQ9BsTgwVImxtcqSJtFbgyL/fZTjxA7a
-        XiyYD/mCfMn3UZIwJdlNwkTFUdROj++f98sf5a+1fpJleHq++7N+fdtXa6wfFt9/sjRW2JffIPBU
-        9U1YqgNU1hyx8MARoup0dT1dZYvlZNaC2krQsax0OM7GujG8q6isEhAIbeg3Sd7bb+zNSHij8CQ9
-        RWoIgZdAsVMSBb3VMcJ4CCogN8jSHgprEEzb7iY3JB4/SZJTtqMxCiVzYjm7neQsPTHHPS89dxXh
-        EPkmZ49zSiD2mHXvqnuvuvc6Z9socMjNdtiBh10TeJzcNFoPADfGIo/OtbNvO3I4T7tTRoWqIEMD
-        uUsTBLSOtfRA323rXnNhCHOe9oEF2ldoZefL+ewoyPpN9Xh6pki96EFdli3STyQLCciVDoMVMMFF
-        BXIomq3SC1j88wqhz5hNs9k5gzdS2Z5NRgMXPjb9WQNHh5Qpe5Wr+Zf6PRACHN1q4TxIJS6d6dM8
-        xIP/Ku28jrZjFsD/pWsuUIGPK5Ow440+niQL+4BQF7TXErzzqr3LeBWjw+g/KoUQUo4DAAA=
+        H4sIAAAAAAAA/32STW/bMAyG7/kVhs5OkcyI7ezWQ9vDgH5clkMcGKrE2NoUSZDkZmmR/15KcWoH
+        a3uxYD7kC/Il3yZJQgQnPxPCWurZzsjpDbtb/eL719+3D+JwkGahFvunMlu1q+b+jqShQj//AebP
+        VVdMYx14odUJMwvUQ1CdF8sfRVnmRR7BTnOQoawxfppPZadoX9FqwcAhWuNvkrzFb+hNcfiH4Vl6
+        juzAOdoAxs5JGLRahgihzgnnqfIkHSDTyoOK7a4rheLhkyQVZhscoxa8QlaR61lF0jMz1NLGUtMi
+        doGvK/KYYQKyx7x/i/4t+3dZkU0QOFZqM+7AwrZzNEyuOilHgCqlPQ3Oxdk3PTl+TLsVSri2RkMd
+        uosTOK8NifSI3010r7swhBiL+/C1138hymazRXESJMOmBjzP8p567EWO6ubLLP1EsubgqZButALC
+        KGuBX4gW6QWs91Z4GGXk5ZBBOy70wGaTkQv/N/1ZAyeHhGoGlW/0B8AYGLzV2ljggl06M6RZCAf/
+        VdrHOmLHxIF9wWuuvQAbVsZhSzt5OkniDs7Drsa9NmCNFfEuw1VMjpN3SSCnIY4DAAA=
     headers:
       access-control-expose-headers:
       - X-Request-ID
@@ -270,7 +255,7 @@ interactions:
       openai-organization:
       - DUMMY
       openai-processing-ms:
-      - '1601'
+      - '2106'
       openai-project:
       - DUMMY
       openai-version:
@@ -294,9 +279,9 @@ interactions:
       x-ratelimit-remaining-tokens:
       - DUMMY
       x-ratelimit-reset-requests:
-      - 12ms
+      - 6ms
       x-ratelimit-reset-tokens:
-      - 129ms
+      - 22ms
       x-request-id:
       - DUMMY
     status:
@@ -391,43 +376,41 @@ interactions:
       you will find a list of document paragraphs (including sentences) and a list
       of concepts.\n</introduction>\n\n<guidance_on_task_structure>\nAll structured
       information in these instructions is provided using semantic XML tags. Field
-      names correspond directly to tag names (e.g., concept_name, paragraph_text,
-      sentence_text, additional_context, etc.).\n</guidance_on_task_structure>\n\n<private_reasoning>\nUse
-      private deliberation to plan, evaluate evidence, and verify decisions. Do not
-      reveal any intermediate analysis, notes, or steps. Only output the JSON according
-      to the format specified within <answer_format></answer_format> tags.\n\nFollow
-      this internal three-stage process:\n\n1. Plan\n    - Internally restate each
-      concept in one sentence.\n    - List 3-5 concrete lexical/semantic cues for
-      relevance aligned with the concept description (include indicators of definition,
-      obligation, permission, exception, conditionals, and negations).\n    - If a
-      concept specifies a structure, rating scale, or available labels, align inclusion/exclusion
-      criteria with those constraints.\n    - For each concept, plan how to synthesize
-      the output value from the available evidence even when no literal span is present.\n\n2.
-      Evidence triage\n    - Evaluate the provided content at paragraph and sentence
-      levels; derive candidate extractions/values for the concepts (explicit or inferred
-      from context).\n    - Collect minimal sufficient evidence privately and note
-      negated, hypothetical, or conditional forms.\n    - Prefer precision over recall;
-      include only high-confidence items and omit weak or ambiguous ones.\n\n3. Consistency
-      pass\n    - Ensure all extracted items strictly match required types and any
-      specified structure, rating scales, or label constraints.\n    - Deduplicate
-      referenced paragraph and sentence IDs and preserve their original order.\n\nNever
-      disclose any plan, evidence, or internal notes - only the JSON array defined
-      within <answer_format></answer_format> tags.\n</private_reasoning>\n\n<task_description>\nYour
-      task is to:\n1. Read through the provided document paragraphs and their sentences.\n    -
-      Each paragraph is identified by a paragraph ID (for example, \"P0\", \"P1\",
-      etc.) specified within <paragraph_id></paragraph_id> tags.\n    - Each paragraph
-      includes sentences, each identified by a sentence ID (for example, \"P0-S0\",
-      \"P0-S1\", etc.) specified within <sentence_id></sentence_id> tags, followed
-      by the full text of the sentence specified within <sentence_text></sentence_text>
-      tags.\n    - Note that paragraphs are listed in the same order they appear in
-      the original document.\n    - You may be working with document fragments rather
-      than complete documents. Focus on extracting information from the available
-      content without making assumptions about missing parts.\n2. Identify whether
-      each concept in the concepts list is addressed within the document paragraphs.\n    -
-      Each concept is identified by a concept ID (for example, \"C0\", \"C1\", etc.)
-      specified within <concept_id></concept_id> tags.\n    - Each concept is described
-      by a concept name specified within <concept_name></concept_name> tags and a
-      concept description specified within <concept_description></concept_description>
+      names correspond directly to tag names (e.g., concept_name, additional_context,
+      etc.).\n</guidance_on_task_structure>\n\n<private_reasoning>\nUse private deliberation
+      to plan, evaluate evidence, and verify decisions. Do not reveal any intermediate
+      analysis, notes, or steps. Only output the JSON according to the format specified
+      within <answer_format></answer_format> tags.\n\nFollow this internal three-stage
+      process:\n\n1. Plan\n    - Internally restate each concept in one sentence.\n    -
+      List 3-5 concrete lexical/semantic cues for relevance aligned with the concept
+      description (include indicators of definition, obligation, permission, exception,
+      conditionals, and negations).\n    - If a concept specifies a structure, rating
+      scale, or available labels, align inclusion/exclusion criteria with those constraints.\n    -
+      For each concept, plan how to synthesize the output value from the available
+      evidence even when no literal span is present.\n\n2. Evidence triage\n    -
+      Evaluate the provided content at paragraph and sentence levels; derive candidate
+      extractions/values for the concepts (explicit or inferred from context).\n    -
+      Collect minimal sufficient evidence privately and note negated, hypothetical,
+      or conditional forms.\n    - Prefer precision over recall; include only high-confidence
+      items and omit weak or ambiguous ones.\n\n3. Consistency pass\n    - Ensure
+      all extracted items strictly match required types and any specified structure,
+      rating scales, or label constraints.\n    - Deduplicate referenced paragraph
+      and sentence IDs and preserve their original order.\n\nNever disclose any plan,
+      evidence, or internal notes - only the JSON array defined within <answer_format></answer_format>
+      tags.\n</private_reasoning>\n\n<task_description>\nYour task is to:\n1. Read
+      through the provided document paragraphs and their sentences.\n    - Each paragraph
+      is given within <paragraph></paragraph> tags, whose id attribute holds its paragraph
+      ID (for example, \"P0\", \"P1\", etc.).\n    - Each paragraph includes sentences,
+      each given with its full text within <sentence></sentence> tags, whose id attribute
+      holds its sentence ID (for example, \"P0-S0\", \"P0-S1\", etc.).\n    - Note
+      that paragraphs are listed in the same order they appear in the original document.\n    -
+      You may be working with document fragments rather than complete documents. Focus
+      on extracting information from the available content without making assumptions
+      about missing parts.\n2. Identify whether each concept in the concepts list
+      is addressed within the document paragraphs.\n    - Each concept is identified
+      by a concept ID (for example, \"C0\", \"C1\", etc.) specified within <concept_id></concept_id>
+      tags.\n    - Each concept is described by a concept name specified within <concept_name></concept_name>
+      tags and a concept description specified within <concept_description></concept_description>
       tags.\n3. For each concept that appears, extract zero or more items relevant
       to that concept. The item format and structure are specified for each concept.\n    -
       Apply cross-paragraph reasoning when helpful (e.g., headings, lists, references
@@ -562,43 +545,28 @@ interactions:
       provided upon termination.\n    </concept_description>\n\n    <amount_of_extracted_items>This
       concept may have zero, one, or multiple extracted items.</amount_of_extracted_items>\n\n    <extracted_item_type>str
       (must be exactly as specified)</extracted_item_type>\n</concept>\n\n</concepts>\n\n<document_paragraphs>\nDOCUMENT
-      PARAGRAPHS INCLUDING SENTENCES:\n    <paragraph id=\"P0\">\n        <paragraph_id>P0</paragraph_id>\n        \n        <paragraph_sentences>\n            <sentence
-      id=\"P0-S0\">\n                <sentence_id>P0-S0</sentence_id>\n                \n                <sentence_text>\n                The
+      PARAGRAPHS INCLUDING SENTENCES:\n<paragraph id=\"P0\">\n<sentence id=\"P0-S0\">The
       Company hereby employs the Employee, and the Employee hereby accepts employment
-      with the Company, upon the terms and conditions set forth in this Agreement.\n                </sentence_text>\n            </sentence>\n            <sentence
-      id=\"P0-S1\">\n                <sentence_id>P0-S1</sentence_id>\n                \n                <sentence_text>\n                The
-      term of this Agreement shall commence on the Effective Date and shall continue
-      for a period of two (2) years, unless earlier terminated in accordance with
-      Section 8 (the \"Term\").\n                </sentence_text>\n            </sentence>\n        </paragraph_sentences>\n    </paragraph>\n\n    <paragraph
-      id=\"P1\">\n        <paragraph_id>P1</paragraph_id>\n        \n        <paragraph_sentences>\n            <sentence
-      id=\"P1-S0\">\n                <sentence_id>P1-S0</sentence_id>\n                \n                <sentence_text>\n                8.
-      TERMINATION\n                </sentence_text>\n            </sentence>\n        </paragraph_sentences>\n    </paragraph>\n\n    <paragraph
-      id=\"P2\">\n        <paragraph_id>P2</paragraph_id>\n        \n        <paragraph_sentences>\n            <sentence
-      id=\"P2-S0\">\n                <sentence_id>P2-S0</sentence_id>\n                \n                <sentence_text>\n                8.1
-      Termination by the Company.\n                </sentence_text>\n            </sentence>\n            <sentence
-      id=\"P2-S1\">\n                <sentence_id>P2-S1</sentence_id>\n                \n                <sentence_text>\n                The
-      Company may terminate the Employee''s employment for Cause at any time upon
-      written notice.\n                </sentence_text>\n            </sentence>\n            <sentence
-      id=\"P2-S2\">\n                <sentence_id>P2-S2</sentence_id>\n                \n                <sentence_text>\n                \"Cause\"
+      with the Company, upon the terms and conditions set forth in this Agreement.</sentence>\n<sentence
+      id=\"P0-S1\">The term of this Agreement shall commence on the Effective Date
+      and shall continue for a period of two (2) years, unless earlier terminated
+      in accordance with Section 8 (the \"Term\").</sentence>\n</paragraph>\n<paragraph
+      id=\"P1\">\n<sentence id=\"P1-S0\">8. TERMINATION</sentence>\n</paragraph>\n<paragraph
+      id=\"P2\">\n<sentence id=\"P2-S0\">8.1 Termination by the Company.</sentence>\n<sentence
+      id=\"P2-S1\">The Company may terminate the Employee''s employment for Cause
+      at any time upon written notice.</sentence>\n<sentence id=\"P2-S2\">\"Cause\"
       shall mean: (i) Employee''s material breach of this Agreement; (ii) Employee''s
       conviction of a felony; or (iii) Employee''s willful misconduct that causes
-      material harm to the Company.\n                </sentence_text>\n            </sentence>\n        </paragraph_sentences>\n    </paragraph>\n\n    <paragraph
-      id=\"P3\">\n        <paragraph_id>P3</paragraph_id>\n        \n        <paragraph_sentences>\n            <sentence
-      id=\"P3-S0\">\n                <sentence_id>P3-S0</sentence_id>\n                \n                <sentence_text>\n                8.2
-      Termination by the Employee.\n                </sentence_text>\n            </sentence>\n            <sentence
-      id=\"P3-S1\">\n                <sentence_id>P3-S1</sentence_id>\n                \n                <sentence_text>\n                The
+      material harm to the Company.</sentence>\n</paragraph>\n<paragraph id=\"P3\">\n<sentence
+      id=\"P3-S0\">8.2 Termination by the Employee.</sentence>\n<sentence id=\"P3-S1\">The
       Employee may terminate employment for Good Reason upon 30 days'' written notice
-      to the Company.\n                </sentence_text>\n            </sentence>\n            <sentence
-      id=\"P3-S2\">\n                <sentence_id>P3-S2</sentence_id>\n                \n                <sentence_text>\n                \"Good
-      Reason\" shall mean a material reduction in Employee''s base salary or a material
-      diminution in Employee''s duties.\n                </sentence_text>\n            </sentence>\n        </paragraph_sentences>\n    </paragraph>\n\n    <paragraph
-      id=\"P4\">\n        <paragraph_id>P4</paragraph_id>\n        \n        <paragraph_sentences>\n            <sentence
-      id=\"P4-S0\">\n                <sentence_id>P4-S0</sentence_id>\n                \n                <sentence_text>\n                8.3
-      Severance.\n                </sentence_text>\n            </sentence>\n            <sentence
-      id=\"P4-S1\">\n                <sentence_id>P4-S1</sentence_id>\n                \n                <sentence_text>\n                If
-      the Employee''s employment is terminated by the Company without Cause or by
-      the Employee for Good Reason, the Employee shall be entitled to receive severance
-      pay equal to six (6) months of the Employee''s base salary.\n                </sentence_text>\n            </sentence>\n        </paragraph_sentences>\n    </paragraph>\n\n</document_paragraphs>"}],"model":"gpt-6-luna"}'
+      to the Company.</sentence>\n<sentence id=\"P3-S2\">\"Good Reason\" shall mean
+      a material reduction in Employee''s base salary or a material diminution in
+      Employee''s duties.</sentence>\n</paragraph>\n<paragraph id=\"P4\">\n<sentence
+      id=\"P4-S0\">8.3 Severance.</sentence>\n<sentence id=\"P4-S1\">If the Employee''s
+      employment is terminated by the Company without Cause or by the Employee for
+      Good Reason, the Employee shall be entitled to receive severance pay equal to
+      six (6) months of the Employee''s base salary.</sentence>\n</paragraph>\n</document_paragraphs>"}],"model":"gpt-6-luna"}'
     headers:
       accept:
       - application/json
@@ -609,7 +577,7 @@ interactions:
       connection:
       - keep-alive
       content-length:
-      - '26813'
+      - '24123'
       content-type:
       - application/json
       cookie:
@@ -643,21 +611,20 @@ interactions:
   response:
     body:
       string: !!binary |
-        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
+        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
     headers:
       access-control-expose-headers:
       - X-Request-ID
@@ -680,7 +647,7 @@ interactions:
       openai-organization:
       - DUMMY
       openai-processing-ms:
-      - '4684'
+      - '4845'
       openai-project:
       - DUMMY
       openai-version:
@@ -704,9 +671,9 @@ interactions:
       x-ratelimit-remaining-tokens:
       - DUMMY
       x-ratelimit-reset-requests:
-      - 24ms
+      - 6ms
       x-ratelimit-reset-tokens:
-      - 306ms
+      - 35ms
       x-request-id:
       - DUMMY
     status:

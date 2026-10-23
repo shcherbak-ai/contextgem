@@ -94,11 +94,11 @@ interactions:
       across diverse document analysis tasks.\\n</conclusion>\"},{\"role\":\"user\",\"content\":\"<introduction>\\nBelow
       you will find document text and a list of concepts.\\n</introduction>\\n\\n<guidance_on_task_structure>\\nAll
       structured information in these instructions is provided using semantic XML
-      tags. Field names correspond directly to tag names (e.g., concept_name, paragraph_text,
-      sentence_text, additional_context, etc.).\\n</guidance_on_task_structure>\\n\\n<private_reasoning>\\nUse
-      private deliberation to plan, evaluate evidence, and verify decisions. Do not
-      reveal any intermediate analysis, notes, or steps. Only output the JSON according
-      to the format specified within <answer_format></answer_format> tags.\\n\\nFollow
+      tags. Field names correspond directly to tag names (e.g., concept_name, additional_context,
+      etc.).\\n</guidance_on_task_structure>\\n\\n<private_reasoning>\\nUse private
+      deliberation to plan, evaluate evidence, and verify decisions. Do not reveal
+      any intermediate analysis, notes, or steps. Only output the JSON according to
+      the format specified within <answer_format></answer_format> tags.\\n\\nFollow
       this internal three-stage process:\\n\\n1. Plan\\n    - Internally restate each
       concept in one sentence.\\n    - List 3-5 concrete lexical/semantic cues for
       relevance aligned with the concept description (include indicators of definition,
@@ -262,7 +262,7 @@ interactions:
       connection:
       - keep-alive
       content-length:
-      - '20551'
+      - '20520'
       content-type:
       - application/json
       cookie:
@@ -296,21 +296,21 @@ interactions:
   response:
     body:
       string: !!binary |
-        H4sIAAAAAAAA/31VyVLjMBC95ytUPjtM9hBuQMHc5gBzoIqkXEJu2xpkyaUlC1T+ab5hvmxadrxA
-        DBcveq9b3a9brfcBIQGPgysSsIxalhdiePd0WFjx8+ZNXN8y6fZv2erw6+5xolP2xILQW6iXP8Bs
-        bXXBFNqB5UpWMNNALXiv4+VqvFzM5qt5CeQqBuHN0sIOF0PhJD1ZZIozMAg94y8h7+XTxyZj2OPy
-        KKxXcjCGpoBrNQkXtRJ+JaDGcGOptEHYgkxJC7IM93kt0bl/ELL2AIPCRjxeI7gObkfrIKxB2FtN
-        GaYRcQu58YznCms8VMSCWo7uPaGz7pHa73gync0b1zW65ZaKyPBUmjNbj78IpeKo0Jiv01B7mv+4
-        nHxy5ckZUG0jjbJ74nJyRsAcCkD85Gp1ebE446j9IQUZGc+ivpwVs0s7tj/HsKsCE1xyRkWPDOaQ
-        F1Z9krBRD7QvGQpImHJpRhKlyYTsAF5NT545FzFJYAuacEnwLblMDXEFsYqMR6OL2b+/9z12CeaT
-        OuhBpCImU9pK1JmohLz45s3WQZe3+VS6mNNUKoy7N6Vr5iygH+yujFtuQiL4K4gD2XLtBToL4cEJ
-        IMpZgkVE2u8bknLMjGADbkGQDPVR+tBjeF9l1WxgAFs6pvrg1eAywUNaVvG7XKpNomaTK9wWhfqi
-        zNark/e3u8bdc8Tisnf6tXkAY8sSz0lMD30Vfqy6BX0w0uxGdtxmRGHZhzaDIXYKHml96hjjivKU
-        UB/VmT9U0/pNlY5BQ/y9GIkSQu0iV0RVdHiUOkrUn6ePjX/h96Y7bDQkzlA/5KQTogNQKZWtlPHC
-        bAa1vPVgS/AAmSzClA0OUhxWWJAiKNHjwIfqB6X7MPuCQuPotZFVr1C6nY2ny8ph0A7lFp7OxifU
-        Kj98WrvZ8jLscRnFYCkXpjNtA0ZZhlOxsR1PF8vwAxjtNM7MljFZdhjUxVy12GjQUeE86L4AKoXw
-        3Ldeqvul138LMD/soRypMWcflWlpGvzd9hWtKUcZcWBAb/HiivAG0L5kMSTUier2wbmHcy2PsK4p
-        6ELz8gryXTE4Dv4DNdYjqHkHAAA=
+        H4sIAAAAAAAA/31VyW7bMBC9+ysInVrATr3EdpJbWnQBeiiQFj0kDgSGHElsKFIlKTtukH/qN/TL
+        OiNFS2IlFy18M2+Gb4bD+xFjkZLRGYtExoPICz35KD7/PL+QZapWX5PU34lvv/2l4vzmy/KyiMbk
+        YW9+gQiN15Gw6AdBWVPDwgEPQKyz9el8fXKymh5XQG4laHJLizBZTXRp+KNHZpUAj9AV/jJ2Xz0p
+        NyPhDpen42YlB+95CrjWGOGis5pWIu698oGbEI07UFgTwFTpXm0MktODsQ0BAooQK7lBcBN9mG6i
+        cQPCXXBc4DZiFSD3ZHFVYy1DbVjwoJCeDHrrhDS8s/nieNlSN+hWBa5jr1LjD3wJv9HWyrhwuN/S
+        QcO0fHcyf0ZFxhlwF2KHspPhen5ggHsoAPFHqtOTo9WBjb3bp2BiT1acyllb9s0eup+HcV8FoZVR
+        gusBGfw+L4J9JmGrHjgqGQrIhC3TjCXWsTnbAdz6gX3mSkuWwBYcU4bh2yiTevamLFiwbDadHh3/
+        +/vp7YBngjtKSxhAvFZpFtguA/iDbERcFpgXc9U6dmk64GUs85l1wWB9mE3YDTV9ton6dtfPSi4V
+        T43F/Q5KcS7KAMiDXZmpoPyYaXULes+2ypGwBylclBqYLQPD4qPZj/csVagIw8bdgmYZ6mrdfsDx
+        U61FG8ADHgXJ3Z5EVCbBw11V/7W91EHiNsgZhkV5X2iPQOrkw8fEYfQcMVn13LA2F+BD1RpLJvl+
+        qDO+112GHIK10dhOhYxZbJdJyGCCHYajwD12mscq0+nilNUBH6oZKKh1EhzI18VIrNZ2F5dFXGeH
+        R7CnRPP5+HFNL/y+7g8pB0npOQ1HU2rdA7gxNtTKkDDXo0beZiAmePB8FuOWPQ5gHHJYkCKq0IcR
+        pUoDtnwyM6PC4cgOcbC3UNEezxazmjDqhnkHL04bNFgaWp3fcj4fD1DGEgJX2vemdCS4yHCatr6z
+        xWo9fgLGO4eztrOYr1ez1oKXUtkOm456KhwmPZRArRCe8H4OixcDdICgWwKqWSyVeCpNZ+aALsWX
+        zNp6VClHHtwWb7wYrw5HNZOQ8FLX1xYOTByIeYyFTcEVTlV3F7XF6GH0HyIF7UmyBwAA
     headers:
       access-control-expose-headers:
       - X-Request-ID
@@ -333,7 +333,7 @@ interactions:
       openai-organization:
       - DUMMY
       openai-processing-ms:
-      - '2966'
+      - '4579'
       openai-project:
       - DUMMY
       openai-version:
@@ -357,9 +357,9 @@ interactions:
       x-ratelimit-remaining-tokens:
       - DUMMY
       x-ratelimit-reset-requests:
-      - 12ms
+      - 6ms
       x-ratelimit-reset-tokens:
-      - 150ms
+      - 30ms
       x-request-id:
       - DUMMY
     status:

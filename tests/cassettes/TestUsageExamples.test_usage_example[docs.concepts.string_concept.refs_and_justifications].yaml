@@ -88,44 +88,43 @@ interactions:
       you will find a list of document paragraphs (including sentences) and a list
       of concepts.\n</introduction>\n\n<guidance_on_task_structure>\nAll structured
       information in these instructions is provided using semantic XML tags. Field
-      names correspond directly to tag names (e.g., concept_name, paragraph_text,
-      sentence_text, additional_context, etc.).\n</guidance_on_task_structure>\n\n<private_reasoning>\nUse
-      private deliberation to plan, evaluate evidence, and verify decisions. Do not
-      reveal any intermediate analysis, notes, or steps. Only output the JSON according
-      to the format specified within <answer_format></answer_format> tags.\n\nFollow
-      this internal three-stage process:\n\n1. Plan\n    - Internally restate each
-      concept in one sentence.\n    - List 3-5 concrete lexical/semantic cues for
-      relevance aligned with the concept description (include indicators of definition,
-      obligation, permission, exception, conditionals, and negations).\n    - If a
-      concept specifies a structure, rating scale, or available labels, align inclusion/exclusion
-      criteria with those constraints.\n    - For each concept, plan how to synthesize
-      the output value from the available evidence even when no literal span is present.\n\n2.
-      Evidence triage\n    - Evaluate the provided content at paragraph and sentence
-      levels; derive candidate extractions/values for the concepts (explicit or inferred
-      from context).\n    - Collect minimal sufficient evidence privately and note
-      negated, hypothetical, or conditional forms.\n    - Prefer precision over recall;
-      include only high-confidence items and omit weak or ambiguous ones.\n\n3. Consistency
-      pass\n    - Ensure all extracted items strictly match required types and any
-      specified structure, rating scales, or label constraints.\n    - Deduplicate
-      referenced paragraph and sentence IDs and preserve their original order.\n    -
-      Ensure justifications align with the item''s evidence and stance, and comply
-      with length and language constraints.\n\nNever disclose any plan, evidence,
-      or internal notes - only the JSON array defined within <answer_format></answer_format>
-      tags.\n</private_reasoning>\n\n<task_description>\nYour task is to:\n1. Read
-      through the provided document paragraphs and their sentences.\n    - Each paragraph
-      is identified by a paragraph ID (for example, \"P0\", \"P1\", etc.) specified
-      within <paragraph_id></paragraph_id> tags.\n    - Each paragraph includes sentences,
-      each identified by a sentence ID (for example, \"P0-S0\", \"P0-S1\", etc.) specified
-      within <sentence_id></sentence_id> tags, followed by the full text of the sentence
-      specified within <sentence_text></sentence_text> tags.\n    - Note that paragraphs
-      are listed in the same order they appear in the original document.\n    - You
-      may be working with document fragments rather than complete documents. Focus
-      on extracting information from the available content without making assumptions
-      about missing parts.\n2. Identify whether each concept in the concepts list
-      is addressed within the document paragraphs.\n    - Each concept is identified
-      by a concept ID (for example, \"C0\", \"C1\", etc.) specified within <concept_id></concept_id>
-      tags.\n    - Each concept is described by a concept name specified within <concept_name></concept_name>
-      tags and a concept description specified within <concept_description></concept_description>
+      names correspond directly to tag names (e.g., concept_name, additional_context,
+      etc.).\n</guidance_on_task_structure>\n\n<private_reasoning>\nUse private deliberation
+      to plan, evaluate evidence, and verify decisions. Do not reveal any intermediate
+      analysis, notes, or steps. Only output the JSON according to the format specified
+      within <answer_format></answer_format> tags.\n\nFollow this internal three-stage
+      process:\n\n1. Plan\n    - Internally restate each concept in one sentence.\n    -
+      List 3-5 concrete lexical/semantic cues for relevance aligned with the concept
+      description (include indicators of definition, obligation, permission, exception,
+      conditionals, and negations).\n    - If a concept specifies a structure, rating
+      scale, or available labels, align inclusion/exclusion criteria with those constraints.\n    -
+      For each concept, plan how to synthesize the output value from the available
+      evidence even when no literal span is present.\n\n2. Evidence triage\n    -
+      Evaluate the provided content at paragraph and sentence levels; derive candidate
+      extractions/values for the concepts (explicit or inferred from context).\n    -
+      Collect minimal sufficient evidence privately and note negated, hypothetical,
+      or conditional forms.\n    - Prefer precision over recall; include only high-confidence
+      items and omit weak or ambiguous ones.\n\n3. Consistency pass\n    - Ensure
+      all extracted items strictly match required types and any specified structure,
+      rating scales, or label constraints.\n    - Deduplicate referenced paragraph
+      and sentence IDs and preserve their original order.\n    - Ensure justifications
+      align with the item''s evidence and stance, and comply with length and language
+      constraints.\n\nNever disclose any plan, evidence, or internal notes - only
+      the JSON array defined within <answer_format></answer_format> tags.\n</private_reasoning>\n\n<task_description>\nYour
+      task is to:\n1. Read through the provided document paragraphs and their sentences.\n    -
+      Each paragraph is given within <paragraph></paragraph> tags, whose id attribute
+      holds its paragraph ID (for example, \"P0\", \"P1\", etc.).\n    - Each paragraph
+      includes sentences, each given with its full text within <sentence></sentence>
+      tags, whose id attribute holds its sentence ID (for example, \"P0-S0\", \"P0-S1\",
+      etc.).\n    - Note that paragraphs are listed in the same order they appear
+      in the original document.\n    - You may be working with document fragments
+      rather than complete documents. Focus on extracting information from the available
+      content without making assumptions about missing parts.\n2. Identify whether
+      each concept in the concepts list is addressed within the document paragraphs.\n    -
+      Each concept is identified by a concept ID (for example, \"C0\", \"C1\", etc.)
+      specified within <concept_id></concept_id> tags.\n    - Each concept is described
+      by a concept name specified within <concept_name></concept_name> tags and a
+      concept description specified within <concept_description></concept_description>
       tags.\n3. For each concept that appears, extract zero or more items relevant
       to that concept. The item format and structure are specified for each concept.\n    -
       Apply cross-paragraph reasoning when helpful (e.g., headings, lists, references
@@ -260,20 +259,14 @@ interactions:
       metrics and figures mentioned in the report\n    </concept_description>\n\n    <amount_of_extracted_items>This
       concept may have zero, one, or multiple extracted items.</amount_of_extracted_items>\n\n    <extracted_item_type>str
       (must be exactly as specified)</extracted_item_type>\n</concept>\n\n</concepts>\n\n<document_paragraphs>\nDOCUMENT
-      PARAGRAPHS INCLUDING SENTENCES:\n    <paragraph id=\"P0\">\n        <paragraph_id>P0</paragraph_id>\n        \n        <paragraph_sentences>\n            <sentence
-      id=\"P0-S0\">\n                <sentence_id>P0-S0</sentence_id>\n                \n                <sentence_text>\n                2024
-      Financial Performance Summary\n                </sentence_text>\n            </sentence>\n        </paragraph_sentences>\n    </paragraph>\n\n    <paragraph
-      id=\"P1\">\n        <paragraph_id>P1</paragraph_id>\n        \n        <paragraph_sentences>\n            <sentence
-      id=\"P1-S0\">\n                <sentence_id>P1-S0</sentence_id>\n                \n                <sentence_text>\n                Revenue
-      increased to $120 million in fiscal year 2024, representing 15% growth compared
-      to the previous year.\n                </sentence_text>\n            </sentence>\n            <sentence
-      id=\"P1-S1\">\n                <sentence_id>P1-S1</sentence_id>\n                \n                <sentence_text>\n                This
+      PARAGRAPHS INCLUDING SENTENCES:\n<paragraph id=\"P0\">\n<sentence id=\"P0-S0\">2024
+      Financial Performance Summary</sentence>\n</paragraph>\n<paragraph id=\"P1\">\n<sentence
+      id=\"P1-S0\">Revenue increased to $120 million in fiscal year 2024, representing
+      15% growth compared to the previous year.</sentence>\n<sentence id=\"P1-S1\">This
       growth was primarily driven by the expansion of our enterprise client base and
-      the successful launch of our premium service tier.\n                </sentence_text>\n            </sentence>\n        </paragraph_sentences>\n    </paragraph>\n\n    <paragraph
-      id=\"P2\">\n        <paragraph_id>P2</paragraph_id>\n        \n        <paragraph_sentences>\n            <sentence
-      id=\"P2-S0\">\n                <sentence_id>P2-S0</sentence_id>\n                \n                <sentence_text>\n                The
-      Board has recommended a dividend of $1.25 per share, which will be payable to
-      shareholders of record as of March 15, 2025.\n                </sentence_text>\n            </sentence>\n        </paragraph_sentences>\n    </paragraph>\n\n</document_paragraphs>"}],"model":"gpt-6-luna"}'
+      the successful launch of our premium service tier.</sentence>\n</paragraph>\n<paragraph
+      id=\"P2\">\n<sentence id=\"P2-S0\">The Board has recommended a dividend of $1.25
+      per share, which will be payable to shareholders of record as of March 15, 2025.</sentence>\n</paragraph>\n</document_paragraphs>"}],"model":"gpt-6-luna"}'
     headers:
       accept:
       - application/json
@@ -284,7 +277,7 @@ interactions:
       connection:
       - keep-alive
       content-length:
-      - '23981'
+      - '22792'
       content-type:
       - application/json
       cookie:
@@ -318,19 +311,19 @@ interactions:
   response:
     body:
       string: !!binary |
-        H4sIAAAAAAAA/91Vy27bMBC8+ysIokUvcmBJftQ5pmh7K4okhwKxITDkWmIikwJJKTEC/3uXlC3J
-        eQDJpYdeBHKHO7scUsOnESFUCnpOKC+Y49uqHH//s1tcJxe5k+n1NDU/YBrb6srMm9nPX5c08hn6
-        9g64O2adcY154KRWLcwNMAeeNV4s48V8Ok/jAGy1gNKn5ZUbz8dlrdgho9CSg0XoBqeEPIWv700J
-        eMTwJDpGtmAtywFjx0UYNLr0EcqsldYx5WjUg1wrByq0e7NSSO4/hKw8wKFymRQrBFf022RFoyMI
-        j84wjtvIpIOt9StuWqxjaBc2rKyhJbiEBlQN5+RTnEzIVpYlakKkIhtpOSvJDpghySSZdnVairva
-        OrmRnHkNW6rrAoiBShtHcEMOLHEY8UoztftiEQulyEabF+xnz+gNbMAA7jWrmGG5YVVxup9ne3oz
-        q1Pqd3xS4nmCBa84DqQ4FMKM8RXKux4m7ftJF99H7xSZ5EY/uALv2Oxzq4sBQZwOOlUoj9S1DZp8
-        SOxcNgetfepYN2DGQdi2HDF4Fv5ED/r/71KjsFvAf1AQIRspcOgv91kyIxUYYgsU/X3yXmhmRLi3
-        Lyl7LiItYeQedninFVNc4rXeyLw2/0Lo5MNCJ+8Uuh2EOY7XQ3PCArVl3hRVXZYDgCmlXRAx2OJ6
-        dDy0oxGiQtIWGXqtReNFc7NOVzSge/yug7HWJ15JK4M/isucvodAO50t05aQ9ibew+lieUAd9lIO
-        8paLJHqFMhPgmCztwJ0pZ7xAF+1y43S+iE7A7MGgxw7KJknarWC1kLrHJqOBCi+bfq2BViGp8kEP
-        8dc3C/QA968Dto5uIiQ/laZfZsA/hm8t684jtEwtmAZfusxJMP7MBGxYXbbPFbU7i09Nhgebg6mM
-        DG+Wvxaj/egvsXBBb6oHAAA=
+        H4sIAAAAAAAA/91VXW/bIBR9z69AaHtzKsdpk6yP29qq2su0TdWmJrIY3MR0NniA01ZV/vsuOP7K
+        WrV92MteMHC4514O+PAwIoRKQU8J5RlzvCjz8Rm/uPpeXX7kP86tVa5kZxeX9u78Ey+mekYjH6F/
+        3gB3TdQR1xgHTmpVw9wAc+BZJ/N3yXyxmCXzABRaQO7DNqUbz8Z5pdg+ItOSg0XoGoeEPITW16YE
+        3OF0HDUzBVjLNoBzzSKcNDr3M5RZK61jytGoA7lWDlQo93qpkNw3hCw9wKF0qRRLBJf0Q7ykUQPC
+        nTOM4zZS6aCwfsV1jbUM9cItyyuoCc6l5Swn98AMSeLkmBjYgqrglLyZJDEpZJ6jSEdtlprgprJO
+        riVnXsGa6FsGGFtq4whux4ElDoVu6PDLeAZiwEqkIuuD/IeZDKzBAG46LZlhG8PKbLixg809GdVK
+        9nkySHEYYMFLjx0p9okwYvwVdV71g3bdoJ3fRc+p/WWvxsboW5fhZTt5S/xVZAalcRolA1KiZFJX
+        NmjyOuF/V3iPEIY6eKy3YMZBWjNITPBgMPX/rjUqWwD+jYIIuZUCu/5WHyUnpARDbIaqv1Df95oZ
+        gSJ2jKzlJHr9HOs/EDZ5tbDJC4WtO2GM/VXfljBBZZm3Q1XleQ9gSmkXNAuGuBo1h9RY4FoqabMU
+        XcCi5aKtWadLGtAdtqtgqdXAJWlp8M9wqdO/INAeTxeLmpB29t3B0+nJHnVYS96LmyfT6BHKVIBj
+        Mrc9X6Y8uFQXO5nO5tEATG8NumsvbTxZtCtYJaTusHjUU+Hvoh8roFZIqk3HMo+f5O8A7p8FrBzd
+        Q0g+VKZbZsC/gk8ta48jVEwtmC0+camTYPyRCVizKq/fKWrvLb4xKZ7rBkxpZHis/K0Y7UZ/AOC7
+        JbSjBwAA
     headers:
       access-control-expose-headers:
       - X-Request-ID
@@ -353,7 +346,7 @@ interactions:
       openai-organization:
       - DUMMY
       openai-processing-ms:
-      - '3130'
+      - '3811'
       openai-project:
       - DUMMY
       openai-version:
@@ -377,9 +370,9 @@ interactions:
       x-ratelimit-remaining-tokens:
       - DUMMY
       x-ratelimit-reset-requests:
-      - 12ms
+      - 6ms
       x-ratelimit-reset-tokens:
-      - 175ms
+      - 33ms
       x-request-id:
       - DUMMY
     status:

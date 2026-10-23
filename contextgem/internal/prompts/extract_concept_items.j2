@@ -15,7 +15,7 @@ Below you will find a list of concepts.
 </introduction>
 
 <guidance_on_task_structure>
-All structured information in these instructions is provided using semantic XML tags. Field names correspond directly to tag names (e.g., concept_name, paragraph_text, sentence_text, additional_context, etc.).
+All structured information in these instructions is provided using semantic XML tags. Field names correspond directly to tag names (e.g., concept_name, additional_context, etc.).
 </guidance_on_task_structure>
 {% if supports_reasoning %}
 
@@ -58,8 +58,8 @@ Your task is to:
     {% if add_references %}
         {% if reference_depth == "sentences" %}
 1. Read through the provided document paragraphs and their sentences.
-    - Each paragraph is identified by a paragraph ID (for example, "P0", "P1", etc.) specified within <paragraph_id></paragraph_id> tags.
-    - Each paragraph includes sentences, each identified by a sentence ID (for example, "P0-S0", "P0-S1", etc.) specified within <sentence_id></sentence_id> tags, followed by the full text of the sentence specified within <sentence_text></sentence_text> tags.
+    - Each paragraph is given within <paragraph></paragraph> tags, whose id attribute holds its paragraph ID (for example, "P0", "P1", etc.).
+    - Each paragraph includes sentences, each given with its full text within <sentence></sentence> tags, whose id attribute holds its sentence ID (for example, "P0-S0", "P0-S1", etc.).
             {% if additional_context_for_paras_or_sents %}
     - When available, additional context information for paragraphs and sentences (such as formatting, list context, or table position) will be provided within <additional_context></additional_context> tags, which provides important context for understanding their structural role and position within the document. Use this information to:
         -- Understand document hierarchy (e.g., headings indicate section boundaries)
@@ -68,7 +68,7 @@ Your task is to:
             {% endif %}
         {% else %}
 1. Read through the document paragraphs provided.
-    - Each paragraph is identified by a paragraph ID (for example, "P0", "P1", etc.) specified within <paragraph_id></paragraph_id> tags, followed by the full text of the paragraph specified within <paragraph_text></paragraph_text> tags.
+    - Each paragraph is given with its full text within <paragraph></paragraph> tags, whose id attribute holds its paragraph ID (for example, "P0", "P1", etc.).
             {% if additional_context_for_paras_or_sents %}
     - When available, additional context information for paragraphs (such as formatting, list context, or table position) will be provided within <additional_context></additional_context> tags, which provides important context for understanding their structural role and position within the document. Use this information to:
         -- Understand document hierarchy (e.g., headings indicate section boundaries)
@@ -435,52 +435,36 @@ DOCUMENT PARAGRAPHS INCLUDING SENTENCES:
         {% else %}
 DOCUMENT PARAGRAPHS:
         {% endif %}
-        {% for para_index, para_item in enumerate(paragraphs) %}
-            {% set para_text = _clean_text_for_llm_prompt(para_item.raw_text, preserve_linebreaks=False, strip_text=True) %}
-            {% if para_text %}
-    <paragraph id="P{{ para_index }}">
-        <paragraph_id>P{{ para_index }}</paragraph_id>
-                {% if reference_depth != "sentences" %}
-        
-        <paragraph_text>
-        {{ para_text }}
-        </paragraph_text>
-                {% endif %}
-                {% set para_context = _clean_text_for_llm_prompt(para_item.additional_context, preserve_linebreaks=False, strip_text=True) if para_item.additional_context else "" %}
-                {% if para_context %}
-        
-        <additional_context>
-        {{ para_context }}
-        </additional_context>
-                {% endif %}
-                {% if reference_depth == "sentences" %}
-        
-        <paragraph_sentences>
-                    {% for sent_index, sent_item in enumerate(para_item.sentences) %}
-                        {% set sent_text = _clean_text_for_llm_prompt(sent_item.raw_text, preserve_linebreaks=False, strip_text=True) %}
-                        {% if sent_text %}
-            <sentence id="P{{ para_index }}-S{{ sent_index }}">
-                <sentence_id>P{{ para_index }}-S{{ sent_index }}</sentence_id>
-                
-                <sentence_text>
-                {{ sent_text }}
-                </sentence_text>
-                            {% set sent_context = _clean_text_for_llm_prompt(sent_item.additional_context, preserve_linebreaks=False, strip_text=True) if sent_item.additional_context else "" %}
-                            {% if sent_context and sent_context != para_context %}
-                
-                <additional_context>
-                {{ sent_context }}
-                </additional_context>
-                            {% endif %}
-            </sentence>
-                        {% endif %}
-                    {% endfor %}
-        </paragraph_sentences>
-                {% endif %}
-    </paragraph>
-
-            {% endif %}
+{% for para_index, para_item in enumerate(paragraphs) %}
+        {% set para_text = _clean_text_for_llm_prompt(para_item.raw_text, preserve_linebreaks=False, strip_text=True) %}
+        {% if para_text %}
+        {% set para_context = _clean_text_for_llm_prompt(para_item.additional_context, preserve_linebreaks=False, strip_text=True) if para_item.additional_context else "" %}
+        {% if reference_depth != "sentences" %}
+        {% if para_context %}
+<paragraph id="P{{ para_index }}"><additional_context>{{ para_context }}</additional_context>{{ para_text }}</paragraph>
+        {% else %}
+<paragraph id="P{{ para_index }}">{{ para_text }}</paragraph>
+        {% endif %}
+        {% else %}
+<paragraph id="P{{ para_index }}">
+        {% if para_context %}
+<additional_context>{{ para_context }}</additional_context>
+        {% endif %}
+        {% for sent_index, sent_item in enumerate(para_item.sentences) %}
+        {% set sent_text = _clean_text_for_llm_prompt(sent_item.raw_text, preserve_linebreaks=False, strip_text=True) %}
+        {% if sent_text %}
+        {% set sent_context = _clean_text_for_llm_prompt(sent_item.additional_context, preserve_linebreaks=False, strip_text=True) if sent_item.additional_context else "" %}
+        {% if sent_context and sent_context != para_context %}
+<sentence id="P{{ para_index }}-S{{ sent_index }}"><additional_context>{{ sent_context }}</additional_context>{{ sent_text }}</sentence>
+        {% else %}
+<sentence id="P{{ para_index }}-S{{ sent_index }}">{{ sent_text }}</sentence>
+        {% endif %}
+        {% endif %}
         {% endfor %}
+</paragraph>
+        {% endif %}
+        {% endif %}
+{% endfor %}
 </document_paragraphs>
     {% else %}
 <document_text>

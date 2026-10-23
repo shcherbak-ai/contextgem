@@ -88,44 +88,43 @@ interactions:
       you will find a list of document paragraphs (including sentences) and a list
       of concepts.\n</introduction>\n\n<guidance_on_task_structure>\nAll structured
       information in these instructions is provided using semantic XML tags. Field
-      names correspond directly to tag names (e.g., concept_name, paragraph_text,
-      sentence_text, additional_context, etc.).\n</guidance_on_task_structure>\n\n<private_reasoning>\nUse
-      private deliberation to plan, evaluate evidence, and verify decisions. Do not
-      reveal any intermediate analysis, notes, or steps. Only output the JSON according
-      to the format specified within <answer_format></answer_format> tags.\n\nFollow
-      this internal three-stage process:\n\n1. Plan\n    - Internally restate each
-      concept in one sentence.\n    - List 3-5 concrete lexical/semantic cues for
-      relevance aligned with the concept description (include indicators of definition,
-      obligation, permission, exception, conditionals, and negations).\n    - If a
-      concept specifies a structure, rating scale, or available labels, align inclusion/exclusion
-      criteria with those constraints.\n    - For each concept, plan how to synthesize
-      the output value from the available evidence even when no literal span is present.\n\n2.
-      Evidence triage\n    - Evaluate the provided content at paragraph and sentence
-      levels; derive candidate extractions/values for the concepts (explicit or inferred
-      from context).\n    - Collect minimal sufficient evidence privately and note
-      negated, hypothetical, or conditional forms.\n    - Prefer precision over recall;
-      include only high-confidence items and omit weak or ambiguous ones.\n\n3. Consistency
-      pass\n    - Ensure all extracted items strictly match required types and any
-      specified structure, rating scales, or label constraints.\n    - Deduplicate
-      referenced paragraph and sentence IDs and preserve their original order.\n    -
-      Ensure justifications align with the item''s evidence and stance, and comply
-      with length and language constraints.\n\nNever disclose any plan, evidence,
-      or internal notes - only the JSON array defined within <answer_format></answer_format>
-      tags.\n</private_reasoning>\n\n<task_description>\nYour task is to:\n1. Read
-      through the provided document paragraphs and their sentences.\n    - Each paragraph
-      is identified by a paragraph ID (for example, \"P0\", \"P1\", etc.) specified
-      within <paragraph_id></paragraph_id> tags.\n    - Each paragraph includes sentences,
-      each identified by a sentence ID (for example, \"P0-S0\", \"P0-S1\", etc.) specified
-      within <sentence_id></sentence_id> tags, followed by the full text of the sentence
-      specified within <sentence_text></sentence_text> tags.\n    - Note that paragraphs
-      are listed in the same order they appear in the original document.\n    - You
-      may be working with document fragments rather than complete documents. Focus
-      on extracting information from the available content without making assumptions
-      about missing parts.\n2. Identify whether each concept in the concepts list
-      is addressed within the document paragraphs.\n    - Each concept is identified
-      by a concept ID (for example, \"C0\", \"C1\", etc.) specified within <concept_id></concept_id>
-      tags.\n    - Each concept is described by a concept name specified within <concept_name></concept_name>
-      tags and a concept description specified within <concept_description></concept_description>
+      names correspond directly to tag names (e.g., concept_name, additional_context,
+      etc.).\n</guidance_on_task_structure>\n\n<private_reasoning>\nUse private deliberation
+      to plan, evaluate evidence, and verify decisions. Do not reveal any intermediate
+      analysis, notes, or steps. Only output the JSON according to the format specified
+      within <answer_format></answer_format> tags.\n\nFollow this internal three-stage
+      process:\n\n1. Plan\n    - Internally restate each concept in one sentence.\n    -
+      List 3-5 concrete lexical/semantic cues for relevance aligned with the concept
+      description (include indicators of definition, obligation, permission, exception,
+      conditionals, and negations).\n    - If a concept specifies a structure, rating
+      scale, or available labels, align inclusion/exclusion criteria with those constraints.\n    -
+      For each concept, plan how to synthesize the output value from the available
+      evidence even when no literal span is present.\n\n2. Evidence triage\n    -
+      Evaluate the provided content at paragraph and sentence levels; derive candidate
+      extractions/values for the concepts (explicit or inferred from context).\n    -
+      Collect minimal sufficient evidence privately and note negated, hypothetical,
+      or conditional forms.\n    - Prefer precision over recall; include only high-confidence
+      items and omit weak or ambiguous ones.\n\n3. Consistency pass\n    - Ensure
+      all extracted items strictly match required types and any specified structure,
+      rating scales, or label constraints.\n    - Deduplicate referenced paragraph
+      and sentence IDs and preserve their original order.\n    - Ensure justifications
+      align with the item''s evidence and stance, and comply with length and language
+      constraints.\n\nNever disclose any plan, evidence, or internal notes - only
+      the JSON array defined within <answer_format></answer_format> tags.\n</private_reasoning>\n\n<task_description>\nYour
+      task is to:\n1. Read through the provided document paragraphs and their sentences.\n    -
+      Each paragraph is given within <paragraph></paragraph> tags, whose id attribute
+      holds its paragraph ID (for example, \"P0\", \"P1\", etc.).\n    - Each paragraph
+      includes sentences, each given with its full text within <sentence></sentence>
+      tags, whose id attribute holds its sentence ID (for example, \"P0-S0\", \"P0-S1\",
+      etc.).\n    - Note that paragraphs are listed in the same order they appear
+      in the original document.\n    - You may be working with document fragments
+      rather than complete documents. Focus on extracting information from the available
+      content without making assumptions about missing parts.\n2. Identify whether
+      each concept in the concepts list is addressed within the document paragraphs.\n    -
+      Each concept is identified by a concept ID (for example, \"C0\", \"C1\", etc.)
+      specified within <concept_id></concept_id> tags.\n    - Each concept is described
+      by a concept name specified within <concept_name></concept_name> tags and a
+      concept description specified within <concept_description></concept_description>
       tags.\n3. For each concept that appears, extract zero or more items relevant
       to that concept. The item format and structure are specified for each concept.\n    -
       Apply cross-paragraph reasoning when helpful (e.g., headings, lists, references
@@ -260,30 +259,17 @@ interactions:
       date for the website redesign project\n    </concept_description>\n\n    <amount_of_extracted_items>This
       concept may have zero or one extracted item, never multiple items.</amount_of_extracted_items>\n\n    <extracted_item_type>str
       (in ''DD-MM-YYYY'' format) (must be exactly as specified)</extracted_item_type>\n</concept>\n\n</concepts>\n\n<document_paragraphs>\nDOCUMENT
-      PARAGRAPHS INCLUDING SENTENCES:\n    <paragraph id=\"P0\">\n        <paragraph_id>P0</paragraph_id>\n        \n        <paragraph_sentences>\n            <sentence
-      id=\"P0-S0\">\n                <sentence_id>P0-S0</sentence_id>\n                \n                <sentence_text>\n                Project
-      Timeline: Website Redesign\n                </sentence_text>\n            </sentence>\n        </paragraph_sentences>\n    </paragraph>\n\n    <paragraph
-      id=\"P1\">\n        <paragraph_id>P1</paragraph_id>\n        \n        <paragraph_sentences>\n            <sentence
-      id=\"P1-S0\">\n                <sentence_id>P1-S0</sentence_id>\n                \n                <sentence_text>\n                The
-      website redesign project officially kicked off on March 1, 2024.\n                </sentence_text>\n            </sentence>\n        </paragraph_sentences>\n    </paragraph>\n\n    <paragraph
-      id=\"P2\">\n        <paragraph_id>P2</paragraph_id>\n        \n        <paragraph_sentences>\n            <sentence
-      id=\"P2-S0\">\n                <sentence_id>P2-S0</sentence_id>\n                \n                <sentence_text>\n                The
-      development team has estimated the project will take 4 months to complete.\n                </sentence_text>\n            </sentence>\n        </paragraph_sentences>\n    </paragraph>\n\n    <paragraph
-      id=\"P3\">\n        <paragraph_id>P3</paragraph_id>\n        \n        <paragraph_sentences>\n            <sentence
-      id=\"P3-S0\">\n                <sentence_id>P3-S0</sentence_id>\n                \n                <sentence_text>\n                Key
-      milestones:\n                </sentence_text>\n            </sentence>\n        </paragraph_sentences>\n    </paragraph>\n\n    <paragraph
-      id=\"P4\">\n        <paragraph_id>P4</paragraph_id>\n        \n        <paragraph_sentences>\n            <sentence
-      id=\"P4-S0\">\n                <sentence_id>P4-S0</sentence_id>\n                \n                <sentence_text>\n                -
-      Design phase: 1 month\n                </sentence_text>\n            </sentence>\n        </paragraph_sentences>\n    </paragraph>\n\n    <paragraph
-      id=\"P5\">\n        <paragraph_id>P5</paragraph_id>\n        \n        <paragraph_sentences>\n            <sentence
-      id=\"P5-S0\">\n                <sentence_id>P5-S0</sentence_id>\n                \n                <sentence_text>\n                -
-      Development phase: 2 months\n                </sentence_text>\n            </sentence>\n        </paragraph_sentences>\n    </paragraph>\n\n    <paragraph
-      id=\"P6\">\n        <paragraph_id>P6</paragraph_id>\n        \n        <paragraph_sentences>\n            <sentence
-      id=\"P6-S0\">\n                <sentence_id>P6-S0</sentence_id>\n                \n                <sentence_text>\n                -
-      Testing and deployment: 1 month\n                </sentence_text>\n            </sentence>\n        </paragraph_sentences>\n    </paragraph>\n\n    <paragraph
-      id=\"P7\">\n        <paragraph_id>P7</paragraph_id>\n        \n        <paragraph_sentences>\n            <sentence
-      id=\"P7-S0\">\n                <sentence_id>P7-S0</sentence_id>\n                \n                <sentence_text>\n                The
-      marketing team needs the final completion date to plan the launch campaign.\n                </sentence_text>\n            </sentence>\n        </paragraph_sentences>\n    </paragraph>\n\n</document_paragraphs>"}],"model":"gpt-6-luna"}'
+      PARAGRAPHS INCLUDING SENTENCES:\n<paragraph id=\"P0\">\n<sentence id=\"P0-S0\">Project
+      Timeline: Website Redesign</sentence>\n</paragraph>\n<paragraph id=\"P1\">\n<sentence
+      id=\"P1-S0\">The website redesign project officially kicked off on March 1,
+      2024.</sentence>\n</paragraph>\n<paragraph id=\"P2\">\n<sentence id=\"P2-S0\">The
+      development team has estimated the project will take 4 months to complete.</sentence>\n</paragraph>\n<paragraph
+      id=\"P3\">\n<sentence id=\"P3-S0\">Key milestones:</sentence>\n</paragraph>\n<paragraph
+      id=\"P4\">\n<sentence id=\"P4-S0\">- Design phase: 1 month</sentence>\n</paragraph>\n<paragraph
+      id=\"P5\">\n<sentence id=\"P5-S0\">- Development phase: 2 months</sentence>\n</paragraph>\n<paragraph
+      id=\"P6\">\n<sentence id=\"P6-S0\">- Testing and deployment: 1 month</sentence>\n</paragraph>\n<paragraph
+      id=\"P7\">\n<sentence id=\"P7-S0\">The marketing team needs the final completion
+      date to plan the launch campaign.</sentence>\n</paragraph>\n</document_paragraphs>"}],"model":"gpt-6-luna"}'
     headers:
       accept:
       - application/json
@@ -294,7 +280,7 @@ interactions:
       connection:
       - keep-alive
       content-length:
-      - '25634'
+      - '23109'
       content-type:
       - application/json
       cookie:
@@ -328,17 +314,17 @@ interactions:
   response:
     body:
       string: !!binary |
-        H4sIAAAAAAAA/51Uy27bMBC8+ysInuVAUiI77rXNpUXSAE2LorYhsORKYiyRKkm5MYL8e5eS9bCb
-        HNoLIe3s7A73wecZIVQK+o5QXjDHq7qc33w/LH5xc/M1uq0+i0+HH98+RA/ybh/e6zuggWfon4/A
-        Xc+64Bp54KRWHcwNMAc+arRcRcvFVbKKW6DSAkpPy2s3X8zLRrEjo9CSg0Vojb+EPLen16YEPKE5
-        DHpLBdayHNDWO6HR6NJbKLNWWseUo8EIcq0cqFbueqMwuD8I2XiAQ+1SKTYIbuj7cEODHoQnZxjH
-        a6TSQWW9x7rDhgid456VDXQBwmgeLudxGF8NgTqfx8Y6mUnOfJE634cCSG20LyTZSb4DQXSWEa3I
-        LTO8IFFAfKCAMCWItAQwQuXLSpwmju2AZLoxpMLLFdbbjl2AgORyL1WOxAlp7BERaMBc5GNTHvo0
-        F2eCDWRgAMuT1syw3LC6OC3BWRneZA3FvY9OUpwTLPgm4YcUx0TImH/BjmynpJfg/wXE/ywgfkXA
-        +DPYj7b2H7+30+HDBI1lfuhVU5YTgCmlXTsP7dhvZ/0F+0HPpJK2SHGXLC4WDq91uqYt+oLntl2c
-        5mQXKA5UhQPt9A7asFerOOkC0nEARjhOro+oQy3lCCTR9WXwSshUgGOytJPto5zxArdk4EaXi2Vw
-        Aqa/De7Q6HGZJMngwRoh9YiFs0kV/hb9moCuQjjxEw1h/GaCEeB++1F6bUBIflqa0c2A39G33IZ+
-        tJKpBbPHlyx1EozvmYCMNWX3HFF7sPiUpNjYHExtZPsm+bGYvcz+AEBian+KBQAA
+        H4sIAAAAAAAA/51UyW7bMBC9+ysInqVAktf02CIo0qJAgQa+2IbAkCOLqUQKJOUkCPzvHUrWYtc+
+        tBdCmjfz5nEWfkwIoVLQT4TynDleVkX4wL+ul69Pscgf15/XczOfTx/mJls8LsR3TgMfoZ9fgLsu
+        6o5rjAMntWphboA58Kzx8j5ZrlaLKG6AUgsofNi+cuEiLGrFThG5lhwsQhv8JeSjOb02JeANzVHQ
+        WUqwlu0BbZ0TGo0uvIUya6V1TDkaDCDXyoFq5G62Csn9QcjWAxwql0qxRXBLv0RbGnQgvDnDOF4j
+        lQ5K6z02LdYztI4HVtTQEkRxGC3DJEpmPVHr81JbJzPJmS9S6/uUA6mM9oUkKNlgJqIV+cEMz0kc
+        EM8SEKYEcegp4ACFrkq8B3HASgJIWPoqE0YyXZuwxFvmRNSmyRGQvTxItUeCkevQKCLQQHRGvtXF
+        e5fu7kK1gQwMYI3Sihm2N6zKz+twUYubUX2Ff8ZnKS4DLPhO4YcUp0QYEf7CtuzGQcfg/wUk/ywg
+        uSJg+OntJ1vzj9+78QRigtoyP/mqLooRwJTSrmlYM/u7SXfBbtozqaTNU1woi9uFE2ydrmiDHvHc
+        NdtTny0Exakqcaqd/g0N7Wy2WrWEdBiAAU5m8xPqUEsxiltOp8EVylSAY7KwoxWknPEcV6WPjaeL
+        ZXAGpq8GF2nwmMbxqvdgtZB6wKLJqAp/i74moK0QTvzAch/d5B8A7l8AVF4ZEJKfV2ZwM+D39JZb
+        345GMbVgDviapU6C8S0TkLG6aJ8kat8tPicp9nUPpjKyeZf8VEyOkz8FxVbsjgUAAA==
     headers:
       access-control-expose-headers:
       - X-Request-ID
@@ -361,7 +347,7 @@ interactions:
       openai-organization:
       - DUMMY
       openai-processing-ms:
-      - '2393'
+      - '3398'
       openai-project:
       - DUMMY
       openai-version:
@@ -385,9 +371,9 @@ interactions:
       x-ratelimit-remaining-tokens:
       - DUMMY
       x-ratelimit-reset-requests:
-      - 12ms
+      - 6ms
       x-ratelimit-reset-tokens:
-      - 187ms
+      - 33ms
       x-request-id:
       - DUMMY
     status:

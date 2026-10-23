@@ -88,47 +88,47 @@ interactions:
       you will find a list of consecutively ordered paragraphs from a document and
       a list of aspects.\n</introduction>\n\n<guidance_on_task_structure>\nAll structured
       information in these instructions is provided using semantic XML tags. Field
-      names correspond directly to tag names (e.g., aspect_name, paragraph_text, sentence_text,
-      additional_context, etc.).\n</guidance_on_task_structure>\n\n<private_reasoning>\nUse
-      private deliberation to plan, evaluate evidence, and verify decisions. Do not
-      reveal any intermediate analysis, notes, or steps. Only output the JSON specified
-      within <answer_format></answer_format> tags.\n\nFollow this internal three-stage
-      process:\n\n1. Plan\n    - Internally restate each aspect in one sentence.\n    -
-      List 3-5 concrete lexical/semantic cues for relevance, including indicators
-      of prohibition, requirement, exception, conditionals, and negations.\n    -
-      Define internal inclusion/exclusion criteria for borderline matches.\n\n2. Evidence
-      triage\n    - For each paragraph, generate candidate matches to aspects.\n    -
-      Collect minimal sufficient textual evidence privately and note negation, hypothetical,
-      or conditional forms.\n    - Prefer precision over recall; include only high-confidence
-      matches and omit weak or ambiguous ones.\n\n3. Consistency pass\n   - Deduplicate
-      paragraph IDs within each aspect and preserve the original order.\n   - Align
-      stance in justifications (permission, prohibition, requirement, exception) with
-      the actual semantics.\n   - Ensure justifications comply with length and language
-      constraints.\n\nNever disclose any plan, evidence, or internal notes - only
-      the JSON array defined within <answer_format></answer_format> tags.\n</private_reasoning>\n\n<task_description>\nYour
+      names correspond directly to tag names (e.g., aspect_name, additional_context,
+      etc.).\n</guidance_on_task_structure>\n\n<private_reasoning>\nUse private deliberation
+      to plan, evaluate evidence, and verify decisions. Do not reveal any intermediate
+      analysis, notes, or steps. Only output the JSON specified within <answer_format></answer_format>
+      tags.\n\nFollow this internal three-stage process:\n\n1. Plan\n    - Internally
+      restate each aspect in one sentence.\n    - List 3-5 concrete lexical/semantic
+      cues for relevance, including indicators of prohibition, requirement, exception,
+      conditionals, and negations.\n    - Define internal inclusion/exclusion criteria
+      for borderline matches.\n\n2. Evidence triage\n    - For each paragraph, generate
+      candidate matches to aspects.\n    - Collect minimal sufficient textual evidence
+      privately and note negation, hypothetical, or conditional forms.\n    - Prefer
+      precision over recall; include only high-confidence matches and omit weak or
+      ambiguous ones.\n\n3. Consistency pass\n   - Deduplicate paragraph IDs within
+      each aspect and preserve the original order.\n   - Align stance in justifications
+      (permission, prohibition, requirement, exception) with the actual semantics.\n   -
+      Ensure justifications comply with length and language constraints.\n\nNever
+      disclose any plan, evidence, or internal notes - only the JSON array defined
+      within <answer_format></answer_format> tags.\n</private_reasoning>\n\n<task_description>\nYour
       task is to:\n\n1. Read and understand the aspects\n    - Each aspect is identified
       by an Aspect ID (for example, \"A0\", \"A1\", etc.) specified within <aspect_id></aspect_id>
       tags, includes a name specified within <aspect_name></aspect_name> tags, and
       has a description specified within <aspect_description></aspect_description>
       tags.\n    - Aspects describe themes, topics, or criteria that might be addressed
-      in the paragraphs.\n\n2. Examine each paragraph\n    - Each paragraph is identified
-      by a paragraph ID (for example, \"P0\", \"P1\", etc.) specified within <paragraph_id></paragraph_id>
-      tags, followed by the full text of the paragraph specified within <paragraph_text></paragraph_text>
-      tags.\n    - Note that paragraphs are listed in the same order they appear in
-      the original document; therefore, context from surrounding paragraphs may influence
-      whether a particular paragraph is relevant to an aspect.\n    - You may be working
-      with document fragments rather than complete documents. Focus on extracting
-      information from the available content without making assumptions about missing
-      parts.\n\n3. Map paragraphs to aspects\n    - A paragraph can address one, multiple,
-      or none of the aspects.\n    - If a paragraph clearly relates to an aspect (based
-      on the aspect''s name and description), include the paragraph''s ID and provide
-      a justification, detailing why the paragraph is relevant to the aspect.\n    -
-      If a paragraph does not relate to an aspect, do not include it under that aspect''s
-      list.\n    - Apply cross-paragraph reasoning when needed (e.g., headings, lists,
-      references like \"above\", \"this section\"): use surrounding context to disambiguate;
-      if unresolved, omit.\n    - Treat negations, exceptions, and conditionals carefully:
-      relevance can be present in prohibitions or restrictions; reflect the stance
-      succinctly in the justification.\n    - Prefer minimal sufficient evidence:\n        --
+      in the paragraphs.\n\n2. Examine each paragraph\n    - Each paragraph is given
+      with its full text within <paragraph></paragraph> tags, whose id attribute holds
+      its paragraph ID (for example, \"P0\", \"P1\", etc.).\n    - Note that paragraphs
+      are listed in the same order they appear in the original document; therefore,
+      context from surrounding paragraphs may influence whether a particular paragraph
+      is relevant to an aspect.\n    - You may be working with document fragments
+      rather than complete documents. Focus on extracting information from the available
+      content without making assumptions about missing parts.\n\n3. Map paragraphs
+      to aspects\n    - A paragraph can address one, multiple, or none of the aspects.\n    -
+      If a paragraph clearly relates to an aspect (based on the aspect''s name and
+      description), include the paragraph''s ID and provide a justification, detailing
+      why the paragraph is relevant to the aspect.\n    - If a paragraph does not
+      relate to an aspect, do not include it under that aspect''s list.\n    - Apply
+      cross-paragraph reasoning when needed (e.g., headings, lists, references like
+      \"above\", \"this section\"): use surrounding context to disambiguate; if unresolved,
+      omit.\n    - Treat negations, exceptions, and conditionals carefully: relevance
+      can be present in prohibitions or restrictions; reflect the stance succinctly
+      in the justification.\n    - Prefer minimal sufficient evidence:\n        --
       base the mapping on the most relevant paragraphs; avoid tangential mentions.\n    -
       Favor precision over recall; when uncertain, exclude rather than speculate.\n\n4.
       Produce the final answer in the JSON format specified within <answer_format></answer_format>
@@ -166,11 +166,10 @@ interactions:
       Direction</aspect_name>\n        \n        <aspect_description>\n        Provisions
       informing the NDA direction (whether mutual or one-way) and information flow
       between parties\n        </aspect_description>\n    </aspect>\n\n</aspects>\n\n<document_paragraphs>\nDOCUMENT
-      PARAGRAPHS:\n    <paragraph id=\"P0\">\n        <paragraph_id>P0</paragraph_id>\n        \n        <paragraph_text>\n        NON-DISCLOSURE
-      AGREEMENT\n        </paragraph_text>\n    </paragraph>\n\n    <paragraph id=\"P1\">\n        <paragraph_id>P1</paragraph_id>\n        \n        <paragraph_text>\n        This
-      Non-Disclosure Agreement (\"Agreement\") is entered into between TechCorp Inc.
-      (\"Disclosing Party\") and Innovation Labs LLC (\"Receiving Party\") on January
-      15, 2024.\n        </paragraph_text>\n    </paragraph>\n\n    <paragraph id=\"P2\">\n        <paragraph_id>P2</paragraph_id>\n        \n        <paragraph_text>\n        ...\n        </paragraph_text>\n    </paragraph>\n\n</document_paragraphs>"}],"model":"gpt-6-luna"}'
+      PARAGRAPHS:\n<paragraph id=\"P0\">NON-DISCLOSURE AGREEMENT</paragraph>\n<paragraph
+      id=\"P1\">This Non-Disclosure Agreement (\"Agreement\") is entered into between
+      TechCorp Inc. (\"Disclosing Party\") and Innovation Labs LLC (\"Receiving Party\")
+      on January 15, 2024.</paragraph>\n<paragraph id=\"P2\">...</paragraph>\n</document_paragraphs>"}],"model":"gpt-6-luna"}'
     headers:
       accept:
       - application/json
@@ -181,7 +180,7 @@ interactions:
       connection:
       - keep-alive
       content-length:
-      - '15020'
+      - '14534'
       content-type:
       - application/json
       cookie:
@@ -215,16 +214,16 @@ interactions:
   response:
     body:
       string: !!binary |
-        H4sIAAAAAAAA/3VTYW/aMBD9zq+w/DkgKAXGvlVdtU1iEpqqaRpB0dW5ELeJndkODFX8950dSMLW
-        fnHCvXePl3vn1wFjXKb8I+MiByfKqhg+/DzO736/5L8elPy2/nL/Q5e3IMF+zuEoeOQ79NMzCnfp
-        GglNfeikVg0sDIJDrzpZLCeL+e1sNg5AqVMsfNuucsP5sKgVnDtyLQVagjb0k7HXcHpvKsU/VA79
-        oVKitbBDql1IVDS68BUO1krrQDkedaDQyqEKdjexInF/MBYTu6LPSGQaExbzu3HMowtWgYGdgSq3
-        Htw05bb3H04rsZ60Eg3lubZOZlKAn07DecyRURtiSaaYTOkkBlr2iCK/16ZiX5UYMbDMEfOTtKLQ
-        VqodW4NxRwYqJYLS+yDJVvBk2Wp1f+F/R4Fy39IjRhMMf08VYFrh8ABHKmbalI1CVujDKOYX16fm
-        Zesf9L7tT9JgVlvwCaq6KHoAkCEX5EKG2zNyalPLpJI2T2gxLG0JJWGdrnhAT3RuwxbUV8HyytBe
-        ucTpFwyyNx+W00aQdxvXwZPJ/Iw68lJ0wHQ8XkZvSCYpOpCF7a0SFyByTHui0/kiugKTg5EOe4zZ
-        zbRlQJ1K3WHjQW8K/5t+y0AzIUqr53/xrn4HCIEV3bmkMkh5X0+moxn0F/c9WhtHcMwtmj3dysRJ
-        ND6yFDOoi+ZqcXu0DsuEct2hqYwM98tvxeA0+AtwrXQGVgQAAA==
+        H4sIAAAAAAAA/3VTy27bMBC8+ysInmXDjyaOekvdwAhgBEGRFCgsQ2ColcRUIgWSsusG/vcsKevh
+        NrlQ8s7seLSzfBsRQkVCvxLKc2Z5WRXjO75+Pv69T+XVc/gz+1Xoh/W6FqsHe3v3bUoD16FeXoHb
+        tmvCFfaBFUo2MNfALDjV2TKcL29ursK5B0qVQOHassqOr8dFLdm5I1eCg0Foiz8JefOn8yYT+IPl
+        adBWSjCGZYC1loRFrQpXocwYYSyTlgY9yJW0IL3dbSRR3B2ERMiu8DNikUSIRfR2GtGgxSqmWaZZ
+        lRsHbpty1/sPp5N4nHUSDeW1NlakgjM3nYbzlAPBNoASTRHnOJOGPAHPV0pX5F7yCVaJRdp3YXih
+        jJAZeWTaHgmTCRKk2ns9smEvhmw2q5b/AziIfUcPCI7P/zdWGFESxgd2xGKqdNkopIU6TCLaWj41
+        Lzv3wPfdcIwa0towF5+si2IAMDRkvZwPcHdGTl1kqZDC5DFuhcEVwRiMVRX16AnPnV+B+iJVWmlc
+        Khtb9Ru87HwZLhtB2q9bD89m8zNq0Usx6AunYfCBZJyAZaIwgz2inPEckoHo4noZXIDxQQsLA8aX
+        ec9gdSJUj01Hgyn8b/ojA82EMK1eZbH4VL8HOIcKL1xcacC8LyfT0zS4W/sZrYvDO6YG9B6vZGwF
+        aBdZAimri+ZeUXM0FsoYc81AV1r4y+W2YnQavQP8hbqHUwQAAA==
     headers:
       access-control-expose-headers:
       - X-Request-ID
@@ -247,7 +246,7 @@ interactions:
       openai-organization:
       - DUMMY
       openai-processing-ms:
-      - '2352'
+      - '2084'
       openai-project:
       - DUMMY
       openai-version:
@@ -271,9 +270,9 @@ interactions:
       x-ratelimit-remaining-tokens:
       - DUMMY
       x-ratelimit-reset-requests:
-      - 12ms
+      - 6ms
       x-ratelimit-reset-tokens:
-      - 109ms
+      - 21ms
       x-request-id:
       - DUMMY
     status:

@@ -88,44 +88,43 @@ interactions:
       you will find a list of document paragraphs (including sentences) and a list
       of concepts.\n</introduction>\n\n<guidance_on_task_structure>\nAll structured
       information in these instructions is provided using semantic XML tags. Field
-      names correspond directly to tag names (e.g., concept_name, paragraph_text,
-      sentence_text, additional_context, etc.).\n</guidance_on_task_structure>\n\n<private_reasoning>\nUse
-      private deliberation to plan, evaluate evidence, and verify decisions. Do not
-      reveal any intermediate analysis, notes, or steps. Only output the JSON according
-      to the format specified within <answer_format></answer_format> tags.\n\nFollow
-      this internal three-stage process:\n\n1. Plan\n    - Internally restate each
-      concept in one sentence.\n    - List 3-5 concrete lexical/semantic cues for
-      relevance aligned with the concept description (include indicators of definition,
-      obligation, permission, exception, conditionals, and negations).\n    - If a
-      concept specifies a structure, rating scale, or available labels, align inclusion/exclusion
-      criteria with those constraints.\n    - For each concept, plan how to synthesize
-      the output value from the available evidence even when no literal span is present.\n\n2.
-      Evidence triage\n    - Evaluate the provided content at paragraph and sentence
-      levels; derive candidate extractions/values for the concepts (explicit or inferred
-      from context).\n    - Collect minimal sufficient evidence privately and note
-      negated, hypothetical, or conditional forms.\n    - Prefer precision over recall;
-      include only high-confidence items and omit weak or ambiguous ones.\n\n3. Consistency
-      pass\n    - Ensure all extracted items strictly match required types and any
-      specified structure, rating scales, or label constraints.\n    - Deduplicate
-      referenced paragraph and sentence IDs and preserve their original order.\n    -
-      Ensure justifications align with the item''s evidence and stance, and comply
-      with length and language constraints.\n\nNever disclose any plan, evidence,
-      or internal notes - only the JSON array defined within <answer_format></answer_format>
-      tags.\n</private_reasoning>\n\n<task_description>\nYour task is to:\n1. Read
-      through the provided document paragraphs and their sentences.\n    - Each paragraph
-      is identified by a paragraph ID (for example, \"P0\", \"P1\", etc.) specified
-      within <paragraph_id></paragraph_id> tags.\n    - Each paragraph includes sentences,
-      each identified by a sentence ID (for example, \"P0-S0\", \"P0-S1\", etc.) specified
-      within <sentence_id></sentence_id> tags, followed by the full text of the sentence
-      specified within <sentence_text></sentence_text> tags.\n    - Note that paragraphs
-      are listed in the same order they appear in the original document.\n    - You
-      may be working with document fragments rather than complete documents. Focus
-      on extracting information from the available content without making assumptions
-      about missing parts.\n2. Identify whether each concept in the concepts list
-      is addressed within the document paragraphs.\n    - Each concept is identified
-      by a concept ID (for example, \"C0\", \"C1\", etc.) specified within <concept_id></concept_id>
-      tags.\n    - Each concept is described by a concept name specified within <concept_name></concept_name>
-      tags and a concept description specified within <concept_description></concept_description>
+      names correspond directly to tag names (e.g., concept_name, additional_context,
+      etc.).\n</guidance_on_task_structure>\n\n<private_reasoning>\nUse private deliberation
+      to plan, evaluate evidence, and verify decisions. Do not reveal any intermediate
+      analysis, notes, or steps. Only output the JSON according to the format specified
+      within <answer_format></answer_format> tags.\n\nFollow this internal three-stage
+      process:\n\n1. Plan\n    - Internally restate each concept in one sentence.\n    -
+      List 3-5 concrete lexical/semantic cues for relevance aligned with the concept
+      description (include indicators of definition, obligation, permission, exception,
+      conditionals, and negations).\n    - If a concept specifies a structure, rating
+      scale, or available labels, align inclusion/exclusion criteria with those constraints.\n    -
+      For each concept, plan how to synthesize the output value from the available
+      evidence even when no literal span is present.\n\n2. Evidence triage\n    -
+      Evaluate the provided content at paragraph and sentence levels; derive candidate
+      extractions/values for the concepts (explicit or inferred from context).\n    -
+      Collect minimal sufficient evidence privately and note negated, hypothetical,
+      or conditional forms.\n    - Prefer precision over recall; include only high-confidence
+      items and omit weak or ambiguous ones.\n\n3. Consistency pass\n    - Ensure
+      all extracted items strictly match required types and any specified structure,
+      rating scales, or label constraints.\n    - Deduplicate referenced paragraph
+      and sentence IDs and preserve their original order.\n    - Ensure justifications
+      align with the item''s evidence and stance, and comply with length and language
+      constraints.\n\nNever disclose any plan, evidence, or internal notes - only
+      the JSON array defined within <answer_format></answer_format> tags.\n</private_reasoning>\n\n<task_description>\nYour
+      task is to:\n1. Read through the provided document paragraphs and their sentences.\n    -
+      Each paragraph is given within <paragraph></paragraph> tags, whose id attribute
+      holds its paragraph ID (for example, \"P0\", \"P1\", etc.).\n    - Each paragraph
+      includes sentences, each given with its full text within <sentence></sentence>
+      tags, whose id attribute holds its sentence ID (for example, \"P0-S0\", \"P0-S1\",
+      etc.).\n    - Note that paragraphs are listed in the same order they appear
+      in the original document.\n    - You may be working with document fragments
+      rather than complete documents. Focus on extracting information from the available
+      content without making assumptions about missing parts.\n2. Identify whether
+      each concept in the concepts list is addressed within the document paragraphs.\n    -
+      Each concept is identified by a concept ID (for example, \"C0\", \"C1\", etc.)
+      specified within <concept_id></concept_id> tags.\n    - Each concept is described
+      by a concept name specified within <concept_name></concept_name> tags and a
+      concept description specified within <concept_description></concept_description>
       tags.\n3. For each concept that appears, extract zero or more items relevant
       to that concept. The item format and structure are specified for each concept.\n    -
       Apply cross-paragraph reasoning when helpful (e.g., headings, lists, references
@@ -267,58 +266,33 @@ interactions:
       \"minimal\" or \"moderate\" or \"significant\"\n}\n    </expected_structure>\n\n    <amount_of_extracted_items>This
       concept may have zero, one, or multiple extracted items.</amount_of_extracted_items>\n\n    <extracted_item_type>dict
       (must be exactly as specified)</extracted_item_type>\n</concept>\n\n</concepts>\n\n<document_paragraphs>\nDOCUMENT
-      PARAGRAPHS INCLUDING SENTENCES:\n    <paragraph id=\"P0\">\n        <paragraph_id>P0</paragraph_id>\n        \n        <paragraph_sentences>\n            <sentence
-      id=\"P0-S0\">\n                <sentence_id>P0-S0</sentence_id>\n                \n                <sentence_text>\n                CUSTOMER
-      COMPLAINT #CR-2023-0472\n                </sentence_text>\n            </sentence>\n        </paragraph_sentences>\n    </paragraph>\n\n    <paragraph
-      id=\"P1\">\n        <paragraph_id>P1</paragraph_id>\n        \n        <paragraph_sentences>\n            <sentence
-      id=\"P1-S0\">\n                <sentence_id>P1-S0</sentence_id>\n                \n                <sentence_text>\n                Date:
-      November 15, 2023\n                </sentence_text>\n            </sentence>\n        </paragraph_sentences>\n    </paragraph>\n\n    <paragraph
-      id=\"P2\">\n        <paragraph_id>P2</paragraph_id>\n        \n        <paragraph_sentences>\n            <sentence
-      id=\"P2-S0\">\n                <sentence_id>P2-S0</sentence_id>\n                \n                <sentence_text>\n                Customer:
-      Sarah Johnson\n                </sentence_text>\n            </sentence>\n        </paragraph_sentences>\n    </paragraph>\n\n    <paragraph
-      id=\"P3\">\n        <paragraph_id>P3</paragraph_id>\n        \n        <paragraph_sentences>\n            <sentence
-      id=\"P3-S0\">\n                <sentence_id>P3-S0</sentence_id>\n                \n                <sentence_text>\n                Description:\n                </sentence_text>\n            </sentence>\n        </paragraph_sentences>\n    </paragraph>\n\n    <paragraph
-      id=\"P4\">\n        <paragraph_id>P4</paragraph_id>\n        \n        <paragraph_sentences>\n            <sentence
-      id=\"P4-S0\">\n                <sentence_id>P4-S0</sentence_id>\n                \n                <sentence_text>\n                I
-      purchased the Ultra Premium Blender (Model XJ-5000) from your online store on
-      October 3, 2023.\n                </sentence_text>\n            </sentence>\n            <sentence
-      id=\"P4-S1\">\n                <sentence_id>P4-S1</sentence_id>\n                \n                <sentence_text>\n                The
-      product was delivered on October 10, 2023.\n                </sentence_text>\n            </sentence>\n            <sentence
-      id=\"P4-S2\">\n                <sentence_id>P4-S2</sentence_id>\n                \n                <sentence_text>\n                After
+      PARAGRAPHS INCLUDING SENTENCES:\n<paragraph id=\"P0\">\n<sentence id=\"P0-S0\">CUSTOMER
+      COMPLAINT #CR-2023-0472</sentence>\n</paragraph>\n<paragraph id=\"P1\">\n<sentence
+      id=\"P1-S0\">Date: November 15, 2023</sentence>\n</paragraph>\n<paragraph id=\"P2\">\n<sentence
+      id=\"P2-S0\">Customer: Sarah Johnson</sentence>\n</paragraph>\n<paragraph id=\"P3\">\n<sentence
+      id=\"P3-S0\">Description:</sentence>\n</paragraph>\n<paragraph id=\"P4\">\n<sentence
+      id=\"P4-S0\">I purchased the Ultra Premium Blender (Model XJ-5000) from your
+      online store on October 3, 2023.</sentence>\n<sentence id=\"P4-S1\">The product
+      was delivered on October 10, 2023.</sentence>\n<sentence id=\"P4-S2\">After
       using it only 5 times, the motor started making loud grinding noises and then
-      completely stopped working on November 12.\n                </sentence_text>\n            </sentence>\n        </paragraph_sentences>\n    </paragraph>\n\n    <paragraph
-      id=\"P5\">\n        <paragraph_id>P5</paragraph_id>\n        \n        <paragraph_sentences>\n            <sentence
-      id=\"P5-S0\">\n                <sentence_id>P5-S0</sentence_id>\n                \n                <sentence_text>\n                I''ve
-      tried troubleshooting using the manual, including checking for obstructions
-      and resetting the device, but nothing has resolved the issue.\n                </sentence_text>\n            </sentence>\n            <sentence
-      id=\"P5-S1\">\n                <sentence_id>P5-S1</sentence_id>\n                \n                <sentence_text>\n                I
-      expected much better quality given the premium price point ($249.99) and the
-      5-year warranty advertised.\n                </sentence_text>\n            </sentence>\n        </paragraph_sentences>\n    </paragraph>\n\n    <paragraph
-      id=\"P6\">\n        <paragraph_id>P6</paragraph_id>\n        \n        <paragraph_sentences>\n            <sentence
-      id=\"P6-S0\">\n                <sentence_id>P6-S0</sentence_id>\n                \n                <sentence_text>\n                I''ve
-      been a loyal customer for over 7 years and have purchased several kitchen appliances
-      from your company.\n                </sentence_text>\n            </sentence>\n            <sentence
-      id=\"P6-S1\">\n                <sentence_id>P6-S1</sentence_id>\n                \n                <sentence_text>\n                This
-      is the first time I''ve experienced such a significant quality issue.\n                </sentence_text>\n            </sentence>\n            <sentence
-      id=\"P6-S2\">\n                <sentence_id>P6-S2</sentence_id>\n                \n                <sentence_text>\n                I
-      would like a replacement unit or a full refund.\n                </sentence_text>\n            </sentence>\n        </paragraph_sentences>\n    </paragraph>\n\n    <paragraph
-      id=\"P7\">\n        <paragraph_id>P7</paragraph_id>\n        \n        <paragraph_sentences>\n            <sentence
-      id=\"P7-S0\">\n                <sentence_id>P7-S0</sentence_id>\n                \n                <sentence_text>\n                Previous
-      interactions:\n                </sentence_text>\n            </sentence>\n        </paragraph_sentences>\n    </paragraph>\n\n    <paragraph
-      id=\"P8\">\n        <paragraph_id>P8</paragraph_id>\n        \n        <paragraph_sentences>\n            <sentence
-      id=\"P8-S0\">\n                <sentence_id>P8-S0</sentence_id>\n                \n                <sentence_text>\n                -
-      Spoke with customer service representative\n                </sentence_text>\n            </sentence>\n            <sentence
-      id=\"P8-S1\">\n                <sentence_id>P8-S1</sentence_id>\n                \n                <sentence_text>\n                Alex
-      on Nov 13 (Ref #CS-98721)\n                </sentence_text>\n            </sentence>\n        </paragraph_sentences>\n    </paragraph>\n\n    <paragraph
-      id=\"P9\">\n        <paragraph_id>P9</paragraph_id>\n        \n        <paragraph_sentences>\n            <sentence
-      id=\"P9-S0\">\n                <sentence_id>P9-S0</sentence_id>\n                \n                <sentence_text>\n                -
-      Was told to submit this formal complaint after troubleshooting was unsuccessful\n                </sentence_text>\n            </sentence>\n        </paragraph_sentences>\n    </paragraph>\n\n    <paragraph
-      id=\"P10\">\n        <paragraph_id>P10</paragraph_id>\n        \n        <paragraph_sentences>\n            <sentence
-      id=\"P10-S0\">\n                <sentence_id>P10-S0</sentence_id>\n                \n                <sentence_text>\n                -
-      No resolution offered during initial call\n                </sentence_text>\n            </sentence>\n        </paragraph_sentences>\n    </paragraph>\n\n    <paragraph
-      id=\"P11\">\n        <paragraph_id>P11</paragraph_id>\n        \n        <paragraph_sentences>\n            <sentence
-      id=\"P11-S0\">\n                <sentence_id>P11-S0</sentence_id>\n                \n                <sentence_text>\n                Contact:
-      sarah.johnson@example.com | (555) 123-4567\n                </sentence_text>\n            </sentence>\n        </paragraph_sentences>\n    </paragraph>\n\n</document_paragraphs>"}],"model":"gpt-6-luna"}'
+      completely stopped working on November 12.</sentence>\n</paragraph>\n<paragraph
+      id=\"P5\">\n<sentence id=\"P5-S0\">I''ve tried troubleshooting using the manual,
+      including checking for obstructions and resetting the device, but nothing has
+      resolved the issue.</sentence>\n<sentence id=\"P5-S1\">I expected much better
+      quality given the premium price point ($249.99) and the 5-year warranty advertised.</sentence>\n</paragraph>\n<paragraph
+      id=\"P6\">\n<sentence id=\"P6-S0\">I''ve been a loyal customer for over 7 years
+      and have purchased several kitchen appliances from your company.</sentence>\n<sentence
+      id=\"P6-S1\">This is the first time I''ve experienced such a significant quality
+      issue.</sentence>\n<sentence id=\"P6-S2\">I would like a replacement unit or
+      a full refund.</sentence>\n</paragraph>\n<paragraph id=\"P7\">\n<sentence id=\"P7-S0\">Previous
+      interactions:</sentence>\n</paragraph>\n<paragraph id=\"P8\">\n<sentence id=\"P8-S0\">-
+      Spoke with customer service representative</sentence>\n<sentence id=\"P8-S1\">Alex
+      on Nov 13 (Ref #CS-98721)</sentence>\n</paragraph>\n<paragraph id=\"P9\">\n<sentence
+      id=\"P9-S0\">- Was told to submit this formal complaint after troubleshooting
+      was unsuccessful</sentence>\n</paragraph>\n<paragraph id=\"P10\">\n<sentence
+      id=\"P10-S0\">- No resolution offered during initial call</sentence>\n</paragraph>\n<paragraph
+      id=\"P11\">\n<sentence id=\"P11-S0\">Contact: sarah.johnson@example.com | (555)
+      123-4567</sentence>\n</paragraph>\n</document_paragraphs>"}],"model":"gpt-6-luna"}'
     headers:
       accept:
       - application/json
@@ -329,7 +303,7 @@ interactions:
       connection:
       - keep-alive
       content-length:
-      - '29777'
+      - '24962'
       content-type:
       - application/json
       cookie:
@@ -363,25 +337,25 @@ interactions:
   response:
     body:
       string: !!binary |
-        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
+        H4sIAAAAAAAA/7VW227jNhB9z1cM9CwHdhLbSfvUFm1RoCgW2KLYIg4EmhpbTChS4cWJuwjQ3+jv
+        9Us6Q0UXx8k+NFg/CCbndnhmOJzPJwCZKrNvIJOVCLJu9ORH+fMf3//y63y9vfvz0/3V8tNf6jdt
+        lj/Z3Ud5m+VsYde3KENndSot2WFQ1rRi6VAEZK+z5dXZ8vJyMZ0nQW1L1Gy2bcJkMdHRiGeLyiqJ
+        nkTXtAT4nL6MzZT4SNvTvNup0XuxRdrrlGjTWc07mfBe+SBMyPJBKK0JaBLc65Uh5/wBWLFAYhMK
+        Va5IuMp+mK6yvBPiY3BC0jEKFbD2rHHdynoPreJO6IgsHu3yvvI+YhH2DbbeG2fLKAOUuCHy+kid
+        +oNwjoDvC9E0Wkmx1skuuIgvND3u0Kmwb91WalsdOZPRB1ujK7TdC01OiZQQfWuR9o5MHFIaayS+
+        y8KhtzpyQlsLh40WEkl6jLtxyjKaQhMs/QVM+Nhg4nMdvTKUxULVjWAm2MSrrVEbOjeHGAyf8jHV
+        t3SspDRA+71CIKoItvv373881DZYB2vcCgNbR+WjzBaEKSFUaIBYaRos4cG6uyTYBHRgjd7DRu0Q
+        okefA1txDFYAT1zb6OEwfafAgTuaoYmOboInzyoAMUlEkUsOK6l6PP0DUVLWgmIdDjXZo3DQJT0H
+        b/sFSEuqVOOgyLKvBlinANbwUQjjxro6EcHQdory9gIUEU6mipGU6KVTa0YCXD6mDV/RZbFuD3YD
+        z4VyCt/BKNuMYFQYxKsUxBGfkiSMY6Oc5yN3BZM2ewgO7yP60ENrGwVZCaWjwxyi8VHSzfebqKnW
+        baSD+spaJj9PBBKUOwY4ClFGx7lpaVBBCQ1SaN0RCFx+0NXlt3Q036ZSW7OdcHtIRdGDZLaZl6EC
+        4T4KTbaQ7jDBjrqESlCBHKp1lQxtJZ8e1Dxfmw06pB5TNILy6URTHfaRF73kTau+Q324eHGtDg08
+        cqejP6o8DtQqf7iYfJweOekkZ+O7x7+b8fIp///A5+8GPn8TOElmXw344t3AF28CXyTgb0i+Xi5m
+        03efaTZNh/oSwGHR7z/vpTX9vxm/0hQ/esHTgYlajwTCGBtSo0vzwc1JR0A3EWyoCfiKHi3haQKh
+        V567fJakT/S9SRNGPBga+DGu6eUP9g6T24ur+ax1mA3TzCBenJ09SwNh0YNgPl+e56+4LEoM1OP8
+        aEzJpJAVPX+97ex8scwPhMUDdSwcNM7nl7NeQ8RS2UE2PRmxcAz6NQAtQ9T7Bi9nF9M3AwwCyWMS
+        QW8c0st4SM2g5vC2feBfVevzkSDTEON2NPIVQaHjnNGzKqJu57bM7+nNqAtK7BYdNfI0vHFZnDyd
+        /Aez9+0jswoAAA==
     headers:
       access-control-expose-headers:
       - X-Request-ID
@@ -404,7 +378,7 @@ interactions:
       openai-organization:
       - DUMMY
       openai-processing-ms:
-      - '5401'
+      - '6875'
       openai-project:
       - DUMMY
       openai-version:
@@ -428,9 +402,9 @@ interactions:
       x-ratelimit-remaining-tokens:
       - DUMMY
       x-ratelimit-reset-requests:
-      - 24ms
+      - 6ms
       x-ratelimit-reset-tokens:
-      - 315ms
+      - 36ms
       x-request-id:
       - DUMMY
     status:

@@ -4550,7 +4550,8 @@ class TestExtractionProperties(BaseTest):
             paragraphs = [
                 (paragraph_id, int(position))
                 for paragraph_id, position in re.findall(
-                    r"<paragraph_id>(P\d+)</paragraph_id>\s*<paragraph_text>\s*Clause (\d+)-",
+                    r'<paragraph id="(P\d+)">'
+                    r"(?:<additional_context>.*?</additional_context>)?Clause (\d+)-",
                     prompt,
                 )
             ]

@@ -87,35 +87,34 @@ interactions:
       across diverse document analysis tasks.\n</conclusion>"},{"role":"user","content":"<introduction>\nBelow
       you will find a list of document paragraphs and a list of concepts.\n</introduction>\n\n<guidance_on_task_structure>\nAll
       structured information in these instructions is provided using semantic XML
-      tags. Field names correspond directly to tag names (e.g., concept_name, paragraph_text,
-      sentence_text, additional_context, etc.).\n</guidance_on_task_structure>\n\n<private_reasoning>\nUse
-      private deliberation to plan, evaluate evidence, and verify decisions. Do not
-      reveal any intermediate analysis, notes, or steps. Only output the JSON according
-      to the format specified within <answer_format></answer_format> tags.\n\nFollow
-      this internal three-stage process:\n\n1. Plan\n    - Internally restate each
-      concept in one sentence.\n    - List 3-5 concrete lexical/semantic cues for
-      relevance aligned with the concept description (include indicators of definition,
-      obligation, permission, exception, conditionals, and negations).\n    - If a
-      concept specifies a structure, rating scale, or available labels, align inclusion/exclusion
-      criteria with those constraints.\n    - For each concept, plan how to synthesize
-      the output value from the available evidence even when no literal span is present.\n\n2.
-      Evidence triage\n    - Evaluate the provided content at paragraph level; derive
-      candidate extractions/values for the concepts (explicit or inferred from context).\n    -
-      Collect minimal sufficient evidence privately and note negated, hypothetical,
-      or conditional forms.\n    - Prefer precision over recall; include only high-confidence
-      items and omit weak or ambiguous ones.\n\n3. Consistency pass\n    - Ensure
-      all extracted items strictly match required types and any specified structure,
-      rating scales, or label constraints.\n    - Deduplicate referenced paragraph
-      IDs and preserve their original order.\n    - Ensure justifications align with
-      the item''s evidence and stance, and comply with length and language constraints.\n\nNever
-      disclose any plan, evidence, or internal notes - only the JSON array defined
-      within <answer_format></answer_format> tags.\n</private_reasoning>\n\n<task_description>\nYour
-      task is to:\n1. Read through the document paragraphs provided.\n    - Each paragraph
-      is identified by a paragraph ID (for example, \"P0\", \"P1\", etc.) specified
-      within <paragraph_id></paragraph_id> tags, followed by the full text of the
-      paragraph specified within <paragraph_text></paragraph_text> tags.\n    - Note
-      that paragraphs are listed in the same order they appear in the original document.\n    -
-      You may be working with document fragments rather than complete documents. Focus
+      tags. Field names correspond directly to tag names (e.g., concept_name, additional_context,
+      etc.).\n</guidance_on_task_structure>\n\n<private_reasoning>\nUse private deliberation
+      to plan, evaluate evidence, and verify decisions. Do not reveal any intermediate
+      analysis, notes, or steps. Only output the JSON according to the format specified
+      within <answer_format></answer_format> tags.\n\nFollow this internal three-stage
+      process:\n\n1. Plan\n    - Internally restate each concept in one sentence.\n    -
+      List 3-5 concrete lexical/semantic cues for relevance aligned with the concept
+      description (include indicators of definition, obligation, permission, exception,
+      conditionals, and negations).\n    - If a concept specifies a structure, rating
+      scale, or available labels, align inclusion/exclusion criteria with those constraints.\n    -
+      For each concept, plan how to synthesize the output value from the available
+      evidence even when no literal span is present.\n\n2. Evidence triage\n    -
+      Evaluate the provided content at paragraph level; derive candidate extractions/values
+      for the concepts (explicit or inferred from context).\n    - Collect minimal
+      sufficient evidence privately and note negated, hypothetical, or conditional
+      forms.\n    - Prefer precision over recall; include only high-confidence items
+      and omit weak or ambiguous ones.\n\n3. Consistency pass\n    - Ensure all extracted
+      items strictly match required types and any specified structure, rating scales,
+      or label constraints.\n    - Deduplicate referenced paragraph IDs and preserve
+      their original order.\n    - Ensure justifications align with the item''s evidence
+      and stance, and comply with length and language constraints.\n\nNever disclose
+      any plan, evidence, or internal notes - only the JSON array defined within <answer_format></answer_format>
+      tags.\n</private_reasoning>\n\n<task_description>\nYour task is to:\n1. Read
+      through the document paragraphs provided.\n    - Each paragraph is given with
+      its full text within <paragraph></paragraph> tags, whose id attribute holds
+      its paragraph ID (for example, \"P0\", \"P1\", etc.).\n    - Note that paragraphs
+      are listed in the same order they appear in the original document.\n    - You
+      may be working with document fragments rather than complete documents. Focus
       on extracting information from the available content without making assumptions
       about missing parts.\n2. Identify whether each concept in the concepts list
       is addressed within the document paragraphs.\n    - Each concept is identified
@@ -253,49 +252,33 @@ interactions:
       the \"extracted_items\" array empty for this concept.\n    </available_labels>\n\n    <amount_of_extracted_items>This
       concept must have exactly one extracted item, never zero or multiple items.</amount_of_extracted_items>\n\n    <extracted_item_type>dict
       (must be exactly as specified)</extracted_item_type>\n</concept>\n\n</concepts>\n\n<document_paragraphs>\nDOCUMENT
-      PARAGRAPHS:\n    <paragraph id=\"P0\">\n        <paragraph_id>P0</paragraph_id>\n        \n        <paragraph_text>\n        QUARTERLY
-      BUSINESS REVIEW AND POLICY UPDATES\n        </paragraph_text>\n    </paragraph>\n\n    <paragraph
-      id=\"P1\">\n        <paragraph_id>P1</paragraph_id>\n        \n        <paragraph_text>\n        GlobalTech
-      Solutions Inc. - February 2025\n        </paragraph_text>\n    </paragraph>\n\n    <paragraph
-      id=\"P2\">\n        <paragraph_id>P2</paragraph_id>\n        \n        <paragraph_text>\n        EMPLOYMENT
-      AGREEMENT AND CONFIDENTIALITY PROVISIONS\n        </paragraph_text>\n    </paragraph>\n\n    <paragraph
-      id=\"P3\">\n        <paragraph_id>P3</paragraph_id>\n        \n        <paragraph_text>\n        This
-      Employment Agreement (\"Agreement\") is entered into between GlobalTech Solutions
-      Inc. (\"Company\") and Sarah Johnson (\"Employee\") as of February 1, 2025.\n        </paragraph_text>\n    </paragraph>\n\n    <paragraph
-      id=\"P4\">\n        <paragraph_id>P4</paragraph_id>\n        \n        <paragraph_text>\n        EMPLOYMENT
-      TERMS\n        </paragraph_text>\n    </paragraph>\n\n    <paragraph id=\"P5\">\n        <paragraph_id>P5</paragraph_id>\n        \n        <paragraph_text>\n        Employee
-      shall serve as Senior Software Engineer with responsibilities including software
-      development, code review, and technical leadership. The position is full-time
-      with an annual salary of $125,000.\n        </paragraph_text>\n    </paragraph>\n\n    <paragraph
-      id=\"P6\">\n        <paragraph_id>P6</paragraph_id>\n        \n        <paragraph_text>\n        CONFIDENTIALITY
-      OBLIGATIONS\n        </paragraph_text>\n    </paragraph>\n\n    <paragraph id=\"P7\">\n        <paragraph_id>P7</paragraph_id>\n        \n        <paragraph_text>\n        Employee
-      acknowledges that during employment, they may have access to confidential information
-      including proprietary algorithms, customer data, and business strategies. Employee
-      agrees to maintain strict confidentiality of such information both during and
-      after employment.\n        </paragraph_text>\n    </paragraph>\n\n    <paragraph
-      id=\"P8\">\n        <paragraph_id>P8</paragraph_id>\n        \n        <paragraph_text>\n        NON-COMPETE
-      PROVISIONS\n        </paragraph_text>\n    </paragraph>\n\n    <paragraph id=\"P9\">\n        <paragraph_id>P9</paragraph_id>\n        \n        <paragraph_text>\n        For
-      a period of 12 months following termination, Employee agrees not to engage in
-      any business activities that directly compete with Company''s core services
-      within the same geographic market.\n        </paragraph_text>\n    </paragraph>\n\n    <paragraph
-      id=\"P10\">\n        <paragraph_id>P10</paragraph_id>\n        \n        <paragraph_text>\n        INTELLECTUAL
-      PROPERTY\n        </paragraph_text>\n    </paragraph>\n\n    <paragraph id=\"P11\">\n        <paragraph_id>P11</paragraph_id>\n        \n        <paragraph_text>\n        All
-      work products, inventions, and discoveries made during employment shall be the
-      exclusive property of the Company.\n        </paragraph_text>\n    </paragraph>\n\n    <paragraph
-      id=\"P12\">\n        <paragraph_id>P12</paragraph_id>\n        \n        <paragraph_text>\n        ADDITIONAL
-      INFORMATION:\n        </paragraph_text>\n    </paragraph>\n\n    <paragraph
-      id=\"P13\">\n        <paragraph_id>P13</paragraph_id>\n        \n        <paragraph_text>\n        FINANCIAL
-      PERFORMANCE SUMMARY\n        </paragraph_text>\n    </paragraph>\n\n    <paragraph
-      id=\"P14\">\n        <paragraph_id>P14</paragraph_id>\n        \n        <paragraph_text>\n        Q4
-      2024 revenue exceeded projections by 12%, reaching $3.2M. Cost optimization
-      initiatives reduced operational expenses by 8%. The board approved a $500K investment
-      in new data analytics infrastructure for 2025.\n        </paragraph_text>\n    </paragraph>\n\n    <paragraph
-      id=\"P15\">\n        <paragraph_id>P15</paragraph_id>\n        \n        <paragraph_text>\n        PRODUCT
-      LAUNCH TIMELINE\n        </paragraph_text>\n    </paragraph>\n\n    <paragraph
-      id=\"P16\">\n        <paragraph_id>P16</paragraph_id>\n        \n        <paragraph_text>\n        The
-      AI-powered customer analytics platform will launch Q2 2025. Marketing budget
-      allocated: $200K for digital campaigns. Expected customer acquisition target:
-      150 new enterprise clients in the first quarter post-launch.\n        </paragraph_text>\n    </paragraph>\n\n</document_paragraphs>"}],"model":"gpt-6-luna"}'
+      PARAGRAPHS:\n<paragraph id=\"P0\">QUARTERLY BUSINESS REVIEW AND POLICY UPDATES</paragraph>\n<paragraph
+      id=\"P1\">GlobalTech Solutions Inc. - February 2025</paragraph>\n<paragraph
+      id=\"P2\">EMPLOYMENT AGREEMENT AND CONFIDENTIALITY PROVISIONS</paragraph>\n<paragraph
+      id=\"P3\">This Employment Agreement (\"Agreement\") is entered into between
+      GlobalTech Solutions Inc. (\"Company\") and Sarah Johnson (\"Employee\") as
+      of February 1, 2025.</paragraph>\n<paragraph id=\"P4\">EMPLOYMENT TERMS</paragraph>\n<paragraph
+      id=\"P5\">Employee shall serve as Senior Software Engineer with responsibilities
+      including software development, code review, and technical leadership. The position
+      is full-time with an annual salary of $125,000.</paragraph>\n<paragraph id=\"P6\">CONFIDENTIALITY
+      OBLIGATIONS</paragraph>\n<paragraph id=\"P7\">Employee acknowledges that during
+      employment, they may have access to confidential information including proprietary
+      algorithms, customer data, and business strategies. Employee agrees to maintain
+      strict confidentiality of such information both during and after employment.</paragraph>\n<paragraph
+      id=\"P8\">NON-COMPETE PROVISIONS</paragraph>\n<paragraph id=\"P9\">For a period
+      of 12 months following termination, Employee agrees not to engage in any business
+      activities that directly compete with Company''s core services within the same
+      geographic market.</paragraph>\n<paragraph id=\"P10\">INTELLECTUAL PROPERTY</paragraph>\n<paragraph
+      id=\"P11\">All work products, inventions, and discoveries made during employment
+      shall be the exclusive property of the Company.</paragraph>\n<paragraph id=\"P12\">ADDITIONAL
+      INFORMATION:</paragraph>\n<paragraph id=\"P13\">FINANCIAL PERFORMANCE SUMMARY</paragraph>\n<paragraph
+      id=\"P14\">Q4 2024 revenue exceeded projections by 12%, reaching $3.2M. Cost
+      optimization initiatives reduced operational expenses by 8%. The board approved
+      a $500K investment in new data analytics infrastructure for 2025.</paragraph>\n<paragraph
+      id=\"P15\">PRODUCT LAUNCH TIMELINE</paragraph>\n<paragraph id=\"P16\">The AI-powered
+      customer analytics platform will launch Q2 2025. Marketing budget allocated:
+      $200K for digital campaigns. Expected customer acquisition target: 150 new enterprise
+      clients in the first quarter post-launch.</paragraph>\n</document_paragraphs>"}],"model":"gpt-6-luna"}'
     headers:
       accept:
       - application/json
@@ -306,7 +289,7 @@ interactions:
       connection:
       - keep-alive
       content-length:
-      - '26182'
+      - '23925'
       content-type:
       - application/json
       cookie:
@@ -340,20 +323,19 @@ interactions:
   response:
     body:
       string: !!binary |
-        H4sIAAAAAAAA/3VUyW7bMBC9+ysInmXDSxwlvRVBWgRIi6LbJTYEmhpZTChS4GJbCAL0N/p7/ZIO
-        qciS4eQiUPNmebM+jwihIqcfCOUlc7yq5fiWf7r7esh/bJ429/n8i5/9Wv7+fPh+cb9ornKaBAu9
-        eQTuOqsJ12gHTmjVwtwAcxC8ztLreXq1uL5MI1DpHGQw29ZufDmWXrFXi1ILDhahB/wl5Dl+AzeV
-        wwHF06STVGAt2wLKOiUUGi2DhDJrhXVMOZr0INfKgYp0H1YKnYcPIasAcKhdJvIVgit6M13RpAPh
-        4AzjmEYmHFQ2aDy02NFDq7hj0kOAB9Igl2wD8tSug26xXrqpkBS5QXIhzooOldb9z0syDPborROF
-        4CxUu2X9swSSa+6ju5ArE8oSpgj0UdjWAMTXBtweQBGHVqFvTDWom/f6AAnZC1dGSVFgn8UOA2BD
-        o54DU1lia+CiaITaRked5b8/fy0JvUhI4aUcO1EBwX44b5NobZlkppmQO6QkrSYWnCXaR96FyJGg
-        YFK4JiFKq3HgBw5aU4FNlBLpeCbHtdE1GNcQvZFiG4thiROA/PQg7wn5KF2p/bYkGnkasvFWKByg
-        sYGdgD2pMC2DIYmwGIBLn0OexJT6imGsnbAxQsWegLzRvGhRaYtZ1YEausRycRnGsWvW5DhbbScN
-        FGAABzCrmcForC5xEM/nZUW/zU9Mo2hxLlqei9Jz0fW5aDYbDt9x9F7aR/zH93q4UkjeYy+Rq8I+
-        DwCmlHZtP0Ii61E3xN36FkIJW2Z4ISyeC1xJ63RNI/qC33U8B/5kwymWtMI1dfoJotvlNJ23Dml/
-        enp4Plu+og65yIHd/CpN3nCZ5YBLI+3gplDOeIm7f7SdLS7T5ATM9gYvQ6+xSKfzowbzudA9Nh0N
-        qnBO+i0CbYVww3ovFxfv+u8BHk4aMq8N5IKfVqZXMxAu+Htqx3ZExtSC2eF5znDBTGhZDgXzsr2x
-        1DYW72OGfd2CwcmPhzZMxehl9B9er0FVXwYAAA==
+        H4sIAAAAAAAA/3VU3W7aMBS+5yksXwdUYAW6u6mqplXatEnVbgqKjHNCTuvYme1AWYW019jr7Ul2
+        7BASRHsTOec75/Pn8/c6YIxjxj8yLgvhZVmp4Z38/PPH+Onb9b1ZTM3d5tneuvuvD9st/v71zJMQ
+        YdZPIH0bNZKG4sCj0Q0sLQgPgXU8v5nMF4vZ5CoCpclAhbBN5Yezoaq1OEYUBiU4gh7pl7HX+A3a
+        dAYvZI7x0VKCc2IDZGudyGiNChYunEPnhfY86UBptAcd5T4uNZGHD2PLAEiofIrZksAlv71a8qQF
+        4cVbIekZKXooXfB4bLATQ+O4FaqGAPeswa7EGtR5XAvdUb7MviRR7JbEhXuWvO+06n4OSf+yp9p5
+        zFGKkO1G9UMBLDOyjnTwUimU6NWeYUYG8gXH0DtQOROOCc16l3/aWIB4WoPfAWjmiSyUU+g9+WbB
+        H6I/wIh98cyBd8zUPjq2yL8/fx3La6WGHktgoRgJs+Aqox2uUaEnEcmRT9dCMSeUsPuE7QqUBROW
+        Li1ETLel+qE8UkdpZCvdiD1EZTpvniWItFGojR4GxeCBVdZs0VFmXORELVWdQcZ26AsMjxO+zyza
+        549OdW+ybCEHC9QcaUWqNlZUBTXJZS2X/PvkLDSappem60vT/NJ002+CUwscmkP8p/Oq39oktKZc
+        ki5N6e8BlGfjY5PEoVoN2mZqxyhHja5IaVIdjS2NhvOm4hE90HcVx7I+mzRO6S1pXLx5hkj7YTaZ
+        NYS8WwEdPF7Mj6gnLaoXtxhPkzco0wy8QOV6s82lkAXNYEc6nc2TMzDdWZrQzmM6uZ6dPESdoemw
+        q0EvC5ei3xLQZAj1pnfD4l3+DpBhtZDyykKG8jwznZuFsEnfczuVIyrmDuyW1mRK42RDyTLIRa2a
+        Xcfd3tGeSqmuG7CVxbjwQlcMDoP/DbwFC+cFAAA=
     headers:
       access-control-expose-headers:
       - X-Request-ID
@@ -376,7 +358,7 @@ interactions:
       openai-organization:
       - DUMMY
       openai-processing-ms:
-      - '6330'
+      - '2309'
       openai-project:
       - DUMMY
       openai-version:
@@ -402,7 +384,7 @@ interactions:
       x-ratelimit-reset-requests:
       - 6ms
       x-ratelimit-reset-tokens:
-      - 38ms
+      - 35ms
       x-request-id:
       - DUMMY
     status:

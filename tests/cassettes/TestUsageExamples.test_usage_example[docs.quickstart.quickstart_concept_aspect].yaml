@@ -88,59 +88,57 @@ interactions:
       you will find a list of consecutively ordered paragraphs from a document and
       a list of aspects.\n</introduction>\n\n<guidance_on_task_structure>\nAll structured
       information in these instructions is provided using semantic XML tags. Field
-      names correspond directly to tag names (e.g., aspect_name, paragraph_text, sentence_text,
-      additional_context, etc.).\n</guidance_on_task_structure>\n\n<private_reasoning>\nUse
-      private deliberation to plan, evaluate evidence, and verify decisions. Do not
-      reveal any intermediate analysis, notes, or steps. Only output the JSON specified
-      within <answer_format></answer_format> tags.\n\nFollow this internal three-stage
-      process:\n\n1. Plan\n    - Internally restate each aspect in one sentence.\n    -
-      List 3-5 concrete lexical/semantic cues for relevance, including indicators
-      of prohibition, requirement, exception, conditionals, and negations.\n    -
-      Define internal inclusion/exclusion criteria for borderline matches.\n\n2. Evidence
-      triage\n    - For each paragraph and sentence, generate candidate matches to
-      aspects.\n    - Collect minimal sufficient textual evidence privately and note
-      negation, hypothetical, or conditional forms.\n    - Prefer precision over recall;
-      include only high-confidence matches and omit weak or ambiguous ones.\n\n3.
-      Consistency pass\n   - Deduplicate paragraph IDs and sentence IDs within each
-      aspect and preserve the original order.\n\nNever disclose any plan, evidence,
-      or internal notes - only the JSON array defined within <answer_format></answer_format>
-      tags.\n</private_reasoning>\n\n<task_description>\nYour task is to:\n\n1. Read
-      and understand the aspects\n    - Each aspect is identified by an Aspect ID
-      (for example, \"A0\", \"A1\", etc.) specified within <aspect_id></aspect_id>
+      names correspond directly to tag names (e.g., aspect_name, additional_context,
+      etc.).\n</guidance_on_task_structure>\n\n<private_reasoning>\nUse private deliberation
+      to plan, evaluate evidence, and verify decisions. Do not reveal any intermediate
+      analysis, notes, or steps. Only output the JSON specified within <answer_format></answer_format>
+      tags.\n\nFollow this internal three-stage process:\n\n1. Plan\n    - Internally
+      restate each aspect in one sentence.\n    - List 3-5 concrete lexical/semantic
+      cues for relevance, including indicators of prohibition, requirement, exception,
+      conditionals, and negations.\n    - Define internal inclusion/exclusion criteria
+      for borderline matches.\n\n2. Evidence triage\n    - For each paragraph and
+      sentence, generate candidate matches to aspects.\n    - Collect minimal sufficient
+      textual evidence privately and note negation, hypothetical, or conditional forms.\n    -
+      Prefer precision over recall; include only high-confidence matches and omit
+      weak or ambiguous ones.\n\n3. Consistency pass\n   - Deduplicate paragraph IDs
+      and sentence IDs within each aspect and preserve the original order.\n\nNever
+      disclose any plan, evidence, or internal notes - only the JSON array defined
+      within <answer_format></answer_format> tags.\n</private_reasoning>\n\n<task_description>\nYour
+      task is to:\n\n1. Read and understand the aspects\n    - Each aspect is identified
+      by an Aspect ID (for example, \"A0\", \"A1\", etc.) specified within <aspect_id></aspect_id>
       tags, includes a name specified within <aspect_name></aspect_name> tags, and
       has a description specified within <aspect_description></aspect_description>
       tags.\n    - Aspects describe themes, topics, or criteria that might be addressed
       in the paragraphs.\n\n2. Examine each paragraph and its sentences\n    - Each
-      paragraph is identified by a paragraph ID (for example, \"P0\", \"P1\", etc.)
-      specified within <paragraph_id></paragraph_id> tags.\n    - Each paragraph includes
-      sentences, each identified by a sentence ID (for example, \"P0-S0\", \"P0-S1\",
-      etc.) specified within <sentence_id></sentence_id> tags, followed by the full
-      text of the sentence specified within <sentence_text></sentence_text> tags.\n    -
-      Note that paragraphs are listed in the same order they appear in the original
-      document; therefore, context from surrounding paragraphs may influence whether
-      a particular paragraph is relevant to an aspect.\n    - You may be working with
-      document fragments rather than complete documents. Focus on extracting information
-      from the available content without making assumptions about missing parts.\n\n3.
-      Map paragraphs and their sentences to aspects\n    - A paragraph can address
-      one, multiple, or none of the aspects.\n    - A sentence within the paragraph
-      can address one, multiple, or none of the aspects.\n    - If a paragraph clearly
-      relates to an aspect (based on the aspect''s name and description), include
-      the paragraph''s ID and the IDs of all the sentences within the paragraph that
-      address or relate to the aspect.\n    - If a paragraph does not relate to an
-      aspect, do not include it under that aspect''s list.\n    - Apply cross-paragraph
-      reasoning when needed (e.g., headings, lists, references like \"above\", \"this
-      section\"): use surrounding context to disambiguate; if unresolved, omit.\n    -
-      Treat negations, exceptions, and conditionals carefully: relevance can be present
-      in prohibitions or restrictions.\n    - Prefer minimal sufficient evidence:\n        --
-      include only the sentences necessary to support the mapping; avoid unrelated
-      sentences.\n    - Favor precision over recall; when uncertain, exclude rather
-      than speculate.\n\n4. Produce the final answer in the JSON format specified
-      within <answer_format></answer_format> tags\n    - Your output must be a JSON
-      array of objects, each object corresponding to a single aspect.\n    - For each
-      aspect (in the order they are provided), include:\n        -- aspect_id: The
-      aspect''s unique identifier, e.g., \"A0\".\n        -- paragraphs: An array
-      of objects for each paragraph that addresses or relates to the aspect. Each
-      object should include:\n            --- paragraph_id: The provided paragraph
+      paragraph is given within <paragraph></paragraph> tags, whose id attribute holds
+      its paragraph ID (for example, \"P0\", \"P1\", etc.).\n    - Each paragraph
+      includes sentences, each given with its full text within <sentence></sentence>
+      tags, whose id attribute holds its sentence ID (for example, \"P0-S0\", \"P0-S1\",
+      etc.).\n    - Note that paragraphs are listed in the same order they appear
+      in the original document; therefore, context from surrounding paragraphs may
+      influence whether a particular paragraph is relevant to an aspect.\n    - You
+      may be working with document fragments rather than complete documents. Focus
+      on extracting information from the available content without making assumptions
+      about missing parts.\n\n3. Map paragraphs and their sentences to aspects\n    -
+      A paragraph can address one, multiple, or none of the aspects.\n    - A sentence
+      within the paragraph can address one, multiple, or none of the aspects.\n    -
+      If a paragraph clearly relates to an aspect (based on the aspect''s name and
+      description), include the paragraph''s ID and the IDs of all the sentences within
+      the paragraph that address or relate to the aspect.\n    - If a paragraph does
+      not relate to an aspect, do not include it under that aspect''s list.\n    -
+      Apply cross-paragraph reasoning when needed (e.g., headings, lists, references
+      like \"above\", \"this section\"): use surrounding context to disambiguate;
+      if unresolved, omit.\n    - Treat negations, exceptions, and conditionals carefully:
+      relevance can be present in prohibitions or restrictions.\n    - Prefer minimal
+      sufficient evidence:\n        -- include only the sentences necessary to support
+      the mapping; avoid unrelated sentences.\n    - Favor precision over recall;
+      when uncertain, exclude rather than speculate.\n\n4. Produce the final answer
+      in the JSON format specified within <answer_format></answer_format> tags\n    -
+      Your output must be a JSON array of objects, each object corresponding to a
+      single aspect.\n    - For each aspect (in the order they are provided), include:\n        --
+      aspect_id: The aspect''s unique identifier, e.g., \"A0\".\n        -- paragraphs:
+      An array of objects for each paragraph that addresses or relates to the aspect.
+      Each object should include:\n            --- paragraph_id: The provided paragraph
       ID, e.g., \"P0\", \"P2\".\n            --- sentences: An array of objects for
       each relevant sentence within the paragraph. Each object should include:\n                ----
       sentence_id: The provided ID of the sentence, e.g., \"P0-S0\", \"P0-S2\".\n        --
@@ -162,30 +160,19 @@ interactions:
       str,\n                    },\n                    ...\n                ]\n            },\n            ...\n        ]\n    },\n    ...\n]\n</answer_format>\n\n<aspects>\nDOCUMENT
       ASPECTS:\n    <aspect id=\"A0\">\n        <aspect_id>A0</aspect_id>\n        \n        <aspect_name>Compensation</aspect_name>\n        \n        <aspect_description>\n        Clauses
       defining the compensation and benefits for the employee\n        </aspect_description>\n    </aspect>\n\n</aspects>\n\n<document_paragraphs>\nDOCUMENT
-      PARAGRAPHS INCLUDING SENTENCES:\n    <paragraph id=\"P0\">\n        <paragraph_id>P0</paragraph_id>\n        \n        <paragraph_sentences>\n            <sentence
-      id=\"P0-S0\">\n                <sentence_id>P0-S0</sentence_id>\n                \n                <sentence_text>\n                Employment
-      Agreement\n                </sentence_text>\n            </sentence>\n        </paragraph_sentences>\n    </paragraph>\n\n    <paragraph
-      id=\"P1\">\n        <paragraph_id>P1</paragraph_id>\n        \n        <paragraph_sentences>\n            <sentence
-      id=\"P1-S0\">\n                <sentence_id>P1-S0</sentence_id>\n                \n                <sentence_text>\n                This
-      agreement between TechCorp Inc. (Employer) and Jane Smith (Employee)...\n                </sentence_text>\n            </sentence>\n        </paragraph_sentences>\n    </paragraph>\n\n    <paragraph
-      id=\"P2\">\n        <paragraph_id>P2</paragraph_id>\n        \n        <paragraph_sentences>\n            <sentence
-      id=\"P2-S0\">\n                <sentence_id>P2-S0</sentence_id>\n                \n                <sentence_text>\n                The
-      employment shall commence on January 15, 2023 and continue until terminated...\n                </sentence_text>\n            </sentence>\n        </paragraph_sentences>\n    </paragraph>\n\n    <paragraph
-      id=\"P3\">\n        <paragraph_id>P3</paragraph_id>\n        \n        <paragraph_sentences>\n            <sentence
-      id=\"P3-S0\">\n                <sentence_id>P3-S0</sentence_id>\n                \n                <sentence_text>\n                The
-      Employee shall work as a Senior Software Engineer reporting to the CTO...\n                </sentence_text>\n            </sentence>\n        </paragraph_sentences>\n    </paragraph>\n\n    <paragraph
-      id=\"P4\">\n        <paragraph_id>P4</paragraph_id>\n        \n        <paragraph_sentences>\n            <sentence
-      id=\"P4-S0\">\n                <sentence_id>P4-S0</sentence_id>\n                \n                <sentence_text>\n                The
-      Employee shall receive an annual salary of $120,000 paid monthly...\n                </sentence_text>\n            </sentence>\n        </paragraph_sentences>\n    </paragraph>\n\n    <paragraph
-      id=\"P5\">\n        <paragraph_id>P5</paragraph_id>\n        \n        <paragraph_sentences>\n            <sentence
-      id=\"P5-S0\">\n                <sentence_id>P5-S0</sentence_id>\n                \n                <sentence_text>\n                The
-      Employee is entitled to 20 days of paid vacation per year...\n                </sentence_text>\n            </sentence>\n        </paragraph_sentences>\n    </paragraph>\n\n    <paragraph
-      id=\"P6\">\n        <paragraph_id>P6</paragraph_id>\n        \n        <paragraph_sentences>\n            <sentence
-      id=\"P6-S0\">\n                <sentence_id>P6-S0</sentence_id>\n                \n                <sentence_text>\n                The
-      Employee agrees to a notice period of 30 days for resignation...\n                </sentence_text>\n            </sentence>\n        </paragraph_sentences>\n    </paragraph>\n\n    <paragraph
-      id=\"P7\">\n        <paragraph_id>P7</paragraph_id>\n        \n        <paragraph_sentences>\n            <sentence
-      id=\"P7-S0\">\n                <sentence_id>P7-S0</sentence_id>\n                \n                <sentence_text>\n                This
-      agreement is governed by the laws of California...\n                </sentence_text>\n            </sentence>\n        </paragraph_sentences>\n    </paragraph>\n\n</document_paragraphs>"}],"model":"gpt-6-luna"}'
+      PARAGRAPHS INCLUDING SENTENCES:\n<paragraph id=\"P0\">\n<sentence id=\"P0-S0\">Employment
+      Agreement</sentence>\n</paragraph>\n<paragraph id=\"P1\">\n<sentence id=\"P1-S0\">This
+      agreement between TechCorp Inc. (Employer) and Jane Smith (Employee)...</sentence>\n</paragraph>\n<paragraph
+      id=\"P2\">\n<sentence id=\"P2-S0\">The employment shall commence on January
+      15, 2023 and continue until terminated...</sentence>\n</paragraph>\n<paragraph
+      id=\"P3\">\n<sentence id=\"P3-S0\">The Employee shall work as a Senior Software
+      Engineer reporting to the CTO...</sentence>\n</paragraph>\n<paragraph id=\"P4\">\n<sentence
+      id=\"P4-S0\">The Employee shall receive an annual salary of $120,000 paid monthly...</sentence>\n</paragraph>\n<paragraph
+      id=\"P5\">\n<sentence id=\"P5-S0\">The Employee is entitled to 20 days of paid
+      vacation per year...</sentence>\n</paragraph>\n<paragraph id=\"P6\">\n<sentence
+      id=\"P6-S0\">The Employee agrees to a notice period of 30 days for resignation...</sentence>\n</paragraph>\n<paragraph
+      id=\"P7\">\n<sentence id=\"P7-S0\">This agreement is governed by the laws of
+      California...</sentence>\n</paragraph>\n</document_paragraphs>"}],"model":"gpt-6-luna"}'
     headers:
       accept:
       - application/json
@@ -196,7 +183,7 @@ interactions:
       connection:
       - keep-alive
       content-length:
-      - '17550'
+      - '15025'
       content-type:
       - application/json
       cookie:
@@ -230,15 +217,15 @@ interactions:
   response:
     body:
       string: !!binary |
-        H4sIAAAAAAAA/61Uy27bMBC86ysEnuVC8kNueiuQoofm0KLoI7EMgaHWEhOaZEnKbRD437OkLEtK
-        GyCHXghyZ3c05M7qMYpjwivyLiasoY7ttZh9+PnwNuXs283ix+XNL3F9//HqyzUc6k8H+Z2TxFeo
-        2ztgrq96wxTWgeNKdjAzQB141mx9ka3zZZ4vA7BXFQhfVms3y2eilfRU0SjOwCK0wWMcP4bVa5MV
-        /MFwmvSRPVhLa8BYn4RBo4SPEGott45KR5IBZEo6kEHuppBI7pc4LjBb4zVKXhWIFeR9WpCkxzQ1
-        tDZUN9aDmy58rn2Wc6b4vDxTdCkW/LfxahOWZ0zT1BHZ7CtKGucdh8O23x6T14pb/U9xq9eJ6zbh
-        jPvtuC8Gdq2l3g+yFWIEUCmVo95PwRHbqL9o74Edl9w2JdrMouewr9YpTQJ6xHUbPNVObEK0QZe6
-        0ql7CLSLxcXJVGTw7wBn89UJdahFjOpWWY9MKMsKHOXCjoxJGGUNVCPSRb5OJmD523AHQ8Y8nQ9W
-        p23F1YCl0egV/hb9LwHdC3FZj76Qvcg/AIyBxgkutYGKs+nLDGkG/G/gpbRzO4JidJA54IyXjoPx
-        LatgR1vRDSqxD9bBvsS+1mC04WFavSuiY/QElrNr4qQEAAA=
+        H4sIAAAAAAAA/61UTW+cMBC98yuQz2xFdgO76a2pmlZVKkXqRw7LCjn2LDgF27FNPxTtf8/YhAXS
+        RMqhF8ueN/N443nmPopjIjh5GxNWU8da3Sw+sI8/2i/n1/klv728uviWXV903z9Vd+/vPp+nJPEV
+        6uYWmBuq3jCFdeCEkj3MDFAHnvVkfbZcbzb56TIAreLQ+LJKu0W+aDpJHytqJRhYhLZ4jOP7sHpt
+        ksMfDKfJEGnBWloBxoYkDBrV+Aih1grrqHQkGUGmpAMZ5G4LieR+ieMCszW2UQpeIFaQd2lBkgHT
+        1NDKUF1bD2778LH2Sc6R4ur0SNGnWPDfxtZmLE+Y5qkTssVXlDTNO4yH3bA9JK8Vl/1PcdnrxPWb
+        cMb9bjoXA/vOUu8H2TXNBKBSKke9n4IjdtHQ6OCBvZDC1iXazKLncK7WKU0CesB1FzzVzWxCtEGX
+        utKpnxBol2fZqicko39H+GT1aDniUEszAqt0M9TNKEsOjorGToxJGGU18Clpvk5mYPnbCAeTjGxg
+        9/fQcaFGLI0mt/Cv6OcE9DckZDXpO3+RfwQYA40vuNQGuGDzmxnTDPjfwEtpx3EExegg8wvfeOkE
+        GD8yDnvaNf1DJfavddCWONcKjDYivFbviugQPQA4KCZ4pAQAAA==
     headers:
       access-control-expose-headers:
       - X-Request-ID
@@ -261,7 +248,7 @@ interactions:
       openai-organization:
       - DUMMY
       openai-processing-ms:
-      - '1281'
+      - '1857'
       openai-project:
       - DUMMY
       openai-version:
@@ -285,9 +272,9 @@ interactions:
       x-ratelimit-remaining-tokens:
       - DUMMY
       x-ratelimit-reset-requests:
-      - 12ms
+      - 6ms
       x-ratelimit-reset-tokens:
-      - 127ms
+      - 21ms
       x-request-id:
       - DUMMY
     status:
@@ -382,43 +369,41 @@ interactions:
       you will find a list of document paragraphs (including sentences) and a list
       of concepts.\n</introduction>\n\n<guidance_on_task_structure>\nAll structured
       information in these instructions is provided using semantic XML tags. Field
-      names correspond directly to tag names (e.g., concept_name, paragraph_text,
-      sentence_text, additional_context, etc.).\n</guidance_on_task_structure>\n\n<private_reasoning>\nUse
-      private deliberation to plan, evaluate evidence, and verify decisions. Do not
-      reveal any intermediate analysis, notes, or steps. Only output the JSON according
-      to the format specified within <answer_format></answer_format> tags.\n\nFollow
-      this internal three-stage process:\n\n1. Plan\n    - Internally restate each
-      concept in one sentence.\n    - List 3-5 concrete lexical/semantic cues for
-      relevance aligned with the concept description (include indicators of definition,
-      obligation, permission, exception, conditionals, and negations).\n    - If a
-      concept specifies a structure, rating scale, or available labels, align inclusion/exclusion
-      criteria with those constraints.\n    - For each concept, plan how to synthesize
-      the output value from the available evidence even when no literal span is present.\n\n2.
-      Evidence triage\n    - Evaluate the provided content at paragraph and sentence
-      levels; derive candidate extractions/values for the concepts (explicit or inferred
-      from context).\n    - Collect minimal sufficient evidence privately and note
-      negated, hypothetical, or conditional forms.\n    - Prefer precision over recall;
-      include only high-confidence items and omit weak or ambiguous ones.\n\n3. Consistency
-      pass\n    - Ensure all extracted items strictly match required types and any
-      specified structure, rating scales, or label constraints.\n    - Deduplicate
-      referenced paragraph and sentence IDs and preserve their original order.\n\nNever
-      disclose any plan, evidence, or internal notes - only the JSON array defined
-      within <answer_format></answer_format> tags.\n</private_reasoning>\n\n<task_description>\nYour
-      task is to:\n1. Read through the provided document paragraphs and their sentences.\n    -
-      Each paragraph is identified by a paragraph ID (for example, \"P0\", \"P1\",
-      etc.) specified within <paragraph_id></paragraph_id> tags.\n    - Each paragraph
-      includes sentences, each identified by a sentence ID (for example, \"P0-S0\",
-      \"P0-S1\", etc.) specified within <sentence_id></sentence_id> tags, followed
-      by the full text of the sentence specified within <sentence_text></sentence_text>
-      tags.\n    - Note that paragraphs are listed in the same order they appear in
-      the original document.\n    - You may be working with document fragments rather
-      than complete documents. Focus on extracting information from the available
-      content without making assumptions about missing parts.\n2. Identify whether
-      each concept in the concepts list is addressed within the document paragraphs.\n    -
-      Each concept is identified by a concept ID (for example, \"C0\", \"C1\", etc.)
-      specified within <concept_id></concept_id> tags.\n    - Each concept is described
-      by a concept name specified within <concept_name></concept_name> tags and a
-      concept description specified within <concept_description></concept_description>
+      names correspond directly to tag names (e.g., concept_name, additional_context,
+      etc.).\n</guidance_on_task_structure>\n\n<private_reasoning>\nUse private deliberation
+      to plan, evaluate evidence, and verify decisions. Do not reveal any intermediate
+      analysis, notes, or steps. Only output the JSON according to the format specified
+      within <answer_format></answer_format> tags.\n\nFollow this internal three-stage
+      process:\n\n1. Plan\n    - Internally restate each concept in one sentence.\n    -
+      List 3-5 concrete lexical/semantic cues for relevance aligned with the concept
+      description (include indicators of definition, obligation, permission, exception,
+      conditionals, and negations).\n    - If a concept specifies a structure, rating
+      scale, or available labels, align inclusion/exclusion criteria with those constraints.\n    -
+      For each concept, plan how to synthesize the output value from the available
+      evidence even when no literal span is present.\n\n2. Evidence triage\n    -
+      Evaluate the provided content at paragraph and sentence levels; derive candidate
+      extractions/values for the concepts (explicit or inferred from context).\n    -
+      Collect minimal sufficient evidence privately and note negated, hypothetical,
+      or conditional forms.\n    - Prefer precision over recall; include only high-confidence
+      items and omit weak or ambiguous ones.\n\n3. Consistency pass\n    - Ensure
+      all extracted items strictly match required types and any specified structure,
+      rating scales, or label constraints.\n    - Deduplicate referenced paragraph
+      and sentence IDs and preserve their original order.\n\nNever disclose any plan,
+      evidence, or internal notes - only the JSON array defined within <answer_format></answer_format>
+      tags.\n</private_reasoning>\n\n<task_description>\nYour task is to:\n1. Read
+      through the provided document paragraphs and their sentences.\n    - Each paragraph
+      is given within <paragraph></paragraph> tags, whose id attribute holds its paragraph
+      ID (for example, \"P0\", \"P1\", etc.).\n    - Each paragraph includes sentences,
+      each given with its full text within <sentence></sentence> tags, whose id attribute
+      holds its sentence ID (for example, \"P0-S0\", \"P0-S1\", etc.).\n    - Note
+      that paragraphs are listed in the same order they appear in the original document.\n    -
+      You may be working with document fragments rather than complete documents. Focus
+      on extracting information from the available content without making assumptions
+      about missing parts.\n2. Identify whether each concept in the concepts list
+      is addressed within the document paragraphs.\n    - Each concept is identified
+      by a concept ID (for example, \"C0\", \"C1\", etc.) specified within <concept_id></concept_id>
+      tags.\n    - Each concept is described by a concept name specified within <concept_name></concept_name>
+      tags and a concept description specified within <concept_description></concept_description>
       tags.\n3. For each concept that appears, extract zero or more items relevant
       to that concept. The item format and structure are specified for each concept.\n    -
       Apply cross-paragraph reasoning when helpful (e.g., headings, lists, references
@@ -542,12 +527,10 @@ interactions:
       concept may have zero, one, or multiple extracted items.</amount_of_extracted_items>\n\n    <extracted_item_examples>\n        <extracted_item_example>\n        custom_data={}
       content=''$X per year''\n        </extracted_item_example>\n    </extracted_item_examples>\n\n    <extracted_item_type>str
       (must be exactly as specified)</extracted_item_type>\n</concept>\n\n</concepts>\n\n<document_paragraphs>\nDOCUMENT
-      PARAGRAPHS INCLUDING SENTENCES:\n    <paragraph id=\"P0\">\n        <paragraph_id>P0</paragraph_id>\n        \n        <paragraph_sentences>\n            <sentence
-      id=\"P0-S0\">\n                <sentence_id>P0-S0</sentence_id>\n                \n                <sentence_text>\n                The
-      Employee shall receive an annual salary of $120,000 paid monthly...\n                </sentence_text>\n            </sentence>\n        </paragraph_sentences>\n    </paragraph>\n\n    <paragraph
-      id=\"P1\">\n        <paragraph_id>P1</paragraph_id>\n        \n        <paragraph_sentences>\n            <sentence
-      id=\"P1-S0\">\n                <sentence_id>P1-S0</sentence_id>\n                \n                <sentence_text>\n                The
-      Employee is entitled to 20 days of paid vacation per year...\n                </sentence_text>\n            </sentence>\n        </paragraph_sentences>\n    </paragraph>\n\n</document_paragraphs>"}],"model":"gpt-6-luna"}'
+      PARAGRAPHS INCLUDING SENTENCES:\n<paragraph id=\"P0\">\n<sentence id=\"P0-S0\">The
+      Employee shall receive an annual salary of $120,000 paid monthly...</sentence>\n</paragraph>\n<paragraph
+      id=\"P1\">\n<sentence id=\"P1-S0\">The Employee is entitled to 20 days of paid
+      vacation per year...</sentence>\n</paragraph>\n</document_paragraphs>"}],"model":"gpt-6-luna"}'
     headers:
       accept:
       - application/json
@@ -558,7 +541,7 @@ interactions:
       connection:
       - keep-alive
       content-length:
-      - '22289'
+      - '21582'
       content-type:
       - application/json
       cookie:
@@ -592,16 +575,16 @@ interactions:
   response:
     body:
       string: !!binary |
-        H4sIAAAAAAAA/3VTwY6bMBC95yuQ1SOpIMnCZq+rVuppt+phK4UIec0EvAu2ZZs00Sr/3jEQDNvm
-        Ytnz5j2PPW8+FkFAeEEeAsIqalmj6uW33+f71fbnj/Tu+P795amx5dPry52KT/z++Y2EjiFf34DZ
-        K+srk8gDy6XoYaaBWnCqcbqN02STJEkHNLKA2tFKZZfJsm4FHRiV5AwMQjs8BsFHt7raRAEnDEfh
-        NdKAMbQEjF2TMKhl7SKEGsONpcKS0INMCguiK3eXCRR3SxBkDmCgbM6LDMGMPEYZCa8gnKymDJ+R
-        cwuNcRm7HhsV+sQjrVvoBb7EqyiMoihQoIMzUD3q9akaDqABL80V1bTUVFVz4U/iN1ljyc/R7IrP
-        BAPu6bjhxXARMpa/kLSfki7+MMaHWHfG/X76o3hBa6jrpGjregJQIaSlzgldL/cDchm7d+CCmypH
-        gxh0C3bEWKlIh15w3XduaGcNJkqjv2xu5Tt0sptVuukFiXeeh+M4GVCLtdQT3no72GgumRdgKa/N
-        xFKEUVZh673oOknDGZj/0WgMn7HaRpsxg7YFlx6LFpNf+Lfo/xXQ/xAXpVdZxzf1PcCco7FypaHg
-        bP4zPk2DG+BbaWM7uoqJAX3E6cwtB+1aVsCBtnU/YsScDY5Hjn0tQSvNuzlzrlhcFn8BOxZ+IF4E
-        AAA=
+        H4sIAAAAAAAA/3VTTY/aMBC98ysiq8dQhRAR6HW73UtVIVVClQBFrj0k3jW2ZTtb0Ir/3nEC+dhd
+        LpY9b97z2PPmbRJFRHDyLSKsop4djZw+sqeN5i+/Npvv65P+86TVj/M8cw+HJf9pSRwY+u8zMH9j
+        fWUaeeCFVi3MLFAPQXWWr9J8uVxkWQMcNQcZaKXx08VU1opeGZUWDBxCWzxG0VuzhtoUhxOGk/gW
+        OYJztASM3ZIwaLUMEUKdE85T5Uncg0wrD6opd7tTKB6WKNoFgIHxheA7BHfkIdmR+AbCyVvK8BmF
+        8HB0IWPbYp1Cm/hKZQ2twJdZmsRJkkQGbHQGaju9NtXCASzgpYWhlpaWmmos/E78LqsreZ2MrnhP
+        cBCejhvBP17UJq+T6W8UGQP74fHSH7r4Ndaccb8f/jdeXzsa+qxqKQcAVUp7GnzSdHp/RS5dbw9C
+        CVcVaB+HXsJ+Oa8NadALrvvGK/Wo/cRYdJ8vvH6BRjabZatWkPS+7OHl/Ap6LEUOaOk8jT9RLDh4
+        KqQb+I0wyir0RcedzRd5PAKLfxZd02ekeb7qMmjNhe6xZDL4hI81f1ZA+0FClQOVu/I9wILbsXBj
+        gQs2/pc+zUIY7ntpXTOagokD+4qTW3gBNjSMw4HWsh0/4s4OR6fArpZgjRXNDAZPTC6T/wiD9/96
+        BAAA
     headers:
       access-control-expose-headers:
       - X-Request-ID
@@ -624,7 +607,7 @@ interactions:
       openai-organization:
       - DUMMY
       openai-processing-ms:
-      - '1494'
+      - '2036'
       openai-project:
       - DUMMY
       openai-version:
@@ -648,9 +631,9 @@ interactions:
       x-ratelimit-remaining-tokens:
       - DUMMY
       x-ratelimit-reset-requests:
-      - 24ms
+      - 6ms
       x-ratelimit-reset-tokens:
-      - 268ms
+      - 31ms
       x-request-id:
       - DUMMY
     status:

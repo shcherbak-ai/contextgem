@@ -88,58 +88,58 @@ interactions:
       you will find a list of consecutively ordered paragraphs from a document and
       a list of aspects.\n</introduction>\n\n<guidance_on_task_structure>\nAll structured
       information in these instructions is provided using semantic XML tags. Field
-      names correspond directly to tag names (e.g., aspect_name, paragraph_text, sentence_text,
-      additional_context, etc.).\n</guidance_on_task_structure>\n\n<private_reasoning>\nUse
-      private deliberation to plan, evaluate evidence, and verify decisions. Do not
-      reveal any intermediate analysis, notes, or steps. Only output the JSON specified
-      within <answer_format></answer_format> tags.\n\nFollow this internal three-stage
-      process:\n\n1. Plan\n    - Internally restate each aspect in one sentence.\n    -
-      List 3-5 concrete lexical/semantic cues for relevance, including indicators
-      of prohibition, requirement, exception, conditionals, and negations.\n    -
-      Define internal inclusion/exclusion criteria for borderline matches.\n\n2. Evidence
-      triage\n    - For each paragraph, generate candidate matches to aspects.\n    -
-      Collect minimal sufficient textual evidence privately and note negation, hypothetical,
-      or conditional forms.\n    - Prefer precision over recall; include only high-confidence
-      matches and omit weak or ambiguous ones.\n\n3. Consistency pass\n   - Deduplicate
-      paragraph IDs within each aspect and preserve the original order.\n\nNever disclose
-      any plan, evidence, or internal notes - only the JSON array defined within <answer_format></answer_format>
+      names correspond directly to tag names (e.g., aspect_name, additional_context,
+      etc.).\n</guidance_on_task_structure>\n\n<private_reasoning>\nUse private deliberation
+      to plan, evaluate evidence, and verify decisions. Do not reveal any intermediate
+      analysis, notes, or steps. Only output the JSON specified within <answer_format></answer_format>
+      tags.\n\nFollow this internal three-stage process:\n\n1. Plan\n    - Internally
+      restate each aspect in one sentence.\n    - List 3-5 concrete lexical/semantic
+      cues for relevance, including indicators of prohibition, requirement, exception,
+      conditionals, and negations.\n    - Define internal inclusion/exclusion criteria
+      for borderline matches.\n\n2. Evidence triage\n    - For each paragraph, generate
+      candidate matches to aspects.\n    - Collect minimal sufficient textual evidence
+      privately and note negation, hypothetical, or conditional forms.\n    - Prefer
+      precision over recall; include only high-confidence matches and omit weak or
+      ambiguous ones.\n\n3. Consistency pass\n   - Deduplicate paragraph IDs within
+      each aspect and preserve the original order.\n\nNever disclose any plan, evidence,
+      or internal notes - only the JSON array defined within <answer_format></answer_format>
       tags.\n</private_reasoning>\n\n<task_description>\nYour task is to:\n\n1. Read
       and understand the aspects\n    - Each aspect is identified by an Aspect ID
       (for example, \"A0\", \"A1\", etc.) specified within <aspect_id></aspect_id>
       tags, includes a name specified within <aspect_name></aspect_name> tags, and
       has a description specified within <aspect_description></aspect_description>
       tags.\n    - Aspects describe themes, topics, or criteria that might be addressed
-      in the paragraphs.\n\n2. Examine each paragraph\n    - Each paragraph is identified
-      by a paragraph ID (for example, \"P0\", \"P1\", etc.) specified within <paragraph_id></paragraph_id>
-      tags, followed by the full text of the paragraph specified within <paragraph_text></paragraph_text>
-      tags.\n    - Note that paragraphs are listed in the same order they appear in
-      the original document; therefore, context from surrounding paragraphs may influence
-      whether a particular paragraph is relevant to an aspect.\n    - You may be working
-      with document fragments rather than complete documents. Focus on extracting
-      information from the available content without making assumptions about missing
-      parts.\n\n3. Map paragraphs to aspects\n    - A paragraph can address one, multiple,
-      or none of the aspects.\n    - If a paragraph clearly relates to an aspect (based
-      on the aspect''s name and description), include that paragraph''s ID under the
-      aspect''s list of paragraph IDs.\n    - If a paragraph does not relate to an
-      aspect, do not include it under that aspect''s list.\n    - Apply cross-paragraph
-      reasoning when needed (e.g., headings, lists, references like \"above\", \"this
-      section\"): use surrounding context to disambiguate; if unresolved, omit.\n    -
-      Treat negations, exceptions, and conditionals carefully: relevance can be present
-      in prohibitions or restrictions.\n    - Prefer minimal sufficient evidence:\n        --
-      base the mapping on the most relevant paragraphs; avoid tangential mentions.\n    -
-      Favor precision over recall; when uncertain, exclude rather than speculate.\n\n4.
-      Produce the final answer in the JSON format specified within <answer_format></answer_format>
-      tags\n    - Your output must be a JSON array of objects, each object corresponding
-      to a single aspect.\n    - For each aspect (in the order they are provided),
-      include:\n        -- aspect_id: The aspect''s unique identifier, e.g., \"A0\".\n        --
-      paragraph_ids: An array of the paragraph IDs that address or relate to the aspect,
-      e.g., [\"P0\", \"P2\"].\n        -- If an aspect has no related paragraphs,
-      still include it with an empty paragraph_ids array ([]).\n- Do not add extra
-      commentary, code block markers, or any other formatting beyond the JSON array.\n-
-      Internally verify before finalizing:\n    -- Each provided aspect appears once,
-      in order, with the correct \"aspect_id\".\n    -- \"paragraph_ids\" contains
-      only valid paragraph IDs.\n    -- The structure exactly matches the format specified
-      within <answer_format></answer_format> tags (no extra keys or commentary).\n</task_description>\n\n<output_constraints>\n-
+      in the paragraphs.\n\n2. Examine each paragraph\n    - Each paragraph is given
+      with its full text within <paragraph></paragraph> tags, whose id attribute holds
+      its paragraph ID (for example, \"P0\", \"P1\", etc.).\n    - Note that paragraphs
+      are listed in the same order they appear in the original document; therefore,
+      context from surrounding paragraphs may influence whether a particular paragraph
+      is relevant to an aspect.\n    - You may be working with document fragments
+      rather than complete documents. Focus on extracting information from the available
+      content without making assumptions about missing parts.\n\n3. Map paragraphs
+      to aspects\n    - A paragraph can address one, multiple, or none of the aspects.\n    -
+      If a paragraph clearly relates to an aspect (based on the aspect''s name and
+      description), include that paragraph''s ID under the aspect''s list of paragraph
+      IDs.\n    - If a paragraph does not relate to an aspect, do not include it under
+      that aspect''s list.\n    - Apply cross-paragraph reasoning when needed (e.g.,
+      headings, lists, references like \"above\", \"this section\"): use surrounding
+      context to disambiguate; if unresolved, omit.\n    - Treat negations, exceptions,
+      and conditionals carefully: relevance can be present in prohibitions or restrictions.\n    -
+      Prefer minimal sufficient evidence:\n        -- base the mapping on the most
+      relevant paragraphs; avoid tangential mentions.\n    - Favor precision over
+      recall; when uncertain, exclude rather than speculate.\n\n4. Produce the final
+      answer in the JSON format specified within <answer_format></answer_format> tags\n    -
+      Your output must be a JSON array of objects, each object corresponding to a
+      single aspect.\n    - For each aspect (in the order they are provided), include:\n        --
+      aspect_id: The aspect''s unique identifier, e.g., \"A0\".\n        -- paragraph_ids:
+      An array of the paragraph IDs that address or relate to the aspect, e.g., [\"P0\",
+      \"P2\"].\n        -- If an aspect has no related paragraphs, still include it
+      with an empty paragraph_ids array ([]).\n- Do not add extra commentary, code
+      block markers, or any other formatting beyond the JSON array.\n- Internally
+      verify before finalizing:\n    -- Each provided aspect appears once, in order,
+      with the correct \"aspect_id\".\n    -- \"paragraph_ids\" contains only valid
+      paragraph IDs.\n    -- The structure exactly matches the format specified within
+      <answer_format></answer_format> tags (no extra keys or commentary).\n</task_description>\n\n<output_constraints>\n-
       No additional text:\n    -- Do not include any headers, explanations, or text
       outside of the JSON array.\n    -- Do not wrap your JSON response in backticks
       or any other formatting characters.\n- Private deliberation only:\n    -- Do
@@ -151,43 +151,28 @@ interactions:
       Provisions</aspect_name>\n        \n        <aspect_description>\n        All
       provisions related to employment termination including conditions, procedures,
       and consequences\n        </aspect_description>\n    </aspect>\n\n</aspects>\n\n<document_paragraphs>\nDOCUMENT
-      PARAGRAPHS:\n    <paragraph id=\"P0\">\n        <paragraph_id>P0</paragraph_id>\n        \n        <paragraph_text>\n        Employment
-      Agreement\n        </paragraph_text>\n    </paragraph>\n\n    <paragraph id=\"P1\">\n        <paragraph_id>P1</paragraph_id>\n        \n        <paragraph_text>\n        This
-      Employment Agreement is entered into between Global Tech Inc. (Company) and
-      John Smith (Employee).\n        </paragraph_text>\n    </paragraph>\n\n    <paragraph
-      id=\"P2\">\n        <paragraph_id>P2</paragraph_id>\n        \n        <paragraph_text>\n        Section
-      8: Termination\n        </paragraph_text>\n    </paragraph>\n\n    <paragraph
-      id=\"P3\">\n        <paragraph_id>P3</paragraph_id>\n        \n        <paragraph_text>\n        8.1
-      Termination by Company\n        </paragraph_text>\n    </paragraph>\n\n    <paragraph
-      id=\"P4\">\n        <paragraph_id>P4</paragraph_id>\n        \n        <paragraph_text>\n        The
-      Company may terminate this agreement at any time with or without cause by providing
-      thirty (30) days written notice to the Employee. In case of termination for
-      cause, no notice period is required.\n        </paragraph_text>\n    </paragraph>\n\n    <paragraph
-      id=\"P5\">\n        <paragraph_id>P5</paragraph_id>\n        \n        <paragraph_text>\n        8.2
-      Termination by Employee\n        </paragraph_text>\n    </paragraph>\n\n    <paragraph
-      id=\"P6\">\n        <paragraph_id>P6</paragraph_id>\n        \n        <paragraph_text>\n        The
+      PARAGRAPHS:\n<paragraph id=\"P0\">Employment Agreement</paragraph>\n<paragraph
+      id=\"P1\">This Employment Agreement is entered into between Global Tech Inc.
+      (Company) and John Smith (Employee).</paragraph>\n<paragraph id=\"P2\">Section
+      8: Termination</paragraph>\n<paragraph id=\"P3\">8.1 Termination by Company</paragraph>\n<paragraph
+      id=\"P4\">The Company may terminate this agreement at any time with or without
+      cause by providing thirty (30) days written notice to the Employee. In case
+      of termination for cause, no notice period is required.</paragraph>\n<paragraph
+      id=\"P5\">8.2 Termination by Employee</paragraph>\n<paragraph id=\"P6\">The
       Employee may terminate this agreement by providing fourteen (14) days written
       notice to the Company. The Employee must complete all pending assignments before
-      the termination date.\n        </paragraph_text>\n    </paragraph>\n\n    <paragraph
-      id=\"P7\">\n        <paragraph_id>P7</paragraph_id>\n        \n        <paragraph_text>\n        8.3
-      Severance Benefits\n        </paragraph_text>\n    </paragraph>\n\n    <paragraph
-      id=\"P8\">\n        <paragraph_id>P8</paragraph_id>\n        \n        <paragraph_text>\n        Upon
-      termination without cause, the Employee shall receive severance pay equal to
-      two (2) weeks of base salary for each year of service, with a minimum of four
-      (4) weeks and a maximum of twenty-six (26) weeks. Severance benefits are contingent
-      upon signing a release agreement.\n        </paragraph_text>\n    </paragraph>\n\n    <paragraph
-      id=\"P9\">\n        <paragraph_id>P9</paragraph_id>\n        \n        <paragraph_text>\n        8.4
-      Return of Company Property\n        </paragraph_text>\n    </paragraph>\n\n    <paragraph
-      id=\"P10\">\n        <paragraph_id>P10</paragraph_id>\n        \n        <paragraph_text>\n        Upon
-      termination, the Employee must immediately return all Company property, including
-      laptops, access cards, confidential documents, and any other materials belonging
-      to the Company.\n        </paragraph_text>\n    </paragraph>\n\n    <paragraph
-      id=\"P11\">\n        <paragraph_id>P11</paragraph_id>\n        \n        <paragraph_text>\n        Section
-      9: Non-Competition\n        </paragraph_text>\n    </paragraph>\n\n    <paragraph
-      id=\"P12\">\n        <paragraph_id>P12</paragraph_id>\n        \n        <paragraph_text>\n        The
-      Employee agrees not to engage in any business that competes with the Company
-      for a period of twelve (12) months following termination of employment within
-      a 50-mile radius of the Company''s headquarters.\n        </paragraph_text>\n    </paragraph>\n\n</document_paragraphs>"}],"model":"gpt-6-luna"}'
+      the termination date.</paragraph>\n<paragraph id=\"P7\">8.3 Severance Benefits</paragraph>\n<paragraph
+      id=\"P8\">Upon termination without cause, the Employee shall receive severance
+      pay equal to two (2) weeks of base salary for each year of service, with a minimum
+      of four (4) weeks and a maximum of twenty-six (26) weeks. Severance benefits
+      are contingent upon signing a release agreement.</paragraph>\n<paragraph id=\"P9\">8.4
+      Return of Company Property</paragraph>\n<paragraph id=\"P10\">Upon termination,
+      the Employee must immediately return all Company property, including laptops,
+      access cards, confidential documents, and any other materials belonging to the
+      Company.</paragraph>\n<paragraph id=\"P11\">Section 9: Non-Competition</paragraph>\n<paragraph
+      id=\"P12\">The Employee agrees not to engage in any business that competes with
+      the Company for a period of twelve (12) months following termination of employment
+      within a 50-mile radius of the Company''s headquarters.</paragraph>\n</document_paragraphs>"}],"model":"gpt-6-luna"}'
     headers:
       accept:
       - application/json
@@ -198,7 +183,7 @@ interactions:
       connection:
       - keep-alive
       content-length:
-      - '16521'
+      - '14772'
       content-type:
       - application/json
       cookie:
@@ -232,15 +217,15 @@ interactions:
   response:
     body:
       string: !!binary |
-        H4sIAAAAAAAA/3WTTY+bMBCG7/kVyGdSQfja7a3S5tTLHqqqbYiQ156AU7At27RdrfLfOyYmELV7
-        8cA8M+PhneFtE0VEcPIxIqyjjg263+6/vZZPiSjGz+evL5y1qhh+7Hfl0/f9OflCYp+hXs7A3Jz1
-        gSnMAyeUvGJmgDrwVdPqMa3KvCiyCQyKQ+/TWu225bYfJQ0ZnRIMLKIDvkbR23T63iSHP+hO4tkz
-        gLW0BfTNQeg0qvceQq0V1lHpSLxApqQDObV7qCUW90cU1Rit8TMawWtkNfmU1CSemaaGtobqDrH1
-        /FCT5x0GIHvOgs2DLYItg62CfQj2Mdg0mR+w0tFfdanlcd2rgdNoqddIjn2/AlRK5ajXeFLpGMjl
-        pstJSGG7BqW3OAf8VuuUJhO94HmcdB7vpCPa4ORc49RPmMpmuyy/FiTLTFc4LQN12Eu/AkURBnRf
-        suHgqOjtaliEUdYBX3LTrKziO9j8NsLBKuKhzG8RdORCLSzZrFT4t+n/NXBVSMh2qbLLq3cvWABj
-        oHGtG22AC3YvzRJmwP8b74Xd5jG1TCyYX7j4jRNg/Mw4nOjYX7eX2FfrYGhwsC0YbcS0wn4tNpfN
-        X1qD/fC5AwAA
+        H4sIAAAAAAAA/3WTTW/bMAyG7/kVhs7OYOfDcXbbgGI9duiww+LAUGXGVuNIqkR3G4r891GOHDtY
+        exFtPiRFv6TfZlHEZMU+R0w0HMXJtPM78e1ncmzS7/zXj9dHfEG4Pz7ef0149lJnLPYZ+ukZBA5Z
+        n4SmPECp1QULCxzBV00328Umz9fbVQ9OuoLWp9UG59m87RQPGY2WAhyhHb1G0Vt/+t5UBX/IncSD
+        5wTO8RrINwSR0+rWexh3TjrkClk8QqEVgurb3RWKivsjigqKNvQZpawKYgX7khQsHpjhlteWm4aw
+        83xXsIcFBRB7WAa7CnYdbBbsJtg82G2waTI8UKW9v+pcqP20VwuHznGvkeradgK4Uhq517hXaR/I
+        +arLQSrpmpKkdzQH+laH2rCenunc9zp3N9IxY2lyWKI+Ql92keerS0E2znSCk0WgSL20I1gmeRa/
+        U7KsALls3WRYTHDRQDXmpstsE9/A8reVCJOIdbq6RvCuknpkyWyiwv9Nv9fARSGp6mkPyw8vGIEQ
+        YGitS2OhkuJWmjHMgv83Pgq7zqNvmTmwr7T4JUqwfmYVHHjXXraXub8O4VTSYGuwxsp+hf1azM6z
+        f/jp1iK5AwAA
     headers:
       access-control-expose-headers:
       - X-Request-ID
@@ -263,7 +248,7 @@ interactions:
       openai-organization:
       - DUMMY
       openai-processing-ms:
-      - '2897'
+      - '3416'
       openai-project:
       - DUMMY
       openai-version:
@@ -287,9 +272,9 @@ interactions:
       x-ratelimit-remaining-tokens:
       - DUMMY
       x-ratelimit-reset-requests:
-      - 12ms
+      - 6ms
       x-ratelimit-reset-tokens:
-      - 120ms
+      - 21ms
       x-request-id:
       - DUMMY
     status:
@@ -384,58 +369,58 @@ interactions:
       you will find a list of consecutively ordered paragraphs from a document and
       a list of aspects.\n</introduction>\n\n<guidance_on_task_structure>\nAll structured
       information in these instructions is provided using semantic XML tags. Field
-      names correspond directly to tag names (e.g., aspect_name, paragraph_text, sentence_text,
-      additional_context, etc.).\n</guidance_on_task_structure>\n\n<private_reasoning>\nUse
-      private deliberation to plan, evaluate evidence, and verify decisions. Do not
-      reveal any intermediate analysis, notes, or steps. Only output the JSON specified
-      within <answer_format></answer_format> tags.\n\nFollow this internal three-stage
-      process:\n\n1. Plan\n    - Internally restate each aspect in one sentence.\n    -
-      List 3-5 concrete lexical/semantic cues for relevance, including indicators
-      of prohibition, requirement, exception, conditionals, and negations.\n    -
-      Define internal inclusion/exclusion criteria for borderline matches.\n\n2. Evidence
-      triage\n    - For each paragraph, generate candidate matches to aspects.\n    -
-      Collect minimal sufficient textual evidence privately and note negation, hypothetical,
-      or conditional forms.\n    - Prefer precision over recall; include only high-confidence
-      matches and omit weak or ambiguous ones.\n\n3. Consistency pass\n   - Deduplicate
-      paragraph IDs within each aspect and preserve the original order.\n\nNever disclose
-      any plan, evidence, or internal notes - only the JSON array defined within <answer_format></answer_format>
+      names correspond directly to tag names (e.g., aspect_name, additional_context,
+      etc.).\n</guidance_on_task_structure>\n\n<private_reasoning>\nUse private deliberation
+      to plan, evaluate evidence, and verify decisions. Do not reveal any intermediate
+      analysis, notes, or steps. Only output the JSON specified within <answer_format></answer_format>
+      tags.\n\nFollow this internal three-stage process:\n\n1. Plan\n    - Internally
+      restate each aspect in one sentence.\n    - List 3-5 concrete lexical/semantic
+      cues for relevance, including indicators of prohibition, requirement, exception,
+      conditionals, and negations.\n    - Define internal inclusion/exclusion criteria
+      for borderline matches.\n\n2. Evidence triage\n    - For each paragraph, generate
+      candidate matches to aspects.\n    - Collect minimal sufficient textual evidence
+      privately and note negation, hypothetical, or conditional forms.\n    - Prefer
+      precision over recall; include only high-confidence matches and omit weak or
+      ambiguous ones.\n\n3. Consistency pass\n   - Deduplicate paragraph IDs within
+      each aspect and preserve the original order.\n\nNever disclose any plan, evidence,
+      or internal notes - only the JSON array defined within <answer_format></answer_format>
       tags.\n</private_reasoning>\n\n<task_description>\nYour task is to:\n\n1. Read
       and understand the aspects\n    - Each aspect is identified by an Aspect ID
       (for example, \"A0\", \"A1\", etc.) specified within <aspect_id></aspect_id>
       tags, includes a name specified within <aspect_name></aspect_name> tags, and
       has a description specified within <aspect_description></aspect_description>
       tags.\n    - Aspects describe themes, topics, or criteria that might be addressed
-      in the paragraphs.\n\n2. Examine each paragraph\n    - Each paragraph is identified
-      by a paragraph ID (for example, \"P0\", \"P1\", etc.) specified within <paragraph_id></paragraph_id>
-      tags, followed by the full text of the paragraph specified within <paragraph_text></paragraph_text>
-      tags.\n    - Note that paragraphs are listed in the same order they appear in
-      the original document; therefore, context from surrounding paragraphs may influence
-      whether a particular paragraph is relevant to an aspect.\n    - You may be working
-      with document fragments rather than complete documents. Focus on extracting
-      information from the available content without making assumptions about missing
-      parts.\n\n3. Map paragraphs to aspects\n    - A paragraph can address one, multiple,
-      or none of the aspects.\n    - If a paragraph clearly relates to an aspect (based
-      on the aspect''s name and description), include that paragraph''s ID under the
-      aspect''s list of paragraph IDs.\n    - If a paragraph does not relate to an
-      aspect, do not include it under that aspect''s list.\n    - Apply cross-paragraph
-      reasoning when needed (e.g., headings, lists, references like \"above\", \"this
-      section\"): use surrounding context to disambiguate; if unresolved, omit.\n    -
-      Treat negations, exceptions, and conditionals carefully: relevance can be present
-      in prohibitions or restrictions.\n    - Prefer minimal sufficient evidence:\n        --
-      base the mapping on the most relevant paragraphs; avoid tangential mentions.\n    -
-      Favor precision over recall; when uncertain, exclude rather than speculate.\n\n4.
-      Produce the final answer in the JSON format specified within <answer_format></answer_format>
-      tags\n    - Your output must be a JSON array of objects, each object corresponding
-      to a single aspect.\n    - For each aspect (in the order they are provided),
-      include:\n        -- aspect_id: The aspect''s unique identifier, e.g., \"A0\".\n        --
-      paragraph_ids: An array of the paragraph IDs that address or relate to the aspect,
-      e.g., [\"P0\", \"P2\"].\n        -- If an aspect has no related paragraphs,
-      still include it with an empty paragraph_ids array ([]).\n- Do not add extra
-      commentary, code block markers, or any other formatting beyond the JSON array.\n-
-      Internally verify before finalizing:\n    -- Each provided aspect appears once,
-      in order, with the correct \"aspect_id\".\n    -- \"paragraph_ids\" contains
-      only valid paragraph IDs.\n    -- The structure exactly matches the format specified
-      within <answer_format></answer_format> tags (no extra keys or commentary).\n</task_description>\n\n<output_constraints>\n-
+      in the paragraphs.\n\n2. Examine each paragraph\n    - Each paragraph is given
+      with its full text within <paragraph></paragraph> tags, whose id attribute holds
+      its paragraph ID (for example, \"P0\", \"P1\", etc.).\n    - Note that paragraphs
+      are listed in the same order they appear in the original document; therefore,
+      context from surrounding paragraphs may influence whether a particular paragraph
+      is relevant to an aspect.\n    - You may be working with document fragments
+      rather than complete documents. Focus on extracting information from the available
+      content without making assumptions about missing parts.\n\n3. Map paragraphs
+      to aspects\n    - A paragraph can address one, multiple, or none of the aspects.\n    -
+      If a paragraph clearly relates to an aspect (based on the aspect''s name and
+      description), include that paragraph''s ID under the aspect''s list of paragraph
+      IDs.\n    - If a paragraph does not relate to an aspect, do not include it under
+      that aspect''s list.\n    - Apply cross-paragraph reasoning when needed (e.g.,
+      headings, lists, references like \"above\", \"this section\"): use surrounding
+      context to disambiguate; if unresolved, omit.\n    - Treat negations, exceptions,
+      and conditionals carefully: relevance can be present in prohibitions or restrictions.\n    -
+      Prefer minimal sufficient evidence:\n        -- base the mapping on the most
+      relevant paragraphs; avoid tangential mentions.\n    - Favor precision over
+      recall; when uncertain, exclude rather than speculate.\n\n4. Produce the final
+      answer in the JSON format specified within <answer_format></answer_format> tags\n    -
+      Your output must be a JSON array of objects, each object corresponding to a
+      single aspect.\n    - For each aspect (in the order they are provided), include:\n        --
+      aspect_id: The aspect''s unique identifier, e.g., \"A0\".\n        -- paragraph_ids:
+      An array of the paragraph IDs that address or relate to the aspect, e.g., [\"P0\",
+      \"P2\"].\n        -- If an aspect has no related paragraphs, still include it
+      with an empty paragraph_ids array ([]).\n- Do not add extra commentary, code
+      block markers, or any other formatting beyond the JSON array.\n- Internally
+      verify before finalizing:\n    -- Each provided aspect appears once, in order,
+      with the correct \"aspect_id\".\n    -- \"paragraph_ids\" contains only valid
+      paragraph IDs.\n    -- The structure exactly matches the format specified within
+      <answer_format></answer_format> tags (no extra keys or commentary).\n</task_description>\n\n<output_constraints>\n-
       No additional text:\n    -- Do not include any headers, explanations, or text
       outside of the JSON array.\n    -- Do not wrap your JSON response in backticks
       or any other formatting characters.\n- Private deliberation only:\n    -- Do
@@ -459,37 +444,25 @@ interactions:
       Obligations</aspect_name>\n        \n        <aspect_description>\n        Employee
       obligations that continue after termination, including property return and non-competition
       requirements\n        </aspect_description>\n    </aspect>\n\n</aspects>\n\n<document_paragraphs>\nDOCUMENT
-      PARAGRAPHS:\n    <paragraph id=\"P0\">\n        <paragraph_id>P0</paragraph_id>\n        \n        <paragraph_text>\n        Section
-      8: Termination\n        </paragraph_text>\n    </paragraph>\n\n    <paragraph
-      id=\"P1\">\n        <paragraph_id>P1</paragraph_id>\n        \n        <paragraph_text>\n        8.1
-      Termination by Company\n        </paragraph_text>\n    </paragraph>\n\n    <paragraph
-      id=\"P2\">\n        <paragraph_id>P2</paragraph_id>\n        \n        <paragraph_text>\n        The
-      Company may terminate this agreement at any time with or without cause by providing
+      PARAGRAPHS:\n<paragraph id=\"P0\">Section 8: Termination</paragraph>\n<paragraph
+      id=\"P1\">8.1 Termination by Company</paragraph>\n<paragraph id=\"P2\">The Company
+      may terminate this agreement at any time with or without cause by providing
       thirty (30) days written notice to the Employee. In case of termination for
-      cause, no notice period is required.\n        </paragraph_text>\n    </paragraph>\n\n    <paragraph
-      id=\"P3\">\n        <paragraph_id>P3</paragraph_id>\n        \n        <paragraph_text>\n        8.2
-      Termination by Employee\n        </paragraph_text>\n    </paragraph>\n\n    <paragraph
-      id=\"P4\">\n        <paragraph_id>P4</paragraph_id>\n        \n        <paragraph_text>\n        The
-      Employee may terminate this agreement by providing fourteen (14) days written
-      notice to the Company. The Employee must complete all pending assignments before
-      the termination date.\n        </paragraph_text>\n    </paragraph>\n\n    <paragraph
-      id=\"P5\">\n        <paragraph_id>P5</paragraph_id>\n        \n        <paragraph_text>\n        8.3
-      Severance Benefits\n        </paragraph_text>\n    </paragraph>\n\n    <paragraph
-      id=\"P6\">\n        <paragraph_id>P6</paragraph_id>\n        \n        <paragraph_text>\n        Upon
-      termination without cause, the Employee shall receive severance pay equal to
-      two (2) weeks of base salary for each year of service, with a minimum of four
-      (4) weeks and a maximum of twenty-six (26) weeks. Severance benefits are contingent
-      upon signing a release agreement.\n        </paragraph_text>\n    </paragraph>\n\n    <paragraph
-      id=\"P7\">\n        <paragraph_id>P7</paragraph_id>\n        \n        <paragraph_text>\n        8.4
-      Return of Company Property\n        </paragraph_text>\n    </paragraph>\n\n    <paragraph
-      id=\"P8\">\n        <paragraph_id>P8</paragraph_id>\n        \n        <paragraph_text>\n        Upon
-      termination, the Employee must immediately return all Company property, including
-      laptops, access cards, confidential documents, and any other materials belonging
-      to the Company.\n        </paragraph_text>\n    </paragraph>\n\n    <paragraph
-      id=\"P9\">\n        <paragraph_id>P9</paragraph_id>\n        \n        <paragraph_text>\n        The
-      Employee agrees not to engage in any business that competes with the Company
-      for a period of twelve (12) months following termination of employment within
-      a 50-mile radius of the Company''s headquarters.\n        </paragraph_text>\n    </paragraph>\n\n</document_paragraphs>"}],"model":"gpt-6-luna"}'
+      cause, no notice period is required.</paragraph>\n<paragraph id=\"P3\">8.2 Termination
+      by Employee</paragraph>\n<paragraph id=\"P4\">The Employee may terminate this
+      agreement by providing fourteen (14) days written notice to the Company. The
+      Employee must complete all pending assignments before the termination date.</paragraph>\n<paragraph
+      id=\"P5\">8.3 Severance Benefits</paragraph>\n<paragraph id=\"P6\">Upon termination
+      without cause, the Employee shall receive severance pay equal to two (2) weeks
+      of base salary for each year of service, with a minimum of four (4) weeks and
+      a maximum of twenty-six (26) weeks. Severance benefits are contingent upon signing
+      a release agreement.</paragraph>\n<paragraph id=\"P7\">8.4 Return of Company
+      Property</paragraph>\n<paragraph id=\"P8\">Upon termination, the Employee must
+      immediately return all Company property, including laptops, access cards, confidential
+      documents, and any other materials belonging to the Company.</paragraph>\n<paragraph
+      id=\"P9\">The Employee agrees not to engage in any business that competes with
+      the Company for a period of twelve (12) months following termination of employment
+      within a 50-mile radius of the Company''s headquarters.</paragraph>\n</document_paragraphs>"}],"model":"gpt-6-luna"}'
     headers:
       accept:
       - application/json
@@ -500,7 +473,7 @@ interactions:
       connection:
       - keep-alive
       content-length:
-      - '16927'
+      - '15559'
       content-type:
       - application/json
       cookie:
@@ -534,15 +507,15 @@ interactions:
   response:
     body:
       string: !!binary |
-        H4sIAAAAAAAA/42TUW+bMBDH3/MpkJ/JFEhCwt5Wqasm7SEPUTUpRMg1F3Dn2J5t1lVVvvvODgSq
-        tUtfjLjf3Z/D97+XSRQRXpHPEWENdeyoxfT2x3N2t73P1r++3xr+9Wa7ae+/6adtc2B3ksS+Qj08
-        AnN91SemsA4cVx1mBqgDr5qs8mSVLZbLLICjqkD4slq7aTYVraRdRaM4A4toh69R9BJO35us4A+G
-        Z3EfOYK1tAaM9UkYNEr4CKHWcuuodCQeIFPSgQzt7gqJ4v6IogKzNf5GyasCWUG+zAoS90xTQ2tD
-        dYPYer4ryCbBBGSbtCB7n3iK/6uXXNObd3qLj+ml1/SWnV72Mb35Nb1Vp7funnmvW8j9+IYNHFpL
-        /WRlK8QIUCmVo94ZYbb7jpwu0zxwyW1TomEsugcnZJ3SJNATnvvgjvbVwIk26DdXOvUTguw8zfOz
-        IBmcOOA0W3XUYS9iVLfMsvgNybICR7mwI4sRRlkD1VCbzHvVHpZPhjsYZeRpfsmgbcXVwGaT0S38
-        2/RbDZxviMt69IXF+t0PDIAx0LiMpTZQcfb6aoY0A36j30u7zCO0TCyY37iupeNg/MwqONBWnHeO
-        2Gfr4FjiYGsw2vCweN4Wk9PkLzvkWBVvBAAA
+        H4sIAAAAAAAA/42TTY/aMBCG7/yKyOdQJYEQ2NuuVLFqVWm1lXooQZHrDInB2Jbt9EMr/nvHISFB
+        3S17MWLedx5N5uNlEgSEl+QuIKymjh21mH5k62/z6vBAD8+Pe7H++iX9lH1eP/Jo/wzfSegz1I89
+        MNdnfWAK88BxJc8yM0AdeGqcrZJsuUxXy1Y4qhKET6u0my6mopG0y6gVZ2BR2uDfIHhpX1+bLOE3
+        hqOwjxzBWloBxnoTBo0SPkKotdw6Kh0JB5Ep6UC25W5yiXD/BEGObo2fUfAyRy0n91FOwl7T1NDK
+        UF2jbL2+yclTjAbUnpKcbL3xFP6XF9/izTre/H285BYv7XiL9/Fmt3hZx1t2v6uem8vtuMMGdo2l
+        frKyEWIkUCmVo34z2tluO+V0meaOS27rAhfG4vbghKxTmrTqCd9tux3N1cCJNrhvrnDqAC12FiXz
+        M5AMmzjIcRZ3qsNaxCgvXqXhK8iiBEe5sKMVI4yyGsoRdLbIwiux+GW4g5Fjkc4vDtqUXA1aNBl1
+        4d+iXyvg3CEuq4GSJm/yB4Ex0HiLhTZQcnbdmcFmwB/0W7bLONqKiQXzE6+1cByMH1kJO9qI88kR
+        +8c6OBY41wqMNry9O78Vk9PkLydcJDVuBAAA
     headers:
       access-control-expose-headers:
       - X-Request-ID
@@ -565,7 +538,7 @@ interactions:
       openai-organization:
       - DUMMY
       openai-processing-ms:
-      - '3111'
+      - '2828'
       openai-project:
       - DUMMY
       openai-version:
@@ -589,9 +562,9 @@ interactions:
       x-ratelimit-remaining-tokens:
       - DUMMY
       x-ratelimit-reset-requests:
-      - 12ms
+      - 6ms
       x-ratelimit-reset-tokens:
-      - 123ms
+      - 22ms
       x-request-id:
       - DUMMY
     status:

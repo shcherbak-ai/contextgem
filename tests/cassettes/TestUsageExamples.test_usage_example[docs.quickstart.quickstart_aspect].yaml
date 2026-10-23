@@ -88,59 +88,57 @@ interactions:
       you will find a list of consecutively ordered paragraphs from a document and
       a list of aspects.\n</introduction>\n\n<guidance_on_task_structure>\nAll structured
       information in these instructions is provided using semantic XML tags. Field
-      names correspond directly to tag names (e.g., aspect_name, paragraph_text, sentence_text,
-      additional_context, etc.).\n</guidance_on_task_structure>\n\n<private_reasoning>\nUse
-      private deliberation to plan, evaluate evidence, and verify decisions. Do not
-      reveal any intermediate analysis, notes, or steps. Only output the JSON specified
-      within <answer_format></answer_format> tags.\n\nFollow this internal three-stage
-      process:\n\n1. Plan\n    - Internally restate each aspect in one sentence.\n    -
-      List 3-5 concrete lexical/semantic cues for relevance, including indicators
-      of prohibition, requirement, exception, conditionals, and negations.\n    -
-      Define internal inclusion/exclusion criteria for borderline matches.\n\n2. Evidence
-      triage\n    - For each paragraph and sentence, generate candidate matches to
-      aspects.\n    - Collect minimal sufficient textual evidence privately and note
-      negation, hypothetical, or conditional forms.\n    - Prefer precision over recall;
-      include only high-confidence matches and omit weak or ambiguous ones.\n\n3.
-      Consistency pass\n   - Deduplicate paragraph IDs and sentence IDs within each
-      aspect and preserve the original order.\n\nNever disclose any plan, evidence,
-      or internal notes - only the JSON array defined within <answer_format></answer_format>
-      tags.\n</private_reasoning>\n\n<task_description>\nYour task is to:\n\n1. Read
-      and understand the aspects\n    - Each aspect is identified by an Aspect ID
-      (for example, \"A0\", \"A1\", etc.) specified within <aspect_id></aspect_id>
+      names correspond directly to tag names (e.g., aspect_name, additional_context,
+      etc.).\n</guidance_on_task_structure>\n\n<private_reasoning>\nUse private deliberation
+      to plan, evaluate evidence, and verify decisions. Do not reveal any intermediate
+      analysis, notes, or steps. Only output the JSON specified within <answer_format></answer_format>
+      tags.\n\nFollow this internal three-stage process:\n\n1. Plan\n    - Internally
+      restate each aspect in one sentence.\n    - List 3-5 concrete lexical/semantic
+      cues for relevance, including indicators of prohibition, requirement, exception,
+      conditionals, and negations.\n    - Define internal inclusion/exclusion criteria
+      for borderline matches.\n\n2. Evidence triage\n    - For each paragraph and
+      sentence, generate candidate matches to aspects.\n    - Collect minimal sufficient
+      textual evidence privately and note negation, hypothetical, or conditional forms.\n    -
+      Prefer precision over recall; include only high-confidence matches and omit
+      weak or ambiguous ones.\n\n3. Consistency pass\n   - Deduplicate paragraph IDs
+      and sentence IDs within each aspect and preserve the original order.\n\nNever
+      disclose any plan, evidence, or internal notes - only the JSON array defined
+      within <answer_format></answer_format> tags.\n</private_reasoning>\n\n<task_description>\nYour
+      task is to:\n\n1. Read and understand the aspects\n    - Each aspect is identified
+      by an Aspect ID (for example, \"A0\", \"A1\", etc.) specified within <aspect_id></aspect_id>
       tags, includes a name specified within <aspect_name></aspect_name> tags, and
       has a description specified within <aspect_description></aspect_description>
       tags.\n    - Aspects describe themes, topics, or criteria that might be addressed
       in the paragraphs.\n\n2. Examine each paragraph and its sentences\n    - Each
-      paragraph is identified by a paragraph ID (for example, \"P0\", \"P1\", etc.)
-      specified within <paragraph_id></paragraph_id> tags.\n    - Each paragraph includes
-      sentences, each identified by a sentence ID (for example, \"P0-S0\", \"P0-S1\",
-      etc.) specified within <sentence_id></sentence_id> tags, followed by the full
-      text of the sentence specified within <sentence_text></sentence_text> tags.\n    -
-      Note that paragraphs are listed in the same order they appear in the original
-      document; therefore, context from surrounding paragraphs may influence whether
-      a particular paragraph is relevant to an aspect.\n    - You may be working with
-      document fragments rather than complete documents. Focus on extracting information
-      from the available content without making assumptions about missing parts.\n\n3.
-      Map paragraphs and their sentences to aspects\n    - A paragraph can address
-      one, multiple, or none of the aspects.\n    - A sentence within the paragraph
-      can address one, multiple, or none of the aspects.\n    - If a paragraph clearly
-      relates to an aspect (based on the aspect''s name and description), include
-      the paragraph''s ID and the IDs of all the sentences within the paragraph that
-      address or relate to the aspect.\n    - If a paragraph does not relate to an
-      aspect, do not include it under that aspect''s list.\n    - Apply cross-paragraph
-      reasoning when needed (e.g., headings, lists, references like \"above\", \"this
-      section\"): use surrounding context to disambiguate; if unresolved, omit.\n    -
-      Treat negations, exceptions, and conditionals carefully: relevance can be present
-      in prohibitions or restrictions.\n    - Prefer minimal sufficient evidence:\n        --
-      include only the sentences necessary to support the mapping; avoid unrelated
-      sentences.\n    - Favor precision over recall; when uncertain, exclude rather
-      than speculate.\n\n4. Produce the final answer in the JSON format specified
-      within <answer_format></answer_format> tags\n    - Your output must be a JSON
-      array of objects, each object corresponding to a single aspect.\n    - For each
-      aspect (in the order they are provided), include:\n        -- aspect_id: The
-      aspect''s unique identifier, e.g., \"A0\".\n        -- paragraphs: An array
-      of objects for each paragraph that addresses or relates to the aspect. Each
-      object should include:\n            --- paragraph_id: The provided paragraph
+      paragraph is given within <paragraph></paragraph> tags, whose id attribute holds
+      its paragraph ID (for example, \"P0\", \"P1\", etc.).\n    - Each paragraph
+      includes sentences, each given with its full text within <sentence></sentence>
+      tags, whose id attribute holds its sentence ID (for example, \"P0-S0\", \"P0-S1\",
+      etc.).\n    - Note that paragraphs are listed in the same order they appear
+      in the original document; therefore, context from surrounding paragraphs may
+      influence whether a particular paragraph is relevant to an aspect.\n    - You
+      may be working with document fragments rather than complete documents. Focus
+      on extracting information from the available content without making assumptions
+      about missing parts.\n\n3. Map paragraphs and their sentences to aspects\n    -
+      A paragraph can address one, multiple, or none of the aspects.\n    - A sentence
+      within the paragraph can address one, multiple, or none of the aspects.\n    -
+      If a paragraph clearly relates to an aspect (based on the aspect''s name and
+      description), include the paragraph''s ID and the IDs of all the sentences within
+      the paragraph that address or relate to the aspect.\n    - If a paragraph does
+      not relate to an aspect, do not include it under that aspect''s list.\n    -
+      Apply cross-paragraph reasoning when needed (e.g., headings, lists, references
+      like \"above\", \"this section\"): use surrounding context to disambiguate;
+      if unresolved, omit.\n    - Treat negations, exceptions, and conditionals carefully:
+      relevance can be present in prohibitions or restrictions.\n    - Prefer minimal
+      sufficient evidence:\n        -- include only the sentences necessary to support
+      the mapping; avoid unrelated sentences.\n    - Favor precision over recall;
+      when uncertain, exclude rather than speculate.\n\n4. Produce the final answer
+      in the JSON format specified within <answer_format></answer_format> tags\n    -
+      Your output must be a JSON array of objects, each object corresponding to a
+      single aspect.\n    - For each aspect (in the order they are provided), include:\n        --
+      aspect_id: The aspect''s unique identifier, e.g., \"A0\".\n        -- paragraphs:
+      An array of objects for each paragraph that addresses or relates to the aspect.
+      Each object should include:\n            --- paragraph_id: The provided paragraph
       ID, e.g., \"P0\", \"P2\".\n            --- sentences: An array of objects for
       each relevant sentence within the paragraph. Each object should include:\n                ----
       sentence_id: The provided ID of the sentence, e.g., \"P0-S0\", \"P0-S2\".\n        --
@@ -163,24 +161,16 @@ interactions:
       ASPECTS:\n    <aspect id=\"A0\">\n        <aspect_id>A0</aspect_id>\n        \n        <aspect_name>Governing
       law</aspect_name>\n        \n        <aspect_description>\n        Clauses defining
       the governing law of the agreement\n        </aspect_description>\n    </aspect>\n\n</aspects>\n\n<document_paragraphs>\nDOCUMENT
-      PARAGRAPHS INCLUDING SENTENCES:\n    <paragraph id=\"P0\">\n        <paragraph_id>P0</paragraph_id>\n        \n        <paragraph_sentences>\n            <sentence
-      id=\"P0-S0\">\n                <sentence_id>P0-S0</sentence_id>\n                \n                <sentence_text>\n                Consultancy
-      Agreement\n                </sentence_text>\n            </sentence>\n        </paragraph_sentences>\n    </paragraph>\n\n    <paragraph
-      id=\"P1\">\n        <paragraph_id>P1</paragraph_id>\n        \n        <paragraph_sentences>\n            <sentence
-      id=\"P1-S0\">\n                <sentence_id>P1-S0</sentence_id>\n                \n                <sentence_text>\n                This
-      agreement between Company A (Supplier) and Company B (Customer)...\n                </sentence_text>\n            </sentence>\n        </paragraph_sentences>\n    </paragraph>\n\n    <paragraph
-      id=\"P2\">\n        <paragraph_id>P2</paragraph_id>\n        \n        <paragraph_sentences>\n            <sentence
-      id=\"P2-S0\">\n                <sentence_id>P2-S0</sentence_id>\n                \n                <sentence_text>\n                The
-      term of the agreement is 1 year from the Effective Date...\n                </sentence_text>\n            </sentence>\n        </paragraph_sentences>\n    </paragraph>\n\n    <paragraph
-      id=\"P3\">\n        <paragraph_id>P3</paragraph_id>\n        \n        <paragraph_sentences>\n            <sentence
-      id=\"P3-S0\">\n                <sentence_id>P3-S0</sentence_id>\n                \n                <sentence_text>\n                The
-      Supplier shall provide consultancy services as described in Annex 2...\n                </sentence_text>\n            </sentence>\n        </paragraph_sentences>\n    </paragraph>\n\n    <paragraph
-      id=\"P4\">\n        <paragraph_id>P4</paragraph_id>\n        \n        <paragraph_sentences>\n            <sentence
-      id=\"P4-S0\">\n                <sentence_id>P4-S0</sentence_id>\n                \n                <sentence_text>\n                The
-      Customer shall pay the Supplier within 30 calendar days of receiving an invoice...\n                </sentence_text>\n            </sentence>\n        </paragraph_sentences>\n    </paragraph>\n\n    <paragraph
-      id=\"P5\">\n        <paragraph_id>P5</paragraph_id>\n        \n        <paragraph_sentences>\n            <sentence
-      id=\"P5-S0\">\n                <sentence_id>P5-S0</sentence_id>\n                \n                <sentence_text>\n                This
-      agreement is governed by the laws of Norway...\n                </sentence_text>\n            </sentence>\n        </paragraph_sentences>\n    </paragraph>\n\n</document_paragraphs>"}],"model":"gpt-6-luna"}'
+      PARAGRAPHS INCLUDING SENTENCES:\n<paragraph id=\"P0\">\n<sentence id=\"P0-S0\">Consultancy
+      Agreement</sentence>\n</paragraph>\n<paragraph id=\"P1\">\n<sentence id=\"P1-S0\">This
+      agreement between Company A (Supplier) and Company B (Customer)...</sentence>\n</paragraph>\n<paragraph
+      id=\"P2\">\n<sentence id=\"P2-S0\">The term of the agreement is 1 year from
+      the Effective Date...</sentence>\n</paragraph>\n<paragraph id=\"P3\">\n<sentence
+      id=\"P3-S0\">The Supplier shall provide consultancy services as described in
+      Annex 2...</sentence>\n</paragraph>\n<paragraph id=\"P4\">\n<sentence id=\"P4-S0\">The
+      Customer shall pay the Supplier within 30 calendar days of receiving an invoice...</sentence>\n</paragraph>\n<paragraph
+      id=\"P5\">\n<sentence id=\"P5-S0\">This agreement is governed by the laws of
+      Norway...</sentence>\n</paragraph>\n</document_paragraphs>"}],"model":"gpt-6-luna"}'
     headers:
       accept:
       - application/json
@@ -191,7 +181,7 @@ interactions:
       connection:
       - keep-alive
       content-length:
-      - '16639'
+      - '14720'
       content-type:
       - application/json
       cookie:
@@ -225,15 +215,15 @@ interactions:
   response:
     body:
       string: !!binary |
-        H4sIAAAAAAAA/3VTTY/bIBC951dYnJ0qX+tke2ul3WNVaQ+NGkcWiyc2GwwIcNt0lf/eAcc23u5e
-        EMx78xjmMa+zJCG8JJ8TwmrqWKPF/GF/2V7Y+q75efr67fzjaVGd97vHGh721v4lqc9Qzy/AXJ/1
-        iSnMA8eV7GBmgDrwqsvt/XKbbbJsFYBGlSB8WqXdPJuLVtJbRq04A4vQAY9J8hpWX5ss4Q+GF2kf
-        acBaWgHGehIGjRI+Qqi13DoqHUlHkCnpQIZyD7lEcb8kSY5sjc8oeJkjlpMvi5ykPaapoZWhurYe
-        PHThIfcNZ5D4fjdIdBQL/m582kTljdKUGonNn7CkmHcdD8d+e4uFM+6P8dMNnFpLfctlK0QEUCmV
-        o96y0PTjDbkObT5xyW1doJMWbcXWWac0CegV12OwrZ04QbTBj+AKp84QZNer5aoTJOMXGeHd5gY6
-        LEXEafdZ+o5iUYKjXNjIesIoq6Ecc5frbJtOwOK34Q4ixm6zGhi0LbkascUsasL/Nb9XQNcgLqvo
-        huxD/RFgDDTOSKENlJxNGzPSDPhB+4g2uBEqxg9kfuEUFY6D8Y6VcKKt6EaB2It10BRoawVGGx7m
-        wX+K2XX2D36iX7wGBAAA
+        H4sIAAAAAAAA/3VT24rbMBB9z1cYPTslzjaJs2/LUpZSdikUyrZxMFppYqu1JSHJbcqSf+9Ivu/l
+        RVhzzhyP5sw8L6KICE6uI8JK6litq+Undve9fryTX67Y5+J8KlZPyX368ON2c/6pH0nsM9TTL2Cu
+        z/rAFOaBE0q2MDNAHXjVZLdf79J0+3EdgFpxqHxaod1yu6waSbuMUgkGFqEDXqPoOZy+NsnhjOFV
+        3EdqsJYWgLGehEGjKh8h1FphHZWOxCPIlHQgQ7mHTKK4P6IoQ7bGZ+SCZ4hl5GaVkbjHNDW0MFSX
+        1oOHNjzkvuAMEl83g0RLseD/jU+bqbxQmlMnYstvWNKUdxkvx/6zi4U7fh+nTzdwaiz1LZdNVU0A
+        KqVy1FsWmn7skMvQ5pOQwpY5OmnRVmyddUqTgF7wPAbbmpkTRBscBJc79RuC7DpNO9/IOCIjnO47
+        0GEp1SRtv+2RmWLOwVFR2Yn1hFFWAh9zk6vtLp6B+V8jHEwYm2QcJtpwoUZstZg04XXNbxXQNkjI
+        YlJ/8q7+CDAGGnck1wa4YPPGjDQDftHeow1uhIpxgMwf3KLcCTDeMQ4n2lTtKhD7zzqoc7S1AKON
+        CPvgh2JxWfwH45a/8gYEAAA=
     headers:
       access-control-expose-headers:
       - X-Request-ID
@@ -256,7 +246,7 @@ interactions:
       openai-organization:
       - DUMMY
       openai-processing-ms:
-      - '1303'
+      - '2733'
       openai-project:
       - DUMMY
       openai-version:
@@ -280,9 +270,9 @@ interactions:
       x-ratelimit-remaining-tokens:
       - DUMMY
       x-ratelimit-reset-requests:
-      - 12ms
+      - 6ms
       x-ratelimit-reset-tokens:
-      - 121ms
+      - 21ms
       x-request-id:
       - DUMMY
     status:

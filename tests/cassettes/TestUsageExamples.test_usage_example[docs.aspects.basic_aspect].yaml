@@ -88,58 +88,58 @@ interactions:
       you will find a list of consecutively ordered paragraphs from a document and
       a list of aspects.\n</introduction>\n\n<guidance_on_task_structure>\nAll structured
       information in these instructions is provided using semantic XML tags. Field
-      names correspond directly to tag names (e.g., aspect_name, paragraph_text, sentence_text,
-      additional_context, etc.).\n</guidance_on_task_structure>\n\n<private_reasoning>\nUse
-      private deliberation to plan, evaluate evidence, and verify decisions. Do not
-      reveal any intermediate analysis, notes, or steps. Only output the JSON specified
-      within <answer_format></answer_format> tags.\n\nFollow this internal three-stage
-      process:\n\n1. Plan\n    - Internally restate each aspect in one sentence.\n    -
-      List 3-5 concrete lexical/semantic cues for relevance, including indicators
-      of prohibition, requirement, exception, conditionals, and negations.\n    -
-      Define internal inclusion/exclusion criteria for borderline matches.\n\n2. Evidence
-      triage\n    - For each paragraph, generate candidate matches to aspects.\n    -
-      Collect minimal sufficient textual evidence privately and note negation, hypothetical,
-      or conditional forms.\n    - Prefer precision over recall; include only high-confidence
-      matches and omit weak or ambiguous ones.\n\n3. Consistency pass\n   - Deduplicate
-      paragraph IDs within each aspect and preserve the original order.\n\nNever disclose
-      any plan, evidence, or internal notes - only the JSON array defined within <answer_format></answer_format>
+      names correspond directly to tag names (e.g., aspect_name, additional_context,
+      etc.).\n</guidance_on_task_structure>\n\n<private_reasoning>\nUse private deliberation
+      to plan, evaluate evidence, and verify decisions. Do not reveal any intermediate
+      analysis, notes, or steps. Only output the JSON specified within <answer_format></answer_format>
+      tags.\n\nFollow this internal three-stage process:\n\n1. Plan\n    - Internally
+      restate each aspect in one sentence.\n    - List 3-5 concrete lexical/semantic
+      cues for relevance, including indicators of prohibition, requirement, exception,
+      conditionals, and negations.\n    - Define internal inclusion/exclusion criteria
+      for borderline matches.\n\n2. Evidence triage\n    - For each paragraph, generate
+      candidate matches to aspects.\n    - Collect minimal sufficient textual evidence
+      privately and note negation, hypothetical, or conditional forms.\n    - Prefer
+      precision over recall; include only high-confidence matches and omit weak or
+      ambiguous ones.\n\n3. Consistency pass\n   - Deduplicate paragraph IDs within
+      each aspect and preserve the original order.\n\nNever disclose any plan, evidence,
+      or internal notes - only the JSON array defined within <answer_format></answer_format>
       tags.\n</private_reasoning>\n\n<task_description>\nYour task is to:\n\n1. Read
       and understand the aspects\n    - Each aspect is identified by an Aspect ID
       (for example, \"A0\", \"A1\", etc.) specified within <aspect_id></aspect_id>
       tags, includes a name specified within <aspect_name></aspect_name> tags, and
       has a description specified within <aspect_description></aspect_description>
       tags.\n    - Aspects describe themes, topics, or criteria that might be addressed
-      in the paragraphs.\n\n2. Examine each paragraph\n    - Each paragraph is identified
-      by a paragraph ID (for example, \"P0\", \"P1\", etc.) specified within <paragraph_id></paragraph_id>
-      tags, followed by the full text of the paragraph specified within <paragraph_text></paragraph_text>
-      tags.\n    - Note that paragraphs are listed in the same order they appear in
-      the original document; therefore, context from surrounding paragraphs may influence
-      whether a particular paragraph is relevant to an aspect.\n    - You may be working
-      with document fragments rather than complete documents. Focus on extracting
-      information from the available content without making assumptions about missing
-      parts.\n\n3. Map paragraphs to aspects\n    - A paragraph can address one, multiple,
-      or none of the aspects.\n    - If a paragraph clearly relates to an aspect (based
-      on the aspect''s name and description), include that paragraph''s ID under the
-      aspect''s list of paragraph IDs.\n    - If a paragraph does not relate to an
-      aspect, do not include it under that aspect''s list.\n    - Apply cross-paragraph
-      reasoning when needed (e.g., headings, lists, references like \"above\", \"this
-      section\"): use surrounding context to disambiguate; if unresolved, omit.\n    -
-      Treat negations, exceptions, and conditionals carefully: relevance can be present
-      in prohibitions or restrictions.\n    - Prefer minimal sufficient evidence:\n        --
-      base the mapping on the most relevant paragraphs; avoid tangential mentions.\n    -
-      Favor precision over recall; when uncertain, exclude rather than speculate.\n\n4.
-      Produce the final answer in the JSON format specified within <answer_format></answer_format>
-      tags\n    - Your output must be a JSON array of objects, each object corresponding
-      to a single aspect.\n    - For each aspect (in the order they are provided),
-      include:\n        -- aspect_id: The aspect''s unique identifier, e.g., \"A0\".\n        --
-      paragraph_ids: An array of the paragraph IDs that address or relate to the aspect,
-      e.g., [\"P0\", \"P2\"].\n        -- If an aspect has no related paragraphs,
-      still include it with an empty paragraph_ids array ([]).\n- Do not add extra
-      commentary, code block markers, or any other formatting beyond the JSON array.\n-
-      Internally verify before finalizing:\n    -- Each provided aspect appears once,
-      in order, with the correct \"aspect_id\".\n    -- \"paragraph_ids\" contains
-      only valid paragraph IDs.\n    -- The structure exactly matches the format specified
-      within <answer_format></answer_format> tags (no extra keys or commentary).\n</task_description>\n\n<output_constraints>\n-
+      in the paragraphs.\n\n2. Examine each paragraph\n    - Each paragraph is given
+      with its full text within <paragraph></paragraph> tags, whose id attribute holds
+      its paragraph ID (for example, \"P0\", \"P1\", etc.).\n    - Note that paragraphs
+      are listed in the same order they appear in the original document; therefore,
+      context from surrounding paragraphs may influence whether a particular paragraph
+      is relevant to an aspect.\n    - You may be working with document fragments
+      rather than complete documents. Focus on extracting information from the available
+      content without making assumptions about missing parts.\n\n3. Map paragraphs
+      to aspects\n    - A paragraph can address one, multiple, or none of the aspects.\n    -
+      If a paragraph clearly relates to an aspect (based on the aspect''s name and
+      description), include that paragraph''s ID under the aspect''s list of paragraph
+      IDs.\n    - If a paragraph does not relate to an aspect, do not include it under
+      that aspect''s list.\n    - Apply cross-paragraph reasoning when needed (e.g.,
+      headings, lists, references like \"above\", \"this section\"): use surrounding
+      context to disambiguate; if unresolved, omit.\n    - Treat negations, exceptions,
+      and conditionals carefully: relevance can be present in prohibitions or restrictions.\n    -
+      Prefer minimal sufficient evidence:\n        -- base the mapping on the most
+      relevant paragraphs; avoid tangential mentions.\n    - Favor precision over
+      recall; when uncertain, exclude rather than speculate.\n\n4. Produce the final
+      answer in the JSON format specified within <answer_format></answer_format> tags\n    -
+      Your output must be a JSON array of objects, each object corresponding to a
+      single aspect.\n    - For each aspect (in the order they are provided), include:\n        --
+      aspect_id: The aspect''s unique identifier, e.g., \"A0\".\n        -- paragraph_ids:
+      An array of the paragraph IDs that address or relate to the aspect, e.g., [\"P0\",
+      \"P2\"].\n        -- If an aspect has no related paragraphs, still include it
+      with an empty paragraph_ids array ([]).\n- Do not add extra commentary, code
+      block markers, or any other formatting beyond the JSON array.\n- Internally
+      verify before finalizing:\n    -- Each provided aspect appears once, in order,
+      with the correct \"aspect_id\".\n    -- \"paragraph_ids\" contains only valid
+      paragraph IDs.\n    -- The structure exactly matches the format specified within
+      <answer_format></answer_format> tags (no extra keys or commentary).\n</task_description>\n\n<output_constraints>\n-
       No additional text:\n    -- Do not include any headers, explanations, or text
       outside of the JSON array.\n    -- Do not wrap your JSON response in backticks
       or any other formatting characters.\n- Private deliberation only:\n    -- Do
@@ -151,25 +151,17 @@ interactions:
       Clauses</aspect_name>\n        \n        <aspect_description>\n        Sections
       describing how and when the agreement can be terminated, including notice periods
       and conditions\n        </aspect_description>\n    </aspect>\n\n</aspects>\n\n<document_paragraphs>\nDOCUMENT
-      PARAGRAPHS:\n    <paragraph id=\"P0\">\n        <paragraph_id>P0</paragraph_id>\n        \n        <paragraph_text>\n        Software
-      License Agreement\n        </paragraph_text>\n    </paragraph>\n\n    <paragraph
-      id=\"P1\">\n        <paragraph_id>P1</paragraph_id>\n        \n        <paragraph_text>\n        This
-      software license agreement (Agreement) is entered into between Tech Corp (Licensor)
-      and Client Corp (Licensee).\n        </paragraph_text>\n    </paragraph>\n\n    <paragraph
-      id=\"P2\">\n        <paragraph_id>P2</paragraph_id>\n        \n        <paragraph_text>\n        ...\n        </paragraph_text>\n    </paragraph>\n\n    <paragraph
-      id=\"P3\">\n        <paragraph_id>P3</paragraph_id>\n        \n        <paragraph_text>\n        2.
-      Term and Termination\n        </paragraph_text>\n    </paragraph>\n\n    <paragraph
-      id=\"P4\">\n        <paragraph_id>P4</paragraph_id>\n        \n        <paragraph_text>\n        This
-      Agreement shall commence on the Effective Date and shall continue for a period
-      of three (3) years, unless earlier terminated in accordance with the provisions
-      hereof. Either party may terminate this Agreement upon thirty (30) days written
-      notice to the other party.\n        </paragraph_text>\n    </paragraph>\n\n    <paragraph
-      id=\"P5\">\n        <paragraph_id>P5</paragraph_id>\n        \n        <paragraph_text>\n        3.
-      Payment Terms\n        </paragraph_text>\n    </paragraph>\n\n    <paragraph
-      id=\"P6\">\n        <paragraph_id>P6</paragraph_id>\n        \n        <paragraph_text>\n        Licensee
-      agrees to pay Licensor an annual license fee of $10,000, payable within thirty
-      (30) days of the invoice date. Late payments shall incur a penalty of 1.5% per
-      month.\n        </paragraph_text>\n    </paragraph>\n\n    <paragraph id=\"P7\">\n        <paragraph_id>P7</paragraph_id>\n        \n        <paragraph_text>\n        ...\n        </paragraph_text>\n    </paragraph>\n\n</document_paragraphs>"}],"model":"gpt-6-luna"}'
+      PARAGRAPHS:\n<paragraph id=\"P0\">Software License Agreement</paragraph>\n<paragraph
+      id=\"P1\">This software license agreement (Agreement) is entered into between
+      Tech Corp (Licensor) and Client Corp (Licensee).</paragraph>\n<paragraph id=\"P2\">...</paragraph>\n<paragraph
+      id=\"P3\">2. Term and Termination</paragraph>\n<paragraph id=\"P4\">This Agreement
+      shall commence on the Effective Date and shall continue for a period of three
+      (3) years, unless earlier terminated in accordance with the provisions hereof.
+      Either party may terminate this Agreement upon thirty (30) days written notice
+      to the other party.</paragraph>\n<paragraph id=\"P5\">3. Payment Terms</paragraph>\n<paragraph
+      id=\"P6\">Licensee agrees to pay Licensor an annual license fee of $10,000,
+      payable within thirty (30) days of the invoice date. Late payments shall incur
+      a penalty of 1.5% per month.</paragraph>\n<paragraph id=\"P7\">...</paragraph>\n</document_paragraphs>"}],"model":"gpt-6-luna"}'
     headers:
       accept:
       - application/json
@@ -180,7 +172,7 @@ interactions:
       connection:
       - keep-alive
       content-length:
-      - '15017'
+      - '13901'
       content-type:
       - application/json
       cookie:
@@ -214,14 +206,14 @@ interactions:
   response:
     body:
       string: !!binary |
-        H4sIAAAAAAAA/3WSTU/jMBCG7/0Vkc8pSglJ1b1xYA97WYSQQDRV5LWniVnXNrYDVKj/nbH74VTA
-        xVLmeWcy8858TLKMCE5+ZYT11LONkdObx2395/npznYP25fXm8fu7v4B+r+/5ZvQguQhQ/97BuaP
-        WRdMYx54odUeMwvUQ6g6my9m8/qqqhYRbDQHGdI646f1VA6KHjJ6LRg4REv8zLKP+IbeFId3DBf5
-        MbIB52gHGDuKMGi1DBFCnRPOU+VJniDTyoOK7S4bhcXDk2UNqg2O0QreIGvIddGQ/MgMtbSz1PSI
-        XeDLhtyWKEB2e9WQVRDuGrUa/8nCenA0TKgGKUeAKqU9DQ7FGVcHsjtNtRZKuL5F4xy6iJ06rw2J
-        dIfvKro0nA1OjEXffev1f4hlLxdltS9I0kYSXswP0GMrMsXLorzMv6nYcvBUSDdymjDKeuApd1bW
-        8/wMtm9WeBgpqro6KejAhU6smIxM+Nrzdw3sDRKqS1Xq4sf6CTAGBk+yNRa4YOfGJJmFcNc/yU7b
-        iB0TB/YVj7b1AmzYGIc1HeT+8ojbOg+bFtfagTVWxPMLRzHZTT4BBgGDtnUDAAA=
+        H4sIAAAAAAAA/3WSTW/bMAyG7/kVhs7OYKdNnPY2FMVOA9pLsTUODFVibC2KJEh0t6LIfx+lfNhB
+        24sA8yHply/5PskypiS7zZjoOIqd09N78eOp8nfzX/fPb1tdzh/DXfn8dNMVP7fdb5bHCvvyBwSe
+        qr4JS3WAypoDFh44QuxaVjezarlcFGUCOytBx7LW4XQx1b3hx4rOKgGB0Io+s+w9vVGbkfCPwkV+
+        iuwgBN4CxU5JFPRWxwjjIaiA3CDLByisQTBJ7qo21Dw+WVZTtqMxGiVrYjX7XtQsPzHHPW89dx3h
+        EPmqZg9XlEDs4bpm65i4r816/CcPmz7wOKHptR4BboxFHh1KM66PZH+eaqOMCl1DxgVykZQGtI4l
+        uqd3nVzqLwZnzpPv2KDdQmo7q8rZoSEbNjLgxfwIkaTocVlV5Z90bCQgVzqMnGaCiw7kUFteLar8
+        AjZ/vUIYZ1zPzhm8l8oOrJiMTPio+TMBB4OUaUf6l1/2H4AQ4OgkG+dBKnFpzJDmId71V2nnbSTF
+        LIB/paNtUIGPG5Ow4b0+XB4LbwFh19BaW/DOq3R+8Sgm+8l/QNmyDXUDAAA=
     headers:
       access-control-expose-headers:
       - X-Request-ID
@@ -244,7 +236,7 @@ interactions:
       openai-organization:
       - DUMMY
       openai-processing-ms:
-      - '1898'
+      - '2176'
       openai-project:
       - DUMMY
       openai-version:
@@ -268,9 +260,9 @@ interactions:
       x-ratelimit-remaining-tokens:
       - DUMMY
       x-ratelimit-reset-requests:
-      - 12ms
+      - 6ms
       x-ratelimit-reset-tokens:
-      - 109ms
+      - 20ms
       x-request-id:
       - DUMMY
     status:
