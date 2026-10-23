@@ -1,0 +1,406 @@
+[
+  {
+    "case": "complex_mcu",
+    "model": "anthropic/claude-haiku-5-5",
+    "mode": "default",
+    "runs": 3,
+    "aspect_f1": [
+      0.7521425648778156,
+      0.7641846095422647,
+      0.7580891721454942
+    ],
+    "aspect_precision": [
+      0.8242527313955886,
+      0.7919297633583348,
+      0.8359977324263038
+    ],
+    "aspect_recall": [
+      0.7403343782654127,
+      0.7891902842641759,
+      0.7493229266628282
+    ],
+    "concepts_correct": [
+      21,
+      23,
+      21
+    ],
+    "n_concepts_scored": 26,
+    "closed_concepts_correct": [
+      8,
+      9,
+      8
+    ],
+    "n_closed_concepts": 11,
+    "reference_f1": [
+      0.6664745454130174,
+      0.677809454629378,
+      0.619954383986951
+    ],
+    "requests": [
+      13,
+      12,
+      12
+    ],
+    "input_tokens": [
+      415835,
+      257358,
+      351548
+    ],
+    "cache_read_tokens": [
+      0,
+      0,
+      0
+    ],
+    "output_tokens": [
+      19115,
+      20735,
+      16992
+    ],
+    "cost_total": [
+      "0.05114",
+      "0.03611",
+      "0.04365"
+    ],
+    "seconds": [
+      93.2,
+      95.1,
+      80.1
+    ],
+    "retries": [
+      3,
+      2,
+      2
+    ],
+    "errors": [],
+    "warnings": 0,
+    "judged": [
+      {
+        "n_strings": 1,
+        "n_strings_correct": 1,
+        "n_justifications": 23,
+        "n_justifications_correct": 20,
+        "n_fields": 12,
+        "n_fields_correct": 12
+      },
+      {
+        "n_strings": 1,
+        "n_strings_correct": 1,
+        "n_justifications": 24,
+        "n_justifications_correct": 20,
+        "n_fields": 12,
+        "n_fields_correct": 12
+      },
+      {
+        "n_strings": 1,
+        "n_strings_correct": 1,
+        "n_justifications": 23,
+        "n_justifications_correct": 20,
+        "n_fields": 12,
+        "n_fields_correct": 12
+      }
+    ]
+  },
+  {
+    "case": "complex_mcu",
+    "model": "openai/gpt-6-luna",
+    "mode": "default",
+    "runs": 3,
+    "aspect_f1": [
+      0.98622286892785,
+      0.9464727140032018,
+      0.942219799663848
+    ],
+    "aspect_precision": [
+      1.0,
+      0.9428571428571428,
+      0.9447869674185464
+    ],
+    "aspect_recall": [
+      0.9731196553856652,
+      0.9620092551127034,
+      0.9493101315761414
+    ],
+    "concepts_correct": [
+      24,
+      25,
+      26
+    ],
+    "n_concepts_scored": 26,
+    "closed_concepts_correct": [
+      10,
+      11,
+      11
+    ],
+    "n_closed_concepts": 11,
+    "reference_f1": [
+      0.7163864098290942,
+      0.7161002572643441,
+      0.7283373049454921
+    ],
+    "requests": [
+      10,
+      10,
+      10
+    ],
+    "input_tokens": [
+      138974,
+      142289,
+      138918
+    ],
+    "cache_read_tokens": [
+      13670,
+      86473,
+      101634
+    ],
+    "output_tokens": [
+      14334,
+      13080,
+      14630
+    ],
+    "cost_total": [
+      "0.02297",
+      "0.01438",
+      "0.01300"
+    ],
+    "seconds": [
+      193.7,
+      171.2,
+      200.8
+    ],
+    "retries": [
+      0,
+      0,
+      0
+    ],
+    "errors": [],
+    "warnings": 0,
+    "judged": [
+      {
+        "n_strings": 1,
+        "n_strings_correct": 1,
+        "n_justifications": 26,
+        "n_justifications_correct": 23,
+        "n_fields": 12,
+        "n_fields_correct": 12
+      },
+      {
+        "n_strings": 1,
+        "n_strings_correct": 1,
+        "n_justifications": 26,
+        "n_justifications_correct": 25,
+        "n_fields": 12,
+        "n_fields_correct": 12
+      },
+      {
+        "n_strings": 1,
+        "n_strings_correct": 1,
+        "n_justifications": 26,
+        "n_justifications_correct": 24,
+        "n_fields": 12,
+        "n_fields_correct": 12
+      }
+    ]
+  },
+  {
+    "case": "complex_stability",
+    "model": "anthropic/claude-haiku-5-5",
+    "mode": "default",
+    "runs": 3,
+    "aspect_f1": [
+      0.9227941176470589,
+      0.8876244665718349,
+      0.9375
+    ],
+    "aspect_precision": [
+      0.9267676767676768,
+      1.0,
+      0.9545454545454546
+    ],
+    "aspect_recall": [
+      0.9230769230769231,
+      0.8278846153846153,
+      0.9230769230769231
+    ],
+    "concepts_correct": [
+      14,
+      14,
+      14
+    ],
+    "n_concepts_scored": 16,
+    "closed_concepts_correct": [
+      4,
+      4,
+      4
+    ],
+    "n_closed_concepts": 5,
+    "reference_f1": [
+      0.7643518518518518,
+      0.7370670995670996,
+      0.6653299916457811
+    ],
+    "requests": [
+      8,
+      8,
+      7
+    ],
+    "input_tokens": [
+      135982,
+      153416,
+      126072
+    ],
+    "cache_read_tokens": [
+      0,
+      0,
+      0
+    ],
+    "output_tokens": [
+      7147,
+      7760,
+      5957
+    ],
+    "cost_total": [
+      "0.01717",
+      "0.01922",
+      "0.01559"
+    ],
+    "seconds": [
+      34.5,
+      35.9,
+      28.0
+    ],
+    "retries": [
+      1,
+      1,
+      0
+    ],
+    "errors": [],
+    "warnings": 0,
+    "judged": [
+      {
+        "n_strings": 2,
+        "n_strings_correct": 2,
+        "n_justifications": 17,
+        "n_justifications_correct": 15,
+        "n_fields": 6,
+        "n_fields_correct": 6
+      },
+      {
+        "n_strings": 2,
+        "n_strings_correct": 2,
+        "n_justifications": 17,
+        "n_justifications_correct": 15,
+        "n_fields": 6,
+        "n_fields_correct": 6
+      },
+      {
+        "n_strings": 2,
+        "n_strings_correct": 2,
+        "n_justifications": 17,
+        "n_justifications_correct": 15,
+        "n_fields": 6,
+        "n_fields_correct": 6
+      }
+    ]
+  },
+  {
+    "case": "complex_stability",
+    "model": "openai/gpt-6-luna",
+    "mode": "default",
+    "runs": 3,
+    "aspect_f1": [
+      0.99,
+      0.99,
+      0.9505263157894737
+    ],
+    "aspect_precision": [
+      1.0,
+      1.0,
+      0.9318181818181819
+    ],
+    "aspect_recall": [
+      0.9807692307692308,
+      0.9807692307692308,
+      0.9807692307692308
+    ],
+    "concepts_correct": [
+      15,
+      15,
+      15
+    ],
+    "n_concepts_scored": 16,
+    "closed_concepts_correct": [
+      5,
+      5,
+      5
+    ],
+    "n_closed_concepts": 5,
+    "reference_f1": [
+      0.8705535205535205,
+      0.8127899877899878,
+      0.8102971102971103
+    ],
+    "requests": [
+      7,
+      7,
+      7
+    ],
+    "input_tokens": [
+      77425,
+      77289,
+      77907
+    ],
+    "cache_read_tokens": [
+      9569,
+      68741,
+      62682
+    ],
+    "output_tokens": [
+      5063,
+      4094,
+      5347
+    ],
+    "cost_total": [
+      "0.01111",
+      "0.00381",
+      "0.00520"
+    ],
+    "seconds": [
+      105.2,
+      94.2,
+      101.1
+    ],
+    "retries": [
+      0,
+      0,
+      0
+    ],
+    "errors": [],
+    "warnings": 0,
+    "judged": [
+      {
+        "n_strings": 2,
+        "n_strings_correct": 2,
+        "n_justifications": 17,
+        "n_justifications_correct": 16,
+        "n_fields": 6,
+        "n_fields_correct": 6
+      },
+      {
+        "n_strings": 2,
+        "n_strings_correct": 2,
+        "n_justifications": 17,
+        "n_justifications_correct": 16,
+        "n_fields": 6,
+        "n_fields_correct": 6
+      },
+      {
+        "n_strings": 2,
+        "n_strings_correct": 2,
+        "n_justifications": 17,
+        "n_justifications_correct": 16,
+        "n_fields": 6,
+        "n_fields_correct": 6
+      }
+    ]
+  }
+]

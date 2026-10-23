@@ -310,6 +310,34 @@ The same configurations on `complex_stability`, under `stability_2026-10-20_text
 
 So on a document whose table rows look alike, the additional context of table rows pays for the decision models, as on the three other cases. For the LLMs it is not shown: the gain of `openai/gpt-6-luna` did not hold when measured again, and that of `openai/gpt-5.6-luna` was not measured again.
 
+## The Markup of the Paragraphs in the Prompts of LLMs
+
+The prompts of LLMs that list paragraphs (those of aspects, and of concepts with references) give each paragraph as `<paragraph id="P0">`, a `<paragraph_id>` element with the ID again, and a `<paragraph_text>` element, each on an indented line of its own with blank lines between them: about 36 tokens of markup a paragraph, 48 with an `<additional_context>` element, as many as the text of a short paragraph such as a table row. A lean listing gives a paragraph on one line, `<paragraph id="P0">text</paragraph>`, with the additional context as an `<additional_context>` element before the text, and the sentences of a paragraph as `<sentence id="P0-S0">text</sentence>` lines within it, in both `extract_aspect_items.j2` and `extract_concept_items.j2`, with the three instruction lines that name the old elements changed to match. It is not in the library: whether to adopt it is the maintainer's decision.
+
+### Measured on 2026-10-23
+
+`markup_2026-10-23_control` and `markup_2026-10-23_lean`: `openai/gpt-6-luna` and `anthropic/claude-haiku-5-5`, 6 runs of each case from the text each, from commit `8b41d0e` with the item count of multi-class label concepts changed in `extract_concept_items.j2` (not committed then), with `litellm` 1.105.2; the lean label from a copy of the code with the lean templates (its `provenance` gives their hashes). Decision models are not in it, as their requests have no such markup. The judge agreed with 76 and 75 of the 76 checks. Runs 1 to 3 were recorded at the same time; runs 4 to 6 an hour later, as 3 runs did not settle the rule below, those of `anthropic/claude-haiku-5-5` for the control 30 minutes after the others. The rule, fixed before the first request: recommend the lean listing if the input tokens of a run drop by 8% or more on each case for both models, no mean measure of a model on a case is lower than the control by more than the spread of the control's runs (with a floor of 0.03 for an F1 and 1 for a count), and the failed runs and retries do not rise. Means of the valid runs, control / lean:
+
+| Model | Case | Input tokens a run | Aspect F1 | Concepts correct | Reference F1 | Justifications correct |
+|-------|------|--------------------|-----------|------------------|--------------|------------------------|
+| `openai/gpt-6-luna` | `complex_nda` | 48,352 / 42,836 (-11%) | 0.987 / 0.991 | 17.8 / 18.0 of 18 | 0.854 / 0.873 | 20.8 / 20.8 |
+| `openai/gpt-6-luna` | `complex_dpa` | 67,936 / 56,996 (-16%) | 0.972 / 0.981 | 20.5 / 21.5 of 22 | 0.859 / 0.859 | 19.8 / 21.0 |
+| `openai/gpt-6-luna` | `complex_mcu` | 101,399 / 82,933 (-18%) | 0.954 / 0.928 | 25.0 / 24.8 of 26 | 0.717 / 0.720 | 23.7 / 23.7 |
+| `openai/gpt-6-luna` | `complex_stability` | 55,773 / 44,859 (-20%) | 0.970 / 0.972 | 14.7 / 14.3 of 16 | 0.824 / 0.814 | 15.5 / 15.3 |
+| `anthropic/claude-haiku-5-5` | `complex_nda` | 88,460 / 80,011 (-10%) | 0.924 / 0.945 | 17.8 / 17.8 of 18 | 0.822 / 0.802 | 20.5 / 20.7 |
+| `anthropic/claude-haiku-5-5` | `complex_dpa` | 93,878 / 83,142 (-11%) | 0.913 / 0.889 | 21.2 / 20.7 of 22 | 0.846 / 0.831 | 20.2 / 19.3 |
+| `anthropic/claude-haiku-5-5` | `complex_mcu` | 221,345 / 129,538 (-42%) | 0.723 / 0.715 | 21.2 / 20.2 of 26 | 0.651 / 0.625 | 20.0 / 18.8 |
+| `anthropic/claude-haiku-5-5` | `complex_stability` | 94,970 / 73,861 (-22%) | 0.878 / 0.960 | 14.0 / 14.0 of 16 | 0.781 / 0.735 | 14.0 / 14.8 |
+
+- **The input tokens drop by 10% to 42% a run**, by 10% to 33% a request, most on the cases whose paragraphs are many and short (the table rows of `complex_mcu` and `complex_stability`). The runs cost USD 0.62 for the control and USD 0.53 for the lean listing.
+- **No measure is lower beyond the spread of the runs**, on any model and case. `anthropic/claude-haiku-5-5` on `complex_mcu` has lower means of concepts, references and justifications with the lean listing, within the spread; the concepts that differ differ by one run each, in both directions, among the computed answers of DR-114 that it gets right in few runs with either listing.
+- **Fewer retries for invalid data**: 10 against 21 in all, and on `complex_mcu` 1 against 11 for `anthropic/claude-haiku-5-5`, whose answers on the aspects of that case are often invalid JSON (see From a PDF File); one of its control runs failed on them after three retries, and is left out of the means above.
+- **With 3 runs the rule was not met** on two pairs, each by one run: the input tokens of `openai/gpt-6-luna` on `complex_dpa` dropped by 3% only, as its lean runs needed one retry more (a request of 7% fewer tokens), and its reference F1 on `complex_stability` was 0.031 lower, from one run at 0.732. With 6 runs, every pair meets it.
+
+**From the Docling documents** (`--input docling`, every paragraph with its additional context): `markup_2026-10-23_docling_control` and `markup_2026-10-23_docling_lean`, 3 runs of `complex_mcu` and `complex_stability` with both LLMs, recorded at the same time, judged (75 and 76 of the 76 checks). The input tokens drop by 15% to 27% a run (`complex_mcu` with `openai/gpt-6-luna`: 140,060 to 118,797), the retries from 9 to 5, and `openai/gpt-6-luna` scores the same or higher on both cases. `anthropic/claude-haiku-5-5` on `complex_mcu` has an aspect F1 of 0.723 against 0.758, 0.005 beyond the rule's floor with three runs, and one concept fewer (20.7 against 21.7), again by single runs among the concepts of DR-114; on `complex_stability` it scores higher (reference F1 0.873 against 0.722). Cost: USD 0.48 for the two labels.
+
+Not measured: sentence-level references, which no case asks for, and other models. Adopting the listing changes the requests of every recorded test with aspects or concept references, whose cassettes are then recorded again, and calls for a new baseline.
+
 ## Adding a Case
 
 1. **Write the files** in `cases/`: the `.txt` text, one paragraph per line, which must be the paragraphs of the reference answers; the `.py` pipeline; the `.gold.json` reference answers, in the format of the other cases (the paragraphs of each aspect and the items of each concept by the positions of the paragraphs, with a justification and evidence for each item); and a `.neutral.json` file if some paragraphs are not scored. A JSON object concept whose objects have no `name` field names the field that identifies them as `object_key` in its `custom_data`.

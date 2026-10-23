@@ -1,0 +1,772 @@
+{
+  "case": "complex_stability",
+  "model": "anthropic/claude-haiku-5-5",
+  "kind": "llm",
+  "mode": "default",
+  "input": "docling",
+  "label": "markup_2026-10-23_docling_lean",
+  "run": 1,
+  "error": null,
+  "seconds": 33.3,
+  "usage": {
+    "requests": 7,
+    "requests_without_response": 0,
+    "input_tokens": 100826,
+    "output_tokens": 7160,
+    "cache_read_tokens": 0,
+    "cache_write_tokens": 0,
+    "cost_total": "0.01366"
+  },
+  "retries_for_invalid_data": 0,
+  "responses_not_valid_json": 0,
+  "extraction_warnings": [],
+  "refusal_warnings": [],
+  "provenance": {
+    "litellm": "1.105.2",
+    "prompts": {
+      "decision_question_aspect.j2": "7b069363576f",
+      "decision_question_concept.j2": "603962caf35d",
+      "default_system_message.j2": "8bb691c5e36c",
+      "extract_aspect_items.j2": "a413910857ef",
+      "extract_concept_items.j2": "8c0e800ae81b"
+    }
+  },
+  "scores": {
+    "summary": {
+      "aspect_f1": 0.9545454545454546,
+      "aspect_precision": 1.0,
+      "aspect_recall": 0.9230769230769231,
+      "concept_accuracy": 0.875,
+      "n_concepts_scored": 16,
+      "n_concepts_correct": 14,
+      "string_exact": 1.0,
+      "n_strings": 2,
+      "reference_f1": 0.8911054994388328,
+      "n_concepts_without_items": 0
+    },
+    "aspects": [
+      {
+        "name": "Shelf-life acceptance criteria",
+        "n_predicted": 7,
+        "n_gold": 7,
+        "n_neutral_predicted": 3,
+        "predicted_paragraphs": [
+          12,
+          21,
+          22,
+          23,
+          24,
+          25,
+          26,
+          27,
+          28,
+          29
+        ],
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0
+      },
+      {
+        "name": "Stability results of V20-2604",
+        "n_predicted": 20,
+        "n_gold": 20,
+        "n_neutral_predicted": 8,
+        "predicted_paragraphs": [
+          57,
+          58,
+          59,
+          60,
+          61,
+          62,
+          63,
+          64,
+          65,
+          66,
+          67,
+          68,
+          69,
+          70,
+          71,
+          72,
+          73,
+          74,
+          75,
+          76,
+          77,
+          78,
+          79,
+          97,
+          98,
+          99,
+          100,
+          101
+        ],
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0
+      },
+      {
+        "name": "Results outside the shelf-life specification",
+        "n_predicted": 9,
+        "n_gold": 13,
+        "n_neutral_predicted": 2,
+        "predicted_paragraphs": [
+          29,
+          65,
+          66,
+          68,
+          69,
+          71,
+          97,
+          98,
+          99,
+          100,
+          101
+        ],
+        "precision": 1.0,
+        "recall": 0.6923076923076923,
+        "f1": 0.8181818181818181
+      },
+      {
+        "name": "Shelf-life rules and proposal",
+        "n_predicted": 8,
+        "n_gold": 8,
+        "n_neutral_predicted": 2,
+        "predicted_paragraphs": [
+          103,
+          104,
+          105,
+          106,
+          107,
+          108,
+          109,
+          110,
+          111,
+          112
+        ],
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0
+      }
+    ],
+    "concepts": [
+      {
+        "context": "document",
+        "name": "Batches on stability",
+        "type": "JsonObjectConcept",
+        "n_items": 3,
+        "n_gold_items": 3,
+        "predicted": [
+          {
+            "container_closure_system": "hdpe bottle with desiccant",
+            "id": "v20-2601",
+            "scale": "pilot"
+          },
+          {
+            "container_closure_system": "pvc/alu blister",
+            "id": "v20-2604",
+            "scale": "production"
+          },
+          {
+            "container_closure_system": "alu/alu blister",
+            "id": "v20-2607",
+            "scale": "production"
+          }
+        ],
+        "gold": [
+          {
+            "container_closure_system": "hdpe bottle with desiccant",
+            "id": "v20-2601",
+            "scale": "pilot"
+          },
+          {
+            "container_closure_system": "pvc/alu blister",
+            "id": "v20-2604",
+            "scale": "production"
+          },
+          {
+            "container_closure_system": "alu/alu blister",
+            "id": "v20-2607",
+            "scale": "production"
+          }
+        ],
+        "scoring": "keys_of_objects",
+        "correct": true,
+        "field_match_rate": 1.0,
+        "predicted_references": [
+          8,
+          9,
+          10
+        ],
+        "references": {
+          "precision": 1.0,
+          "recall": 1.0,
+          "f1": 1.0
+        },
+        "values": [
+          {
+            "id": "V20-2601",
+            "scale": "pilot",
+            "container_closure_system": "HDPE bottle with desiccant"
+          },
+          {
+            "id": "V20-2604",
+            "scale": "production",
+            "container_closure_system": "PVC/Alu blister"
+          },
+          {
+            "id": "V20-2607",
+            "scale": "production",
+            "container_closure_system": "Alu/Alu blister"
+          }
+        ],
+        "justifications": [
+          null,
+          null,
+          null
+        ]
+      },
+      {
+        "context": "document",
+        "name": "Batches with a significant change at the accelerated condition",
+        "type": "LabelConcept",
+        "n_items": 1,
+        "n_gold_items": 1,
+        "predicted": [
+          [
+            "v20-2604",
+            "v20-2607"
+          ]
+        ],
+        "gold": [
+          [
+            "v20-2604",
+            "v20-2607"
+          ]
+        ],
+        "scoring": "exact",
+        "correct": true,
+        "predicted_references": [
+          25,
+          38,
+          67,
+          69,
+          71,
+          91
+        ],
+        "references": {
+          "precision": 1.0,
+          "recall": 0.6666666666666666,
+          "f1": 0.8
+        },
+        "values": [
+          [
+            "V20-2604",
+            "V20-2607"
+          ]
+        ],
+        "justifications": [
+          "Under the section 3.3 definition, V20-2604 has an assay drop of 5.8 % and total impurities above 1.00 % at 6 months, and V20-2607 has impurity D of 0.31 % at 6 months, above the 0.30 % shelf-life limit. V20-2601 stays within all limits."
+        ]
+      },
+      {
+        "context": "document",
+        "name": "Shelf life supported for the Alu/Alu blister by the rules of section 6 in months",
+        "type": "NumericalConcept",
+        "n_items": 1,
+        "n_gold_items": 1,
+        "predicted": [
+          12.0
+        ],
+        "gold": [
+          12.0
+        ],
+        "scoring": "exact",
+        "correct": true,
+        "predicted_references": [
+          37,
+          91,
+          105
+        ],
+        "references": {
+          "precision": 0.6666666666666666,
+          "recall": 0.3333333333333333,
+          "f1": 0.4444444444444444
+        },
+        "values": [
+          12
+        ],
+        "justifications": [
+          "V20-2607 shows a significant change at the accelerated condition, and its intermediate condition has no tested results. Under the section 6 rules the shelf life is therefore not extended beyond the 12-month long-term period."
+        ]
+      },
+      {
+        "context": "document",
+        "name": "The conclusion on V20-2607 at the accelerated condition agrees with its results",
+        "type": "BooleanConcept",
+        "n_items": 1,
+        "n_gold_items": 1,
+        "predicted": [
+          false
+        ],
+        "gold": [
+          false
+        ],
+        "scoring": "exact",
+        "correct": true,
+        "predicted_references": [
+          25,
+          91,
+          95
+        ],
+        "references": {
+          "precision": 1.0,
+          "recall": 1.0,
+          "f1": 1.0
+        },
+        "values": [
+          false
+        ],
+        "justifications": [
+          "The report states that V20-2607 shows no significant change at the accelerated condition, but its impurity D reaches 0.31 % at 6 months, above the 0.30 % shelf-life limit. The conclusion therefore does not agree with the tabulated results."
+        ]
+      },
+      {
+        "context": "document",
+        "name": "Date on which V20-2604 was placed at the intermediate condition",
+        "type": "DateConcept",
+        "n_items": 1,
+        "n_gold_items": 1,
+        "predicted": [
+          "2026-02-09"
+        ],
+        "gold": [
+          "2026-02-09"
+        ],
+        "scoring": "exact",
+        "correct": true,
+        "predicted_references": [
+          9,
+          36
+        ],
+        "references": {
+          "precision": 1.0,
+          "recall": 1.0,
+          "f1": 1.0
+        },
+        "values": [
+          "2026-02-09"
+        ],
+        "justifications": [
+          "V20-2604 was placed on stability on 9 February 2026, and its intermediate samples were placed on that same day as time 0."
+        ]
+      },
+      {
+        "context": "aspect: Shelf-life acceptance criteria",
+        "name": "Shelf-life limit of impurity D in %",
+        "type": "NumericalConcept",
+        "n_items": 1,
+        "n_gold_items": 1,
+        "predicted": [
+          0.3
+        ],
+        "gold": [
+          0.3
+        ],
+        "scoring": "exact",
+        "correct": true,
+        "predicted_references": [
+          25
+        ],
+        "references": {
+          "precision": 1.0,
+          "recall": 1.0,
+          "f1": 1.0
+        },
+        "values": [
+          0.3
+        ],
+        "justifications": [
+          "The shelf-life specification table lists the impurity D acceptance criterion as not more than 0.30 %, which is the highest accepted content."
+        ]
+      },
+      {
+        "context": "aspect: Shelf-life acceptance criteria",
+        "name": "Shelf-life limit of water content in %",
+        "type": "NumericalConcept",
+        "n_items": 1,
+        "n_gold_items": 1,
+        "predicted": [
+          4.0
+        ],
+        "gold": [
+          4.0
+        ],
+        "scoring": "exact",
+        "correct": true,
+        "predicted_references": [
+          28
+        ],
+        "references": {
+          "precision": 1.0,
+          "recall": 1.0,
+          "f1": 1.0
+        },
+        "values": [
+          4.0
+        ],
+        "justifications": [
+          "The shelf-life specification table lists the water content acceptance criterion as not more than 4.0 %, which is the highest accepted water content."
+        ]
+      },
+      {
+        "context": "aspect: Shelf-life acceptance criteria",
+        "name": "Lower shelf-life limit of assay in %",
+        "type": "NumericalConcept",
+        "n_items": 1,
+        "n_gold_items": 1,
+        "predicted": [
+          92.0
+        ],
+        "gold": [
+          92.0
+        ],
+        "scoring": "exact",
+        "correct": true,
+        "predicted_references": [
+          24
+        ],
+        "references": {
+          "precision": 1.0,
+          "recall": 1.0,
+          "f1": 1.0
+        },
+        "values": [
+          92.0
+        ],
+        "justifications": [
+          "The shelf-life specification table gives the assay acceptance range as 92.0 to 105.0 % of the label claim, so 92.0 % is the lowest accepted assay."
+        ]
+      },
+      {
+        "context": "aspect: Stability results of V20-2604",
+        "name": "Total impurities of V20-2604 after 6 months at the accelerated condition in %",
+        "type": "NumericalConcept",
+        "n_items": 1,
+        "n_gold_items": 1,
+        "predicted": [
+          1.12
+        ],
+        "gold": [
+          1.12
+        ],
+        "scoring": "exact",
+        "correct": true,
+        "predicted_references": [
+          69
+        ],
+        "references": {
+          "precision": 1.0,
+          "recall": 1.0,
+          "f1": 1.0
+        },
+        "values": [
+          1.12
+        ],
+        "justifications": [
+          "The accelerated condition (40 °C/75 % RH) table reports total impurities of 1.12 % at 6 months. This is the value for the time point and condition the concept specifies."
+        ]
+      },
+      {
+        "context": "aspect: Stability results of V20-2604",
+        "name": "Water content of V20-2604 after 12 months at the long-term condition in %",
+        "type": "NumericalConcept",
+        "n_items": 1,
+        "n_gold_items": 1,
+        "predicted": [
+          3.3
+        ],
+        "gold": [
+          3.3
+        ],
+        "scoring": "exact",
+        "correct": true,
+        "predicted_references": [
+          64
+        ],
+        "references": {
+          "precision": 1.0,
+          "recall": 1.0,
+          "f1": 1.0
+        },
+        "values": [
+          3.3
+        ],
+        "justifications": [
+          "The long-term condition (25 °C/60 % RH) table reports a water content of 3.3 % at 12 months. This matches the time point and condition the concept specifies."
+        ]
+      },
+      {
+        "context": "aspect: Stability results of V20-2604",
+        "name": "Assay of V20-2604 after 12 months at the intermediate condition in %",
+        "type": "NumericalConcept",
+        "n_items": 1,
+        "n_gold_items": 1,
+        "predicted": [
+          98.1
+        ],
+        "gold": [
+          98.1
+        ],
+        "scoring": "exact",
+        "correct": true,
+        "predicted_references": [
+          74
+        ],
+        "references": {
+          "precision": 1.0,
+          "recall": 1.0,
+          "f1": 1.0
+        },
+        "values": [
+          98.1
+        ],
+        "justifications": [
+          "The intermediate condition (30 °C/65 % RH) table reports an assay of 98.1 % at 12 months. This matches the time point and condition the concept specifies."
+        ]
+      },
+      {
+        "context": "aspect: Results outside the shelf-life specification",
+        "name": "Tests with a result outside the shelf-life specification",
+        "type": "LabelConcept",
+        "n_items": 1,
+        "n_gold_items": 1,
+        "predicted": [
+          [
+            "impurity d",
+            "total impurities",
+            "water content"
+          ]
+        ],
+        "gold": [
+          [
+            "impurity d",
+            "total impurities",
+            "water content"
+          ]
+        ],
+        "scoring": "exact",
+        "correct": true,
+        "predicted_references": [
+          68,
+          69,
+          71,
+          97
+        ],
+        "references": {
+          "precision": 0.75,
+          "recall": 0.42857142857142855,
+          "f1": 0.5454545454545454
+        },
+        "values": [
+          [
+            "Impurity D",
+            "Total impurities",
+            "Water content"
+          ]
+        ],
+        "justifications": [
+          "Section 5 identifies the 6-month accelerated-condition results for impurity D, total impurities and water content as outside the shelf-life specification, and Table 8 shows the values."
+        ]
+      },
+      {
+        "context": "aspect: Results outside the shelf-life specification",
+        "name": "Number of results outside the shelf-life specification",
+        "type": "NumericalConcept",
+        "n_items": 1,
+        "n_gold_items": 1,
+        "predicted": [
+          3.0
+        ],
+        "gold": [
+          5.0
+        ],
+        "scoring": "exact",
+        "correct": false,
+        "predicted_references": [
+          68,
+          69,
+          71,
+          97,
+          101
+        ],
+        "references": {
+          "precision": 0.6,
+          "recall": 0.42857142857142855,
+          "f1": 0.5
+        },
+        "values": [
+          3
+        ],
+        "justifications": [
+          "Three tests (impurity D, total impurities and water content) have a 6-month result outside the shelf-life specification at the accelerated condition, and no other result is reported as outside it."
+        ]
+      },
+      {
+        "context": "aspect: Results outside the shelf-life specification",
+        "name": "Every result outside the shelf-life specification is investigated in section 5",
+        "type": "BooleanConcept",
+        "n_items": 1,
+        "n_gold_items": 1,
+        "predicted": [
+          true
+        ],
+        "gold": [
+          false
+        ],
+        "scoring": "exact",
+        "correct": false,
+        "predicted_references": [
+          29,
+          97,
+          101
+        ],
+        "references": {
+          "precision": 1.0,
+          "recall": 0.6,
+          "f1": 0.7499999999999999
+        },
+        "values": [
+          true
+        ],
+        "justifications": [
+          "Section 5 reports investigation INV-26-031 covering the out-of-specification 6-month results, and the specification section states that each such result is investigated and reported in section 5."
+        ]
+      },
+      {
+        "context": "aspect: Results outside the shelf-life specification",
+        "name": "Root cause of the results of V20-2604 outside the shelf-life specification",
+        "type": "StringConcept",
+        "n_items": 1,
+        "n_gold_items": 1,
+        "predicted": [
+          "moisture ingress through the pvc film of the blister at 75 % rh."
+        ],
+        "gold": [
+          "moisture ingress through the pvc film of the blister at 75 % rh, which raised the water content of the tablets and with it impurity d, a hydrolysis product."
+        ],
+        "scoring": "exact_or_accepted",
+        "correct": true,
+        "predicted_references": [
+          99
+        ],
+        "references": {
+          "precision": 1.0,
+          "recall": 1.0,
+          "f1": 1.0
+        },
+        "values": [
+          "Moisture ingress through the PVC film of the blister at 75 % RH."
+        ],
+        "justifications": [
+          "The investigation's root cause statement attributes the out-of-specification results of batch V20-2604 to moisture ingress through the blister's PVC film at accelerated storage humidity."
+        ]
+      },
+      {
+        "context": "aspect: Shelf-life rules and proposal",
+        "name": "Proposed shelf life of the PVC/Alu blister in months",
+        "type": "NumericalConcept",
+        "n_items": 1,
+        "n_gold_items": 1,
+        "predicted": [
+          18.0
+        ],
+        "gold": [
+          18.0
+        ],
+        "scoring": "exact",
+        "correct": true,
+        "predicted_references": [
+          111
+        ],
+        "references": {
+          "precision": 1.0,
+          "recall": 1.0,
+          "f1": 1.0
+        },
+        "values": [
+          18
+        ],
+        "justifications": [
+          "The table lists a proposed shelf life of 18 months for the PVC/Alu blister with batch V20-2604."
+        ]
+      },
+      {
+        "context": "aspect: Shelf-life rules and proposal",
+        "name": "Storage statement of the PVC/Alu blister",
+        "type": "StringConcept",
+        "n_items": 1,
+        "n_gold_items": 1,
+        "predicted": [
+          "do not store above 25 °c. store in the original package in order to protect from moisture."
+        ],
+        "gold": [
+          "do not store above 25 °c. store in the original package in order to protect from moisture."
+        ],
+        "scoring": "exact_or_accepted",
+        "correct": true,
+        "predicted_references": [
+          111
+        ],
+        "references": {
+          "precision": 1.0,
+          "recall": 1.0,
+          "f1": 1.0
+        },
+        "values": [
+          "Do not store above 25 °C. Store in the original package in order to protect from moisture."
+        ],
+        "justifications": [
+          "This is the storage statement given in the table for the PVC/Alu blister."
+        ]
+      },
+      {
+        "context": "aspect: Shelf-life rules and proposal",
+        "name": "Rule that gives the proposed shelf life of the PVC/Alu blister",
+        "type": "LabelConcept",
+        "n_items": 1,
+        "n_gold_items": 1,
+        "predicted": [
+          [
+            "6.2"
+          ]
+        ],
+        "gold": [
+          [
+            "6.2"
+          ]
+        ],
+        "scoring": "exact",
+        "correct": true,
+        "predicted_references": [
+          104,
+          107,
+          111
+        ],
+        "references": {
+          "precision": 1.0,
+          "recall": 1.0,
+          "f1": 1.0
+        },
+        "values": [
+          [
+            "6.2"
+          ]
+        ],
+        "justifications": [
+          "The 18-month shelf life equals one and a half times the 12-month long-term data period, which matches the extrapolation rule of section 6.2 and falls within its 6-month limit."
+        ]
+      }
+    ]
+  }
+}

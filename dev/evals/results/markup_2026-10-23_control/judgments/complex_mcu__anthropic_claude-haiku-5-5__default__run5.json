@@ -1,0 +1,233 @@
+{
+  "judge": {
+    "model": "typesafe/jev-latest",
+    "questions": "a08ad6e4d950",
+    "litellm": "1.105.2"
+  },
+  "threshold": 0.5,
+  "reference": "d3e8dc508fca",
+  "summary": {
+    "n_strings": 1,
+    "n_strings_correct": 0,
+    "n_justifications": 6,
+    "n_justifications_correct": 6,
+    "n_fields": 0,
+    "n_fields_correct": 0
+  },
+  "usage": {
+    "requests": 6,
+    "input_tokens": 3034,
+    "output_tokens": 120,
+    "cost_total": "0.00013"
+  },
+  "concepts": [
+    {
+      "context": "document",
+      "name": "Lowest HBM rating of a QFN-48 pin in V",
+      "type": "NumericalConcept",
+      "justifications": [
+        {
+          "item": 0,
+          "probability": 0.91,
+          "verdict": true,
+          "decided_by": "judge"
+        }
+      ]
+    },
+    {
+      "context": "document",
+      "name": "Revision C BOR level 2 minimum falling threshold in V",
+      "type": "NumericalConcept",
+      "justifications": [
+        {
+          "item": 0,
+          "probability": 0.96,
+          "verdict": true,
+          "decided_by": "judge"
+        }
+      ]
+    },
+    {
+      "context": "document",
+      "name": "VOS0 permitted at a VDD of 1.8 V",
+      "type": "BooleanConcept",
+      "justifications": [
+        {
+          "item": 0,
+          "probability": 0.93,
+          "verdict": true,
+          "decided_by": "judge"
+        }
+      ]
+    },
+    {
+      "context": "document",
+      "name": "Marking code of revision C",
+      "type": "LabelConcept",
+      "justifications": [
+        {
+          "item": 0,
+          "probability": 0.72,
+          "verdict": true,
+          "decided_by": "judge"
+        }
+      ]
+    },
+    {
+      "context": "document",
+      "name": "DR-115 junction temperature in °C",
+      "type": "NumericalConcept",
+      "justifications": [
+        {
+          "item": 0,
+          "probability": 0.9,
+          "verdict": true,
+          "decided_by": "judge"
+        }
+      ]
+    },
+    {
+      "context": "document",
+      "name": "Start of the first revision C date code",
+      "type": "DateConcept",
+      "justifications": [
+        {
+          "item": 0,
+          "probability": 0.99,
+          "verdict": true,
+          "decided_by": "judge"
+        }
+      ]
+    },
+    {
+      "context": "aspect: Device limitations of revision C",
+      "name": "Limitations present in revision C",
+      "type": "JsonObjectConcept",
+      "fields": []
+    },
+    {
+      "context": "aspect: Device limitations of revision C",
+      "name": "Impact class of ES-08",
+      "type": "RatingConcept",
+      "justifications": []
+    },
+    {
+      "context": "aspect: Device limitations of revision C",
+      "name": "ES-09 present in revision C",
+      "type": "BooleanConcept",
+      "justifications": []
+    },
+    {
+      "context": "aspect: Device limitations of revision C",
+      "name": "ES-08 workaround",
+      "type": "StringConcept",
+      "value": {
+        "verdict": false,
+        "decided_by": "no items"
+      },
+      "justifications": []
+    },
+    {
+      "context": "aspect: Flash memory specifications",
+      "name": "HCLK maximum for 2 wait states in VOS1 in MHz",
+      "type": "NumericalConcept",
+      "justifications": []
+    },
+    {
+      "context": "aspect: Flash memory specifications",
+      "name": "Revision C retention after 10 000 cycles at 85 °C",
+      "type": "NumericalConcept",
+      "justifications": []
+    },
+    {
+      "context": "aspect: Flash memory specifications",
+      "name": "Revision C retention after 1 000 cycles at 105 °C",
+      "type": "NumericalConcept",
+      "justifications": []
+    },
+    {
+      "context": "aspect: DR-114 clock configuration",
+      "name": "DR-114 maximum permitted SYSCLK in MHz",
+      "type": "NumericalConcept",
+      "justifications": []
+    },
+    {
+      "context": "aspect: DR-114 clock configuration",
+      "name": "DR-114 PLL1 configuration within specification",
+      "type": "BooleanConcept",
+      "justifications": []
+    },
+    {
+      "context": "aspect: DR-114 clock configuration",
+      "name": "DR-114 required flash wait states",
+      "type": "NumericalConcept",
+      "justifications": []
+    },
+    {
+      "context": "aspect: DR-114 thermal assessment",
+      "name": "DR-114 junction temperature in °C",
+      "type": "NumericalConcept",
+      "justifications": []
+    },
+    {
+      "context": "aspect: DR-114 thermal assessment",
+      "name": "DR-114 meets HDR-7",
+      "type": "BooleanConcept",
+      "justifications": []
+    },
+    {
+      "context": "aspect: DR-114 errata and firmware",
+      "name": "Errata applicable to the DR-114 production boards",
+      "type": "LabelConcept",
+      "justifications": []
+    },
+    {
+      "context": "aspect: DR-114 errata and firmware",
+      "name": "DR-114 maximum ADC INL in LSB",
+      "type": "NumericalConcept",
+      "justifications": []
+    },
+    {
+      "context": "aspect: DR-114 errata and firmware",
+      "name": "FW 2.3.0 meets HDR-9 for the DR-114 production boards",
+      "type": "BooleanConcept",
+      "justifications": []
+    },
+    {
+      "context": "aspect: DR-115 errata and PLL1 limits",
+      "name": "Errata applicable to the DR-115 boards",
+      "type": "LabelConcept",
+      "justifications": []
+    },
+    {
+      "context": "aspect: DR-115 errata and PLL1 limits",
+      "name": "DR-115 maximum PLL1 VCO frequency in MHz",
+      "type": "NumericalConcept",
+      "justifications": []
+    },
+    {
+      "context": "aspect: DR-115 errata and PLL1 limits",
+      "name": "DR-115 PLL1 configuration within its limits",
+      "type": "BooleanConcept",
+      "justifications": []
+    },
+    {
+      "context": "aspect: Revision B end of life",
+      "name": "Halyard last-time-buy date for revision B",
+      "type": "DateConcept",
+      "justifications": []
+    },
+    {
+      "context": "aspect: Revision B end of life",
+      "name": "Last-shipment date of revision B",
+      "type": "DateConcept",
+      "justifications": []
+    },
+    {
+      "context": "aspect: Revision B end of life",
+      "name": "PO-5521 valid last-time-buy order",
+      "type": "BooleanConcept",
+      "justifications": []
+    }
+  ]
+}

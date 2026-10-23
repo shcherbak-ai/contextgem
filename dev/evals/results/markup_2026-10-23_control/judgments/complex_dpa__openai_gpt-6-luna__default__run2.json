@@ -1,0 +1,380 @@
+{
+  "judge": {
+    "model": "typesafe/jev-latest",
+    "questions": "a08ad6e4d950",
+    "litellm": "1.105.2"
+  },
+  "threshold": 0.5,
+  "reference": "af8882ce3bf9",
+  "summary": {
+    "n_strings": 2,
+    "n_strings_correct": 1,
+    "n_justifications": 22,
+    "n_justifications_correct": 20,
+    "n_fields": 8,
+    "n_fields_correct": 8
+  },
+  "usage": {
+    "requests": 23,
+    "input_tokens": 11400,
+    "output_tokens": 460,
+    "cost_total": "0.00048"
+  },
+  "concepts": [
+    {
+      "context": "document",
+      "name": "Breach notification deadline in force on 15 September 2026",
+      "type": "NumericalConcept",
+      "justifications": [
+        {
+          "item": 0,
+          "probability": 0.93,
+          "verdict": true,
+          "decided_by": "judge"
+        }
+      ]
+    },
+    {
+      "context": "document",
+      "name": "Breach notification deadline in force on 1 November 2026",
+      "type": "NumericalConcept",
+      "justifications": [
+        {
+          "item": 0,
+          "probability": 0.95,
+          "verdict": true,
+          "decided_by": "judge"
+        }
+      ]
+    },
+    {
+      "context": "document",
+      "name": "Audit notice period in force on 1 November 2026",
+      "type": "NumericalConcept",
+      "justifications": [
+        {
+          "item": 0,
+          "probability": 0.58,
+          "verdict": true,
+          "decided_by": "judge"
+        }
+      ]
+    },
+    {
+      "context": "document",
+      "name": "Liability cap in force on 1 November 2026",
+      "type": "NumericalConcept",
+      "justifications": [
+        {
+          "item": 0,
+          "probability": 0.96,
+          "verdict": true,
+          "decided_by": "judge"
+        }
+      ]
+    },
+    {
+      "context": "document",
+      "name": "Liability cap covers confidentiality breaches",
+      "type": "BooleanConcept",
+      "justifications": [
+        {
+          "item": 0,
+          "probability": 0.95,
+          "verdict": true,
+          "decided_by": "judge"
+        }
+      ]
+    },
+    {
+      "context": "document",
+      "name": "Meridian Mail approved on 1 November 2026",
+      "type": "BooleanConcept",
+      "justifications": [
+        {
+          "item": 0,
+          "probability": 0.91,
+          "verdict": true,
+          "decided_by": "judge"
+        }
+      ]
+    },
+    {
+      "context": "document",
+      "name": "Meridian Mail approved on 1 February 2027",
+      "type": "BooleanConcept",
+      "justifications": [
+        {
+          "item": 0,
+          "probability": 0.92,
+          "verdict": true,
+          "decided_by": "judge"
+        }
+      ]
+    },
+    {
+      "context": "document",
+      "name": "Distinct data locations count as of 1 February 2027",
+      "type": "NumericalConcept",
+      "justifications": [
+        {
+          "item": 0,
+          "probability": 0.91,
+          "verdict": true,
+          "decided_by": "judge"
+        }
+      ]
+    },
+    {
+      "context": "document",
+      "name": "Deletion deadline for year-end termination",
+      "type": "DateConcept",
+      "justifications": [
+        {
+          "item": 0,
+          "probability": 0.92,
+          "verdict": true,
+          "decided_by": "judge"
+        }
+      ]
+    },
+    {
+      "context": "document",
+      "name": "Approved sub-processors as of 1 February 2027",
+      "type": "JsonObjectConcept",
+      "fields": [
+        {
+          "object": "Skylark Hosting OU",
+          "field": "country",
+          "verdict": true,
+          "decided_by": "exact"
+        },
+        {
+          "object": "Skylark Hosting OU",
+          "field": "service",
+          "verdict": true,
+          "decided_by": "exact"
+        },
+        {
+          "object": "Baltika Analytics UAB",
+          "field": "country",
+          "verdict": true,
+          "decided_by": "exact"
+        },
+        {
+          "object": "Baltika Analytics UAB",
+          "field": "service",
+          "verdict": true,
+          "decided_by": "exact"
+        },
+        {
+          "object": "Cendrillon Mail SAS",
+          "field": "country",
+          "verdict": true,
+          "decided_by": "exact"
+        },
+        {
+          "object": "Cendrillon Mail SAS",
+          "field": "service",
+          "verdict": true,
+          "decided_by": "exact"
+        },
+        {
+          "object": "Dagmar Backup ApS",
+          "field": "country",
+          "verdict": true,
+          "decided_by": "exact"
+        },
+        {
+          "object": "Dagmar Backup ApS",
+          "field": "service",
+          "verdict": true,
+          "decided_by": "exact"
+        }
+      ]
+    },
+    {
+      "context": "document",
+      "name": "Breach notification obligation summary",
+      "type": "StringConcept",
+      "value": {
+        "probability": 0.12,
+        "verdict": false,
+        "decided_by": "judge"
+      },
+      "justifications": [
+        {
+          "item": 0,
+          "probability": 0.65,
+          "verdict": true,
+          "decided_by": "judge"
+        }
+      ]
+    },
+    {
+      "context": "aspect: Incident IR-27",
+      "name": "Applicable initial notification regime",
+      "type": "LabelConcept",
+      "justifications": [
+        {
+          "item": 0,
+          "probability": 0.87,
+          "verdict": true,
+          "decided_by": "judge"
+        }
+      ]
+    },
+    {
+      "context": "aspect: Incident IR-27",
+      "name": "Initial notice lateness in minutes",
+      "type": "NumericalConcept",
+      "justifications": [
+        {
+          "item": 0,
+          "probability": 0.99,
+          "verdict": true,
+          "decided_by": "judge"
+        }
+      ]
+    },
+    {
+      "context": "aspect: Incident IR-27",
+      "name": "Completed follow-up report deadline",
+      "type": "DateConcept",
+      "justifications": [
+        {
+          "item": 0,
+          "probability": 0.3,
+          "verdict": false,
+          "decided_by": "judge"
+        }
+      ]
+    },
+    {
+      "context": "aspect: Retention TR-27",
+      "name": "Held ORD records deletion deadline",
+      "type": "DateConcept",
+      "justifications": [
+        {
+          "item": 0,
+          "probability": 0.73,
+          "verdict": true,
+          "decided_by": "judge"
+        }
+      ]
+    },
+    {
+      "context": "aspect: Retention TR-27",
+      "name": "BK-0630 deletion deadline",
+      "type": "DateConcept",
+      "justifications": [
+        {
+          "item": 0,
+          "probability": 0.84,
+          "verdict": true,
+          "decided_by": "judge"
+        }
+      ]
+    },
+    {
+      "context": "aspect: Retention TR-27",
+      "name": "Permitted uses of held ORD records on 1 September 2027",
+      "type": "LabelConcept",
+      "justifications": [
+        {
+          "item": 0,
+          "probability": 0.4,
+          "verdict": false,
+          "decided_by": "judge"
+        }
+      ]
+    },
+    {
+      "context": "aspect: Supplier approvals in May 2027",
+      "name": "Nordlicht infrastructure approval start",
+      "type": "DateConcept",
+      "justifications": [
+        {
+          "item": 0,
+          "probability": 0.78,
+          "verdict": true,
+          "decided_by": "judge"
+        }
+      ]
+    },
+    {
+      "context": "aspect: Supplier approvals in May 2027",
+      "name": "Ordinary customer email providers on 10 May 2027",
+      "type": "StringConcept",
+      "value": {
+        "verdict": true,
+        "decided_by": "exact"
+      },
+      "justifications": [
+        {
+          "item": 0,
+          "probability": 0.88,
+          "verdict": true,
+          "decided_by": "judge"
+        }
+      ]
+    },
+    {
+      "context": "aspect: Supplier approvals in May 2027",
+      "name": "Authorised data locations on 15 May 2027",
+      "type": "LabelConcept",
+      "justifications": [
+        {
+          "item": 0,
+          "probability": 0.84,
+          "verdict": true,
+          "decided_by": "judge"
+        }
+      ]
+    },
+    {
+      "context": "aspect: Supplier approvals in May 2027",
+      "name": "Written consent date for Nordlicht email in Finland",
+      "type": "DateConcept"
+    },
+    {
+      "context": "aspect: Liability LC-27",
+      "name": "Security cap before earlier payments in EUR",
+      "type": "NumericalConcept",
+      "justifications": [
+        {
+          "item": 0,
+          "probability": 0.83,
+          "verdict": true,
+          "decided_by": "judge"
+        }
+      ]
+    },
+    {
+      "context": "aspect: Liability LC-27",
+      "name": "Ordinary cap remaining before new claims in EUR",
+      "type": "NumericalConcept",
+      "justifications": [
+        {
+          "item": 0,
+          "probability": 0.96,
+          "verdict": true,
+          "decided_by": "judge"
+        }
+      ]
+    },
+    {
+      "context": "aspect: Liability LC-27",
+      "name": "Total payable on new claims in EUR",
+      "type": "NumericalConcept",
+      "justifications": [
+        {
+          "item": 0,
+          "probability": 0.57,
+          "verdict": true,
+          "decided_by": "judge"
+        }
+      ]
+    }
+  ]
+}
