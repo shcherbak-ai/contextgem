@@ -19,7 +19,6 @@ import functools
 import hashlib
 import inspect
 import json
-import warnings
 from collections.abc import Sequence
 from pathlib import Path
 from typing import Any, cast
@@ -42,7 +41,6 @@ from contextgem.internal.data_models import (
 )
 from contextgem.internal.decorators import _disable_direct_initialization
 from contextgem.internal.exceptions import (
-    ContextGemWarning,
     LLMToolLoopLimitError,
     ModelAPIError,
     ModelRefusalError,
@@ -625,12 +623,10 @@ class _DocumentLLM(_DocumentModel):
 
         # Warn if using default system message
         if self.system_message == self._get_default_system_message():
-            warnings.warn(
+            _warn_from_caller_code(
                 "You are using the default system message optimized for extraction tasks. "
                 "For simple chat interactions, consider setting system_message='' to disable it, "
-                "or provide your own custom system message.",
-                ContextGemWarning,
-                stacklevel=2,
+                "or provide your own custom system message."
             )
 
         # Send message to LLM
@@ -707,11 +703,9 @@ class _DocumentLLM(_DocumentModel):
         :rtype: None
         """
         if self.tools:
-            warnings.warn(
+            _warn_from_caller_code(
                 f"Tool calling for model `{self.model}` is ignored during extraction workflows. "
-                f"Tools are only supported in `llm.chat(...)`.",
-                ContextGemWarning,
-                stacklevel=2,
+                f"Tools are only supported in `llm.chat(...)`."
             )
 
     def _build_user_message(
@@ -1338,14 +1332,12 @@ class _DocumentLLM(_DocumentModel):
         # Warn to use `ollama/` prefix for image processing when using local models,
         # as the ollama_chat/ does not yet support image inputs
         if contains_image_content and self.model.startswith("ollama_chat/"):
-            warnings.warn(
+            _warn_from_caller_code(
                 "Using `ollama_chat/` prefix for processing images with local models is "
                 "not recommended, as it does not yet support image inputs. Please use "
                 "`ollama/` prefix instead. "
                 "See https://github.com/ollama/ollama/issues/10255 and "
-                "https://github.com/ollama/ollama/issues/6451 for more details.",
-                ContextGemWarning,
-                stacklevel=2,
+                "https://github.com/ollama/ollama/issues/6451 for more details."
             )
 
     def _messages_to_request(

@@ -2509,9 +2509,18 @@ class TestChat(BaseTest):
         )
         with (
             patch.object(llms_module.litellm, "acompletion", new=acompletion_stub),
-            pytest.warns(UserWarning, match="ignored during extraction workflows"),
+            pytest.warns(
+                UserWarning, match="ignored during extraction workflows"
+            ) as caught_warnings,
         ):
             llm.extract_concepts_from_document(document)
+        # The warning is attributed to the line that calls the extraction method,
+        # not to the framework or to the event loop that runs its coroutines
+        assert {
+            os.path.normcase(caught_warning.filename)
+            for caught_warning in caught_warnings
+            if "ignored during extraction workflows" in str(caught_warning.message)
+        } == {os.path.normcase(__file__)}
 
         assert len(requests) == 1
         for tool_param in ["tools", "tool_choice", "parallel_tool_calls"]:
