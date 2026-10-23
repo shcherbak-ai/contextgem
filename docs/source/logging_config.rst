@@ -105,6 +105,10 @@ Python warnings are not log messages: ``CONTEXTGEM_LOGGER_LEVEL`` does not affec
 📋 Log Format
 ---------------
 
+ContextGem writes its log to standard output (``sys.stdout``) with a handler of its own, and its logger does not pass the messages on to the root logger: a handler of your application, e.g. one that sends your logs to a log collector, does not get them, unless you add it to the ``contextgem`` logger (``logging.getLogger("contextgem").addHandler(...)``), where it stays when the settings are changed, except with ``OFF``.
+
+The errors that ContextGem logs on an answer of a model that cannot be used say where and how the answer is invalid, without its values, which can hold text of your documents. ``litellm`` logs with loggers of its own: if your application logs them at the ``DEBUG`` level, they log each request that ``litellm`` sends, its prompt included.
+
 ContextGem logs use the following format:
 
 .. code-block:: text

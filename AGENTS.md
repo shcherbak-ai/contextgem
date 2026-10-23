@@ -129,6 +129,7 @@ When adding or modifying functionality:
    ```
 
 6. **Check the links** after a change to the documentation, the README, `PYPI.md`, the changelog or a link in the package: `uv run fab links --offline` builds the documentation into `docs/build/links` and checks the links to the documentation site and the repository against the build and the working tree, the links of the releases from 1.0 too (`dev/check_links.py`), as CI does on each push. Check them against the build, never against the live site, which describes the last release. A page, an anchor or a file that a release links to stays. `uv run fab links` also asks the other sites for their pages (no model requests; CI does it weekly in `links.yml`), which fails only on 404, 410 or an unknown host. A link that leads nowhere on purpose, e.g. a placeholder, goes in `IGNORED` with the reason
+7. **Run a cold-start check** after a change to what users build on, or to the pages that describe it: a new agent with none of the session's context, given only a wheel built from the branch (`uv build --wheel`, installed outside the repository with the versions of `uv export --frozen --no-dev`) and a copy of `docs/build/links`, builds a realistic feature with stand-ins for the models (no keys, no requests) and reports each assumption that proved wrong, each thing it built that ContextGem has, and each gap in the docs or docstrings, quoting the line. Fix the documentation from the report; the agent must not read the repository
 
 ### Checking the README in a browser
 

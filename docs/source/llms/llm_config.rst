@@ -298,7 +298,7 @@ Some LLM providers cache the beginning of a prompt and reuse it across requests 
 🛑 Stopping a Model Whose Prices Are Unknown
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-With ``auto_pricing=True``, a model that ``genai-prices`` has no prices for gets a warning when it is created, and again when the usage of its calls is recorded, and its costs stay at zero. A budget that stops a run when the costs reach a limit would therefore never stop it. To have such a model raise where it is created, make these warnings errors with a warning filter on the start of their text:
+With ``auto_pricing=True``, a model that ``genai-prices`` has no prices for gets a warning when it is created, and again when the usage of its calls is recorded, and its costs stay at zero. A budget check of your own, e.g. one that stops a run when ``get_cost()`` reaches a limit, would therefore never stop it: ContextGem has no budget of its own, and checks no cost before a request. To have such a model raise where it is created, make these warnings errors with a warning filter on the start of their text:
 
 .. code-block:: python
 
@@ -382,3 +382,5 @@ The usage statistics include not only token counts but also detailed information
 .. literalinclude:: ../../../dev/usage_examples/docs/llm_config/detailed_usage.py
    :language: python
    :caption: Accessing detailed usage information
+
+The call history is kept in memory for as long as the LLM is, with the prompt and the response of each call, i.e. the text of your documents, and it grows with each call. ``reset_usage_and_cost()`` clears it, together with the token counts and the costs: read the costs first if you keep them, e.g. for a budget.

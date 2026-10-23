@@ -34,9 +34,18 @@ class Document(_Document):
     :vartype images: list[Image]
     :ivar aspects: List of aspects associated with the document for focused analysis.
         Validated to ensure unique names and descriptions. Defaults to an empty list.
+        The list holds copies of the aspects given, made when it is assigned or
+        added to (``add_aspects()``), so that an aspect can be reused for other
+        documents: read the extracted items from the document's own aspects,
+        e.g. ``document.aspects`` or ``get_aspect_by_name()``.
     :vartype aspects: list[Aspect]
     :ivar concepts: List of concepts associated with the document for information extraction.
         Validated to ensure unique names and descriptions. Defaults to an empty list.
+        The list holds copies of the concepts given, made when it is assigned or
+        added to (``add_concepts()``), so that a concept can be reused for other
+        documents: read the extracted items from the document's own concepts,
+        e.g. ``document.concepts``, ``get_concept_by_name()`` or the list that
+        an extraction method returns.
     :vartype concepts: list[_Concept]
     :ivar paragraph_segmentation_mode: Mode for paragraph segmentation. When set to "sat",
         uses a SaT (Segment Any Text https://arxiv.org/abs/2406.16678) model. Defaults to "newlines".

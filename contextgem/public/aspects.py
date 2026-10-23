@@ -29,6 +29,8 @@ class Aspect(_Aspect):
     :vartype description: str
     :ivar concepts: A list of concepts associated with the aspect. These concepts must be
         unique in both name and description, and must have the "text" modality.
+        The list holds copies of the concepts given, made when it is assigned or
+        added to: read the extracted items from the aspect's own concepts.
     :vartype concepts: list[_Concept]
     :ivar model_role: The role label of the model that extracts the aspect when
         a ``DocumentModelGroup`` is used: the aspect is routed to the model in the group

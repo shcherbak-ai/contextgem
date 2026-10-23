@@ -1804,7 +1804,8 @@ class TestAspectsAndConcepts(BaseTest):
                 llm.extract_concepts_from_document(
                     document, raise_exception_on_extraction_error=False
                 )
-            assert not concept.extracted_items
+            # The document holds a copy of the concept
+            assert not document.concepts[0].extracted_items
             assert any(expected_message_part in message for message in messages), (
                 messages
             )

@@ -30,10 +30,13 @@ class ExtractionPipeline(_ExtractionPipeline):
     extraction patterns into reusable units, allowing for standardized document processing.
 
     :ivar aspects: A list of aspects to extract from documents. Aspects represent structural
-                  categories of information. Defaults to an empty list.
+        categories of information. Defaults to an empty list.
     :vartype aspects: list[_Aspect]
     :ivar concepts: A list of concepts to identify within documents. Concepts represent
-                   specific information elements to extract. Defaults to an empty list.
+        specific information elements to extract. Defaults to an empty list.
+        The pipeline holds copies of the aspects and concepts given, and
+        ``Document.assign_pipeline()`` gives the document copies of its own: read
+        the extracted items from the document's aspects and concepts.
     :vartype concepts: list[_Concept]
     :ivar model_roles: The ``model_role`` values of the pipeline's aspects and concepts,
         and of the sub-aspects and concepts of its aspects, with None for those without

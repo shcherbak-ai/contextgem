@@ -43,7 +43,9 @@ The stand-in receives the keyword arguments of ``litellm.acompletion``, among th
 
 With ``mock_response``, ``litellm.acompletion`` builds such a response without sending the request: the answer as its text, ``finish_reason="stop"``, and a usage of 10 prompt tokens and 20 completion tokens whatever the request (``litellm`` 1.105.2).
 
-The answer of an extraction is the JSON that the prompt asks for in its answer format: an array with an entry for each concept, or aspect, of the request, by its ID in the prompt (``"C0"``, ``"C1"``, … for concepts, ``"A0"``, … for aspects), with its extracted items. The form of an item depends on the request, e.g. on whether justifications or references are asked for: the prompt of a request shows it. The answer of a chat is its text.
+The answer of an extraction is the JSON that the prompt asks for in its answer format: an array with an entry for each concept, or aspect, of the request, by its ID in the prompt (``"C0"``, ``"C1"``, … for concepts, ``"A0"``, … for aspects), with its extracted items. The form of an item depends on the request, e.g. on whether justifications or references are asked for, and on the concept, e.g. ``{"labels": ["Contract"]}`` for a label concept, whose extracted item has the list of labels as its value: the prompt of a request shows it. The answer of a chat is its text.
+
+To test a refusal, set ``finish_reason`` to ``"content_filter"`` on the choice of the response, e.g. of the one that ``mock_response`` builds: ``litellm`` gives this finish reason for the refusal of a Claude model and for the content filters of the providers (see :ref:`llm-refusals-label`).
 
 
 🎯 Stubbing a Decision Model
@@ -61,7 +63,7 @@ The stand-in receives the keyword arguments of ``litellm.adecisions``: ``model``
 
 Run the tests with no API key, neither passed to the models nor in their environment (e.g. ``OPENAI_API_KEY``). A request that a test does not replace then fails for the missing key, with :class:`~contextgem.public.exceptions.ModelAPIError`, instead of being sent and billed.
 
-Replacing the two functions stops the requests to the models only. Other downloads are not affected: a SaT model, which segments the text into sentences when sentences are needed, is downloaded when it is first used (see :ref:`sat-models-offline`), and ``litellm`` fetches its model data from GitHub when it is imported, unless ``LITELLM_LOCAL_MODEL_COST_MAP=True`` is set, with which it uses the copy that it is installed with.
+Replacing the two functions stops the requests to the models only. Other downloads are not affected: a SaT model, which segments the text into sentences when sentences are needed, is downloaded when it is first used (see :ref:`sat-models-offline`), and ``litellm`` fetches its model data from GitHub when it is imported, unless ``LITELLM_LOCAL_MODEL_COST_MAP=True`` is set, with which it uses the copy that it is installed with. ContextGem also counts the input tokens of each request to an LLM with ``litellm``, to check them against the context window of the model, and ``tiktoken``, which counts them, downloads its encodings from ``openaipublic.blob.core.windows.net`` where the copies that ``litellm`` is installed with are rejected, as on Windows with ``litellm`` 1.105.2, whose copies have Windows line endings. Without the download, the check is skipped, with a message in the log.
 
 
 📼 Stand-ins and Recorded Responses
