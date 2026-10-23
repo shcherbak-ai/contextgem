@@ -3,6 +3,16 @@
 
 """
 ContextGem - Extract structured data and insights from documents using LLMs and decision models
+
+Documentation: https://contextgem.shcherbak.ai/
+
+For coding agents and LLMs, https://contextgem.shcherbak.ai/llms.txt indexes
+the documentation, with a Markdown copy of each page.
+
+The documentation describes the latest release, and the docstrings of this
+package describe the version that is installed (``contextgem.__version__``):
+where the two differ, the docstrings apply. The classes and functions to use
+are those that this module exports (``contextgem.__all__``).
 """
 
 __version__ = "1.2.1"

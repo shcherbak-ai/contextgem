@@ -23,4 +23,6 @@ Or, with pip: `pip install -U contextgem`. To convert PDF, DOCX and other files 
 
 See the [documentation](https://contextgem.shcherbak.ai) for the [quickstart](https://contextgem.shcherbak.ai/quickstart/), [how it works](https://contextgem.shcherbak.ai/how_it_works/), [decision models](https://contextgem.shcherbak.ai/decision_models/decision_models/) and [agentic workflows](https://contextgem.shcherbak.ai/agentic_workflows/), the [repository](https://github.com/shcherbak-ai/contextgem#readme) for the overview and the source, and the [changelog](https://github.com/shcherbak-ai/contextgem/blob/main/CHANGELOG.md) for the version history.
 
+For coding agents and LLMs, [llms.txt](https://contextgem.shcherbak.ai/llms.txt) indexes the documentation, with a Markdown copy of each page.
+
 Licensed under [Apache-2.0](https://github.com/shcherbak-ai/contextgem/blob/main/LICENSE).
