@@ -34,6 +34,7 @@ from contextgem.internal.loggers import logger
 from contextgem.internal.utils import _get_llm_cache_token_counts
 from contextgem.public import (
     BooleanConcept,
+    ContextGemWarning,
     Document,
     DocumentDecisionModel,
     DocumentLLM,
@@ -1032,6 +1033,94 @@ class TestUsageAndCost(BaseTest):
         cost_of_other_decision_model = get_cost_of_call(other_decision_model)
         assert cost_of_other_decision_model != cost_of_decision_model
         assert get_cost_of_call(decision_model) == cost_of_other_decision_model
+
+    def test_unknown_prices_raise_with_a_warning_filter(self):
+        """
+        Tests the documented way to keep a model whose costs are not known from
+        running: a warning filter that makes the warnings on unknown prices errors,
+        by the start of their text. A model that genai-prices has no prices for
+        then raises where it is created, while a model with prices is created, as
+        the warning on the accuracy of the prices does not match. For a model created before the filter is set,
+        the warning issued when the usage of its calls is recorded is attributed
+        to the line that calls the extraction method, and with the filter it
+        stops the extraction after the usage of the call is recorded.
+
+        LLM API calls are stubbed, i.e. no cassette is required.
+        """
+        litellm = llms_module.litellm
+
+        async def acompletion_stub(**kwargs: Any):
+            """
+            Simulates the LLM API: returns one item for the concept of the prompt.
+            """
+            return types.SimpleNamespace(
+                choices=[
+                    types.SimpleNamespace(
+                        message=types.SimpleNamespace(
+                            content='[{"concept_id": "C0", "extracted_items": ["Acme"]}]'
+                        )
+                    )
+                ],
+                usage=types.SimpleNamespace(prompt_tokens=100, completion_tokens=10),
+            )
+
+        def make_unknown_prices_errors() -> None:
+            """
+            Sets the warning filter of the documentation.
+            """
+            warnings.filterwarnings(
+                "error",
+                message="Unable to fetch pricing data",
+                category=ContextGemWarning,
+            )
+
+        # === Where the model is created ===
+        with warnings.catch_warnings():
+            make_unknown_prices_errors()
+            with pytest.raises(ContextGemWarning, match="Unable to fetch pricing data"):
+                DocumentLLM(
+                    model="openai/model-without-prices",
+                    api_key="test_api_key",
+                    auto_pricing=True,
+                )
+            # A model with prices
+            DocumentLLM(
+                model="openai/gpt-6-luna", api_key="test_api_key", auto_pricing=True
+            )
+
+        # === Where the usage of the calls is recorded ===
+        with pytest.warns(ContextGemWarning, match="Unable to fetch pricing data"):
+            llm = DocumentLLM(
+                model="openai/model-without-prices",
+                api_key="test_api_key",
+                auto_pricing=True,
+            )
+        document = Document(raw_text="Acme signs the agreement.")
+        document.concepts = [StringConcept(name="Party", description="A party")]
+        with (
+            patch.object(litellm, "acompletion", new=acompletion_stub),
+            pytest.warns(
+                ContextGemWarning, match="Unable to fetch pricing data"
+            ) as caught_warnings,
+        ):
+            llm.extract_concepts_from_document(document)
+        (caught_warning,) = list(caught_warnings)
+        assert os.path.normcase(caught_warning.filename) == os.path.normcase(__file__)
+        assert [item.value for item in document.concepts[0].extracted_items] == ["Acme"]
+
+        with (
+            patch.object(litellm, "acompletion", new=acompletion_stub),
+            warnings.catch_warnings(),
+        ):
+            make_unknown_prices_errors()
+            with pytest.raises(ContextGemWarning, match="Unable to fetch pricing data"):
+                llm.extract_concepts_from_document(document, overwrite_existing=True)
+        # The usage of both calls is recorded, and their cost is not known
+        usage = llm.get_usage()[0].usage
+        assert len(usage.calls) == 2
+        assert usage.input == sum(call._input_tokens for call in usage.calls) == 200
+        assert usage.output == sum(call._output_tokens for call in usage.calls) == 20
+        assert llm.get_cost()[0].cost.total == Decimal(0)
 
     @pytest.mark.vcr
     def test_auto_pricing(self):

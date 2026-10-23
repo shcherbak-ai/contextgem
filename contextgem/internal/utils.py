@@ -70,6 +70,19 @@ _FRAMEWORK_AND_PYDANTIC_DIRS: tuple[str, ...] = tuple(
         os.path.dirname(pydantic.__file__),
     )
 )
+# Paths of the code of the standard library that the coroutines of the framework
+# run under: the event loop, and the thread that a sync method runs its event loop
+# in when the calling code runs one already. A warning issued while a model is
+# called, e.g. on its prices, is attributed to the first frame outside them and
+# the directories above, i.e. to the line of the calling code that called
+# the method of the framework, where the thread has such a line.
+_EVENT_LOOP_PATHS: tuple[str, ...] = (
+    *(
+        os.path.normcase(os.path.abspath(os.path.dirname(module_file))) + os.sep
+        for module_file in (asyncio.__file__, concurrent.futures.__file__)
+    ),
+    os.path.normcase(os.path.abspath(threading.__file__)),
+)
 
 # SaT models in use, by their keys (see `_get_sat_model()`): a model is here only
 # while something else holds it, e.g. a segmentation in a thread, or the entry
@@ -623,15 +636,18 @@ def _run_sync(coro: Coroutine[Any, Any, T]) -> T:
 def _warn_from_caller_code(message: str) -> None:
     """
     Issues a ``ContextGemWarning`` attributed to the code that called the framework,
-    i.e. to the first frame of the call stack outside the framework and Pydantic,
-    e.g. to the line that creates a model or assigns a value to its param.
+    i.e. to the first frame of the call stack outside the framework, Pydantic and
+    the event loop that the framework runs its coroutines in, e.g. to the line that
+    creates a model, assigns a value to its param or calls an extraction method.
 
     A warning issued by a check that runs when an instance is validated is issued
     under frames of the framework and of Pydantic, whose number differs between
     the creation of the instance, its deserialization and an assignment to its
     param, i.e. no fixed ``stacklevel`` attributes it to the calling code in all
-    these cases. If there is no frame outside them, the warning is attributed to
-    the outermost frame.
+    these cases. A warning issued in a coroutine of the framework is issued under
+    the frames of the event loop as well, and of the thread that runs it, if any.
+    If there is no frame outside them, e.g. in a thread that the framework started,
+    the warning is attributed to the outermost frame.
 
     :param message: The message of the warning.
     :type message: str
@@ -646,7 +662,7 @@ def _warn_from_caller_code(message: str) -> None:
         frame is not None
         and frame.f_back is not None
         and os.path.normcase(frame.f_code.co_filename).startswith(
-            _FRAMEWORK_AND_PYDANTIC_DIRS
+            _FRAMEWORK_AND_PYDANTIC_DIRS + _EVENT_LOOP_PATHS
         )
     ):
         frame = frame.f_back

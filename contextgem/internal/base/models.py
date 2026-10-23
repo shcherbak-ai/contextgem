@@ -15,7 +15,6 @@ from __future__ import annotations
 
 import asyncio
 import threading
-import warnings
 from collections.abc import Sequence
 from copy import deepcopy
 from decimal import ROUND_HALF_UP, Decimal
@@ -57,7 +56,6 @@ from contextgem.internal.decorators import (
     _timer_decorator,
 )
 from contextgem.internal.exceptions import (
-    ContextGemWarning,
     ModelAPIError,
     ModelExtractionError,
 )
@@ -2273,21 +2271,17 @@ class _GenericModelProcessor(_AbstractGenericModelProcessor):
                             source.images
                         )
                         if has_text and has_images:
-                            warnings.warn(
+                            _warn_from_caller_code(
                                 "For multimodal concepts, references will only be added "
                                 "when extracting from text. When extracting from images, "
                                 "references will not be added, as there is no text content "
-                                "to reference.",
-                                ContextGemWarning,
-                                stacklevel=2,
+                                "to reference."
                             )
                         elif has_images and not has_text:
-                            warnings.warn(
+                            _warn_from_caller_code(
                                 "References will not be added for multimodal concepts "
                                 "when extracting from images only, as there is no text "
-                                "content to reference.",
-                                ContextGemWarning,
-                                stacklevel=2,
+                                "content to reference."
                             )
                     else:
                         # Vision-only concepts never support references
@@ -4920,15 +4914,15 @@ class _DocumentModel(_GenericModelProcessor):
                         (call_cost[1] for call_cost in call_costs), Decimal(0)
                     )
                 except Exception as e:  # noqa: BLE001 - auto-pricing is skipped on any error
-                    warning_msg = (
+                    # Attributed to the line of the calling code that called the method
+                    # that made the calls, e.g. an extraction method. The usage of
+                    # the calls is recorded before, so that it is kept if a warning
+                    # filter makes the warning an error, e.g. to stop a run whose cost
+                    # is not known.
+                    _warn_from_caller_code(
                         f"Unable to fetch pricing data for model `{self.model}`: {e}. "
                         "Auto-pricing is skipped. "
                         f"{self._get_missing_auto_pricing_advice()}"
-                    )
-                    warnings.warn(
-                        warning_msg,
-                        ContextGemWarning,
-                        stacklevel=2,
                     )
 
             cost_total = cost_input + cost_output
@@ -4963,10 +4957,11 @@ class _DocumentModel(_GenericModelProcessor):
             self._usage.output += new_usage.output
             self._usage.cache_read += new_usage.cache_read
             self._usage.cache_write += new_usage.cache_write
-            # Pricing data (if pricing is configured)
-            self._increment_cost(new_usage)
             # Calls data
             self._usage.calls += new_usage.calls
+            # Pricing data (if pricing is configured), last: a warning that
+            # the prices are not known can be made an error by a warning filter
+            self._increment_cost(new_usage)
 
     def _get_missing_auto_pricing_advice(self) -> str:
         """
@@ -5210,12 +5205,10 @@ class _DocumentModelGroup(_GenericModelProcessor):
         models_with_tools = [llm.model for llm in self._llms if llm.tools]
         if models_with_tools:
             models_with_tools_list = ", ".join(models_with_tools)
-            warnings.warn(
+            _warn_from_caller_code(
                 "Tool calling is ignored during extraction workflows. "
                 f"Models with tools configured: {models_with_tools_list}. "
-                "Tools are only supported in `llm.chat(...)`.",
-                ContextGemWarning,
-                stacklevel=2,
+                "Tools are only supported in `llm.chat(...)`."
             )
 
     @field_validator("models")

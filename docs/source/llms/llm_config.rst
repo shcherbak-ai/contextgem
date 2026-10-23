@@ -274,6 +274,29 @@ Some LLM providers cache the beginning of a prompt and reuse it across requests 
    Tokens written to the cache are priced at the standard cache write price of the model. A longer cache lifetime that a provider may offer at a higher price (e.g. 1-hour cache writes of Anthropic models) is not priced separately. Such a lifetime has to be requested explicitly, which ContextGem does not do.
 
 
+.. _llm-unknown-prices-label:
+
+🛑 Stopping a Model Whose Prices Are Unknown
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+With ``auto_pricing=True``, a model that ``genai-prices`` has no prices for gets a warning when it is created, and again when the usage of its calls is recorded, and its costs stay at zero. A budget that stops a run when the costs reach a limit would therefore never stop it. To have such a model raise where it is created, make these warnings errors with a warning filter on the start of their text:
+
+.. code-block:: python
+
+   import warnings
+
+   from contextgem import ContextGemWarning
+
+   # An LLM or a decision model without prices raises where it is created
+   warnings.filterwarnings(
+       "error",
+       message="Unable to fetch pricing data",
+       category=ContextGemWarning,
+   )
+
+The filter does not match the other warning of automatic pricing, on the accuracy of the prices (above). For a model created before the filter is set, the warning issued when the usage of a call is recorded raises instead, and stops the extraction method after the usage of that call is recorded. See :doc:`../logging_config` for the warnings of ContextGem and how to filter them.
+
+
 🧠 Setting the Reasoning Effort
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
