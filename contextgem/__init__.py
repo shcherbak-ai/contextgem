@@ -39,6 +39,7 @@ from contextgem.public import (
     ModelAPIError,
     ModelExtractionError,
     ModelPricing,
+    ModelRefusalError,
     NumericalConcept,
     Paragraph,
     RatingConcept,
@@ -98,6 +99,7 @@ __all__ = (  # noqa: RUF022 - grouped by kind
     "ContextGemError",
     "ModelAPIError",
     "ModelExtractionError",
+    "ModelRefusalError",
     "LLMToolLoopLimitError",
     "ContextGemWarning",
 )

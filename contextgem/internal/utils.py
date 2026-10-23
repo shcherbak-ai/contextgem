@@ -41,6 +41,7 @@ from contextgem.internal.suppressions import _suppress_litellm_warnings
 from contextgem.internal.typings.types import (
     AsyncCalsAndKwargs,
     ExtractedInstanceType,
+    ModelRefusal,
     ReferenceDepth,
     SaTModelId,
     StandardSaTModelId,
@@ -743,6 +744,71 @@ def _model_call_result_is_output_truncated(
         return False
     calls = res[1].calls
     return bool(calls) and calls[-1]._output_truncated
+
+
+def _model_call_result_is_refused(res: tuple[Any, _ModelUsage] | None) -> bool:
+    """
+    Determines whether the result from a model call is invalid because the model or
+    its provider declined to answer (see ``ModelRefusal``), as opposed to the model
+    returning invalid data, or a request failing for another reason.
+
+    A refusal is final: the call is not made again, with the same model or with
+    a fallback model, and the refusal is reported when it occurs. The refused
+    request is recorded in the usage stats with its refusal, as the last call
+    of an LLM, or as one of the calls of a decision model, whose requests
+    on the texts of the call are recorded together.
+
+    :param res: The result to check, represented as a tuple where the first element is the relevant
+        result value, and the second element is model usage stats dict that follows the _ModelUsage pattern,
+        or None if the result is not received (in which case the reason of the failure is unknown).
+    :type res: tuple[Any, _ModelUsage] | None
+    :return: A boolean indicating whether the result is invalid due to a refusal.
+    :rtype: bool
+    """
+    if res is None or res[0] is not None:
+        return False
+    return any(call._refusal is not None for call in res[1].calls)
+
+
+def _get_model_refusal_msg(
+    *, kind_name: str, model: str, refusal: ModelRefusal, subject: str = ""
+) -> str:
+    """
+    Returns the message on a request that a model or its provider declined to
+    answer. It names the model and what declined the answer, and never has
+    the answer of the model or the text that the request was sent with.
+
+    :param kind_name: The name of the kind of the model, e.g. "LLM" or "decision
+        model", capitalized at the start of the message.
+    :type kind_name: str
+    :param model: The model, as set on the model object.
+    :type model: str
+    :param refusal: How the request was declined.
+    :type refusal: ModelRefusal
+    :param subject: What the request was for, put after the model in the message,
+        e.g. " for concepts ['Parties']". Defaults to an empty string.
+    :type subject: str
+    :return: The message.
+    :rtype: str
+    """
+    if refusal == "refusal":
+        kind = kind_name[:1].upper() + kind_name[1:]
+        what = f"{kind} `{model}` refused to answer{subject}."
+    elif refusal == "content_filter":
+        what = (
+            f"The answer of {kind_name} `{model}`{subject} was stopped with "
+            f"the `content_filter` finish reason: the model refused to answer, "
+            f"or the content filter of its provider stopped the answer."
+        )
+    else:
+        what = (
+            f"The provider of {kind_name} `{model}` blocked the request{subject} "
+            f"for its content."
+        )
+    return (
+        f"{what} A refusal is final: the request is not sent again, also not to "
+        f"a fallback model."
+    )
 
 
 def _is_retryable_model_api_error(error: Exception) -> bool:

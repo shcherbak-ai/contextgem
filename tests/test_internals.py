@@ -193,6 +193,7 @@ class TestInternals(BaseTest):
             "ContextGemError",
             "ModelAPIError",
             "ModelExtractionError",
+            "ModelRefusalError",
             "LLMToolLoopLimitError",
         ]:
             assert name in contextgem.__all__

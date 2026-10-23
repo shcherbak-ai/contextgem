@@ -14,9 +14,9 @@ from __future__ import annotations
 class ContextGemError(Exception):
     """
     Base class of the exceptions that the framework raises when a run fails, i.e.
-    of :class:`ModelAPIError`, :class:`ModelExtractionError` and
-    :class:`LLMToolLoopLimitError`. Catch it to handle any of them in one clause,
-    e.g. ``except ContextGemError``.
+    of :class:`ModelAPIError`, :class:`ModelExtractionError` (with its subclass
+    :class:`ModelRefusalError`) and :class:`LLMToolLoopLimitError`. Catch it to
+    handle any of them in one clause, e.g. ``except ContextGemError``.
 
     An error in the calling code, e.g. an invalid argument or an object that
     cannot be used where it is passed, is raised as ``ValueError`` or ``TypeError``
@@ -85,8 +85,10 @@ class ModelExtractionError(ContextGemError):
 
     - the response of an LLM cannot be parsed or validated, also after the LLM
       was asked again ``max_retries_invalid_data`` times;
-    - the response of a decision model cannot be used, e.g. the model refused
-      to answer a question of a concept. A decision model is not asked again.
+    - the response of a decision model cannot be used, e.g. an answer without
+      valid probabilities. A decision model is not asked again;
+    - the model or its provider declined to answer: then the subclass
+      :class:`ModelRefusalError` is raised.
 
     If ``raise_exception_on_extraction_error=False`` is passed to the extraction
     method, a warning is logged instead.
@@ -104,6 +106,53 @@ class ModelExtractionError(ContextGemError):
     """
 
 
+class ModelRefusalError(ModelExtractionError):
+    """
+    Exception raised when a model or its provider declined to answer, in extraction
+    and in chat:
+
+    - the model refused to answer, e.g. an LLM of OpenAI with its ``refusal``
+      field, or a decision model with a refused answer to a question of a concept,
+      or to the question of an aspect on every paragraph;
+    - the content filter of the provider stopped the answer, which litellm reports
+      with the ``content_filter`` finish reason for all the providers, e.g. for
+      a refusal of a Claude model, the safety filters of Gemini and of Azure
+      OpenAI, and the guardrails of Amazon Bedrock;
+    - the provider blocked the request on its input, which litellm raises as
+      ``litellm.ContentPolicyViolationError``.
+
+    litellm reports a model's refusal and a content filter with the same finish
+    reason, i.e. the message cannot always tell them apart. It also reports
+    a question that a decision model left unanswered as a refused answer.
+
+    A refusal is final: the request is not sent again to the same model,
+    whatever ``max_retries_invalid_data`` is, and it is not sent to a fallback
+    model. The answer of a refused request is not used, also if it is valid JSON.
+    In chat, a refused answer that has a text is returned as it is, with
+    a warning logged: the error is raised for a refused answer without a text,
+    and for a request that the provider blocked.
+
+    As a subclass of :class:`ModelExtractionError`, it is caught by
+    ``except ModelExtractionError`` and ``except ContextGemError``. If
+    ``raise_exception_on_extraction_error=False`` is passed to the extraction
+    method, a warning is logged instead, and the aspects or concepts of the call
+    get no items.
+
+    The message names the model and what declined the answer. It never has
+    the answer of the model or the text of the document.
+
+    Can be imported from ``contextgem``.
+
+    :ivar message: Human-readable error description
+    :vartype message: str
+    :ivar retry_count: Always 0, as a refused request is not sent again
+    :vartype retry_count: int or None
+    :ivar original_error: The exception of litellm for a request that the provider
+        blocked on its input (``litellm.ContentPolicyViolationError``), None otherwise
+    :vartype original_error: Exception or None
+    """
+
+
 class ModelAPIError(ContextGemError):
     """
     Exception raised when a request to a model fails for good, and there is
@@ -117,6 +166,9 @@ class ModelAPIError(ContextGemError):
       or connection error), also after ``num_retries_failed_request`` retries;
     - the response of an LLM is cut off at the max output tokens during extraction,
       or is empty in a chat.
+
+    A request that the provider blocks for its content raises
+    :class:`ModelRefusalError` instead, without a fallback model being tried.
 
     During extraction, if ``raise_exception_on_extraction_error=False`` is passed
     to the extraction method, a warning is logged instead.
@@ -233,3 +285,13 @@ class _InvalidDecisionResponseError(ValueError):
         self.question_name = question_name
         self.reason = reason
         self.location: str = ""
+
+
+class _RefusedDecisionAnswerError(_InvalidDecisionResponseError):
+    """
+    Internal exception raised when the answer of a decision model to a question
+    cannot be used because the model refused to answer it: a refused answer to
+    a question of a concept, or to the question of an aspect on every paragraph.
+    Unlike other answers that cannot be used, a refusal is final: the extraction
+    raises :class:`ModelRefusalError` for it, and no fallback model is tried.
+    """

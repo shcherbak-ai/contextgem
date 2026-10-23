@@ -1,5 +1,5 @@
 .. meta::
-   :description: API reference of the exceptions that ContextGem raises (ModelAPIError, ModelExtractionError and LLMToolLoopLimitError, and their base class ContextGemError) and of ContextGemWarning, the category of its warnings.
+   :description: API reference of the exceptions that ContextGem raises (ModelAPIError, ModelExtractionError with its subclass ModelRefusalError, and LLMToolLoopLimitError, and their base class ContextGemError) and of ContextGemWarning, the category of its warnings.
 
 Exceptions and Warnings
 ========================

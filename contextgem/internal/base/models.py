@@ -58,6 +58,7 @@ from contextgem.internal.decorators import (
 from contextgem.internal.exceptions import (
     ModelAPIError,
     ModelExtractionError,
+    ModelRefusalError,
 )
 from contextgem.internal.items import _ExtractedItem, _StringItem
 from contextgem.internal.loggers import logger
@@ -82,11 +83,13 @@ from contextgem.internal.utils import (
     _clean_text_for_llm_prompt,
     _describe_error_without_values,
     _get_distinct_instances,
+    _get_model_refusal_msg,
     _get_position_from_prompt_id,
     _get_sentence_position_from_prompt_id,
     _group_instances_by_fields,
     _model_call_result_is_api_failure,
     _model_call_result_is_output_truncated,
+    _model_call_result_is_refused,
     _model_call_result_is_valid,
     _parse_llm_output_as_json,
     _remove_thinking_content_from_llm_output,
@@ -2158,17 +2161,18 @@ class _GenericModelProcessor(_AbstractGenericModelProcessor):
         :param has_fallback_pending: Whether a fallback model will be tried if the call to the
             specified model fails. If True, a model API error is logged without being raised or
             warned about, as it is not final. The same applies to a response cut off at
-            the max output tokens. Defaults to False.
+            the max output tokens. A refusal of the model or of its provider is final, i.e.
+            it is raised (or warned about) whatever this is. Defaults to False.
         :type has_fallback_pending: bool
         :param unrecorded_usage: An optional list for the calling code to read if an error
             is raised, in which case no usage is returned. It has the usage of the response
             of an LLM that is being processed, i.e. the usage that the usage and cost of
             the LLM are not updated with yet, and is empty otherwise. If an error other
-            than a model API error is raised, the calling code is to update the usage and
-            cost of the LLM with the usage on the list, which would be lost otherwise.
-            A model API error is raised when they are already updated. The list stays
-            empty for a decision model, which updates its usage and cost itself before
-            any error is raised.
+            than a model API error or a refusal is raised, the calling code is to update
+            the usage and cost of the LLM with the usage on the list, which would be lost
+            otherwise. A model API error and a refusal are raised when they are already
+            updated. The list stays empty for a decision model, which updates its usage
+            and cost itself before any error is raised.
         :type unrecorded_usage: list[_ModelUsage] | None
         :param partial_extraction: An optional state for a call that an LLM makes
             in several requests, i.e. whose content is sent in parts. The call keeps
@@ -2187,6 +2191,10 @@ class _GenericModelProcessor(_AbstractGenericModelProcessor):
                 the usage and cost of the LLM are updated with each of the previous calls
                 before the next one is made.
         :rtype: tuple[list[_Aspect] | list[_Concept] | None, _ModelUsage]
+        :raises ModelRefusalError: If the model or its provider declined to answer,
+            and `raise_exception_on_extraction_error` is True, whether or not
+            a fallback model is yet to be tried. If it is False, a warning is logged,
+            and the refusal is recorded on the refused call in the usage returned.
         """
 
         def validate_source_in_document(
@@ -2552,6 +2560,13 @@ class _GenericModelProcessor(_AbstractGenericModelProcessor):
                 all_usage_data = None
                 unrecorded_usage.clear()
 
+            # What fails with the call, named in the messages on a refusal, as in
+            # the messages on other failed calls
+            failed_instances_msg = (
+                f" Failed {extracted_item_type}s: "
+                f"{[instance.name for instance in instances_to_process]}"
+            )
+
             # Query LLM, process and validate results
             extracted_data, usage_data = await llm._query_llm(
                 messages=messages,
@@ -2561,6 +2576,7 @@ class _GenericModelProcessor(_AbstractGenericModelProcessor):
                 async_limiter=async_limiter,
                 raise_exception_on_model_api_error=raise_exception_on_extraction_error,
                 has_fallback_pending=has_fallback_pending,
+                refusal_msg_suffix=failed_instances_msg,
             )
             # The usage of the response is kept for the calling code as well, which
             # updates the usage and cost of the LLM with it if an exception is raised
@@ -2575,6 +2591,30 @@ class _GenericModelProcessor(_AbstractGenericModelProcessor):
                 # to be tried, or when a warning is logged for it instead of
                 # an exception. There is no response to process, and the failure
                 # is not to be reported as invalid JSON returned by the LLM as well.
+                # A request that the provider blocked for its content is reported
+                # as a refusal, and is final.
+                return None, all_usage_data
+            if model_call_obj._refusal is not None:
+                # The LLM or its provider declined to answer. The answer is not
+                # used, also if it is valid JSON, and the call is not made again,
+                # with this LLM or with a fallback model: a refusal is final.
+                refusal_msg = (
+                    _get_model_refusal_msg(
+                        kind_name=llm._kind_name,
+                        model=llm.model,
+                        refusal=model_call_obj._refusal,
+                    )
+                    + failed_instances_msg
+                )
+                logger.error(refusal_msg)
+                if raise_exception_on_extraction_error:
+                    await llm._update_usage_and_cost((None, all_usage_data))
+                    raise ModelRefusalError(refusal_msg, retry_count=0)
+                # The call fails without an exception, as other failed calls do
+                logger.warning(
+                    f"{refusal_msg} If you want to raise an exception instead, "
+                    f"set `raise_exception_on_extraction_error` to True."
+                )
                 return None, all_usage_data
             parsed_data = _parse_llm_output_as_json(
                 _remove_thinking_content_from_llm_output(extracted_data)
@@ -3276,7 +3316,7 @@ class _GenericModelProcessor(_AbstractGenericModelProcessor):
                     return await self._extract_items_from_instances(
                         **kwargs, unrecorded_usage=unrecorded_usage
                     )
-                except ModelAPIError:
+                except (ModelAPIError, ModelRefusalError):
                     # Raised when the usage and cost of the model are already updated
                     raise
                 except BaseException:
@@ -3291,7 +3331,7 @@ class _GenericModelProcessor(_AbstractGenericModelProcessor):
                 n_retries: int = 0,
                 retry_is_final: bool = False,
                 partial_extraction: _PartialExtraction | None = None,
-            ) -> bool:
+            ) -> tuple[list[_Aspect] | list[_Concept] | None, _ModelUsage]:
                 """
                 Checks the processed result for validity and, if it is invalid, makes
                 the call with the model given: again, if the model is the one that
@@ -3299,9 +3339,10 @@ class _GenericModelProcessor(_AbstractGenericModelProcessor):
                 which is then called again for the invalid data that it returns itself.
 
                 The retries stop as soon as a model API request fails, as such request
-                is already retried (if the error is transient) when it is sent, or as
+                is already retried (if the error is transient) when it is sent, as
                 soon as a response is cut off at the max output tokens, as the same
-                request would be cut off again.
+                request would be cut off again, or as soon as the model or its provider
+                declines to answer, as a refusal is final.
 
                 :param llm_instance: The model instance to process the data.
                 :type llm_instance: _DocumentModel
@@ -3323,8 +3364,9 @@ class _GenericModelProcessor(_AbstractGenericModelProcessor):
                     continued from the part that failed. For the model that returned
                     the result, it is the state of the call that gave the result.
                 :type partial_extraction: _PartialExtraction | None
-                :return: True if retry was successful, False otherwise.
-                :rtype: bool
+                :return: The result of the last call made, or the result given if
+                    no call is made. The retry was successful if it is valid.
+                :rtype: tuple[list[_Aspect] | list[_Concept] | None, _ModelUsage]
                 """
 
                 # A fallback model is called for the first time here, which
@@ -3333,7 +3375,7 @@ class _GenericModelProcessor(_AbstractGenericModelProcessor):
                 n_first_calls = 0 if llm_instance is llm else 1
                 n_calls = n_first_calls + n_retries
                 if n_calls <= 0:
-                    return False
+                    return res
                 if not _model_call_result_is_valid(res):
                     for i in range(n_calls):
                         if i >= n_first_calls:
@@ -3371,40 +3413,35 @@ class _GenericModelProcessor(_AbstractGenericModelProcessor):
                         await llm_instance._update_usage_and_cost(res)
                         if res[0] is not None:
                             break
-                        if _model_call_result_is_api_failure(
-                            res
-                        ) or _model_call_result_is_output_truncated(res):
+                        if is_reported_failure(res):
                             # The retries of the failed request are already performed,
                             # or the response was cut off at the max output tokens,
-                            # i.e. sending it to the same model again is pointless
+                            # i.e. sending it to the same model again is pointless,
+                            # or the model or its provider declined to answer,
+                            # which is final
                             break
-                    if _model_call_result_is_valid(res):
-                        return True
-                    else:
-                        # A failed model API request, as well as a response cut off
-                        # at the max output tokens, is already reported at this point
-                        if retry_is_final and not (
-                            _model_call_result_is_api_failure(res)
-                            or _model_call_result_is_output_truncated(res)
-                        ):
-                            error_msg = get_invalid_output_error_msg(
-                                llm_instance, instances
+                    # A failed model API request, a response cut off at the max
+                    # output tokens, and a refusal are already reported at this point
+                    if (
+                        not _model_call_result_is_valid(res)
+                        and retry_is_final
+                        and not is_reported_failure(res)
+                    ):
+                        error_msg = get_invalid_output_error_msg(
+                            llm_instance, instances
+                        )
+                        if raise_exception_on_extraction_error:
+                            logger.error(error_msg)
+                            raise ModelExtractionError(error_msg, retry_count=n_retries)
+                        else:
+                            warning_msg = (
+                                error_msg
+                                + f" ({n_retries} retries). "
+                                + "If you want to raise an exception instead, "
+                                "set `raise_exception_on_extraction_error` to True."
                             )
-                            if raise_exception_on_extraction_error:
-                                logger.error(error_msg)
-                                raise ModelExtractionError(
-                                    error_msg, retry_count=n_retries
-                                )
-                            else:
-                                warning_msg = (
-                                    error_msg
-                                    + f" ({n_retries} retries). "
-                                    + "If you want to raise an exception instead, "
-                                    "set `raise_exception_on_extraction_error` to True."
-                                )
-                                logger.warning(warning_msg)
-                        return False
-                return True
+                            logger.warning(warning_msg)
+                return res
 
             async def retry_chunk_with_fallbacks(
                 chunk: list[_Aspect] | list[_Concept],
@@ -3422,6 +3459,11 @@ class _GenericModelProcessor(_AbstractGenericModelProcessor):
                 i.e. a fallback model is called as many times as a primary model
                 with the same setting.
 
+                A refusal is final: if the model or its provider declined to answer,
+                in the result given or in a call made here, no further call is made,
+                with the same model or with a fallback model. The refusal is reported
+                when it occurs.
+
                 :param chunk: The chunk of instances to retry.
                 :type chunk: list[_Aspect] | list[_Concept]
                 :param result: The original failed extraction result.
@@ -3434,6 +3476,8 @@ class _GenericModelProcessor(_AbstractGenericModelProcessor):
                 :return: True if any retry succeeded, False otherwise.
                 :rtype: bool
                 """
+                if _model_call_result_is_refused(result):
+                    return False
                 retry_successful = False
                 # Retry on the primary model only if it returned invalid data. If its API
                 # request failed, the retries of that request are already performed.
@@ -3444,7 +3488,7 @@ class _GenericModelProcessor(_AbstractGenericModelProcessor):
                     and not _model_call_result_is_api_failure(result)
                     and not _model_call_result_is_output_truncated(result)
                 ):
-                    retry_successful = await retry_processing_for_result(
+                    retry_result = await retry_processing_for_result(
                         llm_instance=llm,
                         res=result,
                         instances=chunk,
@@ -3452,6 +3496,9 @@ class _GenericModelProcessor(_AbstractGenericModelProcessor):
                         retry_is_final=not llm.fallback_models,
                         partial_extraction=partial_extraction,
                     )
+                    if _model_call_result_is_refused(retry_result):
+                        return False
+                    retry_successful = _model_call_result_is_valid(retry_result)
                 n_fallbacks = len(llm.fallback_models)
                 for i, fallback_llm in enumerate(llm.fallback_models):
                     if retry_successful:
@@ -3462,7 +3509,7 @@ class _GenericModelProcessor(_AbstractGenericModelProcessor):
                     )
                     # The fallback model is called once, and then again for invalid
                     # data that it returns, as many times as it has retries for it
-                    retry_successful = await retry_processing_for_result(
+                    retry_result = await retry_processing_for_result(
                         llm_instance=fallback_llm,
                         res=result,
                         instances=chunk,
@@ -3470,6 +3517,9 @@ class _GenericModelProcessor(_AbstractGenericModelProcessor):
                         retry_is_final=i == n_fallbacks - 1,
                         partial_extraction=_PartialExtraction(),
                     )
+                    if _model_call_result_is_refused(retry_result):
+                        return False
+                    retry_successful = _model_call_result_is_valid(retry_result)
                 return retry_successful
 
             def is_reported_failure(
@@ -3478,9 +3528,10 @@ class _GenericModelProcessor(_AbstractGenericModelProcessor):
             ) -> bool:
                 """
                 Checks whether the invalid result of a call is already reported
-                by the model that made the call, i.e. whether its API request failed
-                or its response was cut off at the max output tokens. Such a result
-                is not to be reported as an invalid output of the model as well.
+                by the model that made the call, i.e. whether its API request failed,
+                its response was cut off at the max output tokens, or the model or
+                its provider declined to answer. Such a result is not to be reported
+                as an invalid output of the model as well.
 
                 :param result: The invalid result of a call, or None if no result
                     is received.
@@ -3489,9 +3540,11 @@ class _GenericModelProcessor(_AbstractGenericModelProcessor):
                 :return: True if the failure is already reported, False otherwise.
                 :rtype: bool
                 """
-                return _model_call_result_is_api_failure(
-                    result
-                ) or _model_call_result_is_output_truncated(result)
+                return (
+                    _model_call_result_is_api_failure(result)
+                    or _model_call_result_is_output_truncated(result)
+                    or _model_call_result_is_refused(result)
+                )
 
             def report_invalid_output_of_call_not_made_again(
                 instances: list[_Aspect] | list[_Concept],
@@ -3991,7 +4044,8 @@ class _DocumentModel(_GenericModelProcessor):
         default_factory=list,
         description=(
             "Fallback models (LLMs, decision models, or both) to try, in the given "
-            "order, if this one fails; each must have the same role, and applies "
+            "order, if this one fails, but not after a refusal, which is final; "
+            "each must have the same role, and applies "
             "its own retry settings. A fallback LLM of an LLM must also have "
             "the same output_language, system_message and tools configuration."
         ),

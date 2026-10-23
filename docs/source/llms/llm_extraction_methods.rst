@@ -78,7 +78,7 @@ Performs comprehensive extraction by processing a :class:`~contextgem.public.doc
    * - ``raise_exception_on_extraction_error``
      - ``bool``
      - ``True``
-     - Whether to raise an exception if the extraction fails due to invalid data returned by a model or an error in the model API. If True (default): if the model returns invalid data, :class:`~contextgem.public.exceptions.ModelExtractionError` will be raised, and if the model API call fails or the response is cut off at the max output tokens, :class:`~contextgem.public.exceptions.ModelAPIError` will be raised (both can be imported from ``contextgem``). If False, a warning is logged instead, and no extracted items are returned. The concepts of an aspect that could not be extracted are then left out, with a warning that names them, and the concepts of the other aspects and of the document are extracted.
+     - Whether to raise an exception if the extraction fails due to invalid data returned by a model or an error in the model API. If True (default): if the model returns invalid data, :class:`~contextgem.public.exceptions.ModelExtractionError` will be raised, and if the model API call fails or the response is cut off at the max output tokens, :class:`~contextgem.public.exceptions.ModelAPIError` will be raised, and if the model or its provider declines to answer, :class:`~contextgem.public.exceptions.ModelRefusalError` will be raised (see :ref:`llm-refusals-label`). All can be imported from ``contextgem``. If False, a warning is logged instead, and no extracted items are returned. The concepts of an aspect that could not be extracted are then left out, with a warning that names them, and the concepts of the other aspects and of the document are extracted.
 
 |
 
@@ -158,7 +158,7 @@ Extracts :class:`~contextgem.public.aspects.Aspect` instances from a :class:`~co
    * - ``raise_exception_on_extraction_error``
      - ``bool``
      - ``True``
-     - Whether to raise an exception if the extraction fails due to invalid data returned by a model or an error in the model API. If True (default): if the model returns invalid data, :class:`~contextgem.public.exceptions.ModelExtractionError` will be raised, and if the model API call fails or the response is cut off at the max output tokens, :class:`~contextgem.public.exceptions.ModelAPIError` will be raised (both can be imported from ``contextgem``). If False, a warning is logged instead, and no extracted items are returned.
+     - Whether to raise an exception if the extraction fails due to invalid data returned by a model or an error in the model API. If True (default): if the model returns invalid data, :class:`~contextgem.public.exceptions.ModelExtractionError` will be raised, and if the model API call fails or the response is cut off at the max output tokens, :class:`~contextgem.public.exceptions.ModelAPIError` will be raised, and if the model or its provider declines to answer, :class:`~contextgem.public.exceptions.ModelRefusalError` will be raised (see :ref:`llm-refusals-label`). All can be imported from ``contextgem``. If False, a warning is logged instead, and no extracted items are returned.
 
 |
 
@@ -243,7 +243,7 @@ Extracts :class:`~contextgem.internal.base.concepts._Concept` instances from a :
    * - ``raise_exception_on_extraction_error``
      - ``bool``
      - ``True``
-     - Whether to raise an exception if the extraction fails due to invalid data returned by a model or an error in the model API. If True (default): if the model returns invalid data, :class:`~contextgem.public.exceptions.ModelExtractionError` will be raised, and if the model API call fails or the response is cut off at the max output tokens, :class:`~contextgem.public.exceptions.ModelAPIError` will be raised (both can be imported from ``contextgem``). If False, a warning is logged instead, and no extracted items are returned.
+     - Whether to raise an exception if the extraction fails due to invalid data returned by a model or an error in the model API. If True (default): if the model returns invalid data, :class:`~contextgem.public.exceptions.ModelExtractionError` will be raised, and if the model API call fails or the response is cut off at the max output tokens, :class:`~contextgem.public.exceptions.ModelAPIError` will be raised, and if the model or its provider declines to answer, :class:`~contextgem.public.exceptions.ModelRefusalError` will be raised (see :ref:`llm-refusals-label`). All can be imported from ``contextgem``. If False, a warning is logged instead, and no extracted items are returned.
 
 |
 
@@ -325,7 +325,7 @@ The aspect must be previously processed before concept extraction can occur. Thi
    * - ``raise_exception_on_extraction_error``
      - ``bool``
      - ``True``
-     - Whether to raise an exception if the extraction fails due to invalid data returned by a model or an error in the model API. If True (default): if the model returns invalid data, :class:`~contextgem.public.exceptions.ModelExtractionError` will be raised, and if the model API call fails or the response is cut off at the max output tokens, :class:`~contextgem.public.exceptions.ModelAPIError` will be raised (both can be imported from ``contextgem``). If False, a warning is logged instead, and no extracted items are returned.
+     - Whether to raise an exception if the extraction fails due to invalid data returned by a model or an error in the model API. If True (default): if the model returns invalid data, :class:`~contextgem.public.exceptions.ModelExtractionError` will be raised, and if the model API call fails or the response is cut off at the max output tokens, :class:`~contextgem.public.exceptions.ModelAPIError` will be raised, and if the model or its provider declines to answer, :class:`~contextgem.public.exceptions.ModelRefusalError` will be raised (see :ref:`llm-refusals-label`). All can be imported from ``contextgem``. If False, a warning is logged instead, and no extracted items are returned.
 
 |
 

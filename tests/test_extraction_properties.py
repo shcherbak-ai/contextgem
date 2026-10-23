@@ -72,7 +72,11 @@ from litellm.types.decisions import (
 from contextgem.internal.base import decision_models as decision_models_module
 from contextgem.internal.base import llms as llms_module
 from contextgem.internal.base.paras_and_sents import _Paragraph
-from contextgem.internal.exceptions import ModelAPIError, ModelExtractionError
+from contextgem.internal.exceptions import (
+    ModelAPIError,
+    ModelExtractionError,
+    ModelRefusalError,
+)
 from contextgem.internal.loggers import logger
 from contextgem.internal.typings.types import (
     ClassificationType,
@@ -3788,6 +3792,8 @@ class TestExtractionProperties(BaseTest):
         with a probability that is not a number within [0, 1], or not attributable
         to its question) is rejected as a whole: the extraction fails with
         ``ModelExtractionError``, or issues a warning, and no concept gets items.
+        A refused answer that the rejection is for raises ``ModelRefusalError``,
+        its subclass.
 
         The Decisions API is stubbed, i.e. no cassette is required.
         """
@@ -3956,10 +3962,14 @@ class TestExtractionProperties(BaseTest):
         if expected is None:
             if raise_exception:
                 assert error is not None
+                if isinstance(error, ModelRefusalError):
+                    # Only a refused answer makes the call fail as a refusal
+                    assert any(answer.kind == "refusal" for answer in answers.values())
             else:
                 assert error is None
                 assert any(
                     "could not be processed" in message
+                    or "A refusal is final" in message
                     for message in _get_messages(caught)
                 )
             for concept in document.concepts:
@@ -3998,7 +4008,8 @@ class TestExtractionProperties(BaseTest):
         the aspect, if it has one, or else the one of the model. A paragraph or
         a sentence that the model refused to answer on is left out, with
         a warning that names the aspect, unless the model refused to answer on
-        every paragraph for the aspect.
+        every paragraph for the aspect, which fails the call as a refusal
+        (``ModelRefusalError``, a subclass of ``ModelExtractionError``).
 
         The aspects with each reference depth are extracted in calls of their
         own, of up to ``max_items_per_call`` aspects. A call with an answer that
@@ -4145,17 +4156,23 @@ class TestExtractionProperties(BaseTest):
         assert len(usage.usage.calls) == len(stub.decision_requests)
         assert usage.usage.input == _DECISION_INPUT_TOKENS * len(stub.decision_requests)
         messages = _get_messages(caught)
+        # The warnings on the paragraphs and the sentences left out of an aspect
+        # for refused answers. A refusal on every paragraph fails the call: it is
+        # final, as its message says.
         refusal_warnings = {
             match.group(1)
             for message in messages
-            if (
+            if "A refusal is final" not in message
+            and (
                 match := re.search(
                     r"refused to answer the question of aspect `(.+?)`", message
                 )
             )
         }
         failure_warnings = [
-            message for message in messages if "could not be processed" in message
+            message
+            for message in messages
+            if "could not be processed" in message or "A refusal is final" in message
         ]
 
         failed_names = {aspects[position].name for position in failed}

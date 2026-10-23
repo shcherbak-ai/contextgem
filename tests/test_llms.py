@@ -2804,3 +2804,73 @@ class TestLLMs(BaseTest):
                 assert (f"Text of thread {other_index}." in prompt) is is_own_data
             # ... i.e. the same prompt as the one rendered on its own
             assert prompt == render_aspects_prompt(index)
+
+    def test_refusal_read_from_litellm_responses(self):
+        """
+        Tests that a refusal is read from the responses as litellm builds them
+        from the responses of the providers: OpenAI's ``refusal`` field of
+        the message, which litellm keeps in the provider-specific fields of
+        the message, and the ``content_filter`` finish reason, to which litellm
+        maps e.g. the ``refusal`` stop reason of Anthropic. A response without
+        either is not a refusal, also one cut off at the max output tokens.
+
+        No LLM API calls are made, i.e. no cassette is required.
+        """
+        litellm = llms_module.litellm
+        # Imported here, after litellm is imported by the framework, which
+        # suppresses its warnings on import
+        from litellm.litellm_core_utils.core_helpers import map_finish_reason
+        from litellm.litellm_core_utils.llm_response_utils.convert_dict_to_response import (
+            convert_to_model_response_object,
+        )
+
+        def create_response(
+            content: str | None, finish_reason: str, refusal: str | None = None
+        ) -> Any:
+            """
+            Creates the response of litellm from a response of the OpenAI API.
+            """
+            return convert_to_model_response_object(
+                response_object={
+                    "id": "chatcmpl-1",
+                    "object": "chat.completion",
+                    "created": 1,
+                    "model": "gpt-6-luna",
+                    "choices": [
+                        {
+                            "index": 0,
+                            "finish_reason": finish_reason,
+                            "message": {
+                                "role": "assistant",
+                                "content": content,
+                                "refusal": refusal,
+                            },
+                        }
+                    ],
+                    "usage": {
+                        "prompt_tokens": 10,
+                        "completion_tokens": 5,
+                        "total_tokens": 15,
+                    },
+                },
+                model_response_object=litellm.ModelResponse(),
+                response_type="completion",
+            )
+
+        get_refusal = llms_module._DocumentLLM._get_refusal_of_completion
+        assert map_finish_reason("refusal") == "content_filter"
+        assert (
+            get_refusal(create_response(None, "stop", refusal="I can't help."))
+            == "refusal"
+        )
+        assert get_refusal(create_response("[]", "content_filter")) == "content_filter"
+        assert (
+            get_refusal(create_response("[]", map_finish_reason("refusal")))
+            == "content_filter"
+        )
+        for response in [
+            create_response("[]", "stop"),
+            create_response("[]", "stop", refusal=""),
+            create_response("[", "length"),
+        ]:
+            assert get_refusal(response) is None

@@ -45,6 +45,7 @@ from contextgem.internal.exceptions import (
     ContextGemWarning,
     LLMToolLoopLimitError,
     ModelAPIError,
+    ModelRefusalError,
     _ToolReturnValueError,
 )
 from contextgem.internal.loggers import logger
@@ -54,6 +55,7 @@ from contextgem.internal.typings.types import (
     DefaultPromptType,
     JSONDictField,
     LanguageRequirement,
+    ModelRefusal,
     NonEmptyStr,
     ReasoningEffort,
     ToolHandler,
@@ -63,6 +65,7 @@ from contextgem.internal.utils import (
     _MODEL_API_RETRIES_ATTEMPTED_ATTR,
     _get_llm_cache_token_counts,
     _get_model_api_retry_delay,
+    _get_model_refusal_msg,
     _get_template,
     _is_retryable_model_api_error,
     _model_call_result_is_api_failure,
@@ -129,7 +132,8 @@ class _DocumentLLM(_DocumentModel):
         ge=0,
         description=(
             "Retries when the model returns invalid or unparsable data; "
-            "a fallback LLM has its own, after it is asked for the first time."
+            "a fallback LLM has its own, after it is asked for the first time. "
+            "A refusal of the model or its provider is final, i.e. not retried."
         ),
     )
     output_language: LanguageRequirement = Field(
@@ -403,7 +407,8 @@ class _DocumentLLM(_DocumentModel):
         :param chat_session: Optional stateful chat session to preserve and use history.
         :type chat_session: _ChatSession | None
         :return: The LLM's response. A response cut off at the max output tokens
-            is returned incomplete, with a warning logged.
+            is returned incomplete, with a warning logged. A refused response
+            that has a text is returned as it is, with a warning logged.
         :rtype: str
         :raises ValueError: If the prompt is empty or not a string
         :raises ValueError: If images parameter is not a list of Image instances
@@ -414,6 +419,9 @@ class _DocumentLLM(_DocumentModel):
             no fallback LLM is left to try
         :raises ModelAPIError: If the request to the LLM fails, or the LLM returns
             an empty response, and no fallback LLM is left to try
+        :raises ModelRefusalError: If the LLM or its provider declines to answer
+            without a text, or the provider blocks the request for its content.
+            A refusal is final: no fallback LLM is tried
         :raises LLMToolLoopLimitError: If the LLM keeps calling tools after
             ``tool_max_rounds`` rounds of tool calls
         """
@@ -441,7 +449,8 @@ class _DocumentLLM(_DocumentModel):
         :param chat_session: Optional stateful chat session to preserve and use history.
         :type chat_session: _ChatSession | None
         :return: The LLM's response. A response cut off at the max output tokens
-            is returned incomplete, with a warning logged.
+            is returned incomplete, with a warning logged. A refused response
+            that has a text is returned as it is, with a warning logged.
         :rtype: str
         :raises ValueError: If the prompt is empty or not a string
         :raises ValueError: If images parameter is not a list of Image instances
@@ -452,6 +461,9 @@ class _DocumentLLM(_DocumentModel):
             no fallback LLM is left to try
         :raises ModelAPIError: If the request to the LLM fails, or the LLM returns
             an empty response, and no fallback LLM is left to try
+        :raises ModelRefusalError: If the LLM or its provider declines to answer
+            without a text, or the provider blocks the request for its content.
+            A refusal is final: no fallback LLM is tried
         :raises LLMToolLoopLimitError: If the LLM keeps calling tools after
             ``tool_max_rounds`` rounds of tool calls
         """
@@ -526,7 +538,8 @@ class _DocumentLLM(_DocumentModel):
         :type chat_session: _ChatSession | None
         :param has_fallback_pending: Whether a fallback LLM will be tried if the call to
             this LLM fails. If True, a model API error or an empty response is logged
-            without an exception being raised, and None is returned. Defaults to False.
+            without an exception being raised, and None is returned. A refusal is
+            final, i.e. it is raised in any case. Defaults to False.
         :type has_fallback_pending: bool
         :return: The LLM's response, or None if the LLM call fails, or the LLM returns
             an empty response, while a fallback LLM is yet to be tried
@@ -538,6 +551,9 @@ class _DocumentLLM(_DocumentModel):
             no fallback LLM is yet to be tried
         :raises ModelAPIError: If the request to the LLM fails, or the LLM returns
             an empty response, and no fallback LLM is yet to be tried
+        :raises ModelRefusalError: If the LLM or its provider declines to answer
+            without a text, or the provider blocks the request for its content,
+            whether or not a fallback LLM is yet to be tried
         :raises LLMToolLoopLimitError: If the LLM keeps calling tools after
             ``tool_max_rounds`` rounds of tool calls
         """
@@ -641,7 +657,21 @@ class _DocumentLLM(_DocumentModel):
         # request, which is already reported at this point.
         if response is not None and not response.strip():
             response = None
-        if response is None and not _model_call_result_is_api_failure(result):
+
+        # A refused answer is final: it is not sent to a fallback LLM. A request
+        # that the provider blocked is already raised at this point.
+        refusal = usage.calls[-1]._refusal if usage.calls else None
+        if refusal is not None:
+            refusal_msg = _get_model_refusal_msg(
+                kind_name=self._kind_name, model=self.model, refusal=refusal
+            )
+            if response is None:
+                logger.error(refusal_msg)
+                raise ModelRefusalError(refusal_msg, retry_count=0)
+            # An answer with a text is returned as it is, e.g. the model's own
+            # words on why it does not answer
+            logger.warning(f"{refusal_msg} The response is returned as it is.")
+        elif response is None and not _model_call_result_is_api_failure(result):
             error_msg = f"LLM {self.model} returned an empty response."
             if output_truncated:
                 # e.g. all the tokens were used up by the reasoning of the model
@@ -1580,9 +1610,48 @@ class _DocumentLLM(_DocumentModel):
             getattr(choice, "finish_reason", None) == "length"
             for choice in completion_obj.choices
         )
+        call_obj._refusal = self._get_refusal_of_completion(completion_obj)
         call_obj._record_response_timestamp()
         call_obj.response = answer_text
         usage.calls.append(call_obj)
+
+    @staticmethod
+    def _get_refusal_of_completion(completion_obj: Any) -> ModelRefusal | None:
+        """
+        Returns whether, and how, the model or its provider declined to answer,
+        as the response of litellm reports it:
+
+        - "refusal" if the message has the refusal of the model in OpenAI's
+          ``refusal`` field, which litellm keeps in the ``provider_specific_fields``
+          of the message, as a non-empty text;
+        - "content_filter" if the response has the ``content_filter`` finish
+          reason, which litellm gives for a refusal of a model (e.g. the ``refusal``
+          stop reason of Anthropic) as well as for the content filter of a provider
+          (e.g. the safety filters of Gemini, of Azure OpenAI, and the guardrails
+          of Amazon Bedrock).
+
+        :param completion_obj: The raw completion object from the LLM.
+        :type completion_obj: Any
+        :return: How the answer was declined, or None if it was not.
+        :rtype: ModelRefusal | None
+        """
+        choices = getattr(completion_obj, "choices", None) or []
+        for choice in choices:
+            message = getattr(choice, "message", None)
+            provider_fields = getattr(message, "provider_specific_fields", None)
+            refusal_text = (
+                provider_fields.get("refusal")
+                if isinstance(provider_fields, dict)
+                else None
+            )
+            if isinstance(refusal_text, str) and refusal_text.strip():
+                return "refusal"
+        if any(
+            getattr(choice, "finish_reason", None) == "content_filter"
+            for choice in choices
+        ):
+            return "content_filter"
+        return None
 
     async def _execute_tool_call(self, tc_obj: Any) -> _Message:
         """
@@ -1960,6 +2029,7 @@ class _DocumentLLM(_DocumentModel):
         chat_session: _ChatSession | None = None,
         has_fallback_pending: bool = False,
         use_tools: bool = False,
+        refusal_msg_suffix: str = "",
     ) -> tuple[str | None, _ModelUsage]:
         """
         Generates a response from an LLM based on the provided messages and system
@@ -2004,6 +2074,10 @@ class _DocumentLLM(_DocumentModel):
             the tool calls requested by the LLM. Tools are used only in chat, i.e. they are
             ignored in extraction workflows. Defaults to False.
         :type use_tools: bool
+        :param refusal_msg_suffix: Appended to the message on a request that
+            the provider blocks for its content, e.g. naming the aspects or concepts
+            of the extraction call that fail with it. Defaults to an empty string.
+        :type refusal_msg_suffix: str
         :return: A tuple containing the LLM response and usage statistics.
             The LLM response is None if the LLM call fails.
         :rtype: tuple[str | None, _ModelUsage]
@@ -2011,6 +2085,11 @@ class _DocumentLLM(_DocumentModel):
             and no fallback model is yet to be tried.
         :raises ModelAPIError: If the LLM call fails due to an error in the LLM API,
             no fallback model is yet to be tried, and exceptions are to be raised.
+        :raises ModelRefusalError: If the provider blocks the request for its
+            content, and exceptions are to be raised, whether or not a fallback
+            model is yet to be tried: a refusal is final. If exceptions are not to
+            be raised, a warning is logged, and the call is recorded as unfinished,
+            with its refusal.
         :raises LLMToolLoopLimitError: If the LLM keeps requesting tool calls after
             the configured max rounds.
         """
@@ -2122,6 +2201,7 @@ class _DocumentLLM(_DocumentModel):
                     chat_session=chat_session,
                     has_fallback_pending=has_fallback_pending,
                     use_tools=use_tools,
+                    refusal_msg_suffix=refusal_msg_suffix,
                 )
             else:
                 # If drop_params was already True and we still got UnsupportedParamsError,
@@ -2152,6 +2232,26 @@ class _DocumentLLM(_DocumentModel):
                             + f" ({n_retries} retries)."
                         )
                         logger.warning(warning_msg)
+        except litellm.ContentPolicyViolationError as e:  # type: ignore[attr-defined]
+            # The provider blocked the request for its content. This is a refusal,
+            # not a failed request: it is final, i.e. the request is not sent to
+            # a fallback model. The error of litellm is kept on the exception
+            # raised, and is not logged.
+            record_failed_call()
+            usage.calls[-1]._refusal = "input_blocked"
+            refusal_msg = (
+                _get_model_refusal_msg(
+                    kind_name=self._kind_name, model=self.model, refusal="input_blocked"
+                )
+                + refusal_msg_suffix
+            )
+            logger.error(refusal_msg)
+            if raise_exception_on_model_api_error:
+                await self._update_usage_and_cost((None, usage))
+                raise ModelRefusalError(
+                    refusal_msg, retry_count=0, original_error=e
+                ) from e
+            logger.warning(refusal_msg)
         except LLMToolLoopLimitError:
             # Propagate tool loop limit errors without wrapping
             await self._update_usage_and_cost((None, usage))

@@ -30,6 +30,7 @@ from contextgem.internal.decorators import _expose_in_registry
 from contextgem.internal.typings.types import (
     DefaultDecimalField,
     MessageRole,
+    ModelRefusal,
     ModelRole,
     NonEmptyStr,
 )
@@ -78,6 +79,10 @@ class _ModelCall(BaseModel):
     # Whether the response was cut off at the max output tokens,
     # as reported by the model provider (finish reason "length")
     _output_truncated: bool = PrivateAttr(default=False)
+
+    # Whether, and how, the model or its provider declined to answer the request
+    # (see `ModelRefusal`). None if the request was not refused.
+    _refusal: ModelRefusal | None = PrivateAttr(default=None)
 
     def _record_response_timestamp(self) -> None:
         """

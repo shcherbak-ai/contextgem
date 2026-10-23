@@ -23,7 +23,11 @@ from pydantic import Field
 
 from contextgem.internal.base import llms as llms_module
 from contextgem.internal.data_models import _Message
-from contextgem.internal.exceptions import LLMToolLoopLimitError, ModelAPIError
+from contextgem.internal.exceptions import (
+    LLMToolLoopLimitError,
+    ModelAPIError,
+    ModelRefusalError,
+)
 from contextgem.internal.loggers import logger
 from contextgem.public import (
     ChatSession,
@@ -2778,3 +2782,132 @@ class TestChat(BaseTest):
             llm.tools = [with_invalid_constraint]
         assert llm.tools is None
         assert llm._tool_registry == {}
+
+    def test_chat_refusal_is_final(self):
+        """
+        Tests that a chat answer that the LLM or its provider declines to give is
+        not sent to a fallback LLM: a refused answer with a text is returned as it
+        is, with a warning, and a refused answer without a text, or a request that
+        the provider blocks for its content, raises ``ModelRefusalError``, which
+        a fallback LLM pending does not change. The refused request is recorded
+        in the usage with its refusal.
+
+        LLM API calls are stubbed, i.e. no cassette is required.
+        """
+
+        litellm = llms_module.litellm
+        prompt = "Tell me about ContextGem."
+        refusal_text = "I can't help with that."
+
+        def create_refused_completion(
+            content: str | None, *, openai_refusal: str | None = None
+        ) -> Any:
+            """
+            Creates a completion of a refused answer: with OpenAI's refusal field,
+            which litellm keeps in the provider-specific fields of the message, if
+            it is given, and with the ``content_filter`` finish reason otherwise.
+            """
+            completion = _create_completion(
+                content,
+                finish_reason="stop" if openai_refusal else "content_filter",
+            )
+            completion.choices[0].message.provider_specific_fields = {
+                "refusal": openai_refusal
+            }
+            return completion
+
+        # A refused answer with a text is returned as it is, with a warning, and
+        # the fallback LLM is not tried
+        llm = _create_llm_for_stubbed_chat()
+        chat_session = ChatSession()
+        acompletion_stub, requests = _stub_llm_api(
+            {
+                _MAIN_MODEL: [create_refused_completion(refusal_text)],
+                _FALLBACK_MODEL: [_create_completion("ContextGem is a framework.")],
+            }
+        )
+        with (
+            patch.object(litellm, "acompletion", new=acompletion_stub),
+            patch.object(logger, "warning", wraps=logger.warning) as log_warning,
+        ):
+            assert llm.chat(prompt, chat_session=chat_session) == refusal_text
+        assert any(
+            str(call.args[0]).startswith(
+                f"The answer of LLM `{_MAIN_MODEL}` was stopped with "
+                f"the `content_filter` finish reason"
+            )
+            and str(call.args[0]).endswith("The response is returned as it is.")
+            for call in log_warning.call_args_list
+        ), log_warning.call_args_list
+        assert [request["model"] for request in requests] == [_MAIN_MODEL]
+        assert [(m.role, m.content) for m in chat_session.messages] == [
+            ("user", prompt),
+            ("assistant", refusal_text),
+        ]
+        (call,) = llm.get_usage()[0].usage.calls
+        assert call._refusal == "content_filter"
+
+        # A refused answer without a text, or a request that the provider blocks,
+        # raises the error, also with a fallback LLM pending, which is not tried
+        input_blocked_error = litellm.ContentPolicyViolationError(
+            message="The request was rejected by the safety system",
+            model=_MAIN_MODEL,
+            llm_provider="openai",
+        )
+        for outcome, refusal, message_start in [
+            (
+                create_refused_completion(None),
+                "content_filter",
+                (
+                    f"The answer of LLM `{_MAIN_MODEL}` was stopped with "
+                    f"the `content_filter` finish reason"
+                ),
+            ),
+            (
+                create_refused_completion(""),
+                "content_filter",
+                (
+                    f"The answer of LLM `{_MAIN_MODEL}` was stopped with "
+                    f"the `content_filter` finish reason"
+                ),
+            ),
+            (
+                create_refused_completion(None, openai_refusal=refusal_text),
+                "refusal",
+                f"LLM `{_MAIN_MODEL}` refused to answer.",
+            ),
+            (
+                input_blocked_error,
+                "input_blocked",
+                (
+                    f"The provider of LLM `{_MAIN_MODEL}` blocked the request for "
+                    f"its content."
+                ),
+            ),
+        ]:
+            for with_fallback in [True, False]:
+                llm = _create_llm_for_stubbed_chat(with_fallback=with_fallback)
+                acompletion_stub, requests = _stub_llm_api(
+                    {
+                        _MAIN_MODEL: [outcome],
+                        _FALLBACK_MODEL: [_create_completion("ContextGem is a tool.")],
+                    }
+                )
+                with (
+                    patch.object(litellm, "acompletion", new=acompletion_stub),
+                    pytest.raises(ModelRefusalError) as exc_info,
+                ):
+                    llm.chat(prompt)
+                assert exc_info.value.message.startswith(message_start)
+                assert exc_info.value.message.endswith(
+                    "A refusal is final: the request is not sent again, also not "
+                    "to a fallback model."
+                )
+                # The refusal text of the model is not in the message
+                assert refusal_text not in str(exc_info.value)
+                assert exc_info.value.original_error is (
+                    input_blocked_error if refusal == "input_blocked" else None
+                )
+                assert [request["model"] for request in requests] == [_MAIN_MODEL]
+                (call,) = llm.get_usage()[0].usage.calls
+                assert call._refusal == refusal

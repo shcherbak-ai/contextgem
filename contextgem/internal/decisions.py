@@ -32,7 +32,10 @@ from contextgem.internal.base.concepts import (
     _RatingConcept,
 )
 from contextgem.internal.base.paras_and_sents import _Paragraph, _Sentence
-from contextgem.internal.exceptions import _InvalidDecisionResponseError
+from contextgem.internal.exceptions import (
+    _InvalidDecisionResponseError,
+    _RefusedDecisionAnswerError,
+)
 from contextgem.internal.utils import _clean_text_for_llm_prompt, _get_template
 
 
@@ -890,9 +893,7 @@ def _get_answer(
     if answer is None:
         raise _InvalidDecisionResponseError(question_name, "the answer is missing.")
     if answer.refused:
-        raise _InvalidDecisionResponseError(
-            question_name, "the model refused to answer."
-        )
+        raise _RefusedDecisionAnswerError(question_name, "the model refused to answer.")
     if answer.kind != kind:
         raise _InvalidDecisionResponseError(
             question_name,

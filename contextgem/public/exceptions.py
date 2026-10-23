@@ -20,6 +20,7 @@ from contextgem.internal.exceptions import (
     LLMToolLoopLimitError,
     ModelAPIError,
     ModelExtractionError,
+    ModelRefusalError,
 )
 
 
@@ -27,6 +28,7 @@ __all__ = (  # noqa: RUF022 - the order of the API reference
     "ContextGemError",
     "ModelAPIError",
     "ModelExtractionError",
+    "ModelRefusalError",
     "LLMToolLoopLimitError",
     "ContextGemWarning",
 )

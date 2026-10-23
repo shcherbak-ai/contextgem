@@ -22,6 +22,7 @@ from contextgem.public.exceptions import (
     LLMToolLoopLimitError,
     ModelAPIError,
     ModelExtractionError,
+    ModelRefusalError,
 )
 from contextgem.public.images import Image
 from contextgem.public.llms import ChatSession, DocumentLLM
@@ -83,6 +84,7 @@ __all__ = (  # noqa: RUF022 - grouped by kind
     "ContextGemError",
     "ModelAPIError",
     "ModelExtractionError",
+    "ModelRefusalError",
     "LLMToolLoopLimitError",
     "ContextGemWarning",
 )
