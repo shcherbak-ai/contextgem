@@ -13715,6 +13715,12 @@ class TestDecisionModels(BaseTest):
             assert DocumentDecisionModel(model=f"{provider}/decider").model == (
                 f"{provider}/decider"
             )
+        # A model identifier without a model name, as without a provider
+        for model in ["typesafe/", "/decider"]:
+            with pytest.raises(
+                ValueError, match="Model identifier must be in the form of"
+            ):
+                DocumentDecisionModel(model=model, api_key="test_api_key")
 
         # A provider of LLMs only, including those of local LLMs
         for model in [

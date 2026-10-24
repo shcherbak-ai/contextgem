@@ -4407,10 +4407,11 @@ class _DocumentModel(_GenericModelProcessor):
         :type model: str
         :return: The validated model string.
         :rtype: str
-        :raises ValueError: If `model` does not contain a forward slash ('/') to indicate
-            the required format.
+        :raises ValueError: If `model` is not in the form of
+            `<model_provider>/<model_name>`, with a provider and a model name.
         """
-        if "/" not in model:
+        provider, _, model_name = model.partition("/")
+        if not provider.strip() or not model_name.strip():
             raise ValueError(
                 "Model identifier must be in the form of `<model_provider>/<model_name>`. "
                 "See https://docs.litellm.ai/docs/providers for the list of supported providers."

@@ -1245,6 +1245,12 @@ class TestLLMs(BaseTest):
                 model="gpt-6-luna",  # no provider prefix in model name
                 api_key=os.getenv("CONTEXTGEM_OPENAI_API_KEY"),
             )
+        # An empty provider or model name
+        for model in ["openai/", "/gpt-6-luna", " /gpt-6-luna", "openai/ "]:
+            with pytest.raises(
+                ValueError, match="Model identifier must be in the form of"
+            ):
+                DocumentLLM(model=model, api_key=os.getenv("CONTEXTGEM_OPENAI_API_KEY"))
         with pytest.raises(ValueError):
             DocumentLLM(
                 model="openai/gpt-6-luna",
