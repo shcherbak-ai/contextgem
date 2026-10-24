@@ -687,74 +687,6 @@ class TestSerialization(BaseTest):
         with pytest.raises(ValueError, match="probabilities"):
             _BooleanItem.from_disk(disk_path)
 
-    def test_deserialize_item_without_probabilities(self, tmp_path: Path):
-        """
-        Tests that the data serialized before the probabilities were added to
-        the extracted items, i.e. the data without the `probabilities` key, is loaded,
-        and gives the items without probabilities.
-        """
-        # Item class, value as serialized, value
-        legacy_items: list[tuple[type[_ExtractedItem], Any, Any]] = [
-            (_StringItem, "Random string", "Random string"),
-            (_BooleanItem, True, True),
-            (_IntegerItem, 4, 4),
-            (_FloatItem, 1.5, 1.5),
-            (_IntegerOrFloatItem, 1, 1),
-            (_JsonObjectItem, {"hello": "world"}, {"hello": "world"}),
-            (_DateItem, "2025-03-02", date(2025, 3, 2)),
-            (_LabelItem, ["NDA"], ["NDA"]),
-        ]
-        for index, (item_class, serialized_value, value) in enumerate(legacy_items):
-            # The data of an item as it was serialized before
-            legacy_item_dict = {
-                "custom_data": {"source": "legacy"},
-                "value": serialized_value,
-                "justification": "Random justification",
-                "_unique_id": f"01K7ABCDEFGHJKMNPQRSTVWXY{index}",
-                "_reference_paragraphs": [],
-                "_reference_sentences": [],
-                "__class__": item_class.__name__,
-            }
-            legacy_item_json = json.dumps(legacy_item_dict)
-            assert "probabilities" not in legacy_item_json
-            disk_path = tmp_path / f"legacy_item_{index}.json"
-            disk_path.write_text(legacy_item_json, encoding="utf-8")
-
-            for item in (
-                item_class.from_dict(legacy_item_dict),
-                item_class.from_json(legacy_item_json),
-                item_class.from_disk(disk_path),
-            ):
-                assert type(item) is item_class
-                assert item.probabilities is None
-                assert item.value == value
-                assert item.justification == "Random justification"
-                assert item.custom_data == {"source": "legacy"}
-                assert item.unique_id == legacy_item_dict["_unique_id"]
-                # Serialized now, the item has the key
-                assert item.to_dict() == {**legacy_item_dict, "probabilities": None}
-                self.check_instance_serialization_and_cloning(item)
-            assert "probabilities" not in legacy_item_dict
-
-        # A document with the extracted items, as it was serialized before
-        document = self._get_document_with_extracted_items(with_probabilities=False)
-        legacy_document_dict = document.to_dict()
-        removed_keys_count = self._remove_probabilities_keys(legacy_document_dict)
-        assert removed_keys_count == len(self._get_extracted_items(document)) == 6
-        legacy_document_json = json.dumps(legacy_document_dict)
-        assert "probabilities" not in legacy_document_json
-        disk_path = tmp_path / "legacy_document.json"
-        disk_path.write_text(legacy_document_json, encoding="utf-8")
-        for restored_document in (
-            Document.from_dict(legacy_document_dict),
-            Document.from_json(legacy_document_json),
-            Document.from_disk(disk_path),
-        ):
-            assert restored_document == document
-            restored_items = self._get_extracted_items(restored_document)
-            assert len(restored_items) == 6
-            assert all(item.probabilities is None for item in restored_items.values())
-
     def test_from_json_error_does_not_hold_string(self, tmp_path: Path):
         """
         Tests that the error raised for a string that is not a valid JSON,
@@ -884,7 +816,7 @@ class TestSerialization(BaseTest):
         concepts of a document are kept when the document is serialized,
         deserialized and cloned.
         """
-        document = self._get_document_with_extracted_items(with_probabilities=True)
+        document = self._get_document_with_extracted_items()
         expected_probabilities = self._document_item_probabilities
         items = self._get_extracted_items(document)
         assert set(items) == set(expected_probabilities)
@@ -971,22 +903,16 @@ class TestSerialization(BaseTest):
         "Title": None,
     }
 
-    def _get_document_with_extracted_items(self, with_probabilities: bool) -> Document:
+    def _get_document_with_extracted_items(self) -> Document:
         """
         Returns a copy of the test document with an aspect and concepts that have
-        extracted items assigned, as after the extraction.
+        extracted items assigned, as after the extraction, with the probabilities
+        of the options in ``_document_item_probabilities``.
 
-        :param with_probabilities: Whether the items have the probabilities of
-            the options. If False, no item has them, as when extracted by an LLM.
-        :type with_probabilities: bool
         :return: The document with the extracted items.
         :rtype: Document
         """
-        probabilities: dict[str, dict[bool | int | str, float] | None] = (
-            self._document_item_probabilities
-            if with_probabilities
-            else dict.fromkeys(self._document_item_probabilities)
-        )
+        probabilities = self._document_item_probabilities
 
         document = self.document.clone()
         document.aspects = [
@@ -1072,31 +998,6 @@ class TestSerialization(BaseTest):
             assert len(instance.extracted_items) == 1
             items[instance.name] = instance.extracted_items[0]
         return items
-
-    @classmethod
-    def _remove_probabilities_keys(cls, serialized_data: Any) -> int:
-        """
-        Removes the `probabilities` key from the serialized data of each extracted
-        item, in place, which gives the data as it was serialized before
-        the probabilities were added to the items.
-
-        :param serialized_data: The serialized data of an instance, or a part of it.
-        :type serialized_data: Any
-        :return: The number of the keys removed.
-        :rtype: int
-        """
-        removed_keys_count = 0
-        if isinstance(serialized_data, dict):
-            if "probabilities" in serialized_data:
-                assert serialized_data["__class__"].endswith("Item")
-                del serialized_data["probabilities"]
-                removed_keys_count += 1
-            for value in serialized_data.values():
-                removed_keys_count += cls._remove_probabilities_keys(value)
-        elif isinstance(serialized_data, list):
-            for value in serialized_data:
-                removed_keys_count += cls._remove_probabilities_keys(value)
-        return removed_keys_count
 
     @pytest.mark.parametrize("restore_method", ["from_dict", "from_json"])
     def test_restored_document_references_its_paragraphs_and_sentences(

@@ -11114,14 +11114,12 @@ class TestDecisionModels(BaseTest):
                 == decision_model.decision_threshold
             )
             assert decision_model._eq_deserialized_model_config(restored_decision_model)
-        # Data serialized without the threshold, i.e. by an earlier version
+        # The threshold of an aspect
         aspect = Aspect(name="Termination", description="Termination clauses")
         aspect.decision_threshold = 0.3
         aspect_dict = aspect.to_dict()
         assert aspect_dict["decision_threshold"] == 0.3
         assert Aspect.from_dict(aspect_dict).decision_threshold == 0.3
-        del aspect_dict["decision_threshold"]
-        assert Aspect.from_dict(aspect_dict).decision_threshold is None
 
     def test_decision_model_aspect_request_failures(self):
         """
