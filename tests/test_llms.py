@@ -742,8 +742,7 @@ class TestLLMs(BaseTest):
         a capability is detected with litellm, once for each model, also when `model`
         is changed, and a value that is set applies instead. The messages on what
         the LLM cannot do say where its capability comes from, a warning is issued
-        when `reasoning_effort` is set but not sent, and the params are serialized,
-        also from the private attrs that the data of an earlier version has.
+        when `reasoning_effort` is set but not sent, and the params are serialized.
         """
         model = "cerebras/llama-3.3-70b"  # detected with tool calls only
         params = [
@@ -922,7 +921,7 @@ class TestLLMs(BaseTest):
             )
             assert llm._build_request_config()["reasoning_effort"] == "low"
 
-        # Serialization: the params, and the private attrs of an earlier version
+        # Serialization: the params, and not the private attrs
         llm = DocumentLLM(
             model=model,
             api_key="test_api_key",
@@ -938,21 +937,6 @@ class TestLLMs(BaseTest):
         }
         assert not any(f"_{param}" in llm_dict for param in params)
         self._check_deserialized_llm_config_eq(llm)
-        earlier_version_dict = {
-            k: v for k, v in llm_dict.items() if k not in params
-        } | {
-            "_supports_vision": True,
-            "_supports_reasoning": False,
-            "_supports_tools": True,
-            "_supports_parallel_tool_calls": False,
-        }
-        llm_from_earlier_version = DocumentLLM.from_dict(earlier_version_dict)
-        assert [getattr(llm_from_earlier_version, param) for param in params] == [
-            True,
-            False,
-            True,
-            False,
-        ]
 
     def test_skipped_token_checks(self):
         """

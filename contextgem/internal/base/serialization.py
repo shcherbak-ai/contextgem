@@ -85,16 +85,6 @@ _PRIVATE_ATTR_PUBLIC_PROPERTY: dict[str, str] = {
     KEY_REFERENCE_SENTENCES_PRIVATE: "reference_sentences",
 }
 
-# The private attrs of the serialized data of earlier versions that are params now,
-# by the name of the param: the capabilities of an LLM, which such data holds as
-# set or detected when the LLM was serialized
-_PRIVATE_ATTRS_OF_EARLIER_VERSIONS: dict[str, str] = {
-    "_supports_vision": "supports_vision",
-    "_supports_reasoning": "supports_reasoning",
-    "_supports_tools": "supports_tools",
-    "_supports_parallel_tool_calls": "supports_parallel_tool_calls",
-}
-
 # Set while an instance is being created from its serialized data, for the
 # validation that cannot be applied to such data (see the function below)
 _DESERIALIZATION_IN_PROGRESS: ContextVar[bool] = ContextVar(
@@ -624,14 +614,8 @@ class _InstanceSerializer(BaseModel):
 
         for k, v in obj_dict.items():
             final_val = rebuild_map[k](v) if k in rebuild_map else v
-            if k in _PRIVATE_ATTRS_OF_EARLIER_VERSIONS:
-                # Data of an earlier version: its value is passed for the param,
-                # unless the data has the param as well
-                param_name = _PRIVATE_ATTRS_OF_EARLIER_VERSIONS[k]
-                if param_name not in obj_dict:
-                    constructor_kwargs[param_name] = final_val
             # If it's a private attr, collect for assignment separately
-            elif k.startswith("_"):
+            if k.startswith("_"):
                 private_attrs[k] = final_val
             else:
                 constructor_kwargs[k] = final_val
