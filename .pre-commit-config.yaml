@@ -83,6 +83,14 @@ repos:
         types: [python]
         pass_filenames: false
 
+      # No value of .env, e.g. an API key of the tests, in a tracked file: in
+      # the staged files at a commit, and in all the tracked files with
+      # --all-files. Without a .env file, e.g. in CI, it checks nothing.
+      - id: no-env-secrets
+        name: no value of .env in the tracked files
+        entry: uv run python dev/check_env_secrets.py
+        language: system
+
       - id: ty
         name: ty
         entry: uv run ty check

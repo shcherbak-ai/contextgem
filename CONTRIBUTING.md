@@ -188,6 +188,7 @@ contextgem/
     - **Ruff**: formatting and linting
     - **ty**: static type checking
     - **Bandit**: security issues in the Python code
+    - **no-env-secrets**: no value of your `.env` file, e.g. an API key with which you record cassettes, is in a file that git tracks: in the staged files, and in all the tracked files with `--all-files`. It reports the variable and the line, never the value ([dev/check_env_secrets.py](dev/check_env_secrets.py))
     - **Interrogate**: docstring coverage, which must stay at 100%: every module, class and function has a docstring
     - **Deptry**: the declared dependencies against the imported ones (unused, missing, transitive)
     - **markdownlint-cli2**: Markdown style, with the version of `package-lock.json` (`npm ci` installs it)
