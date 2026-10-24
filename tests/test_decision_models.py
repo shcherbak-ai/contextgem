@@ -2456,8 +2456,7 @@ class TestDecisionModels(BaseTest):
 
         # The automatic pricing is accepted where genai-prices has a decision price,
         # i.e. the prices of the model have no price of output tokens
-        with pytest.warns(UserWarning, match="Auto-pricing"):
-            decision_model = _create_decision_model(auto_pricing=True)
+        decision_model = _create_decision_model(auto_pricing=True)
         assert decision_model._auto_pricing_provider_id == "typesafe"
         assert decision_model._auto_pricing_model_ref == "jev-latest"
         assert decision_model._calculate_auto_pricing_costs(1_000_000, 1_000_000) == (
@@ -2465,10 +2464,9 @@ class TestDecisionModels(BaseTest):
             Decimal(0),
         )
         # ... whichever provider serves the model
-        with pytest.warns(UserWarning, match="Auto-pricing"):
-            other_decision_model = _create_decision_model(
-                "perplexity/pplx-decider-v1-27b", auto_pricing=True
-            )
+        other_decision_model = _create_decision_model(
+            "perplexity/pplx-decider-v1-27b", auto_pricing=True
+        )
         input_cost, output_cost = other_decision_model._calculate_auto_pricing_costs(
             1_000_000, 1_000_000
         )
@@ -2477,10 +2475,9 @@ class TestDecisionModels(BaseTest):
         # For an OpenAI model, the prices of the decision requests are looked up
         # under the provider that genai-prices has for them, and not the prices of
         # the chat requests, which it has under the provider of the model
-        with pytest.warns(UserWarning, match="Auto-pricing"):
-            openai_decision_model = _create_decision_model(
-                "openai/gpt-6-luna", auto_pricing=True
-            )
+        openai_decision_model = _create_decision_model(
+            "openai/gpt-6-luna", auto_pricing=True
+        )
         assert openai_decision_model._auto_pricing_provider_id == "openai-decisions"
         assert openai_decision_model._auto_pricing_model_ref == "gpt-6-luna"
         # ... with the input tokens read from the cache priced as the other input
@@ -2489,8 +2486,7 @@ class TestDecisionModels(BaseTest):
             1_000, 100, cache_read_tokens=200
         ) == (Decimal("0.0001"), Decimal(0))
         # ... while an LLM of the same name gets the prices of the chat requests
-        with pytest.warns(UserWarning, match="Auto-pricing"):
-            llm = _create_llm("openai/gpt-6-luna", auto_pricing=True)
+        llm = _create_llm("openai/gpt-6-luna", auto_pricing=True)
         assert llm._auto_pricing_provider_id == "openai"
         assert llm._calculate_auto_pricing_costs(0, 1_000_000)[1] > 0
         # A model that genai-prices has no prices for is accepted as well, with
@@ -4324,8 +4320,7 @@ class TestDecisionModels(BaseTest):
         assert decision_model.get_cost()[0].cost == _ModelCost()
 
         # === Automatic pricing ===
-        with pytest.warns(UserWarning, match="Auto-pricing"):
-            decision_model = _create_decision_model(auto_pricing=True)
+        decision_model = _create_decision_model(auto_pricing=True)
         decisions_stub = _DecisionsAPIStub(
             {_DECISION_MODEL: [answers]}, input_tokens=1_000_000
         )
@@ -7039,8 +7034,8 @@ class TestDecisionModels(BaseTest):
             max_tokens=100,
             fallback_models=[_create_decision_model(is_fallback=True)],
         )
-        llm._supports_vision = True
-        llm._supports_parallel_tool_calls = True
+        llm.supports_vision = True
+        llm.supports_parallel_tool_calls = True
         completions_stub = _CompletionsAPIStub({_LLM_MODEL: ["An invoice."]})
         with (
             patch.object(litellm, "adecisions", new=decisions_stub),
@@ -14061,7 +14056,6 @@ class TestDecisionModels(BaseTest):
             DocumentDecisionModel,
             {"model": _DECISION_MODEL},
             api_key,
-            created_model_is_input=False,
             tmp_path=tmp_path,
         )
 
@@ -14090,7 +14084,7 @@ class TestDecisionModels(BaseTest):
 
         llm = _create_llm(fallback_models=[_create_decision_model(is_fallback=True)])
         # The LLM can extract from images, whatever litellm tells of its model
-        llm._supports_vision = True
+        llm.supports_vision = True
         modalities: list[Literal["image", "multimodal"]] = ["image", "multimodal"]
         for modality in modalities:
             document = Document(
@@ -14685,12 +14679,11 @@ class TestDecisionModels(BaseTest):
         automatically, from the usage that the API reports, with the prices of
         the decision requests of OpenAI.
         """
-        with pytest.warns(UserWarning, match="not be 100% accurate"):
-            decision_model = DocumentDecisionModel(
-                model="openai/gpt-6-luna",
-                api_key=os.getenv("CONTEXTGEM_OPENAI_API_KEY"),
-                auto_pricing=True,
-            )
+        decision_model = DocumentDecisionModel(
+            model="openai/gpt-6-luna",
+            api_key=os.getenv("CONTEXTGEM_OPENAI_API_KEY"),
+            auto_pricing=True,
+        )
         document = Document(raw_text=_RECORDED_CONCEPTS_DOCUMENT_TEXT)
         document.concepts = self._create_concepts_for_recorded_tests()
 

@@ -58,7 +58,7 @@ from contextgem.public import (
 )
 from tests.base import BaseTest
 from tests.conftest import VCR_REDACTION_MARKER
-from tests.utils import REDACTED_VALUE, get_project_root_path
+from tests.utils import REDACTED_VALUE, capture_logs, get_project_root_path
 
 
 class TestLLMs(BaseTest):
@@ -598,7 +598,7 @@ class TestLLMs(BaseTest):
             api_base="http://localhost:11434",
             seed=123,
         )
-        llm_reasoning_ollama._supports_reasoning = True
+        llm_reasoning_ollama.supports_reasoning = True
         self.extract_with_local_llm(llm_reasoning_ollama)
 
         # LM Studio
@@ -633,7 +633,7 @@ class TestLLMs(BaseTest):
             model="ollama_chat/gemma3:27b",
             api_base="http://localhost:11434",
         )
-        llm_ollama_chat._supports_vision = True
+        llm_ollama_chat.supports_vision = True
         with pytest.warns(UserWarning, match="use `ollama/` prefix instead"):
             llm_ollama_chat._ensure_vision_support_for_messages(
                 [
@@ -653,7 +653,7 @@ class TestLLMs(BaseTest):
         # TODO: remove this check once litellm supports vision for this model
         with pytest.raises(ValueError, match="does not support vision"):
             llm_ollama.extract_concepts_from_document(document)
-        llm_ollama._supports_vision = True
+        llm_ollama.supports_vision = True
         extracted_concepts = llm_ollama.extract_concepts_from_document(document)
         assert extracted_concepts[0].extracted_items
         # Log the extracted item for debugging
@@ -699,7 +699,9 @@ class TestLLMs(BaseTest):
         # LM Studio
         # The model is not detected as tools-capable, i.e. the capability
         # has to be declared explicitly
-        with pytest.warns(UserWarning, match="does not detect it as tools-capable"):
+        with pytest.warns(
+            UserWarning, match="does not support tool calls according to `litellm"
+        ):
             llm_lm_studio = DocumentLLM(
                 model="lm_studio/openai/gpt-oss-20b",
                 api_base="http://localhost:1234/v1",
@@ -708,7 +710,7 @@ class TestLLMs(BaseTest):
                 tools=[get_order_total, get_discount_amount, compute_final_amount],
                 seed=123,
             )
-        llm_lm_studio._supports_tools = True
+        llm_lm_studio.supports_tools = True
 
         answer = llm_lm_studio.chat(
             "Use the available tools to compute a final amount. "
@@ -732,6 +734,331 @@ class TestLLMs(BaseTest):
 
         # Check serialization of LLM
         self._check_deserialized_llm_config_eq(llm_lm_studio)
+
+    def test_capability_params(self):
+        """
+        Tests the params that declare the capabilities of the model of an LLM: not set,
+        a capability is detected with litellm, once for each model, also when `model`
+        is changed, and a value that is set applies instead. The messages on what
+        the LLM cannot do say where its capability comes from, a warning is issued
+        when `reasoning_effort` is set but not sent, and the params are serialized,
+        also from the private attrs that the data of an earlier version has.
+        """
+        model = "cerebras/llama-3.3-70b"  # detected with tool calls only
+        params = [
+            "supports_vision",
+            "supports_reasoning",
+            "supports_tools",
+            "supports_parallel_tool_calls",
+        ]
+        detected = {
+            "supports_vision": False,
+            "supports_reasoning": False,
+            "supports_tools": True,
+            "supports_parallel_tool_calls": False,
+        }
+
+        def get_capabilities(llm: DocumentLLM) -> dict[str, bool]:
+            """
+            Returns the capabilities that apply to the LLM, by their params.
+            """
+            return {param: getattr(llm, f"_{param}") for param in params}
+
+        # Not set: detected
+        llm = DocumentLLM(model=model, api_key="test_api_key")
+        assert [getattr(llm, param) for param in params] == [None] * 4
+        assert get_capabilities(llm) == detected
+
+        # Set: applies instead of the detection, which is not made for it
+        with patch.object(
+            llms_module.litellm, "supports_vision", side_effect=AssertionError
+        ):
+            llm = DocumentLLM(
+                model=model,
+                api_key="test_api_key",
+                supports_vision=True,
+                supports_tools=False,
+            )
+            assert get_capabilities(llm) == {
+                **detected,
+                "supports_vision": True,
+                "supports_tools": False,
+            }
+        with pytest.raises(ValueError):
+            DocumentLLM(
+                model=model,
+                api_key="test_api_key",
+                supports_vision="yes",
+            )
+
+        # Detected once for a model, and again for a new model
+        llm = DocumentLLM(model=model, api_key="test_api_key")
+        detected_for: list[str] = []
+
+        def supports_vision_stub(detected_model: str) -> bool:
+            """
+            Records the model that vision is detected for.
+            """
+            detected_for.append(detected_model)
+            return detected_model == "openai/gpt-6-luna"
+
+        with patch.object(
+            llms_module.litellm, "supports_vision", new=supports_vision_stub
+        ):
+            assert not llm._supports_vision
+            llm.temperature = 0.5
+            assert not llm._supports_vision
+            assert detected_for == []  # detected when the LLM was created
+            llm.model = "openai/gpt-6-luna"
+            assert llm._supports_vision
+            assert llm._supports_vision
+            assert detected_for == ["openai/gpt-6-luna"]
+            # Assigning None detects the capability again, if needed
+            llm.supports_vision = False
+            assert not llm._supports_vision
+            llm.supports_vision = None
+            assert llm._supports_vision
+            assert detected_for == ["openai/gpt-6-luna"]
+
+        # The capabilities are params: the private attrs that held them before
+        # cannot be assigned
+        with pytest.raises(AttributeError):
+            llm._supports_vision = True
+
+        # The messages say where a missing capability comes from
+        image_message = llm._build_user_message(
+            message_text="Test", images=[self.test_img_png_invoice]
+        )
+        llm = DocumentLLM(model=model, api_key="test_api_key")
+        with pytest.raises(
+            ValueError,
+            match=re.escape(
+                f"Model `{model}` does not support vision according to "
+                "`litellm.supports_vision()`. If the model supports vision, "
+                "set `supports_vision=True` on the LLM."
+            ),
+        ):
+            llm._ensure_vision_support_for_messages([image_message])
+        llm.supports_vision = False
+        with pytest.raises(
+            ValueError,
+            match=re.escape(
+                f"Model `{model}` does not support vision as set with "
+                "`supports_vision=False`."
+            )
+            + "$",
+        ):
+            llm._ensure_vision_support_for_messages([image_message])
+        llm.supports_vision = True
+        llm._ensure_vision_support_for_messages([image_message])
+
+        # A warning on a param of the LLM is issued once when the LLM is created
+        @register_tool
+        def get_status() -> str:
+            """
+            Returns the status.
+            """
+            return "ok"
+
+        with warnings.catch_warnings(record=True) as caught_warnings:
+            warnings.simplefilter("always")
+            DocumentLLM(
+                model="some_provider/some-model",
+                api_key="test_api_key",
+                tools=[get_status],
+            )
+        assert [str(w.message) for w in caught_warnings] == [
+            (
+                "Model `some_provider/some-model` is assigned tools, but does not "
+                "support tool calls according to `litellm.supports_function_calling()`. "
+                "The tools are sent with the requests of a chat, which the model or "
+                "its provider may reject or answer without calling the tools. If the "
+                "model supports tool calls, set `supports_tools=True` on the LLM."
+            )
+        ]
+
+        # `reasoning_effort` that is not sent is warned about: for a model without
+        # reasoning support...
+        with pytest.warns(
+            ContextGemWarning,
+            match="`reasoning_effort` is set for model .*, but is not sent with its "
+            "requests: the model does not support reasoning according to "
+            r"`litellm.supports_reasoning\(\)`",
+        ):
+            llm = DocumentLLM(
+                model=model, api_key="test_api_key", reasoning_effort="low"
+            )
+        assert "reasoning_effort" not in llm._build_request_config()
+        # ... and for a model whose params litellm does not list it among
+        with patch.object(
+            llms_module.litellm,
+            "get_supported_openai_params",
+            return_value=["max_tokens"],
+        ):
+            with pytest.warns(ContextGemWarning, match="litellm does not list it"):
+                llm = DocumentLLM(
+                    model=model,
+                    api_key="test_api_key",
+                    reasoning_effort="low",
+                    supports_reasoning=True,
+                )
+            assert "reasoning_effort" not in llm._build_request_config()
+        # Sent, without a warning, where both apply
+        with (
+            patch.object(
+                llms_module.litellm,
+                "get_supported_openai_params",
+                return_value=["max_tokens", "reasoning_effort"],
+            ),
+            warnings.catch_warnings(),
+        ):
+            warnings.simplefilter("error", category=ContextGemWarning)
+            llm = DocumentLLM(
+                model=model,
+                api_key="test_api_key",
+                reasoning_effort="low",
+                supports_reasoning=True,
+            )
+            assert llm._build_request_config()["reasoning_effort"] == "low"
+
+        # Serialization: the params, and the private attrs of an earlier version
+        llm = DocumentLLM(
+            model=model,
+            api_key="test_api_key",
+            supports_vision=True,
+            supports_parallel_tool_calls=False,
+        )
+        llm_dict = llm.to_dict()
+        assert {param: llm_dict[param] for param in params} == {
+            "supports_vision": True,
+            "supports_reasoning": None,
+            "supports_tools": None,
+            "supports_parallel_tool_calls": False,
+        }
+        assert not any(f"_{param}" in llm_dict for param in params)
+        self._check_deserialized_llm_config_eq(llm)
+        earlier_version_dict = {
+            k: v for k, v in llm_dict.items() if k not in params
+        } | {
+            "_supports_vision": True,
+            "_supports_reasoning": False,
+            "_supports_tools": True,
+            "_supports_parallel_tool_calls": False,
+        }
+        llm_from_earlier_version = DocumentLLM.from_dict(earlier_version_dict)
+        assert [getattr(llm_from_earlier_version, param) for param in params] == [
+            True,
+            False,
+            True,
+            False,
+        ]
+
+    def test_skipped_token_checks(self):
+        """
+        Tests the checks of the token limits of the requests that cannot be made:
+        for a model that litellm does not know, the warning that the limits are not
+        checked is logged once for the LLM and its model, not for each request,
+        and for a model whose token encodings cannot be downloaded, e.g. without
+        network access, the input tokens are not counted again in the process, as
+        each count would try the download again.
+
+        LLM API calls are stubbed, i.e. no cassette is required.
+        """
+        litellm = llms_module.litellm
+
+        async def acompletion_stub(**kwargs: Any) -> Any:
+            """
+            Simulates the LLM API: answers each request with a text.
+            """
+            return litellm.mock_completion(**kwargs, mock_response="Answer.")
+
+        def count_logged(logs: list[str], text: str) -> int:
+            """
+            Returns the number of the logged messages that have the text.
+            """
+            return sum(text in message for message in logs)
+
+        # A model that litellm does not know: logged once for the LLM and its model
+        unknown_model = "openai/model-unknown-to-litellm"
+        other_unknown_model = "openai/other-model-unknown-to-litellm"
+        llm = DocumentLLM(
+            model=unknown_model,
+            api_key="test_api_key",
+            system_message="",
+            max_tokens=100,
+        )
+        with (
+            patch.object(litellm, "acompletion", new=acompletion_stub),
+            capture_logs() as logs,
+        ):
+            llm.chat("Hi")
+            llm.chat("Hi again")
+            for limit in ["input", "output"]:
+                assert (
+                    count_logged(
+                        logs,
+                        f"Could not validate max {limit} tokens for model "
+                        f"`{unknown_model}`",
+                    )
+                    == 1
+                )
+            assert count_logged(logs, "`litellm.register_model()`") == 2
+            assert count_logged(logs, "Not logged again for this LLM and model") == 2
+            # ... and again for another model of the LLM
+            llm.model = other_unknown_model
+            llm.chat("Hi")
+            llm.chat("Hi again")
+            assert (
+                count_logged(
+                    logs,
+                    f"Could not validate max input tokens for model "
+                    f"`{other_unknown_model}`",
+                )
+                == 1
+            )
+
+        # Token encodings that cannot be downloaded: not counted again in the process
+        counted_models: list[str] = []
+
+        def token_counter_stub(model: str, **kwargs: Any) -> int:
+            """
+            Simulates a count of tokens whose encodings cannot be downloaded,
+            e.g. behind a proxy that refuses the download, for one model, and
+            a count that fails otherwise for the other one.
+            """
+            counted_models.append(model)
+            if model == "openai/gpt-6-luna":
+                # As the download error of requests, an OSError
+                raise ConnectionError("Unable to connect to proxy")
+            raise ValueError("Unexpected content")
+
+        with (
+            patch.object(litellm, "acompletion", new=acompletion_stub),
+            patch.object(litellm, "token_counter", new=token_counter_stub),
+            patch.object(llms_module, "_MODELS_WITHOUT_TOKEN_COUNT", new=set()),
+            capture_logs() as logs,
+        ):
+            for _ in range(2):
+                DocumentLLM(
+                    model="openai/gpt-6-luna", api_key="test_api_key", system_message=""
+                ).chat("Hi")
+            assert counted_models == ["openai/gpt-6-luna"]
+            assert (
+                count_logged(
+                    logs,
+                    "Skipping input token validation for the requests of this model "
+                    "until the process is restarted",
+                )
+                == 1
+            )
+            assert count_logged(logs, "https://contextgem.shcherbak.ai/testing/") == 1
+            # Another failure of the count is not remembered
+            other_llm = DocumentLLM(
+                model="openai/gpt-5.6-luna", api_key="test_api_key", system_message=""
+            )
+            other_llm.chat("Hi")
+            other_llm.chat("Hi again")
+            assert counted_models == ["openai/gpt-6-luna"] + ["openai/gpt-5.6-luna"] * 2
 
     def test_init_api_llm(self):
         """
@@ -2470,21 +2797,18 @@ class TestLLMs(BaseTest):
         assert not hasattr(model_group, key_param)
 
         # The LLM that is invalid itself, when it is created, changed or deserialized:
-        # the key is among the inputs of its validation. For an LLM created with
-        # the default system message, the input of a check that involves several
-        # params is the LLM, which is shown, and written out, without the key.
-        # For an LLM created with a system message of its own, it is all the params
-        # that the LLM is created with: the key is reported as redacted.
-        model_params_cases: list[tuple[dict[str, Any], bool]] = [
-            ({"model": "openai/gpt-6-luna"}, True),
-            ({"model": "openai/gpt-6-luna", "system_message": "Be concise."}, False),
-        ]
-        for model_params, created_model_is_input in model_params_cases:
+        # the key is among the inputs of its validation. When the LLM is created,
+        # with the default system message or with one of its own, the input of
+        # a check that involves several params is all the params that the LLM is
+        # created with: the key is reported as redacted.
+        for model_params in [
+            {"model": "openai/gpt-6-luna"},
+            {"model": "openai/gpt-6-luna", "system_message": "Be concise."},
+        ]:
             self.check_model_validation_errors_hide_inputs(
                 DocumentLLM,
                 model_params,
                 api_key,
-                created_model_is_input=created_model_is_input,
                 tmp_path=tmp_path,
             )
 

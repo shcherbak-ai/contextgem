@@ -7,6 +7,7 @@ Module defining tests for the logger.
 
 from __future__ import annotations
 
+import io
 import logging
 import sys
 import warnings
@@ -164,6 +165,91 @@ class TestLogging(BaseTest):
             reload_logger_settings()
             print()
             log_messages()
+
+    def test_colors_only_in_a_terminal(self, monkeypatch):
+        """
+        Tests that the log has the escape codes of its colors only where it is
+        written to a terminal, e.g. not to a file or to the log of a CI job, unless
+        the colors are forced with ``FORCE_COLOR``, and never with ``NO_COLOR``.
+        """
+
+        class _TerminalStream(io.StringIO):
+            """
+            A stream that is taken for a terminal.
+            """
+
+            def isatty(self) -> bool:
+                return True
+
+        escape_code = "\x1b["
+        monkeypatch.delenv("FORCE_COLOR", raising=False)
+        monkeypatch.delenv("NO_COLOR", raising=False)
+        monkeypatch.setenv(LOGGER_LEVEL_ENV_VAR_NAME, "INFO")
+        for stream_class, env_var, is_colored in [
+            (io.StringIO, None, False),
+            (io.StringIO, "FORCE_COLOR", True),
+            (_TerminalStream, None, True),
+            (_TerminalStream, "NO_COLOR", False),
+        ]:
+            stream = stream_class()
+            monkeypatch.setattr(sys, "stdout", stream)
+            if env_var is not None:
+                monkeypatch.setenv(env_var, "1")
+            reload_logger_settings()
+            logger.warning("Colored message")
+            assert "Colored message" in stream.getvalue()
+            assert (escape_code in stream.getvalue()) == is_colored
+            if env_var is not None:
+                monkeypatch.delenv(env_var)
+
+    def test_application_handler_kept_at_any_level(self, monkeypatch, capsys):
+        """
+        Tests that a handler that the application added to the logger is kept when
+        the settings are reloaded, also with the logger disabled: it gets no messages
+        while the logger is disabled, and gets them again once it is enabled. Only
+        the handler of ContextGem is replaced, i.e. it is not added twice.
+        """
+
+        class _ListHandler(logging.Handler):
+            """
+            A handler that keeps the messages of the records it gets.
+            """
+
+            def __init__(self) -> None:
+                super().__init__()
+                self.messages: list[str] = []
+
+            def emit(self, record: logging.LogRecord) -> None:
+                self.messages.append(record.getMessage())
+
+        app_handler = _ListHandler()
+        logger.addHandler(app_handler)
+        try:
+            for level, is_received in [
+                ("INFO", True),
+                ("OFF", False),
+                ("INFO", True),
+                ("WARNING", True),
+            ]:
+                monkeypatch.setenv(LOGGER_LEVEL_ENV_VAR_NAME, level)
+                reload_logger_settings()
+                assert app_handler in logger.handlers
+                n_stream_handlers = sum(
+                    type(handler) is logging.StreamHandler
+                    for handler in logger.handlers
+                )
+                assert n_stream_handlers == (0 if level == "OFF" else 1)
+
+                app_handler.messages.clear()
+                logger.warning(f"Message at {level}")
+                assert app_handler.messages == (
+                    [f"Message at {level}"] if is_received else []
+                )
+                assert (f"Message at {level}" in capsys.readouterr().out) == (
+                    is_received
+                )
+        finally:
+            logger.removeHandler(app_handler)
 
     @pytest.mark.parametrize(
         ("first_level", "second_level"),

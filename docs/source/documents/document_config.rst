@@ -98,7 +98,8 @@ Pass such paragraphs to the document via ``paragraphs``. For a file converted wi
 
 The additional context:
 
-- should be a single-line string: it is cleaned before it is sent to a model, as the text of the paragraph is, i.e. control characters are removed, and whitespace, line breaks included, is collapsed to single spaces. A warning is logged if it has line breaks, as they are not kept. Additional context of which nothing is left is not sent;
+- is a non-empty string, without its surrounding whitespace: an empty string, or one of whitespace only, is rejected (``ValueError``), and the whitespace around the text is removed when the paragraph is created;
+- is cleaned before it is sent to a model, as the text of the paragraph is, i.e. control characters are removed, and whitespace, line breaks included, is collapsed to single spaces: e.g. ``"Table: Fees\nrow 2"`` is sent as ``"Table: Fees row 2"``. Additional context of which nothing is left, e.g. of control characters only, is not sent;
 - is passed to the LLM together with the paragraph text in the prompts that list paragraphs, i.e. when aspects are extracted, or when concepts are extracted with references (``add_references=True``). It is not used when concepts are extracted from the document text as a whole;
 - is sent to a decision model together with the paragraph text when aspects are extracted, also with each sentence of the paragraph that the model is asked about, for an aspect with ``reference_depth="sentences"`` (see :ref:`decision-models-aspects-label`);
 - is inherited by the sentences segmented from the paragraph, i.e. set it on the paragraph, and give a sentence an additional context of its own only where it differs, e.g. for a paragraph that you create with its sentences: a model is sent the additional context of a paragraph once, and that of a sentence only if it differs;

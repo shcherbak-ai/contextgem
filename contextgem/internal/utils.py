@@ -407,20 +407,6 @@ def _is_text_content_empty(text: str) -> bool:
     return not cleaned_text or cleaned_text.isspace()
 
 
-def _contains_linebreaks(text: str) -> bool:
-    """
-    Checks if the given string contains line breaks, considering both Unix (\n) and
-    Windows (\r\n) style line breaks.
-
-    :param text: The string to be checked.
-    :type text: str
-    :return: True if the string contains one or more line breaks, False otherwise.
-    :rtype: bool
-    """
-    # Check for both Unix (\n) and Windows (\r\n) style line breaks
-    return "\n" in text or "\r" in text
-
-
 def _are_prompt_template_brackets_balanced(prompt: str) -> bool:
     """
     Checks whether each opening bracket in prompt template has a matching closing bracket.
@@ -1229,7 +1215,9 @@ def _validate_parsed_llm_output(
     """
 
     if parsed_json is None:
-        logger.error("Error when validating parsed JSON: parsed_json is None")
+        logger.error(
+            "LLM output is not JSON: it cannot be parsed as a JSON array or object"
+        )
         return None
 
     validation_context = {}

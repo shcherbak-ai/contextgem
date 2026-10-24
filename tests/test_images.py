@@ -7,6 +7,7 @@ Module defining tests for images and vision.
 
 from __future__ import annotations
 
+import base64
 import os
 from io import BytesIO
 
@@ -151,21 +152,29 @@ class TestImages(BaseTest):
         assert img_from_bytes.base64_data == expected_base64
         assert img_from_bytesio.base64_data == expected_base64
 
+        # Test 8: A PIL Image without a format, e.g. created in memory, is saved
+        # as PNG, with its pixels
+        pil_image_no_format = PILImage.new("RGB", (100, 100), color="red")
+        assert pil_image_no_format.format is None
+        img_from_pil_no_format = create_image(pil_image_no_format)
+        assert img_from_pil_no_format.mime_type == "image/png"
+        with PILImage.open(
+            BytesIO(base64.b64decode(img_from_pil_no_format.base64_data))
+        ) as decoded_image:
+            assert decoded_image.format == "PNG"
+            assert decoded_image.size == (100, 100)
+            assert decoded_image.getpixel((0, 0)) == (255, 0, 0)
+
         # Test error scenarios
         # Test 1: Non-existent file path
         with pytest.raises(FileNotFoundError):
             create_image("non_existent_image.jpg")
 
-        # Test 2: PIL Image without format
-        pil_image_no_format = PILImage.new("RGB", (100, 100), color="red")
-        with pytest.raises(ValueError, match="Cannot determine image format"):
-            create_image(pil_image_no_format)
-
-        # Test 3: Invalid bytes data
+        # Test 2: Invalid bytes data
         with pytest.raises(OSError, match="Cannot open image from bytes data"):
             create_image(b"invalid image data")
 
-        # Test 4: Invalid file-like object
+        # Test 3: Invalid file-like object
         invalid_buffer = BytesIO(b"not an image")
         with pytest.raises(OSError, match="Cannot open image from file-like object"):
             create_image(invalid_buffer)

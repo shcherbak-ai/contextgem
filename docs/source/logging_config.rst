@@ -105,7 +105,7 @@ Python warnings are not log messages: ``CONTEXTGEM_LOGGER_LEVEL`` does not affec
 📋 Log Format
 ---------------
 
-ContextGem writes its log to standard output (``sys.stdout``) with a handler of its own, and its logger does not pass the messages on to the root logger: a handler of your application, e.g. one that sends your logs to a log collector, does not get them, unless you add it to the ``contextgem`` logger (``logging.getLogger("contextgem").addHandler(...)``), where it stays when the settings are changed, except with ``OFF``.
+ContextGem writes its log to standard output (``sys.stdout``) with a handler of its own, and its logger does not pass the messages on to the root logger: a handler of your application, e.g. one that sends your logs to a log collector, does not get them, unless you add it to the ``contextgem`` logger (``logging.getLogger("contextgem").addHandler(...)``), where it stays when the settings are changed. With ``OFF``, it gets no messages, until the level is changed again.
 
 The errors that ContextGem logs on an answer of a model that cannot be used say where and how the answer is invalid, without its values, which can hold text of your documents. ``litellm`` logs with loggers of its own: if your application logs them at the ``DEBUG`` level, they log each request that ``litellm`` sends, its prompt included.
 
@@ -120,3 +120,5 @@ Each log entry includes:
 * Timestamp (with milliseconds)
 * Log level
 * Log message
+
+The timestamp and the level are in color where the log is written to a terminal. Written elsewhere, e.g. to a file or to the log of a CI job, the log has no color codes, unless the ``FORCE_COLOR`` environment variable is set, e.g. for a CI service that shows colors. With ``NO_COLOR`` set, the log has no colors at all (see `no-color.org <https://no-color.org/>`_). In a Jupyter notebook, whose output is not a terminal, set ``FORCE_COLOR=1`` to see the colors.

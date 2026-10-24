@@ -27,7 +27,14 @@ from aiolimiter import AsyncLimiter
 from fastjsonschema import validate as _jsonschema_validate
 from fastjsonschema.exceptions import JsonSchemaException as _JSONSchemaValidationError
 from jinja2 import Template
-from pydantic import Field, PrivateAttr, StrictFloat, StrictInt, field_validator
+from pydantic import (
+    Field,
+    PrivateAttr,
+    StrictBool,
+    StrictFloat,
+    StrictInt,
+    field_validator,
+)
 
 from contextgem.internal.base.images import _Image
 from contextgem.internal.base.instances import _InstanceBase
@@ -79,6 +86,39 @@ with _suppress_litellm_warnings_context():
 
 
 litellm.suppress_debug_info = True
+
+# The params of an LLM that declare the capabilities of its model, with the function
+# of litellm that detects a capability where its param is not set, and the name
+# of the capability in the messages
+_LLM_CAPABILITY_PARAMS: dict[str, tuple[str, str]] = {
+    "supports_vision": ("supports_vision", "vision"),
+    "supports_reasoning": ("supports_reasoning", "reasoning"),
+    "supports_tools": ("supports_function_calling", "tool calls"),
+    "supports_parallel_tool_calls": (
+        "supports_parallel_function_calling",
+        "parallel tool calls",
+    ),
+}
+
+# The models whose input tokens could not be counted in this process for want of
+# the token encodings, which tiktoken downloads where litellm has no valid copy of
+# them, e.g. without network access: the input tokens of their requests are not
+# counted again, as each count would try the download again
+_MODELS_WITHOUT_TOKEN_COUNT: set[str] = set()
+
+# Where the documentation says how to prepare the token encodings without
+# network access
+_OFFLINE_ENCODINGS_DOCS_URL = (
+    "https://contextgem.shcherbak.ai/testing/#no-api-keys-in-tests"
+)
+
+# The advice on a model that litellm does not know, for the messages on the token
+# limits of its requests that could not be checked
+_REGISTER_MODEL_ADVICE = (
+    "If litellm does not know the model, e.g. one served by your own server, "
+    "register it with `litellm.register_model()`, with its limits: see "
+    "https://contextgem.shcherbak.ai/llms/llm_config/#explicit-capability-declaration."
+)
 
 
 @_disable_direct_initialization
@@ -207,20 +247,98 @@ class _DocumentLLM(_DocumentModel):
             "Prevents infinite or excessively long tool chains."
         ),
     )
+    # Capabilities of the model (see `_LLM_CAPABILITY_PARAMS`), to be set where
+    # the detection of litellm is not accurate for the model
+    supports_vision: StrictBool | None = Field(
+        default=None,
+        description=(
+            "Whether the model takes images as input. Defaults to None, i.e. "
+            "detected with litellm.supports_vision() for the model."
+        ),
+    )
+    supports_reasoning: StrictBool | None = Field(
+        default=None,
+        description=(
+            "Whether the model is a reasoning (CoT-capable) model. Defaults to None, "
+            "i.e. detected with litellm.supports_reasoning() for the model."
+        ),
+    )
+    supports_tools: StrictBool | None = Field(
+        default=None,
+        description=(
+            "Whether the model supports tool calls. Defaults to None, i.e. "
+            "detected with litellm.supports_function_calling() for the model."
+        ),
+    )
+    supports_parallel_tool_calls: StrictBool | None = Field(
+        default=None,
+        description=(
+            "Whether the model supports parallel tool calls. Defaults to None, i.e. "
+            "detected with litellm.supports_parallel_function_calling() for the model."
+        ),
+    )
 
     # Prompts
     _extract_aspect_items_prompt: Template = PrivateAttr()
     _extract_concept_items_prompt: Template = PrivateAttr()
 
-    # Capabilities (can be overridden by users if litellm.supports_*()
-    # is not accurate for the model)
-    _supports_vision: bool = PrivateAttr(default=False)
-    _supports_reasoning: bool = PrivateAttr(default=False)
-    _supports_tools: bool = PrivateAttr(default=False)
-    _supports_parallel_tool_calls: bool = PrivateAttr(default=False)
+    # The capabilities of the model detected with litellm, by their params, for
+    # the params that are not set, and the model they were detected for
+    _detected_capabilities: dict[str, bool] = PrivateAttr(default_factory=dict)
+    _capabilities_detected_for: str | None = PrivateAttr(default=None)
+
+    # The checks of the token limits of the requests that could not be made, by
+    # the model and the limit, which are logged once (see `_log_skipped_token_check`)
+    _skipped_token_checks_logged: set[tuple[str, str]] = PrivateAttr(
+        default_factory=set
+    )
 
     # Tool registry: name -> ToolRegistration
     _tool_registry: dict[str, ToolRegistration] = PrivateAttr(default_factory=dict)
+
+    @property
+    def _supports_vision(self) -> bool:
+        """
+        Returns whether the model takes images as input, as set with
+        ``supports_vision`` or detected with litellm.
+
+        :return: Whether the model supports vision.
+        :rtype: bool
+        """
+        return self._has_capability("supports_vision")
+
+    @property
+    def _supports_reasoning(self) -> bool:
+        """
+        Returns whether the model is a reasoning (CoT-capable) model, as set with
+        ``supports_reasoning`` or detected with litellm.
+
+        :return: Whether the model supports reasoning.
+        :rtype: bool
+        """
+        return self._has_capability("supports_reasoning")
+
+    @property
+    def _supports_tools(self) -> bool:
+        """
+        Returns whether the model supports tool calls, as set with
+        ``supports_tools`` or detected with litellm.
+
+        :return: Whether the model supports tool calls.
+        :rtype: bool
+        """
+        return self._has_capability("supports_tools")
+
+    @property
+    def _supports_parallel_tool_calls(self) -> bool:
+        """
+        Returns whether the model supports parallel tool calls, as set with
+        ``supports_parallel_tool_calls`` or detected with litellm.
+
+        :return: Whether the model supports parallel tool calls.
+        :rtype: bool
+        """
+        return self._has_capability("supports_parallel_tool_calls")
 
     @property
     def _kind_name(self) -> str:
@@ -315,7 +433,8 @@ class _DocumentLLM(_DocumentModel):
     def _set_kind_specific_private_attrs(self) -> None:
         """
         Initializes and configures what only an LLM has: the default system message,
-        unless a system message is given, the prompts and the capabilities.
+        unless a system message is given, the prompts and the capabilities that
+        are not set.
 
         :return: None
         :rtype: None
@@ -323,7 +442,7 @@ class _DocumentLLM(_DocumentModel):
         if self.system_message is None:
             self._set_system_message()
         self._set_prompts()
-        self._set_capabilities()
+        self._update_detected_capabilities()
 
     def _check_request_params(self, *, use_tools: bool = False) -> None:
         """
@@ -578,11 +697,10 @@ class _DocumentLLM(_DocumentModel):
         if images:
             for llm in [self, *self._fallback_llms]:
                 if not llm._supports_vision:
+                    source, advice = llm._get_missing_capability_msgs("supports_vision")
                     raise ValueError(
                         f"{'Fallback model' if llm.is_fallback else 'Model'} "
-                        f"`{llm.model}` does not support vision according to "
-                        f"litellm.supports_vision(). To override this detection, "
-                        f"manually set `_supports_vision=True` on the LLM instance."
+                        f"`{llm.model}` does not support vision {source}. {advice}".rstrip()
                     )
 
         # If a chat session is provided, reuse chat logic with preserved history
@@ -961,22 +1079,6 @@ class _DocumentLLM(_DocumentModel):
             )
             return False
 
-        # Check capabilities
-        if self._supports_vision != other._supports_vision:
-            logger.debug("`_supports_vision` of deserialized LLM is different.")
-            return False
-        if self._supports_reasoning != other._supports_reasoning:
-            logger.debug("`_supports_reasoning` of deserialized LLM is different.")
-            return False
-        if self._supports_tools != other._supports_tools:
-            logger.debug("`_supports_tools` of deserialized LLM is different.")
-            return False
-        if self._supports_parallel_tool_calls != other._supports_parallel_tool_calls:
-            logger.debug(
-                "`_supports_parallel_tool_calls` of deserialized LLM is different."
-            )
-            return False
-
         return True
 
     @field_validator("tools", mode="before")
@@ -1097,7 +1199,8 @@ class _DocumentLLM(_DocumentModel):
                 )
             if self.tools and self._supports_tools != fallback_llm._supports_tools:
                 raise ValueError(
-                    "Fallback LLM must have the same `_supports_tools` configuration as the main LLM"
+                    "Fallback LLM must have the same support for tool calls as the main "
+                    "LLM, as set with `supports_tools` or detected with litellm"
                 )
             if self.tool_choice != fallback_llm.tool_choice:
                 raise ValueError(
@@ -1124,10 +1227,12 @@ class _DocumentLLM(_DocumentModel):
         # The state derived from the params is updated after all the checks pass:
         # if an assigned value is rejected, only the params are restored
         self._sync_tool_registry_from_tools()
+        self._update_detected_capabilities()
 
         # Note: model-specific support for `reasoning_effort` values is not
         # validated here; validation is delegated to litellm / the provider API,
         # which raises an error at request time for unsupported combinations.
+        # Only whether the param is sent at all is warned about below.
 
         # Note: the model role is a free-form routing label that implies no capabilities
         # of the model, i.e. vision and reasoning support is not validated against it.
@@ -1137,22 +1242,44 @@ class _DocumentLLM(_DocumentModel):
         # Emit relevant warnings
 
         if self.tools is not None and not self._supports_tools:
+            source, advice = self._get_missing_capability_msgs("supports_tools")
             _warn_from_caller_code(
-                f"Model `{self.model}` is assigned tools but litellm does not detect it as tools-capable. "
-                f"This will cause tool calling to fail. If you know this model supports tools, "
-                f"manually set `_supports_tools=True` on the LLM instance.",
+                f"Model `{self.model}` is assigned tools, but does not support "
+                f"tool calls {source}. The tools are sent with the requests of "
+                f"a chat, which the model or its provider may reject or answer "
+                f"without calling the tools. {advice}".rstrip(),
             )
         if (
             self.parallel_tool_calls is not None
             and not self._supports_parallel_tool_calls
         ):
-            _warn_from_caller_code(
-                f"Model `{self.model}` has `parallel_tool_calls` parameter set but "
-                f"litellm does not detect it as parallel tool calls-capable. "
-                f"This will cause parallel tool calling to fail. "
-                f"If you know this model supports parallel tool calls, "
-                f"manually set `_supports_parallel_tool_calls=True` on the LLM instance.",
+            source, advice = self._get_missing_capability_msgs(
+                "supports_parallel_tool_calls"
             )
+            _warn_from_caller_code(
+                f"Model `{self.model}` has `parallel_tool_calls` set, but does not "
+                f"support parallel tool calls {source}. A chat with the LLM raises "
+                f"ValueError before any request is sent. {advice}".rstrip(),
+            )
+
+        # `reasoning_effort` is sent only to a reasoning model, and only if litellm
+        # takes it for the model (see `_build_request_config()`)
+        if self.reasoning_effort is not None:
+            if not self._supports_reasoning:
+                source, advice = self._get_missing_capability_msgs("supports_reasoning")
+                _warn_from_caller_code(
+                    f"`reasoning_effort` is set for model `{self.model}`, but is not "
+                    f"sent with its requests: the model does not support reasoning "
+                    f"{source}. {advice}".rstrip(),
+                )
+            elif "reasoning_effort" not in (
+                litellm.get_supported_openai_params(self.model) or []  # type: ignore[attr-defined]
+            ):
+                _warn_from_caller_code(
+                    f"`reasoning_effort` is set for model `{self.model}`, but is not "
+                    f"sent with its requests: litellm does not list it among the params "
+                    f"of the model (`litellm.get_supported_openai_params()`).",
+                )
 
         # Warn that the output language applies to the extraction prompts only if
         # the system message is not the default one, which is what has the instruction
@@ -1191,14 +1318,31 @@ class _DocumentLLM(_DocumentModel):
 
             # If max_input_tokens is not available, skip validation
             if max_input_tokens is None:
-                logger.warning(
-                    f"Could not determine max_input_tokens for model `{self.model}`. Skipping validation."
+                self._log_skipped_token_check(
+                    "input",
+                    f"Could not determine max_input_tokens for model `{self.model}`. "
+                    f"Skipping validation.",
                 )
+                return
+
+            if self.model in _MODELS_WITHOUT_TOKEN_COUNT:
                 return
 
             # Count tokens in the messages
             try:
                 token_count = litellm.token_counter(model=self.model, messages=messages)  # type: ignore[attr-defined]
+            except OSError as e:
+                # The token encodings could not be downloaded, e.g. without network
+                # access: each count would try the download again, which can take
+                # seconds, e.g. behind a proxy that refuses it
+                _MODELS_WITHOUT_TOKEN_COUNT.add(self.model)
+                logger.warning(
+                    f"Could not count tokens for model `{self.model}`: {e}. Skipping "
+                    f"input token validation for the requests of this model until "
+                    f"the process is restarted. To count the tokens without network "
+                    f"access, see {_OFFLINE_ENCODINGS_DOCS_URL}"
+                )
+                return
             except Exception as e:  # noqa: BLE001 - token counting must not fail the call
                 logger.warning(
                     f"Could not count tokens for model `{self.model}`: {e}. Skipping input token validation."
@@ -1226,14 +1370,19 @@ class _DocumentLLM(_DocumentModel):
             if context_exceeded:
                 # Re-raise our own ValueError
                 raise
-            # If it's a different ValueError, log and continue
-            logger.warning(
-                f"Could not validate max input tokens for model `{self.model}`: {e}"
+            # If it's a different ValueError, e.g. for a model that litellm
+            # does not know, log and continue
+            self._log_skipped_token_check(
+                "input",
+                f"Could not validate max input tokens for model `{self.model}`: {e} "
+                f"{_REGISTER_MODEL_ADVICE}",
             )
         except Exception as e:  # noqa: BLE001 - model info must not fail the call
             # If we can't get model info, log a warning but don't fail
-            logger.warning(
-                f"Could not validate max input tokens for model `{self.model}`: {e}"
+            self._log_skipped_token_check(
+                "input",
+                f"Could not validate max input tokens for model `{self.model}`: {e} "
+                f"{_REGISTER_MODEL_ADVICE}",
             )
 
     def _validate_output_tokens(self) -> None:
@@ -1262,9 +1411,10 @@ class _DocumentLLM(_DocumentModel):
 
             # If we still don't have a limit, skip validation
             if max_output_tokens is None:
-                logger.warning(
+                self._log_skipped_token_check(
+                    "output",
                     f"Could not determine max_output_tokens for model `{self.model}`. "
-                    f"Skipping max output token validation."
+                    f"Skipping max output token validation.",
                 )
                 return
 
@@ -1291,15 +1441,41 @@ class _DocumentLLM(_DocumentModel):
             if output_exceeded:
                 # Re-raise our own ValueError
                 raise
-            # If it's a different ValueError, log and continue
-            logger.warning(
-                f"Could not validate max output tokens for model `{self.model}`: {e}"
+            # If it's a different ValueError, e.g. for a model that litellm
+            # does not know, log and continue
+            self._log_skipped_token_check(
+                "output",
+                f"Could not validate max output tokens for model `{self.model}`: {e} "
+                f"{_REGISTER_MODEL_ADVICE}",
             )
         except Exception as e:  # noqa: BLE001 - model info must not fail the call
             # If we can't get model info, log a warning but don't fail
-            logger.warning(
-                f"Could not validate max output tokens for model `{self.model}`: {e}"
+            self._log_skipped_token_check(
+                "output",
+                f"Could not validate max output tokens for model `{self.model}`: {e} "
+                f"{_REGISTER_MODEL_ADVICE}",
             )
+
+    def _log_skipped_token_check(self, limit: str, msg: str) -> None:
+        """
+        Logs at the WARNING level that a token limit of the requests of the LLM
+        could not be checked, once for the LLM and its model: the check is skipped
+        for each request, e.g. for a model that litellm does not know, which would
+        otherwise log the same message for each request.
+
+        :param limit: The limit that could not be checked: ``"input"`` or
+            ``"output"``.
+        :type limit: str
+        :param msg: The message to log.
+        :type msg: str
+        :return: None
+        :rtype: None
+        """
+        key = (self.model, limit)
+        if key in self._skipped_token_checks_logged:
+            return
+        self._skipped_token_checks_logged.add(key)
+        logger.warning(f"{msg} Not logged again for this LLM and model.")
 
     def _get_output_truncated_msg(self) -> str:
         """
@@ -1346,10 +1522,10 @@ class _DocumentLLM(_DocumentModel):
             for m in messages
         )
         if contains_image_content and not self._supports_vision:
+            source, advice = self._get_missing_capability_msgs("supports_vision")
             raise ValueError(
-                f"Model `{self.model}` does not support vision according to "
-                f"litellm.supports_vision(). To override this detection, "
-                f"manually set `_supports_vision=True` on the LLM instance."
+                f"Model `{self.model}` does not support vision {source}. "
+                f"{advice}".rstrip()
             )
 
         # Warn to use `ollama/` prefix for image processing when using local models,
@@ -1498,11 +1674,13 @@ class _DocumentLLM(_DocumentModel):
             request_config["tool_choice"] = self.tool_choice
         if self.parallel_tool_calls is not None:
             if not self._supports_parallel_tool_calls:
+                source, advice = self._get_missing_capability_msgs(
+                    "supports_parallel_tool_calls"
+                )
                 raise ValueError(
                     f"{'Fallback model' if self.is_fallback else 'Model'} "
-                    f"`{self.model}` does not support parallel tool calls according to "
-                    f"litellm.supports_parallel_function_calling(). To override this detection, "
-                    f"manually set `_supports_parallel_tool_calls=True` on the LLM instance."
+                    f"`{self.model}` does not support parallel tool calls {source}. "
+                    f"{advice}".rstrip()
                 )
             request_config["parallel_tool_calls"] = self.parallel_tool_calls
 
@@ -2404,29 +2582,95 @@ class _DocumentLLM(_DocumentModel):
         self._extract_aspect_items_prompt = _get_template("extract_aspect_items")
         self._extract_concept_items_prompt = _get_template("extract_concept_items")
 
-    def _set_capabilities(self) -> None:
+    def _update_detected_capabilities(self) -> None:
         """
-        Sets the capabilities of the LLM based on litellm.supports_*()
-        functions.
+        Detects with litellm the capabilities of the model whose params are not set,
+        when the LLM is created, and after a value is assigned to its param: for
+        the new model if ``model`` is changed, and for a capability whose param
+        is no longer set. A capability is detected once for a model, as a detection
+        can take a request, e.g. to a local server of the model.
 
         :return: None
         :rtype: None
         """
-        self._supports_vision = litellm.supports_vision(self.model)  # type: ignore[attr-defined]
-        self._supports_reasoning = litellm.supports_reasoning(self.model)  # type: ignore[attr-defined]
-        self._supports_tools = litellm.supports_function_calling(self.model)  # type: ignore[attr-defined]
-        self._supports_parallel_tool_calls = litellm.supports_parallel_function_calling(  # type: ignore[attr-defined]
-            self.model
+        if self._capabilities_detected_for != self.model:
+            self._detected_capabilities = {}
+            self._capabilities_detected_for = self.model
+        for param in _LLM_CAPABILITY_PARAMS:
+            if (
+                getattr(self, param) is None
+                and param not in self._detected_capabilities
+            ):
+                self._detected_capabilities[param] = self._detect_capability(param)
+
+    def _detect_capability(self, param: str) -> bool:
+        """
+        Detects a capability of the model with the function of litellm for it.
+
+        :param param: The param of the LLM that declares the capability, e.g.
+            ``supports_vision``.
+        :type param: str
+        :return: Whether litellm detects the capability for the model.
+        :rtype: bool
+        """
+        detector_name, _ = _LLM_CAPABILITY_PARAMS[param]
+        return bool(getattr(litellm, detector_name)(self.model))
+
+    def _has_capability(self, param: str) -> bool:
+        """
+        Returns whether the model has a capability: as set with its param, or as
+        detected with litellm if the param is not set.
+
+        :param param: The param of the LLM that declares the capability, e.g.
+            ``supports_vision``.
+        :type param: str
+        :return: Whether the model has the capability.
+        :rtype: bool
+        """
+        declared = getattr(self, param)
+        if declared is not None:
+            return declared
+        if (
+            self._capabilities_detected_for == self.model
+            and param in self._detected_capabilities
+        ):
+            return self._detected_capabilities[param]
+        # Not detected yet, e.g. while a new model is validated
+        return self._detect_capability(param)
+
+    def _get_missing_capability_msgs(self, param: str) -> tuple[str, str]:
+        """
+        Returns the parts of a message on a capability that the model is taken not
+        to have: where this comes from, to follow "does not support <capability>",
+        and how to declare the capability, which is empty if its param is set
+        to False.
+
+        :param param: The param of the LLM that declares the capability, e.g.
+            ``supports_vision``.
+        :type param: str
+        :return: Where the absence of the capability comes from, and how to declare
+            the capability.
+        :rtype: tuple[str, str]
+        """
+        if getattr(self, param) is False:
+            return f"as set with `{param}=False`", ""
+        detector_name, capability_name = _LLM_CAPABILITY_PARAMS[param]
+        return (
+            f"according to `litellm.{detector_name}()`",
+            f"If the model supports {capability_name}, set `{param}=True` on the LLM.",
         )
 
     def _set_system_message(self) -> None:
         """
-        Sets the default system message for the LLM.
+        Sets the default system message for the LLM, when it is created without
+        a system message. It is set without the validation of an assignment, which
+        would validate the whole LLM again while it is being validated, and issue
+        the warnings on its params twice.
 
         :return: None
         :rtype: None
         """
-        self.system_message = self._get_default_system_message()
+        self.__dict__["system_message"] = self._get_default_system_message()
 
     def _get_default_system_message(
         self, output_language: LanguageRequirement | None = None

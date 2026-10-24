@@ -825,7 +825,6 @@ class TestUtils:
         model_class: type[DocumentLLM | DocumentDecisionModel],
         model_params: dict[str, Any],
         api_key: str,
-        created_model_is_input: bool,
         tmp_path: Path,
     ) -> None:
         """
@@ -849,12 +848,6 @@ class TestUtils:
         :type model_params: dict[str, Any]
         :param api_key: The API key of the model.
         :type api_key: str
-        :param created_model_is_input: Whether the input of a check that involves
-            several params is the model itself, when such a check fails for a model
-            that is being created with these ``model_params``. If not, the input is
-            all the params that the model is created with, i.e. the key as it is
-            passed. For a model that a value is assigned to, it is always the model.
-        :type created_model_is_input: bool
         :param tmp_path: The directory for the files that a model is loaded from.
         :type tmp_path: Path
         :return: None
@@ -927,8 +920,7 @@ class TestUtils:
         # the redacted one if the value is passed as the key or in a param that
         # the model does not have. The input of a check that involves several
         # params (`all_params`) is all the params that the model is created with,
-        # which are reported with the key redacted, unless it is the model (see
-        # `created_model_is_input`).
+        # which are reported with the key redacted.
         all_params = object()
         invalid_params: list[tuple[dict[str, Any], list[str], Any]] = [
             ({"timeout": "x"}, timeout_error, "x"),
@@ -974,8 +966,6 @@ class TestUtils:
                 reported_input = check_error(exc_info.value, expected_texts)
                 if expected_input is not all_params:
                     assert reported_input == expected_input
-                elif created_model_is_input:
-                    check_model_is_input(reported_input)
                 else:
                     # The other params are reported as they are passed
                     assert reported_input == {

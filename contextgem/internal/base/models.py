@@ -1405,12 +1405,13 @@ class _GenericModelProcessor(_AbstractGenericModelProcessor):
                 else:
                     subject = "Model"
                     condition = ""
+                source, advice = llm_instance._get_missing_capability_msgs(
+                    "supports_vision"
+                )
                 raise ValueError(
                     f"{subject} `{llm_instance.model}` does not support vision "
-                    f"according to litellm.supports_vision(), but it is to extract "
-                    f"the following concepts from images{condition}: {concept_names}. "
-                    f"To override this detection, manually set `_supports_vision=True` "
-                    f"on the LLM instance."
+                    f"{source}, but it is to extract the following concepts from "
+                    f"images{condition}: {concept_names}. {advice}".rstrip()
                 )
 
     @staticmethod
@@ -4162,8 +4163,6 @@ class _DocumentModel(_GenericModelProcessor):
         logger.info(f"Using model {self.model}")
         if self.api_key is None:
             logger.info("API key was not provided. Set `api_key`, if applicable.")
-        if self.api_base is None:
-            logger.info("API base was not provided. Set `api_base`, if applicable.")
 
         # Log the information that applies to the specific kind of the model
         self._log_kind_specific_info()
@@ -4772,7 +4771,8 @@ class _DocumentModel(_GenericModelProcessor):
             logger.info(
                 f"No pricing params provided for the {kind} `{self.model}`"
                 f"{f' with role `{self.role}`' if self.role else ''}. "
-                f"Costs for this {kind} were not calculated."
+                f"Its costs are not calculated: set `pricing_details`, or "
+                f"`auto_pricing=True`, to calculate them."
             )
 
         # Quantize for presentation without mutating internal state
@@ -5090,15 +5090,6 @@ class _DocumentModel(_GenericModelProcessor):
             return
         if self._auto_pricing_source_model == self.model:
             return
-
-        if self._auto_pricing_source_model is None:
-            # Warn about auto-pricing accuracy limitations when it is enabled
-            _warn_from_caller_code(
-                "Auto-pricing: these prices will not be 100% accurate. "
-                "The price data cannot be exactly correct because model providers do not provide "
-                "exact price information for their APIs in a format which can be reliably processed. "
-                "See Pydantic's genai-prices https://github.com/pydantic/genai-prices for more details.",
-            )
 
         # Not left from the previous model if they cannot be derived from this one
         self._auto_pricing_provider_id = None

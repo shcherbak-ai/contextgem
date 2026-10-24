@@ -66,10 +66,6 @@ KEY_CLASS_PRIVATE = "__class__"
 KEY_ASYNC_LIMITER_PRIVATE = "_async_limiter"
 KEY_MODEL_USAGE_PRIVATE = "_usage"
 KEY_MODEL_COST_PRIVATE = "_cost"
-KEY_LLM_SUPPORTS_VISION_PRIVATE = "_supports_vision"
-KEY_LLM_SUPPORTS_REASONING_PRIVATE = "_supports_reasoning"
-KEY_LLM_SUPPORTS_TOOLS_PRIVATE = "_supports_tools"
-KEY_LLM_SUPPORTS_PARALLEL_TOOL_CALLS_PRIVATE = "_supports_parallel_tool_calls"
 KEY_PRIVATE_ATTRS_INITIALIZED_PRIVATE = "_private_attrs_initialized"
 # Chat message attrs
 KEY_TIME_CREATED_PRIVATE = "_time_created"
@@ -87,6 +83,16 @@ _PRIVATE_ATTR_PUBLIC_PROPERTY: dict[str, str] = {
     KEY_EXTRACTED_ITEMS_PRIVATE: "extracted_items",
     KEY_REFERENCE_PARAGRAPHS_PRIVATE: "reference_paragraphs",
     KEY_REFERENCE_SENTENCES_PRIVATE: "reference_sentences",
+}
+
+# The private attrs of the serialized data of earlier versions that are params now,
+# by the name of the param: the capabilities of an LLM, which such data holds as
+# set or detected when the LLM was serialized
+_PRIVATE_ATTRS_OF_EARLIER_VERSIONS: dict[str, str] = {
+    "_supports_vision": "supports_vision",
+    "_supports_reasoning": "supports_reasoning",
+    "_supports_tools": "supports_tools",
+    "_supports_parallel_tool_calls": "supports_parallel_tool_calls",
 }
 
 # Set while an instance is being created from its serialized data, for the
@@ -229,10 +235,6 @@ class _InstanceSerializer(BaseModel):
                 KEY_UNIQUE_ID_PRIVATE,
                 KEY_IS_PROCESSED_PRIVATE,
                 KEY_NESTING_LEVEL_PRIVATE,
-                KEY_LLM_SUPPORTS_VISION_PRIVATE,
-                KEY_LLM_SUPPORTS_REASONING_PRIVATE,
-                KEY_LLM_SUPPORTS_TOOLS_PRIVATE,
-                KEY_LLM_SUPPORTS_PARALLEL_TOOL_CALLS_PRIVATE,
                 KEY_PRIVATE_ATTRS_INITIALIZED_PRIVATE,
             ]:
                 base_dict[key] = val
@@ -622,8 +624,14 @@ class _InstanceSerializer(BaseModel):
 
         for k, v in obj_dict.items():
             final_val = rebuild_map[k](v) if k in rebuild_map else v
+            if k in _PRIVATE_ATTRS_OF_EARLIER_VERSIONS:
+                # Data of an earlier version: its value is passed for the param,
+                # unless the data has the param as well
+                param_name = _PRIVATE_ATTRS_OF_EARLIER_VERSIONS[k]
+                if param_name not in obj_dict:
+                    constructor_kwargs[param_name] = final_val
             # If it's a private attr, collect for assignment separately
-            if k.startswith("_"):
+            elif k.startswith("_"):
                 private_attrs[k] = final_val
             else:
                 constructor_kwargs[k] = final_val

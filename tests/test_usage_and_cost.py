@@ -858,10 +858,7 @@ class TestUsageAndCost(BaseTest):
                 ("anthropic/claude-haiku-4-5", False),
                 ("openai/gpt-6-luna", True),  # higher prices above 272K
             ]:
-                with pytest.warns(
-                    UserWarning, match="prices will not be 100% accurate."
-                ):
-                    llm = create_llm(model, auto_pricing=True)
+                llm = create_llm(model, auto_pricing=True)
                 queue_completion_usages()
                 llm.extract_concepts_from_document(
                     document,
@@ -964,9 +961,13 @@ class TestUsageAndCost(BaseTest):
             caught_warnings: list[warnings.WarningMessage],
         ) -> list[str]:
             """
-            Returns the messages of the caught warnings.
+            Returns the messages of the caught warnings of ContextGem.
             """
-            return [str(caught_warning.message) for caught_warning in caught_warnings]
+            return [
+                str(caught_warning.message)
+                for caught_warning in caught_warnings
+                if issubclass(caught_warning.category, ContextGemWarning)
+            ]
 
         def create_llm(model: str, **kwargs: Any) -> DocumentLLM:
             """
@@ -991,29 +992,23 @@ class TestUsageAndCost(BaseTest):
                 __file__
             )
 
-        with pytest.warns(
-            UserWarning, match="not be 100% accurate"
-        ) as caught_pricing_warnings:
+        # A model with prices is created without a warning
+        with warnings.catch_warnings(record=True) as caught_warnings:
+            warnings.simplefilter("always")
             llm = create_llm("openai/gpt-6-luna", auto_pricing=True)
-        check_warning_attributed_to_this_file(
-            caught_pricing_warnings, "not be 100% accurate"
-        )
+        assert not get_warning_messages(caught_warnings)
         cost_of_model = get_cost_of_call(llm)
-        with pytest.warns(UserWarning, match="not be 100% accurate"):
-            other_llm = create_llm("openai/gpt-5.6-luna", auto_pricing=True)
+        other_llm = create_llm("openai/gpt-5.6-luna", auto_pricing=True)
         cost_of_other_model = get_cost_of_call(other_llm)
         assert Decimal(0) < cost_of_model != cost_of_other_model
 
         # === The model is changed ===
         # The costs are calculated with the prices of the new model, which are
-        # looked up without the warning on the accuracy of the prices again
+        # looked up without a warning
         with warnings.catch_warnings(record=True) as caught_warnings:
             warnings.simplefilter("always")
             llm.model = "openai/gpt-5.6-luna"
-        assert not any(
-            "100% accurate" in message
-            for message in get_warning_messages(caught_warnings)
-        )
+        assert not get_warning_messages(caught_warnings)
         assert llm._auto_pricing_model_ref == "gpt-5.6-luna"
         assert get_cost_of_call(llm) == cost_of_other_model
         # ... and are not calculated with the prices of the previous model, if
@@ -1039,13 +1034,10 @@ class TestUsageAndCost(BaseTest):
         llm = create_llm("openai/gpt-6-luna")
         assert llm._auto_pricing_provider_id is None
         assert get_cost_of_call(llm) == Decimal(0)
-        with pytest.warns(
-            UserWarning, match="not be 100% accurate"
-        ) as caught_pricing_warnings:
+        with warnings.catch_warnings(record=True) as caught_warnings:
+            warnings.simplefilter("always")
             llm.auto_pricing = True
-        check_warning_attributed_to_this_file(
-            caught_pricing_warnings, "not be 100% accurate"
-        )
+        assert not get_warning_messages(caught_warnings)
         assert get_cost_of_call(llm) == cost_of_model
         llm.auto_pricing = False
         assert llm._auto_pricing_provider_id is None
@@ -1053,23 +1045,20 @@ class TestUsageAndCost(BaseTest):
         assert get_cost_of_call(llm) == Decimal(0)
         # ... also when the model is changed while it is disabled
         llm.model = "openai/gpt-5.6-luna"
-        with pytest.warns(UserWarning, match="not be 100% accurate"):
-            llm.auto_pricing = True
+        llm.auto_pricing = True
         assert get_cost_of_call(llm) == cost_of_other_model
 
         # === A decision model ===
-        with pytest.warns(UserWarning, match="not be 100% accurate"):
-            decision_model = DocumentDecisionModel(
-                model="typesafe/jev-latest", api_key="test_api_key", auto_pricing=True
-            )
+        decision_model = DocumentDecisionModel(
+            model="typesafe/jev-latest", api_key="test_api_key", auto_pricing=True
+        )
         cost_of_decision_model = get_cost_of_call(decision_model)
         decision_model.model = "perplexity/pplx-decider-v1-27b"
-        with pytest.warns(UserWarning, match="not be 100% accurate"):
-            other_decision_model = DocumentDecisionModel(
-                model="perplexity/pplx-decider-v1-27b",
-                api_key="test_api_key",
-                auto_pricing=True,
-            )
+        other_decision_model = DocumentDecisionModel(
+            model="perplexity/pplx-decider-v1-27b",
+            api_key="test_api_key",
+            auto_pricing=True,
+        )
         cost_of_other_decision_model = get_cost_of_call(other_decision_model)
         assert cost_of_other_decision_model != cost_of_decision_model
         assert get_cost_of_call(decision_model) == cost_of_other_decision_model
@@ -1079,8 +1068,8 @@ class TestUsageAndCost(BaseTest):
         Tests the documented way to keep a model whose costs are not known from
         running: a warning filter that makes the warnings on unknown prices errors,
         by the start of their text. A model that genai-prices has no prices for
-        then raises where it is created, while a model with prices is created, as
-        the warning on the accuracy of the prices does not match. For a model created before the filter is set,
+        then raises where it is created, while a model with prices is created.
+        For a model created before the filter is set,
         the warning issued when the usage of its calls is recorded is attributed
         to the line that calls the extraction method, and with the filter it
         stops the extraction after the usage of the call is recorded.
@@ -1169,13 +1158,12 @@ class TestUsageAndCost(BaseTest):
         """
 
         # Use an LLM with auto pricing enabled and no manual pricing details
-        with pytest.warns(UserWarning, match="prices will not be 100% accurate."):
-            llm = DocumentLLM(
-                model="openai/gpt-6-luna",
-                api_key=os.getenv("CONTEXTGEM_OPENAI_API_KEY"),
-                auto_pricing=True,
-                auto_pricing_refresh=True,  # test with auto-refresh
-            )
+        llm = DocumentLLM(
+            model="openai/gpt-6-luna",
+            api_key=os.getenv("CONTEXTGEM_OPENAI_API_KEY"),
+            auto_pricing=True,
+            auto_pricing_refresh=True,  # test with auto-refresh
+        )
         assert (
             llm._auto_pricing_refresh_attempted
         )  # since we use dummy call to check auto-pricing support for provider/model

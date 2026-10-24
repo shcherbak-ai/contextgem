@@ -3355,7 +3355,10 @@ class TestExtraction(BaseTest):
         )
         # An LLM that returned a response that is not a valid JSON
         not_valid_json = [
-            "ERROR: Error when validating parsed JSON: parsed_json is None",
+            (
+                "ERROR: LLM output is not JSON: it cannot be parsed as a JSON array "
+                "or object"
+            ),
             "ERROR: LLM returned invalid data for {type}s",
         ]
         fallback_pending = "INFO: The call will be retried with a fallback model."

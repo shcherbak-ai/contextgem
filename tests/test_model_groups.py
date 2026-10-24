@@ -444,7 +444,7 @@ class TestModelGroups(BaseTest):
             )
         assert not llm_calls  # no LLM calls are made
         # Unless the vision support of the model is declared explicitly
-        llm_text_only_fallback._supports_vision = True
+        llm_text_only_fallback.supports_vision = True
         llm_with_text_only_fallback.extract_all(document)
         check_all_extracted(document)
 

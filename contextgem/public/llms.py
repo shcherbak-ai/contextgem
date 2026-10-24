@@ -79,7 +79,9 @@ class DocumentLLM(_DocumentLLM):
     :vartype max_tokens: int | None
     :ivar reasoning_effort: The effort level for the LLM to reason about the input. Can be set to
         ``"none"``, ``"minimal"``, ``"low"``, ``"medium"``, ``"high"``, ``"xhigh"``, or
-        ``"max"``. The parameter is sent only to the models detected as supporting reasoning.
+        ``"max"``. The parameter is sent only to the models that support reasoning (see
+        ``supports_reasoning``), and only if ``litellm`` lists it among the params of the
+        model: otherwise it is not sent, and a warning is issued when it is set.
         Support for specific values varies by model and provider: if ``litellm`` reports
         a value as not supported for the model, it is dropped from the request, with a warning
         logged, while a value that is rejected otherwise, e.g. by the provider API, fails
@@ -188,6 +190,33 @@ class DocumentLLM(_DocumentLLM):
         the LLM still calls tools after them, ``LLMToolLoopLimitError`` is raised.
         Defaults to 10.
     :vartype tool_max_rounds: int
+    :ivar supports_vision: Whether the model takes images as input. An LLM that does
+        not support vision is not sent images: a chat with images, and the extraction
+        of concepts from images, raise ``ValueError`` before any request is sent, also
+        for such a fallback LLM. Defaults to None, in which case it is detected with
+        ``litellm.supports_vision()`` for the model, also after ``model`` is changed.
+        Set it where the detection is wrong for the model, e.g. for a local model.
+    :vartype supports_vision: bool | None
+    :ivar supports_reasoning: Whether the model is a reasoning (CoT-capable) model.
+        For such a model, the extraction prompts have instructions for reasoning
+        models, and ``reasoning_effort`` is sent, and the output token limit as
+        ``max_completion_tokens``, where ``litellm`` lists these params for the model.
+        Defaults to None, in which case it is detected with
+        ``litellm.supports_reasoning()`` for the model, also after ``model`` is changed.
+    :vartype supports_reasoning: bool | None
+    :ivar supports_tools: Whether the model supports tool calls. A warning is issued
+        when ``tools`` are set for an LLM that does not support them, and the fallback
+        LLMs of an LLM with tools must have the same support. Defaults to None, in which
+        case it is detected with ``litellm.supports_function_calling()`` for the model,
+        also after ``model`` is changed.
+    :vartype supports_tools: bool | None
+    :ivar supports_parallel_tool_calls: Whether the model supports parallel tool calls.
+        A warning is issued when ``parallel_tool_calls`` is set for an LLM that does not
+        support them, and a chat with such an LLM, or with such a fallback LLM, raises
+        ``ValueError`` before any request is sent. Defaults to None, in which case it is
+        detected with ``litellm.supports_parallel_function_calling()`` for the model,
+        also after ``model`` is changed.
+    :vartype supports_parallel_tool_calls: bool | None
     :ivar is_group: Whether the object is a model group: always False for an LLM.
         Read-only.
     :vartype is_group: bool
@@ -214,10 +243,9 @@ class DocumentLLM(_DocumentLLM):
             assignment completely: the LLM extracts all aspects/concepts, regardless of their ``model_role``.
 
         - Explicit capability declaration
-            Model vision capabilities are automatically detected using
-            ``litellm.supports_vision()``. If this function does not correctly identify your model's capabilities,
-            an error will be raised when the model is to be sent images, and you can explicitly declare
-            the capability by setting ``_supports_vision=True`` on the LLM instance.
+            The capabilities of the model are detected with the ``litellm.supports_*()``
+            functions. Where a detection is wrong for your model, declare the capability
+            with its param, e.g. ``supports_vision=True``.
 
     Example:
         .. literalinclude:: ../../../dev/usage_examples/docstrings/llms/def_llm.py
@@ -240,7 +268,11 @@ class ChatSession(_ChatSession):
     :ivar messages: The messages of the session, in order: the system message, if any,
         the messages of the user, and the answers of the LLM. Read-only. The tool calls
         and their results are not listed, although they are kept in the history that
-        is sent to the LLM.
+        is sent to the LLM. Each message has its ``role`` (``"system"``, ``"user"`` or
+        ``"assistant"``) and its ``content``: a string, or, for a message of the user
+        with images, a list of parts in the format of the OpenAI API, the text
+        (``{"type": "text", ...}``) and each image as a base64 data URL
+        (``{"type": "image_url", ...}``).
     :vartype messages: list[_Message]
     :ivar custom_data: A dictionary for data of your own about the session, e.g. the ID
         that your application has for it. Must be JSON-serializable. Not sent to the models,

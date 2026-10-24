@@ -24,6 +24,8 @@ For local models, usually you need to specify the ``api_base`` instead of the AP
    :language: python
    :caption: Using a local LLM
 
+For a server with an OpenAI-compatible API, e.g. vLLM or llama.cpp, use the ``openai/`` prefix with the ``api_base`` of the server, and an ``api_key``: ``litellm`` requires a key for the ``openai/`` prefix, and fails the request without one ("Missing credentials"). If the server checks no key, any value works, e.g. ``api_key="none"``. ``litellm`` knows nothing of such a model: see :ref:`llm-capabilities-label` for declaring what it supports, and for registering it with ``litellm``.
+
 
 📝 Configuration Parameters
 -----------------------------
@@ -73,7 +75,7 @@ The :class:`~contextgem.public.llms.DocumentLLM` class accepts the following par
    * - ``reasoning_effort``
      - ``str | None``
      - ``None``
-     - Reasoning effort for reasoning (CoT-capable) models. Values: ``"none"``, ``"minimal"``, ``"low"``, ``"medium"``, ``"high"``, ``"xhigh"``, ``"max"``. The parameter is sent only to the models detected as supporting reasoning. Support for specific values varies by model and provider: if ``litellm`` reports a value as not supported for the model, the request is sent without the parameter, with a warning logged, as for the sampling parameters (see :ref:`llm-sampling-params-label`), while a value that is rejected otherwise, e.g. by the provider API, fails the request. ``"none"`` explicitly disables reasoning on models that support this value, which differs from the default ``None`` (parameter not sent, provider default applies).
+     - Reasoning effort for reasoning (CoT-capable) models. Values: ``"none"``, ``"minimal"``, ``"low"``, ``"medium"``, ``"high"``, ``"xhigh"``, ``"max"``. The parameter is sent only to the models that support reasoning (see ``supports_reasoning``), and only if ``litellm`` lists it among the parameters of the model: otherwise it is not sent, and a warning is issued when it is set. Support for specific values varies by model and provider: if ``litellm`` reports a value as not supported for the model, the request is sent without the parameter, with a warning logged, as for the sampling parameters (see :ref:`llm-sampling-params-label`), while a value that is rejected otherwise, e.g. by the provider API, fails the request. ``"none"`` explicitly disables reasoning on models that support this value, which differs from the default ``None`` (parameter not sent, provider default applies).
    * - ``timeout``
      - ``int``
      - ``600``
@@ -142,6 +144,22 @@ The :class:`~contextgem.public.llms.DocumentLLM` class accepts the following par
      - ``int``
      - ``10``
      - Safety limit on the number of tool-execution rounds per chat request to prevent infinite loops.
+   * - ``supports_vision``
+     - ``bool | None``
+     - ``None``
+     - Whether the model takes images as input. If not set (default), it is detected with ``litellm.supports_vision()``. See :ref:`llm-capabilities-label`.
+   * - ``supports_reasoning``
+     - ``bool | None``
+     - ``None``
+     - Whether the model is a reasoning (CoT-capable) model. If not set (default), it is detected with ``litellm.supports_reasoning()``. See :ref:`llm-capabilities-label`.
+   * - ``supports_tools``
+     - ``bool | None``
+     - ``None``
+     - Whether the model supports tool calls. If not set (default), it is detected with ``litellm.supports_function_calling()``. See :ref:`llm-capabilities-label`.
+   * - ``supports_parallel_tool_calls``
+     - ``bool | None``
+     - ``None``
+     - Whether the model supports parallel tool calls. If not set (default), it is detected with ``litellm.supports_parallel_function_calling()``. See :ref:`llm-capabilities-label`.
    * - ``async_limiter``
      - ``AsyncLimiter``
      - ``AsyncLimiter(10, 10)``
@@ -314,7 +332,7 @@ With ``auto_pricing=True``, a model that ``genai-prices`` has no prices for gets
        category=ContextGemWarning,
    )
 
-The filter does not match the other warning of automatic pricing, on the accuracy of the prices (above). For a model created before the filter is set, the warning issued when the usage of a call is recorded raises instead, and stops the extraction method after the usage of that call is recorded. See :doc:`../logging_config` for the warnings of ContextGem and how to filter them.
+For a model created before the filter is set, the warning issued when the usage of a call is recorded raises instead, and stops the extraction method after the usage of that call is recorded. See :doc:`../logging_config` for the warnings of ContextGem and how to filter them.
 
 
 🧠 Setting the Reasoning Effort
@@ -327,26 +345,73 @@ For reasoning (CoT-capable) models (such as OpenAI's GPT-5 and GPT-6 models), yo
    :caption: Setting the reasoning effort
 
 
+.. _llm-capabilities-label:
+
 ⚙️ Explicit Capability Declaration
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Model vision capabilities are automatically detected using ``litellm.supports_vision()``. If this function does not correctly identify your model's capabilities, an error will be raised when the model is to be sent images (e.g. when extracting concepts with the ``"image"`` or ``"multimodal"`` modality), and you can explicitly declare the capability by setting ``_supports_vision=True`` on the LLM instance:
+The capabilities of the model are detected with the functions of ``litellm`` when the LLM is created, and again when ``model`` is changed. Each has a parameter that declares it instead, for a model that ``litellm`` does not know or detects wrongly, e.g. a local model or one released after the ``litellm`` version you have:
+
+.. list-table::
+   :header-rows: 1
+   :widths: 30 30 40
+
+   * - Parameter
+     - Detected with
+     - What depends on it
+   * - ``supports_vision``
+     - ``litellm.supports_vision()``
+     - Images are sent only to an LLM with vision: a chat with images, or the extraction of concepts from images (the ``"image"`` or ``"multimodal"`` modality), raises ``ValueError`` before any request is sent if the LLM, or one of its fallback LLMs, does not support it.
+   * - ``supports_reasoning``
+     - ``litellm.supports_reasoning()``
+     - For a reasoning model, the extraction prompts have instructions for reasoning models, and ``reasoning_effort`` is sent, and ``max_tokens`` as ``max_completion_tokens``, where ``litellm`` lists these parameters for the model.
+   * - ``supports_tools``
+     - ``litellm.supports_function_calling()``
+     - A warning is issued when ``tools`` are set for an LLM without tool calls, and the fallback LLMs of an LLM with tools must have the same support (see :ref:`llm-tools-fallback-label`).
+   * - ``supports_parallel_tool_calls``
+     - ``litellm.supports_parallel_function_calling()``
+     - A warning is issued when ``parallel_tool_calls`` is set for an LLM without parallel tool calls, and a chat with it raises ``ValueError`` before any request is sent, also for such a fallback LLM.
 
 .. code-block:: python
 
    from contextgem import DocumentLLM
 
-   # Example: Explicitly declare vision capability
+   # A local vision model that litellm does not detect as one
    llm = DocumentLLM(
        model="some_provider/custom_vision_model",
        api_base="http://localhost:3456/v1",
+       supports_vision=True,
    )
-   # Declare capability if automatic detection fails
-   # (an error is raised when the model is to be sent images)
-   llm._supports_vision = True
 
-.. warning::
-   Explicit capability declarations should only be used when automatic capability detection fails. Incorrectly setting this flag may lead to unexpected behavior or API errors.
+Set a capability only if the model has it: a model that is sent images or tools that it does not support fails the request. Setting the parameter to ``None`` detects the capability again. A message on a capability that the LLM lacks names the function of ``litellm`` that it was detected with, or the parameter if it is set to ``False``. A parameter that is not set stays ``None``: the parameters say what you declare, not what is detected.
+
+For a model that ``litellm`` does not know at all, e.g. one served by your own server, ContextGem also cannot check the requests against its context window and its max output: it logs a warning that it could not validate them (``Could not validate max input tokens``), once for the LLM and its model. Registering the model with ``litellm``, before the LLM is created, gives ``litellm`` what it lacks, its capabilities included, which are then detected:
+
+.. code-block:: python
+
+   import litellm
+
+   from contextgem import DocumentLLM
+
+   litellm.register_model(
+       {
+           "openai/my-local-vlm": {
+               "litellm_provider": "openai",
+               "mode": "chat",
+               "max_input_tokens": 32000,
+               "max_output_tokens": 4096,
+               "supports_vision": True,
+               "supports_function_calling": True,
+           }
+       }
+   )
+   llm = DocumentLLM(
+       model="openai/my-local-vlm",
+       api_base="http://localhost:8000/v1",
+       api_key="none",  # litellm requires a key for the `openai/` prefix
+   )
+
+The fields are those of the model data that ``litellm`` is installed with (``litellm.model_cost``), e.g. ``supports_reasoning`` and ``supports_parallel_function_calling`` for the other two capabilities.
 
 
 🤖🤖 Model Groups

@@ -47,6 +47,35 @@ The answer of an extraction is the JSON that the prompt asks for in its answer f
 
 To test a refusal, set ``finish_reason`` to ``"content_filter"`` on the choice of the response, e.g. of the one that ``litellm.mock_completion`` builds: ``litellm`` gives this finish reason for the refusal of a Claude model and for the content filters of the providers (see :ref:`llm-refusals-label`). For the refusal of a model of OpenAI, set ``provider_specific_fields={"refusal": "..."}`` on the message, with no ``content``: ``litellm`` keeps the ``refusal`` field of the answer of OpenAI there, where ContextGem reads it, and setting ``refusal`` on the message has no effect. For a request or an answer that the provider blocks, raise ``litellm.ContentPolicyViolationError``.
 
+To test a chat with tools, return the tool calls of the model with ``mock_tool_calls``, a list of tool calls as the OpenAI API gives them, and ``mock_response=""``. ContextGem then calls the tools, and sends the next request of the turn with their results, as messages with the ``"tool"`` role, to which the stand-in answers with the text:
+
+.. code-block:: python
+
+   import json
+
+   import litellm
+
+
+   async def acompletion_stand_in(**kwargs):
+       # The first request of the turn: the model calls a tool
+       if not any(message.get("role") == "tool" for message in kwargs["messages"]):
+           return litellm.mock_completion(
+               **kwargs,
+               mock_response="",
+               mock_tool_calls=[
+                   {
+                       "id": "call_1",
+                       "type": "function",
+                       "function": {
+                           "name": "get_order_status",
+                           "arguments": json.dumps({"order_id": "ORD-1"}),
+                       },
+                   }
+               ],
+           )
+       # The next request, with the result of the tool: the answer
+       return litellm.mock_completion(**kwargs, mock_response="The order is shipped.")
+
 
 🎯 Stubbing a Decision Model
 ------------------------------
@@ -63,7 +92,15 @@ The stand-in receives the keyword arguments of ``litellm.adecisions``: ``model``
 
 Run the tests with no API key, neither passed to the models nor in their environment (e.g. ``OPENAI_API_KEY``). A request that a test does not replace then fails for the missing key, with :class:`~contextgem.public.exceptions.ModelAPIError`, instead of being sent and billed.
 
-Replacing the two functions stops the requests to the models only. Other downloads are not affected: a SaT model, which segments the text into sentences when sentences are needed, is downloaded when it is first used (see :ref:`sat-models-offline`), and ``litellm`` fetches its model data from GitHub when it is imported, unless ``LITELLM_LOCAL_MODEL_COST_MAP=True`` is set, with which it uses the copy that it is installed with. ContextGem also counts the input tokens of each request to an LLM with ``litellm``, to check them against the context window of the model, and ``tiktoken``, which counts them, downloads its encodings from ``openaipublic.blob.core.windows.net`` where the copies that ``litellm`` is installed with are rejected, as on Windows with ``litellm`` 1.105.2, whose copies have Windows line endings. Without the download, the check is skipped, with a message in the log.
+Replacing the two functions stops the requests to the models only. Other downloads are not affected: a SaT model, which segments the text into sentences when sentences are needed, is downloaded when it is first used (see :ref:`sat-models-offline`), and ``litellm`` fetches its model data from GitHub when it is imported, unless ``LITELLM_LOCAL_MODEL_COST_MAP=True`` is set, with which it uses the copy that it is installed with. ContextGem also counts the input tokens of each request to an LLM with ``litellm``, to check them against the context window of the model, and ``tiktoken``, which counts them, downloads its encodings from ``openaipublic.blob.core.windows.net`` where the copies that ``litellm`` is installed with are rejected, as on Windows with ``litellm`` 1.105.2, whose copies have Windows line endings. Without the download, the check is skipped, with a message in the log, for the requests of that model until the process is restarted: each count would try the download again, which can take several seconds where the network blocks it, e.g. behind a proxy that refuses it. To count the tokens without the download, prepare the encodings in a folder of your own where the network can be reached, and keep the folder with your tests: ``litellm`` uses the folder that ``CUSTOM_TIKTOKEN_CACHE_DIR`` names, when it is set before ``litellm`` is imported.
+
+.. code-block:: bash
+
+   # Download the encodings into the folder once, e.g. when the CI image is built
+   export CUSTOM_TIKTOKEN_CACHE_DIR=/opt/tiktoken
+   uv run python -c "import litellm; litellm.token_counter(model='openai/gpt-6-luna', text='Text.')"
+
+Run the tests with the same ``CUSTOM_TIKTOKEN_CACHE_DIR``. Count with a model of your tests in the command: a model may use another encoding.
 
 
 📼 Stand-ins and Recorded Responses

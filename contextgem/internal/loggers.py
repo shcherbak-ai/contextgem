@@ -14,7 +14,7 @@ import logging
 import os
 import sys
 import threading
-from typing import Protocol
+from typing import Protocol, TextIO
 
 import colorlog
 
@@ -152,10 +152,17 @@ def _read_env_vars() -> tuple[bool, str]:
     return disable_logger, level_str
 
 
-def _get_colored_formatter() -> logging.Formatter:
+def _get_colored_formatter(stream: TextIO) -> logging.Formatter:
     """
     Creates a colored formatter using colorlog with millisecond precision.
 
+    The colors are written only where the stream is a terminal, e.g. not to a file
+    or to the log of a CI job, which would show their escape codes as text, unless
+    the ``FORCE_COLOR`` environment variable is set. With ``NO_COLOR`` set, they are
+    not written at all (see https://no-color.org/).
+
+    :param stream: The stream that the log is written to.
+    :type stream: TextIO
     :return: A logging formatter with color support and milliseconds
     :rtype: logging.Formatter
     """
@@ -176,6 +183,7 @@ def _get_colored_formatter() -> logging.Formatter:
             "CRITICAL": "red,bold",
         },
         style="%",
+        stream=stream,
     )
 
 
@@ -208,12 +216,10 @@ def _configure_logger_from_env():
             logger.removeHandler(_contextgem_handler)
             _contextgem_handler = None
 
-        # If logging is disabled (OFF level), remove all handlers except NullHandler
+        # If logging is disabled (OFF level), no handler of ours is added. The handlers
+        # that the application added to the logger are kept, to get the messages again
+        # when logging is enabled
         if disable_logger:
-            # Remove all non-NullHandler handlers
-            for handler in logger.handlers[:]:
-                if not isinstance(handler, logging.NullHandler):
-                    logger.removeHandler(handler)
             # Set level high to ensure nothing gets through
             logger.setLevel(logging.CRITICAL + 1)
             # Don't propagate to avoid any output
@@ -235,7 +241,7 @@ def _configure_logger_from_env():
 
         # Create and configure handler
         handler = logging.StreamHandler(sys.stdout)
-        handler.setFormatter(_get_colored_formatter())
+        handler.setFormatter(_get_colored_formatter(sys.stdout))
         logger.addHandler(handler)
         _contextgem_handler = handler
 

@@ -45,6 +45,8 @@ To reconstruct objects from their serialized forms, use the corresponding class 
 
 The API credentials of a model, i.e. its ``api_key`` and ``api_base``, are never included in the serialized data, so that they do not end up in the files, logs or other systems that the serialized data is passed to. The usage and cost statistics of a model are not included either. The other configuration parameters of the model are preserved, together with its fallback models.
 
+Unlike a document, a deserialized model does not compare equal to the original (``==``), also with its credentials set again: it has a rate limiter of its own (``async_limiter``), with the same settings, and other objects of its own for running requests, and its usage and cost start from zero. To check that a model is restored with the same configuration, compare the serialized data of the two, e.g. ``restored.to_dict() == llm.to_dict()``.
+
 A deserialized model therefore has no ``api_key`` and no ``api_base``. A key that a model is not given is read from the environment variable of its provider, as for any model; the ones that you pass in code are to be set again, for the model and for each of its fallback models:
 
 .. code-block:: python

@@ -971,10 +971,10 @@ class TestChat(BaseTest):
         )
 
         # Test for `supports_tools` mismatch between main and fallback LLMs
-        llm._supports_tools = False
+        llm.supports_tools = False
         with pytest.raises(ValueError, match="supports_tools"):
             llm.fallback_models = [llm_fallback]
-        llm._supports_tools = True
+        llm.supports_tools = True
         llm.fallback_models = [llm_fallback]
 
         # Optional chat session to preserve history
@@ -1006,13 +1006,13 @@ class TestChat(BaseTest):
             "Do not guess any values; you must call the tools."
         )
         if parallel_tool_calls:
-            llm._supports_parallel_tool_calls = False  # set to False to test error
+            llm.supports_parallel_tool_calls = False  # set to False to test error
             with pytest.raises(
                 ValueError,
                 match=f"^Model `{llm.model}` does not support parallel tool calls",
             ):
                 llm.chat(prompt, chat_session=cs)
-            llm._supports_parallel_tool_calls = True
+            llm.supports_parallel_tool_calls = True
         else:
             llm.tool_max_rounds = 1
             with pytest.raises(LLMToolLoopLimitError):
@@ -1847,7 +1847,7 @@ class TestChat(BaseTest):
             tools=[get_order_status], parallel_tool_calls=False
         )
         fallback_llm = llm.fallback_models[0]
-        fallback_llm._supports_parallel_tool_calls = False
+        fallback_llm.supports_parallel_tool_calls = False
         acompletion_stub, requests = _stub_llm_api(
             {_MAIN_MODEL: [_create_completion("The order is shipped.")]}
         )
@@ -1860,7 +1860,7 @@ class TestChat(BaseTest):
                 llm.chat("What is the status of the order ORD-123?")
             assert requests == []
 
-            fallback_llm._supports_parallel_tool_calls = True
+            fallback_llm.supports_parallel_tool_calls = True
             assert llm.chat("What is the status of the order ORD-123?")
             assert [request["model"] for request in requests] == [_MAIN_MODEL]
 

@@ -29,12 +29,13 @@ class Sentence(_Sentence):
 
     :ivar raw_text: The complete text content of the sentence. This value is frozen after initialization.
     :vartype raw_text: str
-    :ivar additional_context: Optional supplementary information about the sentence, as a
-        single-line string. It is passed to the LLM together with the sentence text in the prompts
+    :ivar additional_context: Optional supplementary information about the sentence.
+        It is passed to the LLM together with the sentence text in the prompts
         that list sentences, i.e. when sentence-level references are used
         (``reference_depth="sentences"``). A decision model is sent it together with
         the sentence text when aspects are extracted with sentences as their items.
-        Sentences that are segmented automatically inherit
+        Its whitespace, line breaks included, is sent as single spaces, as the text of
+        the sentence is. Sentences that are segmented automatically inherit
         the additional context of their paragraph. Defaults to None.
     :vartype additional_context: str | None
     :ivar page_numbers: The numbers of the pages of the document that the sentence is on, from 1,

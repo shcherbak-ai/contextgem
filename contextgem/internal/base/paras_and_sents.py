@@ -14,10 +14,8 @@ from pydantic import Field, field_validator, model_validator
 
 from contextgem.internal.base.instances import _InstanceBase
 from contextgem.internal.decorators import _disable_direct_initialization
-from contextgem.internal.loggers import logger
 from contextgem.internal.registry import _publicize
 from contextgem.internal.typings.types import NonEmptyStr, PageNumber
-from contextgem.internal.utils import _contains_linebreaks
 
 
 class _ParasAndSentsBase(_InstanceBase):
@@ -28,7 +26,8 @@ class _ParasAndSentsBase(_InstanceBase):
     additional_context: NonEmptyStr | None = Field(
         default=None,
         description=(
-            "Optional supplementary information without linebreaks; used to enrich prompts."
+            "Optional supplementary information; used to enrich prompts, where "
+            "its whitespace, line breaks included, is collapsed to single spaces."
         ),
     )
     page_numbers: list[PageNumber] = Field(
@@ -52,28 +51,6 @@ class _ParasAndSentsBase(_InstanceBase):
         :rtype: list[int]
         """
         return sorted(set(page_numbers))
-
-    @field_validator("additional_context")
-    @classmethod
-    def _validate_additional_context(cls, additional_context: str | None) -> str | None:
-        """
-        Validates the optional 'additional_context' attribute by checking for line breaks
-        in the string, if provided. If line breaks are detected, a warning is logged to inform
-        the user that they are not kept: the additional context is cleaned before it is
-        sent to a model, as the text of a paragraph is, i.e. its whitespace, line breaks
-        included, is collapsed to single spaces.
-
-        :param additional_context: The optional string to be validated for line breaks.
-        :type additional_context: str | None
-        :return: The unmodified 'additional_context' value after validation.
-        :rtype: str | None
-        """
-        if additional_context is not None and _contains_linebreaks(additional_context):
-            logger.warning(
-                f"Additional context of `{cls.__name__}` contains line breaks, "
-                f"which are replaced with spaces when it is sent to a model."
-            )
-        return additional_context
 
 
 @_disable_direct_initialization

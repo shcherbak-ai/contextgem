@@ -12,6 +12,8 @@ For a tool that runs an extraction for an agent, see :ref:`agentic-tool-label`.
 .. note::
    Tool support is only available in ``chat(...)`` and ``chat_async(...)`` methods. It is not used by extraction methods: the tools of an LLM are not sent with the requests of an extraction.
 
+   To chat and to extract with the same model, create an LLM for each: one with the tools and the system message of the chat, and one for the extraction. The system message of an LLM is sent with its extraction requests as well, in place of the default one written for extraction, and an extraction with an LLM that has tools issues a warning that they are ignored, which a test that makes the warnings of ContextGem errors fails on (see :doc:`../logging_config`).
+
 
 Basic Usage
 ------------
@@ -337,7 +339,7 @@ When ``chat(...)`` raises an error, or is cancelled (e.g. on a timeout set by th
 Tools and Fallback LLMs
 ------------------------
 
-An LLM with tools can have fallback LLMs (see :ref:`llm-fallback-llms-label`). Each fallback LLM must have the same tools as the primary LLM, in any order, the same ``tool_choice`` and ``parallel_tool_calls``, and the same support for tool calls, as detected by ``litellm`` with ``litellm.supports_function_calling()`` or set manually with ``_supports_tools=True`` on the LLM instance. This is checked when the fallback LLMs are set. Before any request of a chat is sent, it is also checked that each fallback LLM with ``parallel_tool_calls`` set supports parallel tool calls.
+An LLM with tools can have fallback LLMs (see :ref:`llm-fallback-llms-label`). Each fallback LLM must have the same tools as the primary LLM, in any order, the same ``tool_choice`` and ``parallel_tool_calls``, and the same support for tool calls, as detected by ``litellm`` with ``litellm.supports_function_calling()`` or set with ``supports_tools`` (see :ref:`llm-capabilities-label`). This is checked when the fallback LLMs are set. Before any request of a chat is sent, it is also checked that each fallback LLM with ``parallel_tool_calls`` set supports parallel tool calls.
 
 A fallback LLM takes over when a request to the current LLM fails, at any point of the chat, or when the current LLM returns an empty response also after the request was sent again ``max_retries_invalid_data`` times. A request with an empty response is sent again with the messages that it had, i.e. with the results of the tool calls made before it: the tools are not called again for it. The fallback LLM starts the chat over: it is sent the prompt, without the tool calls made by the LLM that failed and without their results.
 

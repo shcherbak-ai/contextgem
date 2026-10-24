@@ -87,7 +87,10 @@ def create_image(source: str | Path | PILImage.Image | BinaryIO | bytes) -> Imag
     PNG, and WebP.
 
     :param source: The image source - can be a file path (str or Path), PIL Image object,
-        file-like object (BytesIO, file handle, etc.), or raw bytes data.
+        file-like object (BytesIO, file handle, etc.), or raw bytes data. A PIL Image
+        object is saved in its format, e.g. JPEG for an image opened from a JPEG
+        file, and as PNG if it has none, e.g. an image created in memory with
+        ``PIL.Image.new()``, or the result of an operation on another image.
     :type source: str | Path | PILImage.Image | BinaryIO | bytes
     :return: An Image instance with the appropriate MIME type and base64 data.
     :rtype: Image
@@ -140,12 +143,9 @@ def create_image(source: str | Path | PILImage.Image | BinaryIO | bytes) -> Imag
     if isinstance(source, PILImage.Image):
         # PIL Image object - we need to use PIL since we don't have original bytes
         pil_image = source
-        image_format = pil_image.format
-        if image_format is None:
-            raise ValueError(
-                "Cannot determine image format from PIL Image object. "
-                "Please save the image with a specific format first."
-            )
+        # An image created in memory, e.g. with `PILImage.new()`, has no format:
+        # it is saved as PNG, which keeps its pixels as they are
+        image_format = pil_image.format or "PNG"
         # For PIL images, we'll need to save to buffer to get bytes
 
     elif isinstance(source, str | Path):

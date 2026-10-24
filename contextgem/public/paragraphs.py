@@ -32,13 +32,15 @@ class Paragraph(_Paragraph):
     :ivar sentences: The individual sentences contained within the paragraph. Defaults to an empty list.
         Cannot be reassigned once populated.
     :vartype sentences: list[Sentence]
-    :ivar additional_context: Optional supplementary information about the paragraph, as a
-        single-line string, e.g. its structural role, formatting, or position in the document
+    :ivar additional_context: Optional supplementary information about the paragraph,
+        e.g. its structural role, formatting, or position in the document
         ("Heading, level 2" or "Table: Fees, row 2, column 3"). It is passed to the LLM
         together with the paragraph text in the prompts that list paragraphs, i.e. when
         aspects are extracted, or when concepts are extracted with references. A decision
         model is sent it together with the paragraph text when aspects are extracted.
-        Sentences segmented from the paragraph inherit it. Defaults to None.
+        Its whitespace, line breaks included, is sent as single spaces, as the text of
+        the paragraph is. Sentences segmented from the paragraph inherit it.
+        Defaults to None.
     :vartype additional_context: str | None
     :ivar page_numbers: The numbers of the pages of the document that the paragraph is on,
         from 1, in ascending order, e.g. ``[4, 5]`` for a paragraph that continues on the next
