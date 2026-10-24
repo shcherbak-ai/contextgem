@@ -5125,22 +5125,9 @@ class _DocumentModel(_GenericModelProcessor):
             # Local models are not supported for auto-pricing
             return
 
-        # Derive from self.model formatted as "provider/model"
-        parts = self.model.split("/", 1)
-        if len(parts) != 2:
-            warning_msg = (
-                f"Could not derive auto-pricing provider/model from `{self.model}`. "
-                f"Auto-pricing will be skipped. "
-                f"Consider setting `pricing_details=ModelPricing(...)` "
-                f"or disabling auto-pricing."
-            )
-            _warn_from_caller_code(
-                warning_msg,
-            )
-            return
-
-        provider_id = self._get_auto_pricing_provider_id(parts[0])
-        model_ref = parts[1]
+        # From `model`, which is validated as "<provider>/<model name>"
+        provider, _, model_ref = self.model.partition("/")
+        provider_id = self._get_auto_pricing_provider_id(provider)
         self._auto_pricing_provider_id = provider_id
         self._auto_pricing_model_ref = model_ref
 
