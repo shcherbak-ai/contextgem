@@ -2505,8 +2505,8 @@ class TestExtraction(BaseTest):
         model and in a model group. The same applies to a call whose data is
         invalid and that is not made again: a call made again whose data is still
         invalid after the last retry, and a call of a model that has no retries
-        for invalid data and no fallback model, i.e. of an LLM with
-        ``max_retries_invalid_data=0`` or of a decision model.
+        for invalid data and no fallback model, i.e. of an LLM or a decision model
+        with ``max_retries_invalid_data=0``.
 
         A failure that does not fail the extraction changes nothing: the other
         calls go on when a fallback model is yet to be tried, and when
@@ -2894,7 +2894,7 @@ class TestExtraction(BaseTest):
                     "invalid data returned by LLM",
                 ),
                 (
-                    create_decision_model,
+                    lambda: create_decision_model(max_retries_invalid_data=0),
                     decision_model,
                     "an invalid response returned by decision model",
                 ),
@@ -3070,8 +3070,8 @@ class TestExtraction(BaseTest):
         failed, for aspects and for concepts, with and without concurrency, for
         an LLM and a decision model, each with a fallback model of either kind:
 
-        - a call is logged as one whose LLM did not return valid JSON only when
-          the LLM returned a response that is not such a JSON;
+        - a call is logged as one whose LLM returned invalid data only when
+          the LLM returned a response that cannot be used;
         - a call is logged as retried for invalid data only when it is made again
           with the model that returned invalid data for it, numbered among
           the retries of that model;
@@ -3079,7 +3079,7 @@ class TestExtraction(BaseTest):
           a fallback decision model is not.
 
         A prompt that exceeds the context window of the LLM, and a failed API
-        request, were also logged as an LLM that did not return valid JSON, when
+        request, were also logged as an LLM that returned invalid data, when
         a fallback model was yet to be tried or a warning was issued instead of
         an exception, although the LLM returned nothing. A response cut off at
         the max output tokens was also logged as a JSON that failed
@@ -3356,7 +3356,7 @@ class TestExtraction(BaseTest):
         # An LLM that returned a response that is not a valid JSON
         not_valid_json = [
             "ERROR: Error when validating parsed JSON: parsed_json is None",
-            "ERROR: LLM did not return valid JSON for {type}s",
+            "ERROR: LLM returned invalid data for {type}s",
         ]
         fallback_pending = "INFO: The call will be retried with a fallback model."
         trying_fallback_llm = f"INFO: Trying with fallback LLM {fallback_model} (1/1)"
@@ -3495,26 +3495,42 @@ class TestExtraction(BaseTest):
                 ],
                 request_outcomes={decision_model: [api_error]},
             )
-            # It returns an invalid response, and the fallback decision model is
-            # called once
+            # It returns an invalid response, and the call is made again with it,
+            # by default up to three times, as with an LLM
+            invalid_decision_response = (
+                "ERROR: Decision model `"
+                + decision_model
+                + "` returned an invalid response for {type} `Topic "
+            )
             check_log(
                 [decision_model, fallback_decision_model],
                 [
-                    "ERROR: Decision model `"
-                    + decision_model
-                    + "` returned an invalid response for {type} `Topic ",
-                    trying_fallback_decision_model,
+                    invalid_decision_response,
+                    "INFO: Retrying {type}s with an invalid response (1/3)",
                 ],
                 request_outcomes={decision_model: [invalid_answer]},
+            )
+            # The response is still invalid after its retries, and the fallback
+            # decision model is called
+            check_log(
+                [decision_model, fallback_decision_model],
+                [
+                    invalid_decision_response,
+                    "INFO: Retrying {type}s with an invalid response (1/1)",
+                    invalid_decision_response,
+                    trying_fallback_decision_model,
+                ],
+                request_outcomes={decision_model: [invalid_answer] * 2},
+                max_retries_invalid_data=1,
             )
 
     def test_fallback_model_has_its_own_retries_for_invalid_data(self):
         """
         Tests that a fallback model that returns invalid data during extraction is
         called as a primary model with the same setting is: once, and then again
-        as many times as it has retries for invalid data, i.e. a fallback LLM up
-        to ``1 + max_retries_invalid_data`` times, and a fallback decision model,
-        which has no such retries, once. Also tests that the number of retries
+        as many times as it has retries for invalid data, i.e. up to
+        ``1 + max_retries_invalid_data`` times, a fallback LLM as a fallback
+        decision model. Also tests that the number of retries
         reported when the data stays invalid, in ``ModelExtractionError`` and in
         the warning issued instead of it, is the number of times that the model
         the report is for, i.e. the last one tried, was called again, and that
@@ -3640,28 +3656,24 @@ class TestExtraction(BaseTest):
             )
 
         def create_model(
-            chain: list[int | None],
+            chain: list[tuple[str, int]],
         ) -> DocumentLLM | DocumentDecisionModel:
             """
             Creates the primary model of a chain, with the other models of
             the chain as its fallback models. A model of the chain is given as
-            the ``max_retries_invalid_data`` of an LLM, or as None for a decision
-            model, which has no retries for invalid data.
+            its kind, "llm" or "decision", and its ``max_retries_invalid_data``.
             """
             models: list[DocumentLLM | DocumentDecisionModel] = []
-            for position, retries in enumerate(chain):
+            for position, (kind, retries) in enumerate(chain):
                 model_kwargs: dict[str, Any] = {
                     "api_key": f"key-{position}",
                     "is_fallback": position > 0,
+                    "max_retries_invalid_data": retries,
                 }
                 model = (
                     DocumentDecisionModel(model=decision_model, **model_kwargs)
-                    if retries is None
-                    else DocumentLLM(
-                        model=llm_model,
-                        max_retries_invalid_data=retries,
-                        **model_kwargs,
-                    )
+                    if kind == "decision"
+                    else DocumentLLM(model=llm_model, **model_kwargs)
                 )
                 # The requests to the stubbed APIs are not to be paced
                 model.async_limiter = AsyncLimiter(1000, 1)
@@ -3690,7 +3702,7 @@ class TestExtraction(BaseTest):
             return document
 
         def extract(
-            chain: list[int | None],
+            chain: list[tuple[str, int]],
             instance_type: str,
             use_concurrency: bool,
             raise_exception: bool = True,
@@ -3734,7 +3746,7 @@ class TestExtraction(BaseTest):
                 for i in range(n_instances)
             ]
 
-        def get_expected_call(chain: list[int | None]) -> list[int]:
+        def get_expected_call(chain: list[tuple[str, int]]) -> list[int]:
             """
             Returns the positions of the models in the order of the requests of
             a call for which each model of the chain returns invalid data: each
@@ -3743,54 +3755,71 @@ class TestExtraction(BaseTest):
             """
             return [
                 position
-                for position, retries in enumerate(chain)
-                for _ in range(1 + (retries or 0))
+                for position, (_, retries) in enumerate(chain)
+                for _ in range(1 + retries)
             ]
 
-        def get_expected_log(chain: list[int | None], instance_type: str) -> list[str]:
+        def get_expected_log(
+            chain: list[tuple[str, int]], instance_type: str
+        ) -> list[str]:
             """
             Returns the lines logged for such a call: a line for each fallback
             model tried, and a line for each retry of a model, numbered among
             the retries of that model.
             """
             expected_log: list[str] = []
-            for position, retries in enumerate(chain):
+            for position, (kind, retries) in enumerate(chain):
                 if position > 0:
                     fallback = (
                         f"decision model {decision_model}"
-                        if retries is None
+                        if kind == "decision"
                         else f"LLM {llm_model}"
                     )
                     expected_log.append(
                         f"Trying with fallback {fallback} ({position}/{len(chain) - 1})"
                     )
+                invalid_output = (
+                    "an invalid response" if kind == "decision" else "invalid data"
+                )
                 expected_log += [
-                    f"Retrying {instance_type}s with invalid data ({i + 1}/{retries})"
-                    for i in range(retries or 0)
+                    f"Retrying {instance_type}s with {invalid_output} "
+                    f"({i + 1}/{retries})"
+                    for i in range(retries)
                 ]
             return expected_log
 
-        chains: list[list[int | None]] = [
-            # A primary model on its own: an LLM with 0, 1 or 3 retries for
-            # invalid data, or a decision model
-            *[[primary] for primary in (0, 1, 3, None)],
-            # A fallback LLM with 0, 1 or 3 retries
+        def llm(retries: int) -> tuple[str, int]:
+            """
+            Returns an LLM of a chain, with its retries for invalid data.
+            """
+            return "llm", retries
+
+        def dm(retries: int) -> tuple[str, int]:
+            """
+            Returns a decision model of a chain, with its retries for invalid data.
+            """
+            return "decision", retries
+
+        chains: list[list[tuple[str, int]]] = [
+            # A primary model on its own, with 0, 1 or 3 retries for invalid data
+            *[[primary(n)] for primary in (llm, dm) for n in (0, 1, 3)],
+            # A fallback model with 0, 1 or 3 retries
             *[
-                [primary, fallback]
-                for primary in (0, 1, 3, None)
-                for fallback in (0, 1, 3)
+                [primary, fallback(n)]
+                for primary in (llm(0), llm(1), llm(3), dm(0), dm(1))
+                for fallback in (llm, dm)
+                for n in (0, 1, 3)
             ],
-            # A fallback decision model
-            *[[primary, None] for primary in (0, 1, 3, None)],
             # Two fallback models
-            [0, 0, 0],
-            [1, 1, 1],
-            [3, 3, 3],
-            [3, 1, 0],
-            [1, None, 3],
-            [1, 3, None],
-            [None, 1, 3],
-            [None, None, 1],
+            [llm(0), llm(0), llm(0)],
+            [llm(1), llm(1), llm(1)],
+            [llm(3), llm(3), llm(3)],
+            [llm(3), llm(1), llm(0)],
+            [llm(1), dm(0), llm(3)],
+            [llm(1), llm(3), dm(0)],
+            [dm(0), llm(1), llm(3)],
+            [dm(0), dm(0), llm(1)],
+            [dm(1), dm(3), dm(0)],
         ]
         combinations = [
             (instance_type, use_concurrency)
@@ -3812,10 +3841,10 @@ class TestExtraction(BaseTest):
                     # The model that failed last, which the report is for:
                     # the kind of the model, what it returned, and the number
                     # of times that it was called again
-                    last_retries = chain[-1] or 0
+                    last_kind, last_retries = chain[-1]
                     reported = (
                         "due to an invalid response returned by decision model"
-                        if chain[-1] is None
+                        if last_kind == "decision"
                         else "due to invalid data returned by LLM"
                     )
                     for instance_type, use_concurrency in combinations:
@@ -3878,13 +3907,15 @@ class TestExtraction(BaseTest):
                         )
                         assert not any(i.extracted_items for i in instances)
 
-                # === A fallback LLM returns valid data in the last call it has ===
+                # === A fallback model returns valid data in the last call it has ===
                 # I.e. in its last retry: nothing fails, and nothing is reported
-                valid_last_call_chains: list[list[int | None]] = [
-                    [0, 1],
-                    [3, 3],
-                    [None, 1],
-                    [1, 1, 3],
+                valid_last_call_chains: list[list[tuple[str, int]]] = [
+                    [llm(0), llm(1)],
+                    [llm(3), llm(3)],
+                    [dm(0), llm(1)],
+                    [llm(1), llm(1), llm(3)],
+                    [llm(1), dm(2)],
+                    [dm(1), dm(1)],
                 ]
                 for chain in valid_last_call_chains:
                     last_position = len(chain) - 1
@@ -3892,7 +3923,7 @@ class TestExtraction(BaseTest):
                         position: [invalid_answer] for position in range(last_position)
                     }
                     request_outcomes[last_position] = [
-                        *([invalid_answer] * (chain[-1] or 0)),
+                        *([invalid_answer] * chain[-1][1]),
                         None,
                     ]
                     for instance_type, use_concurrency in combinations:
@@ -3927,7 +3958,7 @@ class TestExtraction(BaseTest):
                     for instance_type, use_concurrency in combinations:
                         with pytest.raises(ModelAPIError):
                             extract(
-                                [1, 3],
+                                [llm(1), llm(3)],
                                 instance_type,
                                 use_concurrency,
                                 request_outcomes={
@@ -3948,7 +3979,7 @@ class TestExtraction(BaseTest):
                             ModelExtractionError, match=r"\(after 1 retries\)$"
                         ) as exc_info:
                             extract(
-                                [3, 1],
+                                [llm(3), llm(1)],
                                 instance_type,
                                 use_concurrency,
                                 request_outcomes={
@@ -6319,10 +6350,9 @@ class TestExtraction(BaseTest):
         - the ``content_filter`` finish reason, which litellm reports for
           a refusal of a model and for the content filter of a provider;
         - the refusal of OpenAI's ``refusal`` field of the message;
-        - a request that the provider blocked on its input, which litellm raises
-          as ``ContentPolicyViolationError``. It is handled as a failed request with
-          a non-transient error, as before refusals had an error of their own: it is
-          not sent again to the LLM, the fallback LLM is tried, and the error of
+        - a request that the provider blocked, or whose answer it blocked, which
+          litellm raises as ``ContentPolicyViolationError`` for both. It is a refusal
+          without an answer, i.e. a finished call without tokens, and the error of
           litellm is the ``original_error`` of ``ModelRefusalError``.
 
         LLM API calls are stubbed, i.e. no cassette is required.
@@ -6372,10 +6402,10 @@ class TestExtraction(BaseTest):
             ),
             ("refusal", f"LLM `{primary_model}` refused to answer."),
             (
-                "input_blocked",
+                "blocked",
                 (
-                    f"The provider of LLM `{primary_model}` blocked the request "
-                    f"for its content."
+                    f"The provider of LLM `{primary_model}` blocked the request, "
+                    f"or the answer to it, for its content."
                 ),
             ),
         ]
@@ -6392,7 +6422,7 @@ class TestExtraction(BaseTest):
                 )
             if refusal == "refusal":
                 return create_completion(None, refusal="I can't help with that.")
-            return input_blocked_error
+            return blocked_error
 
         def create_stub(outcomes: list[Any], requested_models: list[str]) -> Any:
             """
@@ -6448,38 +6478,35 @@ class TestExtraction(BaseTest):
                 ),
             )
 
-        input_blocked_error = litellm.ContentPolicyViolationError(
+        blocked_error = litellm.ContentPolicyViolationError(
             message="The request was rejected by the safety system",
             model=primary_model,
             llm_provider="openai",
         )
         for refusal, refusal_sentence in refusals:
-            # Whether the refused request is sent again: an answer refused, not
-            # a request blocked on its input
-            sent_again = refusal != "input_blocked"
-
             # === A retry that is answered ===
-            if sent_again:
-                requested_models: list[str] = []
-                llm = create_llm(max_retries=2, with_fallback=True)
-                document = create_document()
-                acompletion_stub = create_stub(
-                    [refused_outcome(refusal), create_completion(answer("Acme"))],
-                    requested_models,
-                )
-                with (
-                    patch.object(litellm, "acompletion", new=acompletion_stub),
-                    capture_logs() as messages,
-                ):
-                    llm.extract_concepts_from_document(document)
-                assert requested_models == [primary_model, primary_model]
-                assert [
-                    item.value for item in document.concepts[0].extracted_items
-                ] == ["Acme"]
-                assert "Retrying concepts after a refusal (1/2)" in messages
-                first_call, second_call = llm.get_usage()[0].usage.calls
-                assert first_call._refusal == refusal
-                assert second_call._refusal is None
+            requested_models: list[str] = []
+            llm = create_llm(max_retries=2, with_fallback=True)
+            document = create_document()
+            acompletion_stub = create_stub(
+                [refused_outcome(refusal), create_completion(answer("Acme"))],
+                requested_models,
+            )
+            with (
+                patch.object(litellm, "acompletion", new=acompletion_stub),
+                capture_logs() as messages,
+            ):
+                llm.extract_concepts_from_document(document)
+            assert requested_models == [primary_model, primary_model]
+            assert [item.value for item in document.concepts[0].extracted_items] == [
+                "Acme"
+            ]
+            assert "Retrying concepts after a refusal (1/2)" in messages
+            first_call, second_call = llm.get_usage()[0].usage.calls
+            assert first_call._refusal == refusal
+            assert second_call._refusal is None
+            # A refused request is a finished call, also a blocked one
+            assert first_call.timestamp_received is not None
 
             # === Refused on each retry, answered by the fallback LLM ===
             requested_models = []
@@ -6488,10 +6515,7 @@ class TestExtraction(BaseTest):
             acompletion_stub = create_stub([refused_outcome(refusal)], requested_models)
             with patch.object(litellm, "acompletion", new=acompletion_stub):
                 llm.extract_concepts_from_document(document)
-            n_primary_requests = 3 if sent_again else 1
-            assert requested_models == (
-                [primary_model] * n_primary_requests + [fallback_model]
-            )
+            assert requested_models == [primary_model] * 3 + [fallback_model]
             # The refused answer is not used, also when it is valid JSON
             assert [item.value for item in document.concepts[0].extracted_items] == [
                 "Fallback value"
@@ -6499,24 +6523,17 @@ class TestExtraction(BaseTest):
             primary_usage, fallback_usage = llm.get_usage()
             assert [call._refusal for call in primary_usage.usage.calls] == [
                 refusal
-            ] * n_primary_requests
+            ] * 3
             assert len(fallback_usage.usage.calls) == 1
             # A blocked request has no response, and no tokens
-            assert primary_usage.usage.input == (
-                0 if refusal == "input_blocked" else 30
-            )
+            assert primary_usage.usage.input == (0 if refusal == "blocked" else 30)
 
             # === Refused on each retry, without a fallback LLM ===
-            for max_retries in [1, 0]:
-                n_retries = max_retries if sent_again else 0
-                expected_msg = (
-                    f"{refusal_sentence} Failed concepts: ['Parties']"
-                    if sent_again
-                    else refusal_sentence
-                )
+            for n_retries in [1, 0]:
+                expected_msg = f"{refusal_sentence} Failed concepts: ['Parties']"
                 for raise_exception in [True, False]:
                     requested_models = []
-                    llm = create_llm(max_retries=max_retries, with_fallback=False)
+                    llm = create_llm(max_retries=n_retries, with_fallback=False)
                     document = create_document()
                     acompletion_stub = create_stub(
                         [refused_outcome(refusal)], requested_models
@@ -6535,8 +6552,9 @@ class TestExtraction(BaseTest):
                             assert isinstance(exc_info.value, ModelRefusalError)
                             assert exc_info.value.message == expected_msg
                             assert exc_info.value.retry_count == n_retries
+                            # A blocked request keeps the error of litellm
                             assert exc_info.value.original_error is (
-                                None if sent_again else input_blocked_error
+                                blocked_error if refusal == "blocked" else None
                             )
                         else:
                             llm.extract_concepts_from_document(

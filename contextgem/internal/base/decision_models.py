@@ -28,7 +28,7 @@ from typing import Any, cast
 from aiolimiter import AsyncLimiter
 from genai_prices import Usage as _GPUsage
 from genai_prices import calc_price as _calc_auto_price
-from pydantic import Field, StrictFloat, ValidationError
+from pydantic import Field, StrictFloat, StrictInt, ValidationError
 
 from contextgem.internal.base.aspects import _Aspect
 from contextgem.internal.base.concepts import (
@@ -62,7 +62,6 @@ from contextgem.internal.decisions import (
 from contextgem.internal.decorators import _disable_direct_initialization
 from contextgem.internal.exceptions import (
     ModelAPIError,
-    ModelRefusalError,
     _InvalidDecisionResponseError,
     _RefusedDecisionAnswerError,
 )
@@ -317,8 +316,7 @@ def _get_answers_by_question_names(
         if answer_name is not None and answer_name != question.name:
             raise _InvalidDecisionResponseError(
                 question.name,
-                f"the answer at the position of the question has the name "
-                f"`{answer_name}`.",
+                "the answer at the position of the question has another name.",
             )
 
         answer_type = getattr(response_answer, "type", None)
@@ -351,7 +349,7 @@ def _get_answers_by_question_names(
             )
         else:
             raise _InvalidDecisionResponseError(
-                question.name, f"the answer is of an unknown type `{answer_type}`."
+                question.name, "the answer is of an unknown type."
             )
         answers[question.name] = answer
     return answers
@@ -384,7 +382,7 @@ def _get_option_probabilities_by_labels(
         label = getattr(option_probability, label_attr_name, None)
         if label in option_probabilities:
             raise _InvalidDecisionResponseError(
-                question.name, f"the answer repeats the option `{label}`."
+                question.name, "the answer repeats an option."
             )
         option_probabilities[label] = getattr(option_probability, "probability", None)
     return option_probabilities
@@ -410,6 +408,31 @@ class _DocumentDecisionModel(_DocumentModel):
             "the most probable option is taken."
         ),
     )
+    max_retries_invalid_data: StrictInt = Field(
+        default=3,
+        ge=0,
+        description=(
+            "Retries when a response of the model cannot be used, e.g. an answer "
+            "without valid probabilities, or when the model or its provider "
+            "declines to answer; only the requests whose answers cannot be used "
+            "are sent again. A fallback model has its own, after it is asked for "
+            "the first time."
+        ),
+    )
+
+    @property
+    def _retries_invalid_data(self) -> int:
+        """
+        Returns the number of times that a call is made again when a response of
+        the decision model cannot be used, or the model or its provider declines to
+        answer, as set for the model. The requests of the call whose answers were
+        usable are not sent again. A fallback model has the same number of retries,
+        after the first call that is made with it.
+
+        :return: The number of retries of a call with a response that cannot be used.
+        :rtype: int
+        """
+        return self.max_retries_invalid_data
 
     @property
     def _kind_name(self) -> str:
@@ -845,6 +868,7 @@ class _DocumentDecisionModel(_DocumentModel):
         async_limiter: AsyncLimiter | None = None,
         raise_exception_on_extraction_error: bool = True,
         has_fallback_pending: bool = False,
+        answers_cache: dict[str, dict[str, _DecisionAnswer]] | None = None,
     ) -> tuple[list[_Aspect] | list[_Concept] | None, _ModelUsage]:
         """
         Extracts the items of aspects or concepts with the decision model: asks
@@ -915,8 +939,14 @@ class _DocumentDecisionModel(_DocumentModel):
         paragraph, the response cannot be used, as nothing is known about
         the aspect. A refused answer to a question of a concept cannot be used
         either. Both are refusals, as is a request that the provider blocks for its
-        content: the call fails, the fallback models are tried, and
-        ``ModelRefusalError`` is raised (or a warning is logged) if none answers.
+        content, or whose answers it blocks: the call fails, it is made again up to
+        ``max_retries_invalid_data`` times, as it is for a response that cannot be
+        used, then the fallback models are tried, and ``ModelRefusalError`` is
+        raised (or a warning is logged) if none answers.
+
+        When the call is made again, the requests whose answers were usable are not
+        sent again (see ``answers_cache``): only the request whose response cannot
+        be used, or that was refused, and those that were not sent after it.
 
         If there are more questions on a text than a request can hold, they are
         sent in several requests on the same text.
@@ -963,6 +993,11 @@ class _DocumentDecisionModel(_DocumentModel):
             without being raised or warned about, as it is not final.
             Defaults to False.
         :type has_fallback_pending: bool
+        :param answers_cache: The usable answers of the requests of the call, which
+            the call keeps when it is made again (see ``_PartialExtraction``), and
+            which it adds the usable answers of its requests to. Defaults to None,
+            i.e. no answers are kept.
+        :type answers_cache: dict[str, dict[str, _DecisionAnswer]] | None
         :return: A tuple containing:
             (0) List of processed instances with extracted items, or None if
                 a request failed or a response cannot be used
@@ -1017,6 +1052,7 @@ class _DocumentDecisionModel(_DocumentModel):
                     usage=usage,
                     num_retries_failed_request=num_retries_failed_request,
                     async_limiter=async_limiter,
+                    answers_cache=answers_cache,
                 )
             else:
                 answers_of_texts = await self._ask_about_concepts(
@@ -1029,6 +1065,7 @@ class _DocumentDecisionModel(_DocumentModel):
                     max_paragraphs_to_analyze_per_call=max_paragraphs_to_analyze_per_call,
                     num_retries_failed_request=num_retries_failed_request,
                     async_limiter=async_limiter,
+                    answers_cache=answers_cache,
                 )
         except _RefusedDecisionAnswerError as e:
             # The model refused to answer a question of a concept, or the question
@@ -1058,31 +1095,20 @@ class _DocumentDecisionModel(_DocumentModel):
             await self._update_usage_and_cost((None, usage))
             raise
         except litellm.ContentPolicyViolationError as e:  # type: ignore[attr-defined]
-            # The provider blocked a request for its content: a refusal, handled
-            # as a failed request with a non-transient error, i.e. the next fallback
-            # model is tried, but raised as a refusal. The failed request is the last
-            # call recorded in the usage (call unfinished), with its refusal.
-            if usage.calls:
-                usage.calls[-1]._refusal = "input_blocked"
-            refusal_msg = _get_model_refusal_msg(
-                kind_name=self._kind_name, model=self.model, refusal="input_blocked"
-            )
-            logger.error(refusal_msg)
+            # The provider blocked a request or its answers for their content:
+            # a refusal, as a refused answer to a question of a concept is, i.e.
+            # the call is made again, as the verdict of a content filter can differ
+            # on another request, and the fallback models are tried next. The calls
+            # are recorded as finished, the blocked one with the refusal.
             # The error of litellm, the message of the provider
-            logger.debug(f"The request was blocked by the provider: {e}")
-            if has_fallback_pending:
-                logger.info("The call will be retried with a fallback model.")
-            elif raise_exception_on_extraction_error:
-                await self._update_usage_and_cost((None, usage))
-                raise ModelRefusalError(
-                    refusal_msg, retry_count=0, original_error=e
-                ) from e
-            else:
-                logger.warning(
-                    f"{refusal_msg} (0 retries). If you want to raise an exception "
-                    f"instead, set `raise_exception_on_extraction_error` to True."
-                )
-            return None, usage
+            logger.debug(
+                f"The request or its answers were blocked by the provider: {e}"
+            )
+            return self._handle_refusal(
+                refusal_subject="",
+                call_instances_msg=call_instances_msg,
+                usage=usage,
+            )
         except Exception as e:
             # e.g. rate limit error, after the retries of the request are exhausted,
             # or a non-transient error such as failed authentication. The failed
@@ -1133,6 +1159,9 @@ class _DocumentDecisionModel(_DocumentModel):
             except _RefusedDecisionAnswerError as e:
                 # A refused answer to a question of a concept. Such answers are
                 # rejected when the responses are received: this is a safeguard.
+                # The answers are asked for again if the call is made again.
+                if answers_cache is not None:
+                    answers_cache.clear()
                 return self._handle_refusal(
                     refusal_subject=self._get_refused_answer_subject(
                         error=e,
@@ -1145,7 +1174,11 @@ class _DocumentDecisionModel(_DocumentModel):
             except ValueError as e:
                 # An answer that cannot be used (missing, of another kind than its
                 # question, without the probabilities of the options offered), or
-                # a value that the item of the aspect or concept does not accept
+                # a value that the item of the aspect or concept does not accept.
+                # Which request it is from is not known here: all the answers are
+                # asked for again if the call is made again.
+                if answers_cache is not None:
+                    answers_cache.clear()
                 logger.error(
                     self._get_invalid_response_msg(
                         error=e,
@@ -1471,6 +1504,7 @@ class _DocumentDecisionModel(_DocumentModel):
         usage: _ModelUsage,
         num_retries_failed_request: int = 3,
         async_limiter: AsyncLimiter | None = None,
+        answers_cache: dict[str, dict[str, _DecisionAnswer]] | None = None,
     ) -> tuple[
         list[_Paragraph],
         list[dict[str, _DecisionAnswer]],
@@ -1519,6 +1553,9 @@ class _DocumentDecisionModel(_DocumentModel):
         :param async_limiter: An optional aiolimiter.AsyncLimiter instance that
             controls the frequency of the requests, when concurrency is enabled.
         :type async_limiter: AsyncLimiter | None
+        :param answers_cache: The usable answers of the requests of the call, kept
+            for the call to be made again (see ``_get_answers``). Defaults to None.
+        :type answers_cache: dict[str, dict[str, _DecisionAnswer]] | None
         :return: The paragraphs that are asked about, in the order of
             the paragraphs of the source, for each of them, the answers of
             the model by the names of the questions, and for each of them,
@@ -1566,6 +1603,7 @@ class _DocumentDecisionModel(_DocumentModel):
             async_limiter=async_limiter,
             send_concurrently=async_limiter is not None,
             accept_refusals=True,
+            answers_cache=answers_cache,
         )
         # A refused answer leaves its paragraph out of the aspect. An aspect that
         # the model answered about on no paragraph is not extracted, though:
@@ -1600,6 +1638,7 @@ class _DocumentDecisionModel(_DocumentModel):
             usage=usage,
             num_retries_failed_request=num_retries_failed_request,
             async_limiter=async_limiter,
+            answers_cache=answers_cache,
         )
         return paragraphs, answers_of_paragraphs, answers_of_sentences
 
@@ -1613,6 +1652,7 @@ class _DocumentDecisionModel(_DocumentModel):
         usage: _ModelUsage,
         num_retries_failed_request: int = 3,
         async_limiter: AsyncLimiter | None = None,
+        answers_cache: dict[str, dict[str, _DecisionAnswer]] | None = None,
     ) -> list[_AnswersOnSentences]:
         """
         Asks the decision model, on each sentence of each paragraph that belongs to
@@ -1669,6 +1709,9 @@ class _DocumentDecisionModel(_DocumentModel):
         :param async_limiter: An optional aiolimiter.AsyncLimiter instance that
             controls the frequency of the requests, when concurrency is enabled.
         :type async_limiter: AsyncLimiter | None
+        :param answers_cache: The usable answers of the requests of the call, kept
+            for the call to be made again (see ``_get_answers``). Defaults to None.
+        :type answers_cache: dict[str, dict[str, _DecisionAnswer]] | None
         :return: For each of the paragraphs, the sentences that are asked about,
             in the order of the sentences, each with the answers of the model by
             the names of the questions. Empty for a paragraph none of whose
@@ -1767,6 +1810,7 @@ class _DocumentDecisionModel(_DocumentModel):
             async_limiter=async_limiter,
             send_concurrently=async_limiter is not None,
             accept_refusals=True,
+            answers_cache=answers_cache,
         )
         for (paragraph_position, sentence), answers in zip(
             sentences, answers_of_units, strict=True
@@ -1784,6 +1828,7 @@ class _DocumentDecisionModel(_DocumentModel):
         max_paragraphs_to_analyze_per_call: int = 0,
         num_retries_failed_request: int = 3,
         async_limiter: AsyncLimiter | None = None,
+        answers_cache: dict[str, dict[str, _DecisionAnswer]] | None = None,
     ) -> list[dict[str, _DecisionAnswer]]:
         """
         Asks the decision model the questions of the concepts on the text of
@@ -1820,6 +1865,9 @@ class _DocumentDecisionModel(_DocumentModel):
         :param async_limiter: An optional aiolimiter.AsyncLimiter instance that
             controls the frequency of the requests, when concurrency is enabled.
         :type async_limiter: AsyncLimiter | None
+        :param answers_cache: The usable answers of the requests of the call, kept
+            for the call to be made again (see ``_get_answers``). Defaults to None.
+        :type answers_cache: dict[str, dict[str, _DecisionAnswer]] | None
         :return: For each text that the questions are asked on, i.e. for the text
             of the source, or for each of its parts that is asked about, in
             the order of the parts, the answers of the model by the names of
@@ -1877,6 +1925,7 @@ class _DocumentDecisionModel(_DocumentModel):
             num_retries_failed_request=num_retries_failed_request,
             async_limiter=async_limiter,
             send_concurrently=send_concurrently,
+            answers_cache=answers_cache,
         )
 
     @staticmethod
@@ -2071,6 +2120,7 @@ class _DocumentDecisionModel(_DocumentModel):
         async_limiter: AsyncLimiter | None = None,
         send_concurrently: bool = False,
         accept_refusals: bool = False,
+        answers_cache: dict[str, dict[str, _DecisionAnswer]] | None = None,
     ) -> list[dict[str, _DecisionAnswer]]:
         """
         Asks the decision model the questions on each of the texts and returns
@@ -2091,12 +2141,15 @@ class _DocumentDecisionModel(_DocumentModel):
         is left for an error or cancelled:
 
         - first the requests that got a response, in the order of the texts,
-          each with the tokens used and the answers;
+          each with the tokens used and the answers, and the requests that
+          the provider blocked, or whose answers it blocked, each without
+          a response, with the refusal;
         - then the requests that failed, as unfinished calls, with the request
           whose error is raised as the last of them, i.e. as the last call recorded.
 
         A request that is in flight when this method is cancelled is cancelled
-        with it and is not recorded, as its outcome is not known.
+        with it and is not recorded, as its outcome is not known. A request whose
+        answers are in the cache given is not sent, and not recorded.
 
         :param units: The texts to ask the questions on, each with its questions.
         :type units: list[_QuestionsOnText]
@@ -2118,6 +2171,13 @@ class _DocumentDecisionModel(_DocumentModel):
             response one that cannot be used: a ``_RefusedDecisionAnswerError`` is
             raised for it, and the call of its request is recorded with the refusal.
         :type accept_refusals: bool
+        :param answers_cache: The usable answers of the requests already sent in
+            the call, which the call keeps when it is made again (see
+            ``_PartialExtraction``), by the request, as recorded in its call:
+            a request with answers here is not sent again, and the usable answers
+            of each request that is sent are added, unless one of them is refused.
+            Defaults to None, i.e. no answers are kept.
+        :type answers_cache: dict[str, dict[str, _DecisionAnswer]] | None
         :return: For each text, the answers by the names of the questions.
         :rtype: list[dict[str, _DecisionAnswer]]
         :raises _InvalidDecisionResponseError: If a response cannot be used, i.e.
@@ -2127,6 +2187,10 @@ class _DocumentDecisionModel(_DocumentModel):
             request failed. The call of each request is then recorded as finished.
             The error has the position and the location of the text that
             the response is for.
+        :raises litellm.ContentPolicyViolationError: If the provider blocked
+            a request, or its answers, and no request failed. The call of each
+            request is then recorded as finished, that of the blocked request with
+            the refusal.
         :raises Exception: The error of the first request that failed for good.
         """
         # The cap is the one of litellm, which rejects a request over it
@@ -2146,14 +2210,36 @@ class _DocumentDecisionModel(_DocumentModel):
                 f"`{self.model}` in {len(requests)} requests "
                 f"(max {max_questions_per_request} questions per request)."
             )
+        # The questions of each request as they are sent, and each request as it
+        # is recorded, without the API credentials, which also identifies it among
+        # the requests whose answers are kept
+        requests_questions: list[list[dict[str, Any]]] = [
+            [_get_request_question(question) for question in questions_chunk]
+            for _, questions_chunk in requests
+        ]
+        requests_json: list[str] = [
+            json.dumps(
+                {
+                    "model": self.model,
+                    "input": units[unit_position].text,
+                    "questions": request_questions,
+                },
+                ensure_ascii=False,
+            )
+            for (unit_position, _), request_questions in zip(
+                requests, requests_questions, strict=True
+            )
+        ]
 
         # Outcomes of the requests, by the positions of the requests
         finished_calls: dict[int, _ModelCall] = {}
         failed_calls: dict[int, _ModelCall] = {}
         answers_of_requests: dict[int, dict[str, _DecisionAnswer]] = {}
         # Errors in the order they occurred: of the requests that failed, with
-        # the positions of the requests, and of the responses that cannot be used
+        # the positions of the requests, of the requests that the provider blocked,
+        # and of the responses that cannot be used
         request_errors: list[tuple[int, Exception]] = []
+        blocked_errors: list[Exception] = []
         response_errors: list[_InvalidDecisionResponseError] = []
         # Requests sent, and the tasks of the requests when sent concurrently
         sent_positions: set[int] = set()
@@ -2183,34 +2269,28 @@ class _DocumentDecisionModel(_DocumentModel):
             :return: None
             :rtype: None
             """
-            if request_errors or response_errors:
+            if request_errors or blocked_errors or response_errors:
                 # The answers on all the texts are needed: the request is pointless
                 return
-            sent_positions.add(position)
             unit_position, questions_chunk = requests[position]
-            text = units[unit_position].text
-            request_questions = [
-                _get_request_question(question) for question in questions_chunk
-            ]
-            # The request is recorded as sent, without the API credentials
-            call_obj = _ModelCall(
-                prompt_kwargs={},
-                prompt=json.dumps(
-                    {
-                        "model": self.model,
-                        "input": text,
-                        "questions": request_questions,
-                    },
-                    ensure_ascii=False,
-                ),
-            )
+            request_json = requests_json[position]
+            sent_positions.add(position)
+            call_obj = _ModelCall(prompt_kwargs={}, prompt=request_json)
             try:
                 response = await self._send_decisions_request(
-                    text=text,
-                    request_questions=request_questions,
+                    text=units[unit_position].text,
+                    request_questions=requests_questions[position],
                     num_retries_failed_request=num_retries_failed_request,
                 )
                 self._record_response(call_obj=call_obj, response=response)
+            except litellm.ContentPolicyViolationError as e:  # type: ignore[attr-defined]
+                # The provider blocked the request or its answers for their
+                # content: a refusal without answers (call finished)
+                call_obj._record_blocked(e)
+                finished_calls[position] = call_obj
+                blocked_errors.append(e)
+                stop_sending()
+                return
             except Exception as e:  # noqa: BLE001 - any request error is collected
                 # The call is unfinished
                 failed_calls[position] = call_obj
@@ -2229,6 +2309,13 @@ class _DocumentDecisionModel(_DocumentModel):
                     questions_chunk, answers, accept_refusals=accept_refusals
                 )
                 answers_of_requests[position] = answers
+                # Kept for the call to be made again without this request, unless
+                # the model refused to answer one of the questions, which it may
+                # answer then
+                if answers_cache is not None and not any(
+                    answer.refused for answer in answers.values()
+                ):
+                    answers_cache[request_json] = answers
             except _InvalidDecisionResponseError as e:
                 # Where the text that the questions of the request were asked on is
                 e.location = units[unit_position].location
@@ -2240,13 +2327,24 @@ class _DocumentDecisionModel(_DocumentModel):
         async def send_paced_request(position: int) -> None:
             """
             Sends the request at the given position when the limiter allows for it,
-            if a limiter is given, and right away otherwise.
+            if a limiter is given, and right away otherwise. A request whose answers
+            are kept from a previous call is not sent, and takes no turn of
+            the limiter: its answers are used.
 
             :param position: The position of the request.
             :type position: int
             :return: None
             :rtype: None
             """
+            cached_answers = (
+                answers_cache.get(requests_json[position])
+                if answers_cache is not None
+                else None
+            )
+            if cached_answers is not None:
+                # Answered with usable answers when the call was made before
+                answers_of_requests[position] = cached_answers
+                return
             if async_limiter:
                 async with async_limiter:
                     await send_request(position)
@@ -2271,7 +2369,7 @@ class _DocumentDecisionModel(_DocumentModel):
                         raise outcome
             else:
                 for position in range(len(requests)):
-                    if request_errors or response_errors:
+                    if request_errors or blocked_errors or response_errors:
                         break
                     await send_paced_request(position)
         finally:
@@ -2291,6 +2389,8 @@ class _DocumentDecisionModel(_DocumentModel):
         # A failed request comes first: its unfinished call is recorded
         if request_errors:
             raise request_errors[0][1]
+        if blocked_errors:
+            raise blocked_errors[0]
         if response_errors:
             raise response_errors[0]
 

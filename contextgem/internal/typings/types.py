@@ -57,8 +57,9 @@ ClassificationType = Literal["multi_class", "multi_label"]
 # ("refusal", e.g. OpenAI's refusal field, or a refused answer of a decision model),
 # the answer was stopped with the "content_filter" finish reason, which litellm
 # reports for a refusal of a model as well as for a content filter of a provider,
-# or the provider blocked the request on its input ("input_blocked")
-ModelRefusal = Literal["refusal", "content_filter", "input_blocked"]
+# or the provider blocked the request or its answer ("blocked"), which litellm
+# raises as ContentPolicyViolationError for both
+ModelRefusal = Literal["refusal", "content_filter", "blocked"]
 
 # Define standard SaT model IDs as a separate type
 StandardSaTModelId = Literal[

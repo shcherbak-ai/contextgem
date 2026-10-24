@@ -2131,9 +2131,12 @@ class TestChat(BaseTest):
     @pytest.mark.parametrize("empty_response", [None, "", " \n"])
     def test_chat_with_empty_response(self, empty_response: str | None):
         """
-        Tests that an empty response of an LLM is handled as a failure of that LLM:
-        a fallback LLM is tried, and an error is raised when there is no fallback LLM
-        left to try.
+        Tests that the request of an empty response of an LLM is sent again, up to
+        ``max_retries_invalid_data`` times, and that an empty response is then
+        handled as a failure of that LLM: a fallback LLM is tried, and an error is
+        raised when there is no fallback LLM left to try. After a round of tool
+        calls, only the request with the empty response is sent again, with
+        the results of the tool calls, i.e. the tools are not called again.
 
         LLM API calls are stubbed, i.e. no cassette is required.
         """
@@ -2141,12 +2144,43 @@ class TestChat(BaseTest):
         litellm = llms_module.litellm
         prompt = "What is the result of 2+2?"
 
-        # With a fallback LLM
+        # Answered when the request is sent again: no fallback LLM is tried
         llm = _create_llm_for_stubbed_chat()
         chat_session = ChatSession()
         acompletion_stub, requests = _stub_llm_api(
             {
-                _MAIN_MODEL: [_create_completion(empty_response)],
+                _MAIN_MODEL: [
+                    _create_completion(empty_response),
+                    _create_completion("4"),
+                ],
+                _FALLBACK_MODEL: [_create_completion("5")],
+            }
+        )
+        with (
+            patch.object(litellm, "acompletion", new=acompletion_stub),
+            patch.object(logger, "info", wraps=logger.info) as log_info,
+        ):
+            assert llm.chat(prompt, chat_session=chat_session) == "4"
+        assert [request["model"] for request in requests] == [_MAIN_MODEL] * 2
+        assert requests[1]["messages"] == requests[0]["messages"]
+        assert any(
+            call.args[0] == "Retrying the request after an empty response (1/3)"
+            for call in log_info.call_args_list
+        ), log_info.call_args_list
+        assert [(m.role, m.content) for m in chat_session.messages] == [
+            ("user", prompt),
+            ("assistant", "4"),
+        ]
+        # Each request is a call of its own, with the prompt of the chat
+        calls = llm.get_usage()[0].usage.calls
+        assert [call.prompt for call in calls] == [prompt, prompt]
+
+        # Empty each time: the fallback LLM is tried
+        llm = _create_llm_for_stubbed_chat(max_retries_invalid_data=2)
+        chat_session = ChatSession()
+        acompletion_stub, requests = _stub_llm_api(
+            {
+                _MAIN_MODEL: [_create_completion(empty_response)] * 3,
                 _FALLBACK_MODEL: [_create_completion("4")],
             }
         )
@@ -2154,44 +2188,72 @@ class TestChat(BaseTest):
             assert llm.chat(prompt, chat_session=chat_session) == "4"
         assert [request["model"] for request in requests] == [
             _MAIN_MODEL,
+            _MAIN_MODEL,
+            _MAIN_MODEL,
             _FALLBACK_MODEL,
         ]
         assert [(m.role, m.content) for m in chat_session.messages] == [
             ("user", prompt),
             ("assistant", "4"),
         ]
-        # The usage of the request with the empty response is recorded
+        # The usage of the requests with the empty response is recorded
         main_usage = llm.get_usage()[0].usage
-        assert (main_usage.input, main_usage.output) == (10, 5)
+        assert (main_usage.input, main_usage.output) == (30, 15)
 
         # Without a fallback LLM
-        llm = _create_llm_for_stubbed_chat(with_fallback=False)
+        llm = _create_llm_for_stubbed_chat(
+            with_fallback=False, max_retries_invalid_data=2
+        )
         chat_session = ChatSession()
         acompletion_stub, requests = _stub_llm_api(
-            {_MAIN_MODEL: [_create_completion(empty_response)]}
+            {_MAIN_MODEL: [_create_completion(empty_response)] * 3}
         )
         with (
             patch.object(litellm, "acompletion", new=acompletion_stub),
-            pytest.raises(ModelAPIError, match="returned an empty response"),
+            pytest.raises(
+                ModelAPIError, match="returned an empty response"
+            ) as exc_info,
         ):
             llm.chat(prompt, chat_session=chat_session)
+        assert exc_info.value.retry_count == 2
+        assert len(requests) == 3
         # The prompt remains in the chat session as not answered
         assert [m.role for m in chat_session.messages] == ["user"]
         assert chat_session.messages[0]._response_succeeded is False
 
-        # The same applies to an empty response after a round of tool calls
+        # Without retries, the fallback LLM is tried at once
+        llm = _create_llm_for_stubbed_chat(max_retries_invalid_data=0)
+        acompletion_stub, requests = _stub_llm_api(
+            {
+                _MAIN_MODEL: [_create_completion(empty_response)],
+                _FALLBACK_MODEL: [_create_completion("4")],
+            }
+        )
+        with patch.object(litellm, "acompletion", new=acompletion_stub):
+            assert llm.chat(prompt) == "4"
+        assert [request["model"] for request in requests] == [
+            _MAIN_MODEL,
+            _FALLBACK_MODEL,
+        ]
+
+        # After a round of tool calls, only the request with the empty response
+        # is sent again: the tools are not called again
+        tool_calls_made: list[tuple[int, int]] = []
+
         @register_tool
         def add(a: int, b: int) -> str:
             """
             Adds two numbers.
             """
+            tool_calls_made.append((a, b))
             return str(a + b)
 
-        llm = _create_llm_for_stubbed_chat(tools=[add])
+        llm = _create_llm_for_stubbed_chat(tools=[add], max_retries_invalid_data=1)
         acompletion_stub, requests = _stub_llm_api(
             {
                 _MAIN_MODEL: [
                     _create_completion(None, ("add", '{"a": 2, "b": 2}')),
+                    _create_completion(empty_response),
                     _create_completion(empty_response),
                 ],
                 _FALLBACK_MODEL: [_create_completion("4")],
@@ -2202,7 +2264,60 @@ class TestChat(BaseTest):
         assert [request["model"] for request in requests] == [
             _MAIN_MODEL,
             _MAIN_MODEL,
+            _MAIN_MODEL,
             _FALLBACK_MODEL,
+        ]
+        # The request sent again has the results of the tool call made once
+        assert requests[2]["messages"] == requests[1]["messages"]
+        assert requests[1]["messages"][-1]["role"] == "tool"
+        assert tool_calls_made == [(2, 2)]
+        assert [call.prompt for call in llm.get_usage()[0].usage.calls] == [
+            prompt,
+            "<tools_round_trip>",
+            "<tools_round_trip>",
+        ]
+
+    def test_chat_requests_keep_their_messages(self):
+        """
+        Tests that the messages that a request is sent with are not changed when
+        the messages of the next requests of a tool round are added: a stand-in for
+        the LLM API that keeps the requests as it receives them sees each request
+        as it was sent.
+
+        LLM API calls are stubbed, i.e. no cassette is required.
+        """
+
+        litellm = llms_module.litellm
+
+        @register_tool
+        def add(a: int, b: int) -> str:
+            """
+            Adds two numbers.
+            """
+            return str(a + b)
+
+        responses = [
+            _create_completion(None, ("add", '{"a": 2, "b": 2}')),
+            _create_completion("4"),
+        ]
+        kept_requests: list[dict[str, Any]] = []
+
+        async def acompletion_stub(**kwargs: Any) -> Any:
+            """
+            Simulates the LLM API, keeping the requests as they are received.
+            """
+            kept_requests.append(kwargs)
+            return responses[len(kept_requests) - 1]
+
+        llm = _create_llm_for_stubbed_chat(with_fallback=False, tools=[add])
+        with patch.object(litellm, "acompletion", new=acompletion_stub):
+            assert llm.chat("What is the result of 2+2?") == "4"
+        first_request, second_request = kept_requests
+        assert [m["role"] for m in first_request["messages"]] == ["user"]
+        assert [m["role"] for m in second_request["messages"]] == [
+            "user",
+            "assistant",
+            "tool",
         ]
 
     def test_chat_response_cut_off_at_max_output_tokens(self):
@@ -2797,9 +2912,10 @@ class TestChat(BaseTest):
         Tests that a chat answer that the LLM or its provider declines to give is
         handled as an empty answer is: a refused answer with a text is returned as
         it is, with a warning, while a refused answer without a text, or a request
-        that the provider blocks for its content, is sent to the fallback LLM, and
-        raises ``ModelRefusalError`` if there is none. The refused request is
-        recorded in the usage with its refusal.
+        that the provider blocks for its content, is sent again up to
+        ``max_retries_invalid_data`` times, then to the fallback LLM, and raises
+        ``ModelRefusalError`` if there is none. Each refused request is recorded in
+        the usage with its refusal, as a finished call.
 
         LLM API calls are stubbed, i.e. no cassette is required.
         """
@@ -2857,8 +2973,9 @@ class TestChat(BaseTest):
         assert call._refusal == "content_filter"
 
         # A refused answer without a text, or a request that the provider blocks,
-        # is sent to the fallback LLM, and raises the error if there is none
-        input_blocked_error = litellm.ContentPolicyViolationError(
+        # is sent again, then to the fallback LLM, and raises the error if there
+        # is none
+        blocked_error = litellm.ContentPolicyViolationError(
             message="The request was rejected by the safety system",
             model=_MAIN_MODEL,
             llm_provider="openai",
@@ -2886,19 +3003,47 @@ class TestChat(BaseTest):
                 f"LLM `{_MAIN_MODEL}` refused to answer.",
             ),
             (
-                input_blocked_error,
-                "input_blocked",
+                blocked_error,
+                "blocked",
                 (
-                    f"The provider of LLM `{_MAIN_MODEL}` blocked the request for "
-                    f"its content."
+                    f"The provider of LLM `{_MAIN_MODEL}` blocked the request, or "
+                    f"the answer to it, for its content."
                 ),
             ),
         ]:
+            # Answered when the request is sent again: no fallback LLM is tried
+            llm = _create_llm_for_stubbed_chat()
+            acompletion_stub, requests = _stub_llm_api(
+                {
+                    _MAIN_MODEL: [outcome, _create_completion("ContextGem is a tool.")],
+                    _FALLBACK_MODEL: [_create_completion("ContextGem is a model.")],
+                }
+            )
+            with (
+                patch.object(litellm, "acompletion", new=acompletion_stub),
+                patch.object(logger, "info", wraps=logger.info) as log_info,
+            ):
+                assert llm.chat(prompt) == "ContextGem is a tool."
+            assert [request["model"] for request in requests] == [_MAIN_MODEL] * 2
+            assert any(
+                call.args[0] == "Retrying the request after a refusal (1/3)"
+                for call in log_info.call_args_list
+            ), log_info.call_args_list
+            # The request sent again is the same as the refused one
+            assert requests[1]["messages"] == requests[0]["messages"]
+            refused_call, answered_call = llm.get_usage()[0].usage.calls
+            assert refused_call._refusal == refusal
+            assert answered_call._refusal is None
+            assert refused_call.prompt == answered_call.prompt == prompt
+
+            # Refused each time: the fallback LLM is tried, or the error is raised
             for with_fallback in [True, False]:
-                llm = _create_llm_for_stubbed_chat(with_fallback=with_fallback)
+                llm = _create_llm_for_stubbed_chat(
+                    with_fallback=with_fallback, max_retries_invalid_data=1
+                )
                 acompletion_stub, requests = _stub_llm_api(
                     {
-                        _MAIN_MODEL: [outcome],
+                        _MAIN_MODEL: [outcome, outcome],
                         _FALLBACK_MODEL: [_create_completion("ContextGem is a tool.")],
                     }
                 )
@@ -2911,13 +3056,17 @@ class TestChat(BaseTest):
                         assert exc_info.value.message.startswith(message_start)
                         # The refusal text of the model is not in the message
                         assert refusal_text not in exc_info.value.message
-                        # A blocked request keeps the error of litellm, as
-                        # ModelAPIError did
+                        assert exc_info.value.retry_count == 1
+                        # A blocked request keeps the error of litellm
                         assert exc_info.value.original_error is (
-                            input_blocked_error if refusal == "input_blocked" else None
+                            blocked_error if refusal == "blocked" else None
                         )
                 assert [request["model"] for request in requests] == (
-                    [_MAIN_MODEL, _FALLBACK_MODEL] if with_fallback else [_MAIN_MODEL]
+                    [_MAIN_MODEL, _MAIN_MODEL, _FALLBACK_MODEL]
+                    if with_fallback
+                    else [_MAIN_MODEL, _MAIN_MODEL]
                 )
-                (call,) = llm.get_usage()[0].usage.calls
-                assert call._refusal == refusal
+                calls = llm.get_usage()[0].usage.calls
+                assert [call._refusal for call in calls] == [refusal, refusal]
+                # A refused request is a finished call, also a blocked one
+                assert all(call.timestamp_received is not None for call in calls)

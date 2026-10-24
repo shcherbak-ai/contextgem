@@ -225,6 +225,10 @@ The :class:`~contextgem.public.decision_models.DocumentDecisionModel` class acce
      - ``int``
      - ``3``
      - Number of retries when a request fails with a transient error (request timeout, rate limit, server or connection error). Retries are performed with exponential backoff and jitter. Non-transient errors (e.g. invalid request, failed authentication) are not retried. See :ref:`llm-retries-label`.
+   * - ``max_retries_invalid_data``
+     - ``int``
+     - ``3``
+     - Number of retries when a response cannot be used, or the model or its provider declines to answer (see :ref:`decision-models-errors-label`). Only the requests whose answers cannot be used are sent again, with those that were not sent after them: the answers that were usable are kept. A model that gives the same answers to the same request gains nothing from the retries, which then only add requests: set it to ``0`` for such a model. See :ref:`llm-retries-label`.
    * - ``pricing_details``
      - ``ModelPricing | None``
      - ``None``
@@ -254,7 +258,7 @@ The :class:`~contextgem.public.decision_models.DocumentDecisionModel` class acce
      - ``AsyncLimiter(10, 10)``
      - Relevant when concurrency is enabled for extraction tasks. Controls the frequency of the requests sent concurrently. Defaults to allowing 10 acquisitions per 10-second period. The rate applies to all the requests to the decision model that are sent concurrently, i.e. the extraction calls that run at the same time share it. This matters most for aspect extraction, which sends one request per paragraph (see :ref:`decision-models-aspects-label`). See `aiolimiter documentation <https://github.com/mjpieters/aiolimiter>`_ for AsyncLimiter configuration details.
 
-A decision model has no other parameters of :class:`~contextgem.public.llms.DocumentLLM`, e.g. those that control the generation of text or the chat (``system_message``, ``output_language``, ``temperature``, ``top_p``, ``seed``, ``max_tokens``, ``reasoning_effort``, ``tools``), or ``max_retries_invalid_data``. Passing one of them raises a validation error.
+A decision model has no other parameters of :class:`~contextgem.public.llms.DocumentLLM`, e.g. those that control the generation of text or the chat (``system_message``, ``output_language``, ``temperature``, ``top_p``, ``seed``, ``max_tokens``, ``reasoning_effort``, ``tools``). Passing one of them raises a validation error.
 
 
 .. _decision-models-supported-label:
@@ -567,7 +571,7 @@ The ``fallback_models`` of a decision model and of an LLM can hold models of bot
 
 In both directions, each fallback model must be created with ``is_fallback=True``, have the same ``role`` as the primary model, and cannot have fallback models of its own. A fallback model must also differ from the primary model, and from the other fallback models, in at least one configuration parameter, unless it is a model of the other kind: the same model name, e.g. ``openai/gpt-6-luna``, can be used as a decision model and as its fallback LLM. The further requirements for the fallbacks of an LLM (the same output language, system message and tools, see :ref:`llm-fallback-llms-label`) apply between two LLMs only.
 
-The next fallback model is tried when the current model fails for good: when its request fails with a non-transient error, when the retries of its request are exhausted, or when a decision model returns a response that cannot be used (see :ref:`decision-models-errors-label`). A refusal of the model or of its provider is handled as a response that cannot be used (see :ref:`llm-refusals-label`). A decision model is not asked again for a response that cannot be used, whether it is the primary model or a fallback model, while a fallback LLM that returns invalid data is asked again as a primary LLM is: up to its own ``max_retries_invalid_data`` times, after it is asked for the first time (see :ref:`llm-retries-label`). If there is no fallback model left to try, the error is the one of the last model that failed: the ``retry_count`` of ``ModelExtractionError`` is the number of times that this model was asked again, i.e. ``0`` for a decision model. Usage and cost are tracked separately for the primary model and for each of its fallback models.
+The next fallback model is tried when the current model fails for good: when its request fails with a non-transient error, when the retries of its request are exhausted, or when a decision model returns a response that cannot be used (see :ref:`decision-models-errors-label`). A refusal of the model or of its provider is handled as a response that cannot be used (see :ref:`llm-refusals-label`). The next fallback model is tried once the current model has been asked again ``max_retries_invalid_data`` times, and a fallback model is asked again in the same way, up to its own ``max_retries_invalid_data`` times, after it is asked for the first time, a decision model as an LLM (see :ref:`llm-retries-label`). If there is no fallback model left to try, the error is the one of the last model that failed: the ``retry_count`` of ``ModelExtractionError`` is the number of times that this model was asked again. Usage and cost are tracked separately for the primary model and for each of its fallback models.
 
 
 .. _decision-models-cost-label:
@@ -678,9 +682,9 @@ Providers may set further limits of their own. See the documentation of your pro
    * - :class:`~contextgem.public.exceptions.ModelAPIError`
      - A request failed for good: with a non-transient error, or with a transient error after ``num_retries_failed_request`` retries. This includes the requests that ``litellm`` rejects before sending them, e.g. for a missing API key or API base. The error has the number of retries made (``retry_count``) and the error of the request (``original_error``).
    * - :class:`~contextgem.public.exceptions.ModelExtractionError`
-     - A response cannot be used: an answer is missing, an answer does not have a valid probability for each of the options offered, or has a zero probability for each of them, or the option that an answer picks is not one of the options offered. The request is not sent again, as the same response is expected.
+     - A response cannot be used: an answer is missing, an answer does not have a valid probability for each of the options offered, or has a zero probability for each of them, or the option that an answer picks is not one of the options offered. The call is made again up to ``max_retries_invalid_data`` times: the request whose response cannot be used is sent again, with the requests that were not sent after it, and the requests whose answers were usable are not.
    * - :class:`~contextgem.public.exceptions.ModelRefusalError`
-     - The model refused to answer a question of a concept, or the question of an aspect on every paragraph, or the provider blocked a request for its content. A subclass of ``ModelExtractionError``. As for a response that cannot be used, the request is not sent again to the decision model, and the fallback models are tried (see :ref:`llm-refusals-label`).
+     - The model refused to answer a question of a concept, or the question of an aspect on every paragraph, or the provider blocked a request or its answers for their content. A subclass of ``ModelExtractionError``. As for a response that cannot be used, the call is made again up to ``max_retries_invalid_data`` times, and then the fallback models are tried (see :ref:`llm-refusals-label`).
 
 ``ModelAPIError``, ``ModelExtractionError`` and ``ModelRefusalError`` are raised only if there is no fallback model left to try (see :ref:`decision-models-fallbacks-label`). They can be imported from ``contextgem``, and ``except ContextGemError`` catches any of them (:class:`~contextgem.public.exceptions.ContextGemError`).
 

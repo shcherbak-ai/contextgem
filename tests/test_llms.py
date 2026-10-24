@@ -1322,7 +1322,10 @@ class TestLLMs(BaseTest):
             create_api_error(litellm.InternalServerError),
             create_api_error(litellm.ServiceUnavailableError),
             create_api_error(litellm.APIConnectionError),
-            RuntimeError("Error not classified by litellm"),
+            # A timeout or a connection error of Python, without a status code
+            TimeoutError("Simulated timeout"),
+            ConnectionError("Simulated connection error"),
+            ConnectionResetError("Simulated connection reset"),
         ]:
             assert _is_retryable_model_api_error(error)
         for error in [
@@ -1331,6 +1334,10 @@ class TestLLMs(BaseTest):
             create_api_error(litellm.NotFoundError),
             create_api_error(litellm.ContextWindowExceededError),
             create_api_error(litellm.ContentPolicyViolationError),
+            # Another error without a status code, i.e. not one of litellm, e.g.
+            # of a stand-in for the API in a test, would fail again in the same way
+            RuntimeError("Error not classified by litellm"),
+            ValueError("Simulated error of a stand-in"),
         ]:
             assert not _is_retryable_model_api_error(error)
 

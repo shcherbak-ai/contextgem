@@ -210,7 +210,8 @@ def run_once(
             message.startswith("Retrying ") for message in log_capture.messages
         ),
         "responses_not_valid_json": sum(
-            "did not return valid JSON" in message for message in log_capture.messages
+            "LLM returned invalid data for" in message
+            for message in log_capture.messages
         ),
         # A failed call that is not raised as an exception: for invalid data,
         # a refusal or a response cut off, with the hint on raising, or for

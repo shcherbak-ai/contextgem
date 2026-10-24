@@ -131,7 +131,9 @@ class _DocumentLLM(_DocumentModel):
         description=(
             "Retries when the model returns invalid or unparsable data; "
             "a fallback LLM has its own, after it is asked for the first time. "
-            "A refusal of the model or its provider is retried as well."
+            "A refusal of the model or its provider is retried as well, also "
+            "a request or an answer that the provider blocks. In chat, a request "
+            "whose answer is empty or refused without a text is sent again."
         ),
     )
     output_language: LanguageRequirement = Field(
@@ -550,10 +552,12 @@ class _DocumentLLM(_DocumentModel):
         :raises ValueError: If the prompt exceeds the context window of the LLM, and
             no fallback LLM is yet to be tried
         :raises ModelAPIError: If the request to the LLM fails, or the LLM returns
-            an empty response, and no fallback LLM is yet to be tried
+            an empty response, also when the request is sent again
+            ``max_retries_invalid_data`` times, and no fallback LLM is yet to be tried
         :raises ModelRefusalError: If the LLM or its provider declines to answer
-            without a text, or the provider blocks the request for its content,
-            and no fallback LLM is yet to be tried
+            without a text, or the provider blocks the request or its answer for
+            their content, also when the request is sent again
+            ``max_retries_invalid_data`` times, and no fallback LLM is yet to be tried
         :raises LLMToolLoopLimitError: If the LLM keeps calling tools after
             ``tool_max_rounds`` rounds of tool calls
         """
@@ -641,6 +645,9 @@ class _DocumentLLM(_DocumentModel):
             chat_session=chat_session,
             has_fallback_pending=has_fallback_pending,
             use_tools=True,  # tools are used only in chat
+            # A request whose answer cannot be used, e.g. an empty or a blocked
+            # one, is sent again, as the same data is asked for again in extraction
+            max_retries_unusable_answer=self.max_retries_invalid_data,
         )
 
         # Update usage and cost statistics
@@ -650,16 +657,21 @@ class _DocumentLLM(_DocumentModel):
 
         # Whether the response was cut off at the max output tokens
         output_truncated = bool(usage.calls) and usage.calls[-1]._output_truncated
+        # The request of an answer that cannot be used is sent again, unless
+        # the answer was cut off at the max output tokens, as the same request
+        # would be cut off again
+        n_retries_unusable_answer = (
+            0 if output_truncated else self.max_retries_invalid_data
+        )
 
         # An empty response is handled as a failed one. It is told apart from a failed
         # request, which is already reported at this point.
         if response is not None and not response.strip():
             response = None
 
-        # A refused answer. Without a text, it is tried with the next fallback LLM,
-        # as an empty response is, and raised if none is left. A request that
-        # the provider blocked is already reported at this point, as a failed
-        # request is.
+        # A refused answer, also of a request or an answer that the provider blocked.
+        # Without a text, it is asked for again, and then tried with the next
+        # fallback LLM, as an empty response is, and raised if none is left.
         refusal = usage.calls[-1]._refusal if usage.calls else None
         if refusal is not None and not _model_call_result_is_api_failure(result):
             refusal_msg = _get_model_refusal_msg(
@@ -668,7 +680,11 @@ class _DocumentLLM(_DocumentModel):
             if response is None:
                 logger.error(refusal_msg)
                 if not has_fallback_pending:
-                    raise ModelRefusalError(refusal_msg, retry_count=0)
+                    raise ModelRefusalError(
+                        refusal_msg,
+                        retry_count=n_retries_unusable_answer,
+                        original_error=usage.calls[-1]._original_error_of_refusal,
+                    )
                 logger.info("The call will be retried with a fallback LLM.")
             else:
                 # An answer with a text is returned as it is, e.g. the model's own
@@ -681,7 +697,7 @@ class _DocumentLLM(_DocumentModel):
                 error_msg += f" {self._get_output_truncated_msg()}"
             logger.error(error_msg)
             if not has_fallback_pending:
-                raise ModelAPIError(error_msg)
+                raise ModelAPIError(error_msg, retry_count=n_retries_unusable_answer)
             logger.info("The call will be retried with a fallback LLM.")
         elif response is not None and output_truncated:
             # A response with a text is returned as it is: it can be cut off
@@ -1839,6 +1855,7 @@ class _DocumentLLM(_DocumentModel):
         chat_session: _ChatSession | None = None,
         use_tools: bool = False,
         thinking_blocks_key: str | None = None,
+        max_retries_unusable_answer: int = 0,
     ) -> tuple[str | None, bool]:
         """
         Sends the initial request, processes any tool-calling loops up to the
@@ -1850,6 +1867,17 @@ class _DocumentLLM(_DocumentModel):
 
         Each request is recorded in the usage object: with the tokens used and
         the response if it succeeds, or as an unfinished call if it fails.
+        A request that the provider blocked, or whose answer it blocked, is recorded
+        as a finished call without a response, with its refusal.
+
+        In chat, a request whose answer cannot be used is sent again, up to
+        ``max_retries_unusable_answer`` times, with the same messages, i.e. with
+        the results of the tool calls made before it: the tools are not called
+        again. Such an answer is one that the provider blocked, or one with neither
+        a text nor tool calls, unless it was cut off at the max output tokens.
+        In extraction, the call is made again for an answer that cannot be used
+        instead (see ``_GenericModelProcessor._extract_instances``), as such
+        an answer can be one with a text.
 
         :param request_config: The request configuration.
         :type request_config: dict[str, Any]
@@ -1881,10 +1909,15 @@ class _DocumentLLM(_DocumentModel):
             `_get_thinking_blocks_key()`). The thinking blocks returned with the responses
             are kept only if it is provided. Defaults to None.
         :type thinking_blocks_key: str | None
+        :param max_retries_unusable_answer: How many times a request whose answer
+            cannot be used is sent again. Defaults to 0, as in extraction.
+        :type max_retries_unusable_answer: int
         :return: The tuple containing the answer and whether tool calls were still requested.
         :rtype: tuple[str | None, bool]
         :raises _ToolReturnValueError: If a tool returns a value other than a non-empty
             string. It carries the error to be raised to the calling code.
+        :raises litellm.ContentPolicyViolationError: If the provider blocks the last
+            request that is sent, or its answer.
         """
 
         async def send_and_record(
@@ -1909,7 +1942,10 @@ class _DocumentLLM(_DocumentModel):
             send_completion = functools.partial(
                 self._send_non_streaming_completion,
                 request_config=request_config,
-                messages_payload=request_messages,
+                # A copy: the messages of the next requests are added to the list,
+                # which the request is not to see changed, e.g. in a stand-in for
+                # the API that keeps the requests
+                messages_payload=list(request_messages),
                 num_retries_failed_request=num_retries_failed_request,
                 max_retries_failed_request=max_retries_failed_request,
                 drop_params=drop_params,
@@ -1933,11 +1969,81 @@ class _DocumentLLM(_DocumentModel):
                     call_obj=call_obj,
                     completion_obj=chat_completion,
                 )
+            except litellm.ContentPolicyViolationError as e:  # type: ignore[attr-defined]
+                # The provider blocked the request or its answer for their content:
+                # a refusal without an answer (call finished)
+                call_obj._record_blocked(e)
+                usage.calls.append(call_obj)
+                raise
             except Exception:
                 # Record the call details (call unfinished)
                 usage.calls.append(call_obj)
                 raise
             return answer, tool_calls, thinking_blocks
+
+        async def send_until_answered(
+            call_obj: _ModelCall, drop_tool_choice: bool = False
+        ) -> tuple[str | None, list[Any] | None, list[dict[str, Any]] | None]:
+            """
+            Sends a request with the current messages (see ``send_and_record``), and
+            sends it again while its answer cannot be used, up to
+            ``max_retries_unusable_answer`` times: when the provider blocks
+            the request or its answer, or when the answer has neither a text nor
+            tool calls, e.g. a refused answer without a text, unless the answer was
+            cut off at the max output tokens, as the same request would be cut off
+            again. Each request is recorded as a call of its own, and each answer
+            that is not used is logged.
+
+            :param call_obj: The model call object of the first request.
+            :type call_obj: _ModelCall
+            :param drop_tool_choice: Whether to remove tool_choice in the requests.
+            :type drop_tool_choice: bool
+            :return: The tuple containing the answer text, the tool calls, and
+                the thinking blocks of the response of the last request.
+            :rtype: tuple[str | None, list[Any] | None, list[dict[str, Any]] | None]
+            :raises litellm.ContentPolicyViolationError: If the provider blocks
+                the last request, or its answer.
+            """
+            for retry in range(max_retries_unusable_answer + 1):
+                if retry:
+                    call_obj = _ModelCall(
+                        prompt_kwargs=call_obj.prompt_kwargs, prompt=call_obj.prompt
+                    )
+                is_last_request = retry == max_retries_unusable_answer
+                try:
+                    answer, tool_calls, thinking_blocks = await send_and_record(
+                        call_obj, drop_tool_choice=drop_tool_choice
+                    )
+                except litellm.ContentPolicyViolationError:  # type: ignore[attr-defined]
+                    if is_last_request:
+                        raise
+                else:
+                    has_tool_calls = bool(tool_calls) and use_tools and bool(self.tools)
+                    if (
+                        is_last_request
+                        or has_tool_calls
+                        or (isinstance(answer, str) and answer.strip())
+                        or call_obj._output_truncated
+                    ):
+                        return answer, tool_calls, thinking_blocks
+                if call_obj._refusal is not None:
+                    logger.error(
+                        _get_model_refusal_msg(
+                            kind_name=self._kind_name,
+                            model=self.model,
+                            refusal=call_obj._refusal,
+                        )
+                    )
+                    reason = "after a refusal"
+                else:
+                    logger.error(f"LLM {self.model} returned an empty response.")
+                    reason = "after an empty response"
+                logger.info(
+                    f"Retrying the request {reason} "
+                    f"({retry + 1}/{max_retries_unusable_answer})"
+                )
+            # This should never happen: the last request returns or raises
+            raise RuntimeError("No request was sent.")
 
         # The tool calls of the turn are recorded from the start of the request,
         # i.e. not those of a previous attempt to answer the turn
@@ -1945,7 +2051,7 @@ class _DocumentLLM(_DocumentModel):
             chat_session._discard_pending_turn()
 
         # Initial send
-        answer, tool_calls, thinking_blocks = await send_and_record(model_call_obj)
+        answer, tool_calls, thinking_blocks = await send_until_answered(model_call_obj)
         if not (use_tools and self.tools):
             tool_calls = None
 
@@ -2003,7 +2109,7 @@ class _DocumentLLM(_DocumentModel):
                 )
 
             followup_call = _ModelCall(prompt_kwargs={}, prompt="<tools_round_trip>")
-            answer, tool_calls, thinking_blocks = await send_and_record(
+            answer, tool_calls, thinking_blocks = await send_until_answered(
                 followup_call, drop_tool_choice=True
             )
 
@@ -2028,6 +2134,7 @@ class _DocumentLLM(_DocumentModel):
         chat_session: _ChatSession | None = None,
         has_fallback_pending: bool = False,
         use_tools: bool = False,
+        max_retries_unusable_answer: int = 0,
     ) -> tuple[str | None, _ModelUsage]:
         """
         Generates a response from an LLM based on the provided messages and system
@@ -2036,6 +2143,11 @@ class _DocumentLLM(_DocumentModel):
         If an exception is raised after a request was sent, the usage and cost of the LLM
         are updated before that with the requests already made, as no usage statistics
         are returned in such case.
+
+        A request that the provider blocked for its content, or whose answer it
+        blocked, is a refusal, which is not raised here: the response is None, and
+        the call is recorded as finished, with the refusal. The caller handles it
+        as a refused answer without a text.
 
         :param messages: Full chat messages to send to the LLM. Must be a list
             of `_Message` objects including any applicable system message and the user turn.
@@ -2072,6 +2184,10 @@ class _DocumentLLM(_DocumentModel):
             the tool calls requested by the LLM. Tools are used only in chat, i.e. they are
             ignored in extraction workflows. Defaults to False.
         :type use_tools: bool
+        :param max_retries_unusable_answer: How many times a request whose answer
+            cannot be used is sent again (see ``_send_messages_with_tools``), as in
+            chat. Defaults to 0, as in extraction, in which the call is made again.
+        :type max_retries_unusable_answer: int
         :return: A tuple containing the LLM response and usage statistics.
             The LLM response is None if the LLM call fails.
         :rtype: tuple[str | None, _ModelUsage]
@@ -2151,6 +2267,7 @@ class _DocumentLLM(_DocumentModel):
                 chat_session=chat_session,
                 use_tools=use_tools,
                 thinking_blocks_key=thinking_blocks_key,
+                max_retries_unusable_answer=max_retries_unusable_answer,
             )
 
             if tool_calls_remaining:
@@ -2190,6 +2307,7 @@ class _DocumentLLM(_DocumentModel):
                     chat_session=chat_session,
                     has_fallback_pending=has_fallback_pending,
                     use_tools=use_tools,
+                    max_retries_unusable_answer=max_retries_unusable_answer,
                 )
             else:
                 # If drop_params was already True and we still got UnsupportedParamsError,
@@ -2221,30 +2339,13 @@ class _DocumentLLM(_DocumentModel):
                         )
                         logger.warning(warning_msg)
         except litellm.ContentPolicyViolationError as e:  # type: ignore[attr-defined]
-            # The provider blocked the request for its content: a refusal, handled
-            # as a failed request with a non-transient error, i.e. it is not sent
-            # again to this LLM, and the next fallback model is tried, but raised
-            # as a refusal. The call is recorded as unfinished, with its refusal.
-            record_failed_call()
-            usage.calls[-1]._refusal = "input_blocked"
-            refusal_msg = _get_model_refusal_msg(
-                kind_name=self._kind_name, model=self.model, refusal="input_blocked"
-            )
-            logger.error(refusal_msg)
+            # The provider blocked the request or its answer for their content:
+            # a refused answer without a text, which the call is recorded with
+            # (call finished). The caller reports it, as a refused answer: the call
+            # is made again in extraction, as the verdict of a content filter can
+            # differ on another request, and the fallback models are tried next.
             # The error of litellm, the message of the provider
-            logger.debug(f"The request was blocked by the provider: {e}")
-            if has_fallback_pending:
-                logger.info("The call will be retried with a fallback model.")
-            elif raise_exception_on_model_api_error:
-                await self._update_usage_and_cost((None, usage))
-                raise ModelRefusalError(
-                    refusal_msg, retry_count=0, original_error=e
-                ) from e
-            else:
-                logger.warning(
-                    f"{refusal_msg} (0 retries). If you want to raise an exception "
-                    f"instead, set `raise_exception_on_extraction_error` to True."
-                )
+            logger.debug(f"The request or its answer was blocked by the provider: {e}")
         except LLMToolLoopLimitError:
             # Propagate tool loop limit errors without wrapping
             await self._update_usage_and_cost((None, usage))
@@ -2281,7 +2382,8 @@ class _DocumentLLM(_DocumentModel):
                     )
                     logger.warning(warning_msg)
 
-        # The failed call is recorded in the usage as unfinished at this point
+        # The failed call is recorded in the usage as unfinished at this point,
+        # or as refused if the provider blocked it
         return None, usage
 
     def _set_prompts(self) -> None:

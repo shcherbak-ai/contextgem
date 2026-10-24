@@ -76,6 +76,18 @@ class DocumentDecisionModel(_DocumentDecisionModel):
         Retries are performed with exponential backoff and jitter. Non-transient errors
         (e.g. invalid request, failed authentication) are not retried. Defaults to 3.
     :vartype num_retries_failed_request: int
+    :ivar max_retries_invalid_data: Number of retries when a request succeeds but
+        a response cannot be used, e.g. an answer without valid probabilities or with
+        an option that was not offered, or when the model or its provider declines
+        to answer: a refused answer to a question of a concept, the question of
+        an aspect refused on every paragraph, or a request that the provider blocks.
+        Only the requests whose answers cannot be used are sent again, and those
+        that were not sent after them: the answers that were usable are kept.
+        A fallback model applies its own setting in the same way: it is asked once,
+        and then again up to its ``max_retries_invalid_data`` times. A model that
+        gives the same answers to the same request gains nothing from the retries,
+        which then only add requests: set it to 0 for such a model. Defaults to 3.
+    :vartype max_retries_invalid_data: int
     :ivar timeout: Timeout in seconds for API calls. Defaults to 600 seconds.
     :vartype timeout: int
     :ivar pricing_details: ModelPricing object with pricing details for cost calculation.
@@ -106,10 +118,11 @@ class DocumentDecisionModel(_DocumentDecisionModel):
         Each must have ``is_fallback=True`` and the same role as the current model, and
         must differ from the current model and from each other in at least one config
         param. A fallback LLM extracts the same aspects/concepts with its prompts,
-        i.e. its items have no probabilities, and is asked again when it returns
-        invalid data, up to its ``max_retries_invalid_data`` times, while a fallback
-        decision model is asked once. A refusal of the current model or of its provider
-        is passed on to the fallbacks as well. Defaults to an empty list.
+        i.e. its items have no probabilities. A fallback model is tried once
+        the current model has used up its ``max_retries_invalid_data``, and is asked
+        again up to its own ``max_retries_invalid_data`` times. A refusal of
+        the current model or of its provider is passed on to the fallbacks as well.
+        Defaults to an empty list.
     :vartype fallback_models: list[DocumentDecisionModel | DocumentLLM]
     :ivar decision_threshold: The lowest probability of "yes" (above 0, up to 1) with
         which a yes/no question is taken as answered "yes": a paragraph or a sentence

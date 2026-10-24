@@ -13,11 +13,11 @@ Smaller language models, such as many that run locally, often struggle with Cont
 ⚠️ Common Issues with Small Models
 ------------------------------------
 
-**"LLM did not return valid JSON" Error**
+**"LLM returned invalid data" Error**
     Small models frequently fail to follow the precise JSON schema required by ContextGem's internal prompts. This manifests as:
 
-    - ``Error when validating parsed JSON: parsed_json is None``
-    - ``LLM did not return valid JSON``
+    - ``Error when validating parsed JSON: parsed_json is None``, for an output that is not JSON, or ``LLM output does not match the answer format``, for JSON that does not match the schema
+    - ``LLM returned invalid data``
 
 **Inconsistent Results**
     Small models may produce:

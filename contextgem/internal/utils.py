@@ -706,9 +706,9 @@ def _model_call_result_is_api_failure(res: tuple[Any, _ModelUsage] | None) -> bo
     in the usage stats with no response received. By the time such a result is returned,
     the retries of the failed request are already exhausted (or the error is not
     retryable), so that sending the same request to the same model again is pointless.
-    A request that the provider blocked for its content is recorded as an unfinished
-    call too, with its refusal: it is handled as a failed request with a non-transient
-    error, and reported as a refusal (see ``_model_call_result_is_refused``).
+    A request that the provider blocked for its content, or whose answer it blocked,
+    is not a failed request: it is recorded as a finished call with its refusal (see
+    ``_model_call_result_is_refused``).
 
     :param res: The result to check, represented as a tuple where the first element is the relevant
         result value, and the second element is model usage stats dict that follows the _ModelUsage pattern,
@@ -758,11 +758,12 @@ def _model_call_result_is_refused(res: tuple[Any, _ModelUsage] | None) -> bool:
     The answer of a refused request is not used. The call is made again as for
     invalid data, as the verdict of a model or of a content filter can differ on
     another request, and then with the fallback models, and the refusal is
-    reported if none of them answers. A request that the provider blocked on its
-    input is handled as a failed request instead (see
-    ``_model_call_result_is_api_failure``). The refused request is recorded in the usage
-    stats with its refusal, as the last call of an LLM, or as one of the calls of
-    a decision model, whose requests on the texts of the call are recorded together.
+    reported if none of them answers. So is a request that the provider blocked
+    for its content, or whose answer it blocked, which litellm raises as
+    ``ContentPolicyViolationError`` for both: a finished call without an answer.
+    The refused request is recorded in the usage stats with its refusal, as the last
+    call of an LLM, or as one of the calls of a decision model, whose requests on
+    the texts of the call are recorded together.
 
     :param res: The result to check, represented as a tuple where the first element is the relevant
         result value, and the second element is model usage stats dict that follows the _ModelUsage pattern,
@@ -830,8 +831,8 @@ def _get_model_refusal_msg(
         )
     else:
         what = (
-            f"The provider of {kind_name} `{model}` blocked the request{subject} "
-            f"for its content."
+            f"The provider of {kind_name} `{model}` blocked the request{subject}, "
+            f"or the answer to it, for its content."
         )
     return what
 
@@ -845,8 +846,14 @@ def _is_retryable_model_api_error(error: Exception) -> bool:
     Request timeouts, conflicts, rate limits, and server errors (including connection errors,
     which litellm reports as server errors) are retryable. Other client errors, such as
     an invalid request, a failed authentication, or an exceeded context window, will fail
-    again in the same way and are therefore not retryable. An error without a status code
-    is not classified by litellm and is assumed to be transient.
+    again in the same way and are therefore not retryable.
+
+    An error without a status code is not an error of litellm, which gives one to each
+    error of a request that it raises, also to an error that it cannot map
+    (``APIConnectionError``, 500). It is e.g. an error of a stand-in for the API in
+    a test, which would fail again in the same way: it is not retryable, unless it is
+    a timeout or a connection error of Python (``TimeoutError``, ``ConnectionError``),
+    e.g. one that a stand-in raises to simulate such a failure.
 
     :param error: The exception raised by the model API request.
     :type error: Exception
@@ -855,7 +862,7 @@ def _is_retryable_model_api_error(error: Exception) -> bool:
     """
     status_code = getattr(error, "status_code", None)
     if not isinstance(status_code, int):
-        return True
+        return isinstance(error, TimeoutError | ConnectionError)
     return status_code in _MODEL_API_RETRYABLE_STATUS_CODES or status_code >= 500
 
 

@@ -927,7 +927,7 @@ def _get_predicate_probability(
     if not _is_probability(answer.probability):
         raise _InvalidDecisionResponseError(
             question_name,
-            f"the probability {answer.probability!r} is not a number within [0, 1].",
+            "the probability of the answer is not a number within [0, 1].",
         )
     return float(answer.probability)
 
@@ -970,13 +970,10 @@ def _get_option_probabilities(
             question_name, "the answer has no probabilities of the options."
         )
     option_labels = [option.label for option in options]
-    not_offered_labels = [
-        label for label in option_probabilities if label not in option_labels
-    ]
-    if not_offered_labels:
+    if any(label not in option_labels for label in option_probabilities):
         raise _InvalidDecisionResponseError(
             question_name,
-            f"the answer has options that were not offered: {not_offered_labels}. "
+            "the answer has options that were not offered. "
             f"Options offered: {option_labels}.",
         )
     missing_labels = [
@@ -993,15 +990,15 @@ def _get_option_probabilities(
         if not _is_probability(probability):
             raise _InvalidDecisionResponseError(
                 question_name,
-                f"the probability {probability!r} of the option `{option.label}` "
-                f"is not a number within [0, 1].",
+                f"the probability of the option `{option.label}` "
+                "is not a number within [0, 1].",
             )
         probabilities[option.value] = float(probability)
     if answer.chosen_option is not None and answer.chosen_option not in option_labels:
         raise _InvalidDecisionResponseError(
             question_name,
-            f"the answer picks the option `{answer.chosen_option}`, which was not "
-            f"offered. Options offered: {option_labels}.",
+            "the answer picks an option that was not offered. "
+            f"Options offered: {option_labels}.",
         )
     if not any(probabilities.values()):
         # The answer does not tell the options apart. This is also what an answer

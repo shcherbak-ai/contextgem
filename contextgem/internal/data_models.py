@@ -36,6 +36,43 @@ from contextgem.internal.typings.types import (
 )
 
 
+class _ErrorKeptInCopies:
+    """
+    Holds an error that the copies of the object holding it share, i.e. the error
+    is not copied with the object: an error of litellm cannot be copied, as its class
+    takes arguments that it does not keep, and a call is copied with the usage of
+    its model, e.g. when the model is cloned.
+
+    :ivar error: The error.
+    :vartype error: Exception
+    """
+
+    __slots__ = ("error",)
+
+    def __init__(self, error: Exception) -> None:
+        self.error = error
+
+    def __copy__(self) -> _ErrorKeptInCopies:
+        """
+        Returns this instance, which the copy shares.
+
+        :return: This instance.
+        :rtype: _ErrorKeptInCopies
+        """
+        return self
+
+    def __deepcopy__(self, memo: dict[int, Any]) -> _ErrorKeptInCopies:
+        """
+        Returns this instance, which the copy shares.
+
+        :param memo: Objects already copied (unused).
+        :type memo: dict[int, Any]
+        :return: This instance.
+        :rtype: _ErrorKeptInCopies
+        """
+        return self
+
+
 class _ModelCall(BaseModel):
     """
     Holds data on an individual call to the model, i.e. on one request sent to
@@ -87,6 +124,37 @@ class _ModelCall(BaseModel):
     # the question of a concept that a decision model refused to answer. Empty if
     # the request was refused as a whole, or not refused.
     _refusal_subject: str = PrivateAttr(default="")
+    # The error of litellm for a request that the provider blocked, or whose answer
+    # it blocked (refusal "blocked"): the original error of the `ModelRefusalError`
+    # raised for it. None for the other calls.
+    _refusal_error: _ErrorKeptInCopies | None = PrivateAttr(default=None)
+
+    def _record_blocked(self, error: Exception) -> None:
+        """
+        Records that the provider blocked the request, or its answer, for its
+        content, which litellm raises as ``ContentPolicyViolationError``: a refusal
+        without an answer, i.e. the call is finished, with no response and no tokens.
+
+        :param error: The error of litellm.
+        :type error: Exception
+        :return: None
+        :rtype: None
+        """
+        self._record_response_timestamp()
+        self._refusal = "blocked"
+        self._refusal_error = _ErrorKeptInCopies(error)
+
+    @property
+    def _original_error_of_refusal(self) -> Exception | None:
+        """
+        Returns the error of litellm for a request that the provider blocked, or
+        whose answer it blocked, given as the original error of the error raised
+        for the refusal. None for the other calls.
+
+        :return: The error of litellm, or None.
+        :rtype: Exception | None
+        """
+        return self._refusal_error.error if self._refusal_error is not None else None
 
     def _record_response_timestamp(self) -> None:
         """

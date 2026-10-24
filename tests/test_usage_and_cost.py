@@ -13,6 +13,7 @@ import os
 import re
 import types
 import warnings
+from copy import deepcopy
 from decimal import Decimal
 from typing import Any, cast
 from unittest.mock import patch
@@ -213,6 +214,45 @@ class TestUsageAndCost(BaseTest):
         usage = llm.get_usage()[0].usage
         assert (usage.input, usage.output) == (10, 5)
         assert [bool(call.timestamp_received) for call in usage.calls] == [True, False]
+
+    def test_blocked_request_recorded_as_refused_call(self):
+        """
+        Tests that a request that the provider blocked, or whose answer it blocked,
+        is recorded as a finished call without a response and without tokens, with
+        the refusal and the error of litellm, and that the call can be copied with
+        the usage that holds it, the copy sharing the error: an error of litellm
+        cannot be copied.
+        """
+        litellm = llms_module.litellm
+        error = litellm.ContentPolicyViolationError(
+            message="The request was rejected by the safety system",
+            model="openai/gpt-6-luna",
+            llm_provider="openai",
+        )
+        with pytest.raises(TypeError):
+            deepcopy(error)
+
+        call = _ModelCall(prompt_kwargs={}, prompt="Tell me about ContextGem.")
+        call._record_blocked(error)
+        assert call.timestamp_received is not None
+        assert call.response is None
+        assert call._refusal == "blocked"
+        assert call._original_error_of_refusal is error
+        assert (call._input_tokens, call._output_tokens) == (0, 0)
+
+        usage = _ModelUsage(calls=[call])
+        usage_copy = deepcopy(usage)
+        (call_copy,) = usage_copy.calls
+        assert call_copy is not call
+        assert call_copy._refusal == "blocked"
+        assert call_copy._original_error_of_refusal is error
+        # The error is not serialized with the usage
+        assert "safety system" not in usage.to_json()
+
+        # The other calls have no error of a refusal
+        assert (
+            _ModelCall(prompt_kwargs={}, prompt="p")._original_error_of_refusal is None
+        )
 
     def test_usage_recorded_when_error_is_raised_after_response(self):
         """

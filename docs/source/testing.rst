@@ -24,7 +24,7 @@ The code that you build on ContextGem can be tested without sending a request to
 
 ContextGem looks these functions up on the ``litellm`` module when it sends each request, so ``unittest.mock.patch.object(litellm, "acompletion", stand_in)``, or ``monkeypatch.setattr(litellm, "acompletion", stand_in)`` with pytest, applies to every model, also to one created before the patch, and to the sync and async methods alike. They are the supported points for replacing the requests in tests. The stand-in is an async function, called with keyword arguments.
 
-What ContextGem makes of the response of a stand-in is validated as a response of the model is: an answer that does not have the format that the prompt asks for is invalid data, which ContextGem asks for again up to ``max_retries_invalid_data`` times, and then raises :class:`~contextgem.public.exceptions.ModelExtractionError` (see :ref:`llm-retries-label`). A stand-in can also raise an error of ``litellm``, e.g. to test the handling of a failed request.
+What ContextGem makes of the response of a stand-in is validated as a response of the model is: an answer that does not have the format that the prompt asks for is invalid data, which ContextGem asks for again up to ``max_retries_invalid_data`` times, and then raises :class:`~contextgem.public.exceptions.ModelExtractionError` (see :ref:`llm-retries-label`). A stand-in can also raise an error of ``litellm``, e.g. to test the handling of a failed request. An error without an HTTP status code, e.g. an exception of your own, or an error in the stand-in itself, is not retried, unless it is a ``TimeoutError`` or a ``ConnectionError`` of Python, e.g. to simulate a failure of the network: the next fallback model is tried, and the error is the ``original_error`` of :class:`~contextgem.public.exceptions.ModelAPIError` (see :ref:`llm-retries-label`).
 
 
 🤖 Stubbing an LLM
@@ -41,11 +41,11 @@ The stand-in receives the keyword arguments of ``litellm.acompletion``, among th
 - the ``finish_reason`` of the choices;
 - the token counts of ``usage``: ``prompt_tokens``, ``completion_tokens`` and, where present, the cached tokens of ``prompt_tokens_details``, which the costs are calculated from.
 
-With ``mock_response``, ``litellm.acompletion`` builds such a response without sending the request: the answer as its text, ``finish_reason="stop"``, and a usage of 10 prompt tokens and 20 completion tokens whatever the request (``litellm`` 1.105.2).
+``litellm.mock_completion``, given the keyword arguments of the request and ``mock_response``, builds such a response, and sends no request whatever it is given: the answer as its text, ``finish_reason="stop"``, and a usage of 10 prompt tokens and 20 completion tokens whatever the request (``litellm`` 1.105.2). ``mock_response=""`` gives an empty answer. Do not call the real ``litellm.acompletion`` from a stand-in, also not with ``mock_response``: it takes ``mock_response=""`` as no mock, and sends the request.
 
 The answer of an extraction is the JSON that the prompt asks for in its answer format: an array with an entry for each concept, or aspect, of the request, by its ID in the prompt (``"C0"``, ``"C1"``, … for concepts, ``"A0"``, … for aspects), with its extracted items. The form of an item depends on the request, e.g. on whether justifications or references are asked for, and on the concept, e.g. ``{"labels": ["Contract"]}`` for a label concept, whose extracted item has the list of labels as its value: the prompt of a request shows it. The answer of a chat is its text.
 
-To test a refusal, set ``finish_reason`` to ``"content_filter"`` on the choice of the response, e.g. of the one that ``mock_response`` builds: ``litellm`` gives this finish reason for the refusal of a Claude model and for the content filters of the providers (see :ref:`llm-refusals-label`).
+To test a refusal, set ``finish_reason`` to ``"content_filter"`` on the choice of the response, e.g. of the one that ``litellm.mock_completion`` builds: ``litellm`` gives this finish reason for the refusal of a Claude model and for the content filters of the providers (see :ref:`llm-refusals-label`). For the refusal of a model of OpenAI, set ``provider_specific_fields={"refusal": "..."}`` on the message, with no ``content``: ``litellm`` keeps the ``refusal`` field of the answer of OpenAI there, where ContextGem reads it, and setting ``refusal`` on the message has no effect. For a request or an answer that the provider blocks, raise ``litellm.ContentPolicyViolationError``.
 
 
 🎯 Stubbing a Decision Model
@@ -55,7 +55,7 @@ To test a refusal, set ``finish_reason`` to ``"content_filter"`` on the choice o
    :language: python
    :caption: An extraction with a stand-in for the decision model
 
-The stand-in receives the keyword arguments of ``litellm.adecisions``: ``model``, ``input``, the text, and ``questions``, each a dict with its ``name`` and ``type``: ``"predicate"`` for a yes/no question, ``"choice"`` or ``"score"`` with the options in ``"choices"`` or ``"levels"``. It returns a ``litellm.types.decisions.OpenAIDecisionResponse`` with one answer for each question, in the order of the questions, and its ``usage``. An answer is an ``OpenAIPredicateAnswer``, ``OpenAIChoiceAnswer`` or ``OpenAIScoreAnswer`` of the same module, with the probabilities of the options, or an ``OpenAIRefusalAnswer``.
+The stand-in receives the keyword arguments of ``litellm.adecisions``: ``model``, ``input``, the text, and ``questions``, each a dict with its ``name`` and ``type``: ``"predicate"`` for a yes/no question, ``"choice"`` with the options in ``"choices"``, each a dict with its ``"value"``, or ``"score"`` with the levels in ``"levels"``, each a dict with its ``"label"``. It returns a ``litellm.types.decisions.OpenAIDecisionResponse`` with one answer for each question, in the order of the questions, and its ``usage``. An answer is an ``OpenAIPredicateAnswer``, ``OpenAIChoiceAnswer`` or ``OpenAIScoreAnswer`` of the same module, with the probabilities of the options, or an ``OpenAIRefusalAnswer``.
 
 
 🔑 No API Keys in Tests

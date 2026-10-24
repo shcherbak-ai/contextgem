@@ -536,7 +536,7 @@ def _get_messages(recorded: list[str]) -> list[str]:
 # a decision model refused to answer on
 _RE_EXTRACTION_WARNING = re.compile(
     r"could not be processed|Exception occurred while calling"
-    r"|was cut off at the max output tokens|refused to answer"
+    r"|was cut off at the max output tokens|refused to answer|blocked the request"
 )
 
 
@@ -3007,14 +3007,26 @@ def _get_expected_decision_aspect_items(
 
 # What a model API does with a request: answers it with data that can be used
 # ("valid") or not ("invalid"), with a response cut off at the max output tokens
-# (LLMs only), or fails with a transient error, which is retried, or with an error
-# that is not
-_LLM_OUTCOMES = ["valid", "invalid", "truncated", "transient", "permanent"]
-_DECISION_OUTCOMES = ["valid", "invalid", "transient", "permanent"]
-# Longest script that a model of a fallback chain can need: an LLM is called up to
-# three times (once, and again twice for invalid data), and a decision model sends
-# a request for each of up to three paragraphs, each sent up to twice
-_SCRIPT_LENGTH = 6
+# (LLMs only), with a refusal to answer each of its questions (decision models
+# only), or the provider blocks the request or its answer for their content
+# ("blocked"), or the request fails with a transient error, which is retried, or
+# with an error that is not
+_LLM_OUTCOMES = ["valid", "invalid", "truncated", "blocked", "transient", "permanent"]
+_DECISION_OUTCOMES = [
+    "valid",
+    "invalid",
+    "refused",
+    "blocked",
+    "transient",
+    "permanent",
+]
+# Longest script that a model of a fallback chain can need, each request being sent
+# up to twice: an LLM is called up to three times (once, and again twice for
+# invalid data or a refusal), with a request each time, and a decision model sends
+# a request for each of up to three paragraphs in each of these calls, as
+# the paragraphs that it refused to answer on are asked about again
+_LLM_SCRIPT_LENGTH = 6
+_DECISION_SCRIPT_LENGTH = 18
 
 
 @dataclass(frozen=True)
@@ -3027,8 +3039,8 @@ class _ScriptedModel:
     :vartype kind: str
     :ivar model: Model identifier.
     :vartype model: str
-    :ivar retries_invalid_data: Number of times that an LLM is called again for
-        invalid data. Zero for a decision model.
+    :ivar retries_invalid_data: Number of times that the model is called again for
+        invalid data or a refusal.
     :vartype retries_invalid_data: int
     :ivar retries_failed_request: Number of times that a request that fails with
         a transient error is sent again.
@@ -3068,6 +3080,7 @@ class _ScriptedModel:
         return DocumentDecisionModel(
             model=self.model,
             api_key="test_api_key",
+            max_retries_invalid_data=self.retries_invalid_data,
             num_retries_failed_request=self.retries_failed_request,
             pricing_details=pricing,
             is_fallback=is_fallback,
@@ -3094,19 +3107,22 @@ def _fallback_chains(draw: st.DrawFn) -> list[_ScriptedModel]:
     decision_models = iter(_DECISION_MODELS)
     chain = []
     for kind in kinds:
-        outcomes = _LLM_OUTCOMES if kind == "llm" else _DECISION_OUTCOMES
+        if kind == "llm":
+            outcomes, script_length = _LLM_OUTCOMES, _LLM_SCRIPT_LENGTH
+        else:
+            outcomes, script_length = _DECISION_OUTCOMES, _DECISION_SCRIPT_LENGTH
         chain.append(
             _ScriptedModel(
                 kind=kind,
                 model=next(llm_models if kind == "llm" else decision_models),
-                retries_invalid_data=draw(st.integers(0, 2)) if kind == "llm" else 0,
+                retries_invalid_data=draw(st.integers(0, 2)),
                 retries_failed_request=draw(st.integers(0, 1)),
                 outcomes=tuple(
                     draw(
                         st.lists(
                             st.sampled_from(outcomes),
-                            min_size=_SCRIPT_LENGTH,
-                            max_size=_SCRIPT_LENGTH,
+                            min_size=script_length,
+                            max_size=script_length,
                         )
                     )
                 ),
@@ -3141,13 +3157,19 @@ class _SimulatedExtraction:
     entail.
 
     :ivar outcome: Outcome of the last call made: "valid", "invalid",
-        "truncated", or "api_failure" for a request that failed for good.
+        "truncated", "refused" for a decision model that refused to answer on
+        every paragraph, "blocked" for a request that the provider blocked, or
+        "api_failure" for a request that failed for good.
     :vartype outcome: str
     :ivar last_model: The last model called.
     :vartype last_model: _ScriptedModel | None
     :ivar retries_attempted: Number of the times that the failed request of
         the last call was sent again, for transient errors.
     :vartype retries_attempted: int
+    :ivar refused_paragraphs: Positions of the paragraphs that a decision model
+        refused to answer on in its call that succeeded, which the aspects do not
+        include.
+    :vartype refused_paragraphs: list[int]
     :ivar usage: Usage of each model, by its identifier.
     :vartype usage: dict[str, _SimulatedUsage]
     """
@@ -3155,6 +3177,7 @@ class _SimulatedExtraction:
     outcome: str = ""
     last_model: _ScriptedModel | None = None
     retries_attempted: int = 0
+    refused_paragraphs: list[int] = field(default_factory=list)
     usage: dict[str, _SimulatedUsage] = field(default_factory=dict)
 
 
@@ -3166,13 +3189,22 @@ def _simulate_extraction(
     and its fallback models, as documented:
 
     - an LLM is sent one request for the call, a decision model one request for
-      each paragraph, which it stops sending once a request fails or a response
-      cannot be used;
+      each paragraph, which it stops sending once a request fails or is blocked,
+      or a response cannot be used. A decision model that refused to answer on
+      some paragraphs extracts the aspects without them, while a refusal to
+      answer on every paragraph fails the call as a refusal;
     - a request that fails with a transient error is sent again, up to
-      ``num_retries_failed_request`` times;
-    - the primary model is called again for invalid data, up to
+      ``num_retries_failed_request`` times. A request that the provider blocked
+      gets no response, and is not sent again then: it fails the call as
+      a refusal;
+    - the primary model is called again for invalid data or a refusal, up to
       ``max_retries_invalid_data`` times, and a fallback model is called once,
-      and again for invalid data in the same way;
+      and again for invalid data or a refusal in the same way. A decision model
+      that is called again asks only about the paragraphs that it has no usable
+      answers on from its previous calls: those that it refused to answer on,
+      the one whose request was blocked or whose response cannot be used, and
+      those not asked about after it. A fallback model has no answers of
+      the models before it;
     - a model is not called again once its request failed for good, or its
       response was cut off at the max output tokens: the next fallback model is
       tried.
@@ -3188,6 +3220,8 @@ def _simulate_extraction(
         usage={model.model: _SimulatedUsage() for model in chain}
     )
     scripts = {model.model: iter(model.outcomes) for model in chain}
+    # Outcomes of a call for which the model is called again
+    retried_outcomes = ("invalid", "refused", "blocked")
 
     def send(model: _ScriptedModel) -> tuple[str, int]:
         """
@@ -3203,42 +3237,62 @@ def _simulate_extraction(
                 continue
             if outcome in ("transient", "permanent"):
                 return "api_failure", attempt
-            usage.responses += 1
+            if outcome != "blocked":
+                # A blocked request gets no response, and has no tokens
+                usage.responses += 1
             return outcome, attempt
         raise AssertionError("Unreachable")
 
-    def call(model: _ScriptedModel) -> tuple[str, int]:
+    def call(model: _ScriptedModel, answered: set[int]) -> tuple[str, int, list[int]]:
         """
-        Makes a call with the model, and returns its outcome, and how many times
-        the last request of the call was sent again.
+        Makes a call with the model, and returns its outcome, how many times
+        the last request of the call was sent again, and the paragraphs that
+        a decision model refused to answer on in a call that succeeded.
+        A decision model does not ask about the paragraphs of ``answered``, which
+        it has usable answers on from its previous calls, and adds to them those
+        that it gets usable answers on.
         """
         if model.kind == "llm":
-            return send(model)
-        for _ in range(paragraph_count):
             outcome, retries = send(model)
+            return outcome, retries, []
+        refused = []
+        for paragraph_position in range(paragraph_count):
+            if paragraph_position in answered:
+                continue
+            outcome, retries = send(model)
+            if outcome == "refused":
+                refused.append(paragraph_position)
+                continue
             if outcome != "valid":
-                return outcome, retries
-        return "valid", 0
+                return outcome, retries, []
+            answered.add(paragraph_position)
+        if len(refused) == paragraph_count:
+            return "refused", 0, []
+        return "valid", 0, refused
 
     primary, *fallback_models = chain
     simulated.last_model = primary
-    outcome, retries = call(primary)
-    if outcome == "invalid":
+    # The paragraphs with usable answers of the model called
+    answered: set[int] = set()
+    outcome, retries, refused = call(primary, answered)
+    if outcome in retried_outcomes:
         for _ in range(primary.retries_invalid_data):
-            outcome, retries = call(primary)
-            if outcome != "invalid":
+            outcome, retries, refused = call(primary, answered)
+            if outcome not in retried_outcomes:
                 break
     if outcome != "valid":
         for fallback_model in fallback_models:
             simulated.last_model = fallback_model
+            answered = set()
             for _ in range(fallback_model.retries_invalid_data + 1):
-                outcome, retries = call(fallback_model)
-                if outcome != "invalid":
+                outcome, retries, refused = call(fallback_model, answered)
+                if outcome not in retried_outcomes:
                     break
             if outcome == "valid":
                 break
     simulated.outcome = outcome
     simulated.retries_attempted = retries
+    simulated.refused_paragraphs = refused
     return simulated
 
 
@@ -3790,10 +3844,11 @@ class TestExtractionProperties(BaseTest):
         A response with an answer that cannot be used (refused, of another kind
         than its question, without the probabilities of the options offered,
         with a probability that is not a number within [0, 1], or not attributable
-        to its question) is rejected as a whole: the extraction fails with
-        ``ModelExtractionError``, or issues a warning, and no concept gets items.
-        A refused answer that the rejection is for raises ``ModelRefusalError``,
-        its subclass.
+        to its question) is rejected as a whole, and the request is sent again
+        ``max_retries_invalid_data`` times, which gives the same response: then
+        the extraction fails with ``ModelExtractionError``, or issues a warning,
+        with the number of retries, and no concept gets items. A refused answer
+        that the rejection is for raises ``ModelRefusalError``, its subclass.
 
         The Decisions API is stubbed, i.e. no cassette is required.
         """
@@ -3930,6 +3985,7 @@ class TestExtractionProperties(BaseTest):
         note(f"Expected: {expected!r}")
         event("rejected" if expected is None else "accepted")
         raise_exception = data.draw(st.booleans())
+        retries_invalid_data = data.draw(st.integers(0, 2))
 
         def decide(request: dict[str, Any]) -> Any:
             """
@@ -3944,6 +4000,7 @@ class TestExtractionProperties(BaseTest):
             model=_DECISION_MODEL,
             api_key="test_api_key",
             decision_threshold=model_threshold,
+            max_retries_invalid_data=retries_invalid_data,
         )
         stub = _ModelAPIsStub(decide=decide)
         error: Exception | None = None
@@ -3954,14 +4011,17 @@ class TestExtractionProperties(BaseTest):
                 )
             except ModelExtractionError as e:
                 error = e
-        assert len(stub.decision_requests) == 1
+        # The request, sent again for each retry of a rejected response
+        request_count = 1 if expected is not None else 1 + retries_invalid_data
+        assert len(stub.decision_requests) == request_count
         (usage,) = model.get_usage()
-        assert len(usage.usage.calls) == 1
-        assert usage.usage.input == _DECISION_INPUT_TOKENS
+        assert len(usage.usage.calls) == request_count
+        assert usage.usage.input == _DECISION_INPUT_TOKENS * request_count
 
         if expected is None:
             if raise_exception:
-                assert error is not None
+                assert isinstance(error, ModelExtractionError)
+                assert error.retry_count == retries_invalid_data
                 if isinstance(error, ModelRefusalError):
                     # Only a refused answer makes the call fail as a refusal
                     assert any(answer.kind == "refusal" for answer in answers.values())
@@ -3970,6 +4030,7 @@ class TestExtractionProperties(BaseTest):
                 # The warning on the failed call, for invalid data or a refusal
                 assert any(
                     "Failed concepts:" in message
+                    and f"({retries_invalid_data} retries)" in message
                     and "If you want to raise an exception instead" in message
                     for message in _get_messages(caught)
                 )
@@ -4014,12 +4075,14 @@ class TestExtractionProperties(BaseTest):
 
         The aspects with each reference depth are extracted in calls of their
         own, of up to ``max_items_per_call`` aspects. A call with an answer that
-        cannot be used otherwise fails as a whole: the extraction fails with
+        cannot be used otherwise fails as a whole, and is made again
+        ``max_retries_invalid_data`` times, with the requests whose answers were
+        not usable, which give the same answers: then the extraction fails with
         ``ModelExtractionError``, or issues a warning that names the aspects of
-        the call, which get no items, while the aspects of the other calls are
-        extracted unless the extraction failed before. Apart from that,
-        the outcome does not depend on whether the calls and the requests are
-        made concurrently.
+        the call, with the number of retries, and these aspects get no items,
+        while the aspects of the other calls are extracted unless the extraction
+        failed before. Apart from that, the outcome does not depend on whether
+        the calls and the requests are made concurrently.
 
         The Decisions API is stubbed, i.e. no cassette is required.
         """
@@ -4073,6 +4136,7 @@ class TestExtractionProperties(BaseTest):
         raise_exception = data.draw(st.booleans())
         use_concurrency = data.draw(st.booleans())
         max_items_per_call = data.draw(st.integers(0, 2))
+        retries_invalid_data = data.draw(st.integers(0, 2))
         # With concurrency, each aspect is extracted in a call of its own by
         # default, and otherwise all the aspects of a reference depth together
         items_per_call = (
@@ -4139,6 +4203,7 @@ class TestExtractionProperties(BaseTest):
             model=_DECISION_MODEL,
             api_key="test_api_key",
             decision_threshold=model_threshold,
+            max_retries_invalid_data=retries_invalid_data,
         )
         model.async_limiter = _create_unpaced_limiter()
         stub = _ModelAPIsStub(decide=decide)
@@ -4184,11 +4249,16 @@ class TestExtractionProperties(BaseTest):
             assert error is None
             assert not failure_warnings
         elif raise_exception:
-            assert error is not None
+            assert isinstance(error, ModelExtractionError)
+            assert error.retry_count == retries_invalid_data
             assert _get_failed_instance_names([str(error)]) <= failed_names
         else:
             assert error is None
             assert _get_failed_instance_names(failure_warnings) == failed_names
+            assert all(
+                f"({retries_invalid_data} retries)" in message
+                for message in failure_warnings
+            )
         if failed and raise_exception:
             # The extraction failed when one of the calls failed, i.e. the other
             # call may not have been made, or completed
@@ -4332,15 +4402,19 @@ class TestExtractionProperties(BaseTest):
         Tests the outcome of an extraction with a primary model and up to two
         fallback models, each an LLM or a decision model, whatever their APIs do
         with the requests: answer with data that can be used or not, with
-        a response cut off at the max output tokens, or fail with a transient
-        error or with one that is not. The outcome must be the one that the retry
-        and fallback rules entail (see ``_simulate_extraction``): the items of
-        the model whose call succeeded, or the error of the last call, i.e.
-        ``ModelAPIError`` for a failed request or a response cut off,
-        ``ModelExtractionError`` for invalid data, each with the number of
-        retries made, or a single warning instead. The usage of each model must
-        have a call for each request, and the tokens of each response, and its
-        cost the price of these tokens, also when the extraction fails.
+        a response cut off at the max output tokens, with a refusal to answer,
+        block the request for its content, or fail with a transient error or
+        with one that is not. The outcome must be the one that the retry and
+        fallback rules entail (see ``_simulate_extraction``): the items of
+        the model whose call succeeded, without the paragraphs that a decision
+        model refused to answer on, with a warning for each aspect that names
+        them, or the error of the last call, i.e. ``ModelAPIError`` for a failed
+        request or a response cut off, ``ModelExtractionError`` for invalid data,
+        ``ModelRefusalError`` for a refusal or a blocked request, with the error
+        of litellm for the blocked request, each with the number of retries
+        made, or a single warning instead. The usage of each model must have
+        a call for each request, and the tokens of each response, and its cost
+        the price of these tokens, also when the extraction fails.
 
         The APIs are stubbed, i.e. no cassette is required.
         """
@@ -4357,6 +4431,8 @@ class TestExtractionProperties(BaseTest):
         note(f"Simulated: {simulated!r}")
         assert simulated.last_model is not None
         event(f"outcome: {simulated.outcome}, last model: {simulated.last_model.kind}")
+        if simulated.refused_paragraphs:
+            event("paragraphs refused")
 
         scripts = {model.model: iter(model.outcomes) for model in chain}
         valid_output = json.dumps(
@@ -4368,6 +4444,21 @@ class TestExtractionProperties(BaseTest):
                 for position in range(aspect_count)
             ]
         )
+        # The errors of litellm for the requests that the providers blocked, in
+        # the order of the requests
+        blocked_errors: list[Exception] = []
+
+        def block(model: str) -> Exception:
+            """
+            Returns the error of litellm for a request to the model that its
+            provider blocked for its content, and keeps it.
+            """
+            provider, _, model_name = model.partition("/")
+            error = litellm.ContentPolicyViolationError(
+                message="Simulated block", model=model_name, llm_provider=provider
+            )
+            blocked_errors.append(error)
+            return error
 
         def complete(request: dict[str, Any]) -> Any:
             """
@@ -4376,6 +4467,8 @@ class TestExtractionProperties(BaseTest):
             outcome = next(scripts[request["model"]])
             if outcome in ("transient", "permanent"):
                 return _api_error(outcome == "transient", request["model"])
+            if outcome == "blocked":
+                return block(request["model"])
             if outcome == "truncated":
                 return _completion(
                     valid_output[: len(valid_output) // 2], finish_reason="length"
@@ -4392,11 +4485,21 @@ class TestExtractionProperties(BaseTest):
         def decide(request: dict[str, Any]) -> Any:
             """
             Does with a request to a decision model what the script of the model
-            says: a valid response has the paragraph belong to each aspect.
+            says: a valid response has the paragraph belong to each aspect, and
+            a refused one has a refusal to answer each question.
             """
             outcome = next(scripts[request["model"]])
             if outcome in ("transient", "permanent"):
                 return _api_error(outcome == "transient", request["model"])
+            if outcome == "blocked":
+                return block(request["model"])
+            if outcome == "refused":
+                return _decisions_response(
+                    [
+                        OpenAIRefusalAnswer(name=question["name"])
+                        for question in request["questions"]
+                    ]
+                )
             answers = [
                 OpenAIPredicateAnswer(name=question["name"], probability=0.9)
                 for question in request["questions"]
@@ -4449,12 +4552,23 @@ class TestExtractionProperties(BaseTest):
         assert simulated.last_model is not None
         if simulated.outcome == "valid":
             assert error is None
-            assert not messages
+            # A warning for each aspect on the paragraphs that the decision model
+            # refused to answer on, which the aspect does not include
+            refused = simulated.refused_paragraphs
+            assert len(messages) == (aspect_count if refused else 0)
+            for position, message in enumerate(messages):
+                assert (
+                    f"refused to answer the question of aspect `Aspect {position}` "
+                    f"on {len(refused)} of {paragraph_count} paragraphs "
+                    f"(indices: {refused})"
+                ) in message
             decided = simulated.last_model.kind == "decision"
             for aspect in document.aspects:
                 assert aspect._is_processed
                 assert [item.value for item in aspect.extracted_items] == [
-                    paragraph.raw_text for paragraph in document.paragraphs
+                    paragraph.raw_text
+                    for p, paragraph in enumerate(document.paragraphs)
+                    if p not in refused
                 ]
                 assert all(
                     (item.probabilities is not None) is decided
@@ -4465,18 +4579,38 @@ class TestExtractionProperties(BaseTest):
         for aspect in document.aspects:
             assert not aspect._is_processed
             assert not aspect.extracted_items
+        # What the message on the last call names, for invalid data or a refusal
+        failure_texts = {
+            "invalid": "could not be processed",
+            "refused": "refused to answer the question of aspect `Aspect 0` on "
+            "every paragraph",
+            "blocked": "blocked the request, or the answer to it, for its content",
+        }
         if not raise_exception:
             assert error is None
             (message,) = messages
-            if simulated.outcome == "invalid":
-                assert "could not be processed" in message
+            if simulated.outcome in failure_texts:
+                assert failure_texts[simulated.outcome] in message
+                assert (
+                    f"({simulated.last_model.retries_invalid_data} retries)" in message
+                )
             elif simulated.outcome == "truncated":
                 assert "was cut off at the max output tokens" in message
             else:
                 assert "Exception occurred while calling" in message
             return
-        if simulated.outcome == "invalid":
+        if simulated.outcome in ("refused", "blocked"):
+            assert isinstance(error, ModelRefusalError)
+            assert failure_texts[simulated.outcome] in error.message
+            assert error.retry_count == simulated.last_model.retries_invalid_data
+            # The error of litellm for the last request, which the provider blocked
+            if simulated.outcome == "blocked":
+                assert error.original_error is blocked_errors[-1]
+            else:
+                assert error.original_error is None
+        elif simulated.outcome == "invalid":
             assert isinstance(error, ModelExtractionError)
+            assert not isinstance(error, ModelRefusalError)
             assert error.retry_count == simulated.last_model.retries_invalid_data
         else:
             assert isinstance(error, ModelAPIError)

@@ -114,6 +114,9 @@ if TYPE_CHECKING:
         _DocumentModelGroup,  # ty: ignore[unresolved-import]
     )
 
+    # Used only in annotations
+    from contextgem.internal.decisions import _DecisionAnswer
+
 
 # Local model providers supported via liteLLM
 _LOCAL_MODEL_PROVIDERS = [
@@ -141,16 +144,28 @@ class _PartialExtraction:
     answered with valid data are not sent again then: the call is continued from
     the part that failed, with what was extracted from the parts before it.
 
-    This applies to a call that is made again with the same LLM. A fallback model
+    A decision model sends a request for each text of the call, e.g. for each
+    paragraph for aspects, and the call fails when the answers of one of them cannot
+    be used. When the call is made again, the requests whose answers were usable
+    are not sent again: their answers are kept here. The answers of a request that
+    has a refused answer, which is accepted for aspects, are not kept, i.e. such
+    a request is sent again with the call, as the model may answer it then.
+
+    This applies to a call that is made again with the same model. A fallback model
     is given no such state, i.e. it extracts from all the parts.
 
     :ivar n_parts_processed: The number of the parts, counted from the first one,
         that are processed, i.e. the position of the part to continue from.
     :vartype n_parts_processed: int
+    :ivar decision_answers: The usable answers of the requests of a decision model,
+        by the request, as recorded in its call (the model, the text and
+        the questions as JSON), each by the names of the questions.
+    :vartype decision_answers: dict[str, dict[str, _DecisionAnswer]]
     """
 
     def __init__(self) -> None:
         self.n_parts_processed: int = 0
+        self.decision_answers: dict[str, dict[str, _DecisionAnswer]] = {}
         self._sources_mapper: dict[
             str, dict[str, _Aspect | _Concept | list[_ExtractedItem]]
         ] = {}
@@ -2380,6 +2395,11 @@ class _GenericModelProcessor(_AbstractGenericModelProcessor):
                 async_limiter=async_limiter,
                 raise_exception_on_extraction_error=raise_exception_on_extraction_error,
                 has_fallback_pending=has_fallback_pending,
+                answers_cache=(
+                    partial_extraction.decision_answers
+                    if partial_extraction is not None
+                    else None
+                ),
             )
 
         # Safe cast: a model that is not a decision model is an LLM
@@ -2579,12 +2599,11 @@ class _GenericModelProcessor(_AbstractGenericModelProcessor):
                 # to be tried, or when a warning is logged for it instead of
                 # an exception. There is no response to process, and the failure
                 # is not to be reported as invalid data returned by the LLM as well.
-                # So is a request that the provider blocked for its content, which
-                # is reported as a refusal.
                 return None, all_usage_data
             if model_call_obj._refusal is not None:
-                # The LLM or its provider declined to answer. The answer is not used,
-                # also if it is valid JSON.
+                # The LLM or its provider declined to answer, also by blocking
+                # the request or its answer. The answer is not used, also if it is
+                # valid JSON.
                 # As for invalid data, the call is made again, as the verdict can
                 # differ on another request, and then with the fallback models; the
                 # refusal is raised (or warned about) if none of them answers.
@@ -2646,7 +2665,7 @@ class _GenericModelProcessor(_AbstractGenericModelProcessor):
                         )
                 else:
                     logger.error(
-                        f"LLM did not return valid JSON for {extracted_item_type}s"
+                        f"LLM returned invalid data for {extracted_item_type}s"
                     )
                 return None, all_usage_data
 
@@ -3297,6 +3316,9 @@ class _GenericModelProcessor(_AbstractGenericModelProcessor):
                         )
                         + f" {failed_instances_msg}",
                         retry_count=n_retries,
+                        # The error of litellm for a request or an answer that
+                        # the provider blocked
+                        original_error=refused_call._original_error_of_refusal,
                     )
                 return ModelExtractionError(
                     f"Some {instance_type}s could not be processed due to "
@@ -3464,11 +3486,11 @@ class _GenericModelProcessor(_AbstractGenericModelProcessor):
                 retry path produced a valid result.
 
                 Each model is called again for invalid data that it returns as many
-                times as it has retries for such data (an LLM: as set for it,
-                a decision model: none), a fallback model after its first call,
-                i.e. a fallback model is called as many times as a primary model
-                with the same setting. A refusal of the model or of its provider
-                is retried, and passed on to the fallback models, as invalid data is.
+                times as it has retries for such data (``max_retries_invalid_data``),
+                a fallback model after its first call, i.e. a fallback model is
+                called as many times as a primary model with the same setting.
+                A refusal of the model or of its provider is retried, and passed on
+                to the fallback models, as invalid data is.
 
                 :param chunk: The chunk of instances to retry.
                 :type chunk: list[_Aspect] | list[_Concept]

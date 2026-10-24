@@ -109,7 +109,12 @@ class DocumentLLM(_DocumentLLM):
         ``max_retries_invalid_data`` times. If the content of a call is sent
         in parts, a retry is a request for the part that the invalid data was returned
         for, i.e. the parts answered with valid data are not sent again. A refusal of
-        the LLM or of its provider is not data to retry for: it is final. Defaults to 3.
+        the LLM or of its provider is requested again as invalid data is, also
+        a request or an answer that the provider blocks. In a chat, a request is sent
+        again in the same way when its answer is empty, when it is a refused answer
+        without a text, or when the provider blocks it: a refused answer with a text
+        is returned as it is, and an answer cut off at the max output tokens is not
+        requested again. Defaults to 3.
     :vartype max_retries_invalid_data: int
     :ivar timeout: Timeout in seconds for LLM API calls. As responses are not streamed,
         the whole response has to be received within the timeout. Defaults to 600 seconds.
@@ -137,11 +142,11 @@ class DocumentLLM(_DocumentLLM):
         (``DocumentDecisionModel``) with ``is_fallback=True`` and the same role can
         also be a fallback: it replaces the LLM only in the extraction, provided that
         a decision model can extract everything the LLM is to extract, and is skipped
-        in a chat. Each fallback applies its own retry settings: a fallback LLM that
-        returns invalid data during extraction is asked again up to its
-        ``max_retries_invalid_data`` times, as the current LLM is, and a fallback
-        decision model is asked once. A refusal of the current LLM or of its provider
-        is passed on to the fallbacks as well. Defaults to an empty list.
+        in a chat. Each fallback applies its own retry settings: a fallback model that
+        returns data that cannot be used is asked again up to its
+        ``max_retries_invalid_data`` times, as the current LLM is. A refusal of
+        the current LLM or of its provider is passed on to the fallbacks as well.
+        Defaults to an empty list.
     :vartype fallback_models: list[DocumentLLM | DocumentDecisionModel]
     :ivar output_language: Language for produced output text (justifications, explanations).
         Can be "en" (English) or "adapt" (adapts to document/image language). Defaults to "en".
@@ -256,8 +261,11 @@ class ChatSession(_ChatSession):
         the next turns. The results include the errors of the tools, which the LLM
         receives as it calls them. A turn that ends without an answer, e.g. on
         an error of the LLM API, is started over when it is sent again, i.e. its
-        tool calls are not kept. ``messages`` lists the messages of the user and
-        the answers of the LLM, without the tool calls.
+        tool calls are not kept. Its message of the user stays in the session, as
+        not answered: sent again as it is, it is answered as that turn, while
+        another message sent then comes after it, i.e. the LLM is sent both.
+        ``messages`` lists the messages of the user and the answers of the LLM,
+        without the tool calls.
 
         The history also keeps the thinking blocks that an LLM returns with its tool
         calls and answers, e.g. those of Claude when ``reasoning_effort`` is set.

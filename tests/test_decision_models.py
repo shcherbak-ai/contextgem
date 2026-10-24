@@ -1830,7 +1830,7 @@ class TestDecisionModels(BaseTest):
                     convert,
                     {name: _predicate_answer(name, probability=probability)},
                     name,
-                    r"is not a number within \[0, 1\]",
+                    "the probability of the answer is not a number",
                 )
 
         # Missing
@@ -1980,8 +1980,8 @@ class TestDecisionModels(BaseTest):
                             )
                         },
                         name,
-                        "the answer has options that were not offered: "
-                        rf"\['{other_label}'\]",
+                        "the answer has options that were not offered. Options "
+                        rf"offered: {re.escape(str(option_labels))}\.$",
                     )
             # Without one of the options offered: an option without a probability
             # is not taken as an option with a zero probability
@@ -2016,8 +2016,8 @@ class TestDecisionModels(BaseTest):
                         )
                     },
                     name,
-                    rf"of the option `{option_labels[1]}` is not a number within "
-                    r"\[0, 1\]",
+                    "the probability of the option "
+                    rf"`{option_labels[1]}` is not a number within \[0, 1\]",
                 )
             # With a zero probability of each option: the first option is not
             # taken as the most probable one of equally improbable options
@@ -2062,8 +2062,8 @@ class TestDecisionModels(BaseTest):
                             )
                         },
                         name,
-                        f"the answer picks the option `{chosen_option}`, which was "
-                        "not offered",
+                        "the answer picks an option that was not offered. Options "
+                        rf"offered: {re.escape(str(option_labels))}\.$",
                     )
             # ... while each of the options offered can be the picked one
             for chosen_option in option_labels:
@@ -2144,7 +2144,7 @@ class TestDecisionModels(BaseTest):
             lambda answers: _validate_answers(questions, answers, accept_refusals=True),
             {**refused_answers, "C0": _predicate_answer("C0", probability=1.5)},
             "C0",
-            r"is not a number within \[0, 1\]",
+            "the probability of the answer is not a number",
         )
 
         def validate(answers: dict[str, _DecisionAnswer]) -> Any:
@@ -2180,7 +2180,7 @@ class TestDecisionModels(BaseTest):
             (
                 {"A0": _predicate_answer("A0", probability=1.5)},
                 "A0",
-                r"is not a number within \[0, 1\]",
+                "the probability of the answer is not a number",
             ),
             # With an option that was not offered, or without an option offered
             (
@@ -2190,7 +2190,10 @@ class TestDecisionModels(BaseTest):
                     )
                 },
                 "C1",
-                r"the answer has options that were not offered: \['fax'\]",
+                (
+                    r"the answer has options that were not offered\. Options offered: "
+                    r"\['written', 'email'\]\.$"
+                ),
             ),
             (
                 {"C2": _score_answer("C2", option_probabilities={"1": 0.5, "2": 0.5})},
@@ -2217,7 +2220,10 @@ class TestDecisionModels(BaseTest):
                     )
                 },
                 "C1",
-                "the answer picks the option `Written`, which was not offered",
+                (
+                    r"the answer picks an option that was not offered\. Options offered: "
+                    r"\['written', 'email'\]\.$"
+                ),
             ),
         ]:
             _check_invalid_answer(validate, answers, question_name, reason_match)
@@ -2244,6 +2250,7 @@ class TestDecisionModels(BaseTest):
             "api_base",
             "role",
             "num_retries_failed_request",
+            "max_retries_invalid_data",
             "timeout",
             "pricing_details",
             "auto_pricing",
@@ -2260,6 +2267,7 @@ class TestDecisionModels(BaseTest):
         assert decision_model.api_base is None
         assert decision_model.role is None
         assert decision_model.num_retries_failed_request == 3
+        assert decision_model.max_retries_invalid_data == 3
         assert decision_model.timeout == 600
         assert decision_model.pricing_details is None
         assert decision_model.auto_pricing is False
@@ -2281,6 +2289,7 @@ class TestDecisionModels(BaseTest):
             api_base="https://decisions.example.com",
             role=" decide ",
             num_retries_failed_request=1,
+            max_retries_invalid_data=1,
             timeout=30,
             pricing_details=ModelPricing(
                 input_per_1m_tokens=0.042, output_per_1m_tokens=0.0
@@ -2289,6 +2298,7 @@ class TestDecisionModels(BaseTest):
             decision_threshold=0.7,
             async_limiter=async_limiter,  # ty: ignore[unknown-argument]
         )
+        assert decision_model.max_retries_invalid_data == 1
         assert decision_model.decision_threshold == 0.7
         assert decision_model.role == "decide"  # validated as the role of an LLM
         assert decision_model.list_roles == ["decide"]
@@ -2301,6 +2311,8 @@ class TestDecisionModels(BaseTest):
             DocumentDecisionModel(model="jev-latest")
         with pytest.raises(ValueError, match="num_retries_failed_request"):
             DocumentDecisionModel(model=_DECISION_MODEL, num_retries_failed_request=-1)
+        with pytest.raises(ValueError, match="max_retries_invalid_data"):
+            DocumentDecisionModel(model=_DECISION_MODEL, max_retries_invalid_data=-1)
         with pytest.raises(ValueError, match="timeout"):
             decision_model.timeout = -1
         assert decision_model.timeout == 30
@@ -2322,7 +2334,6 @@ class TestDecisionModels(BaseTest):
             ("tool_choice", "auto"),
             ("parallel_tool_calls", True),
             ("tool_max_rounds", 5),
-            ("max_retries_invalid_data", 1),
             ("max_retries_failed_request", 1),
             ("deployment_id", "deployment"),
             ("api_version", "2026-01-01"),
@@ -2340,9 +2351,10 @@ class TestDecisionModels(BaseTest):
             assert not hasattr(decision_model, method_name)
 
         # What the extraction logic shared with LLMs reads from a model: a call
-        # for which a decision model returned an invalid response is not made
-        # again, and a failed request is retried only by the framework
-        assert decision_model._retries_invalid_data == 0
+        # for which a decision model returned an invalid response is made again
+        # as many times as set for the model, as for an LLM, and a failed request
+        # is retried only by the framework
+        assert decision_model._retries_invalid_data == 1
         assert decision_model._provider_retries_failed_request == 0
         llm = _create_llm(max_retries_invalid_data=2, max_retries_failed_request=1)
         assert llm._retries_invalid_data == 2
@@ -3631,7 +3643,10 @@ class TestDecisionModels(BaseTest):
         fails for good, with and without concurrency: no further requests are
         sent, the requests made are counted in the usage, no concept gets its
         items, and a fallback model takes over, also for a refused answer, which
-        raises ``ModelRefusalError`` without a fallback model.
+        raises ``ModelRefusalError`` without a fallback model. Before the fallback
+        model, a response that cannot be used, or a refused answer, is asked for
+        again with the request on the part that failed, and not on the part before
+        it.
         """
         part_texts = self._get_texts_of_parts(2)
         n_parts = len(part_texts)
@@ -3780,7 +3795,8 @@ class TestDecisionModels(BaseTest):
                     ),
                 ),
             ]:
-                decision_model = _create_decision_model()
+                # One call, without retries for invalid data
+                decision_model = _create_decision_model(max_retries_invalid_data=0)
                 document = create_document()
                 decisions_stub = _DecisionsAPIStub(
                     {
@@ -3808,8 +3824,8 @@ class TestDecisionModels(BaseTest):
                 # of the text that the question was asked on
                 assert (
                     f"Decision model `{_DECISION_MODEL}` returned an invalid "
-                    f"response for {log_subject}: the probability 1.5 is not a number "
-                    f"within [0, 1]."
+                    f"response for {log_subject}: the probability of the answer is not "
+                    f"a number within [0, 1]."
                 ) in captured_logs, captured_logs
                 assert [request["input"] for request in decisions_stub.requests] == (
                     part_texts[: failed_position + 1]
@@ -3839,7 +3855,8 @@ class TestDecisionModels(BaseTest):
                     ),
                 ),
             ]:
-                decision_model = _create_decision_model()
+                # One call, without retries for invalid data
+                decision_model = _create_decision_model(max_retries_invalid_data=0)
                 document = create_document()
                 decisions_stub = _DecisionsAPIStub(
                     {
@@ -3901,12 +3918,25 @@ class TestDecisionModels(BaseTest):
 
             # === A fallback decision model ===
             # It is sent the text in the same parts, and its answers are the ones
-            # that the items are created from
+            # that the items are created from. Before it, the decision model is
+            # asked again for a response that cannot be used, up to its
+            # `max_retries_invalid_data` times (3 by default), with the request on
+            # the part that failed only: the answers on the part before it are
+            # kept. A failed request is not sent again.
+            n_primary_calls = 1 + 3
             for primary_outcome, finished_positions, failed_positions in [
                 (auth_error, [0], [failed_position]),
-                ({**valid_answers, "NDA check": 1.5}, [0, failed_position], []),
-                # A refusal is passed on to the fallback model too
-                ({**valid_answers, "NDA check": "refusal"}, [0, failed_position], []),
+                (
+                    {**valid_answers, "NDA check": 1.5},
+                    [0, *[failed_position] * n_primary_calls],
+                    [],
+                ),
+                # A refusal is asked for again, and passed on to the fallback model
+                (
+                    {**valid_answers, "NDA check": "refusal"},
+                    [0, *[failed_position] * n_primary_calls],
+                    [],
+                ),
             ]:
                 decision_model = _create_decision_model(
                     fallback_models=[
@@ -3929,14 +3959,15 @@ class TestDecisionModels(BaseTest):
                         document,
                         **extraction_kwargs,  # ty: ignore[invalid-argument-type]
                     )
+                primary_positions = [*finished_positions, *failed_positions]
                 assert decisions_stub.requested_models() == (
-                    [_DECISION_MODEL] * (failed_position + 1)
+                    [_DECISION_MODEL] * len(primary_positions)
                     + [_OTHER_DECISION_MODEL] * n_parts
                 )
-                assert [
-                    request["input"]
-                    for request in decisions_stub.requests[failed_position + 1 :]
-                ] == part_texts
+                assert [request["input"] for request in decisions_stub.requests] == [
+                    *[part_texts[position] for position in primary_positions],
+                    *part_texts,
+                ]
                 check_usage(decision_model, finished_positions, failed_positions)
                 fallback_usage = decision_model.get_usage()[1].usage
                 assert fallback_usage.input == 30 * n_parts
@@ -4683,8 +4714,9 @@ class TestDecisionModels(BaseTest):
         """
         Tests that a response of a decision model that cannot be used, such as
         an answer of another kind than its question, fails the extraction as
-        invalid data returned by the model, without the same request being sent
-        again, and that a refusal to answer a question fails it as a refusal.
+        invalid data returned by the model, and that a refusal to answer
+        a question fails it as a refusal, also after the request is sent again
+        ``max_retries_invalid_data`` times.
         """
         concepts = [
             BooleanConcept(name="NDA check", description="The document is an NDA"),
@@ -4770,11 +4802,17 @@ class TestDecisionModels(BaseTest):
                 ),
             ),
             # A probability that is not within [0, 1]
-            ({**valid_answers, "C0": 1.5}, r"`C0`: the probability 1.5 is not"),
+            (
+                {**valid_answers, "C0": 1.5},
+                r"`C0`: the probability of the answer is not",
+            ),
             # An option that was not offered, or an option offered that is missing
             (
                 {**valid_answers, "C1": {"written": 0.7, "fax": 0.3}},
-                r"`C1`: the answer has options that were not offered: \['fax'\]",
+                (
+                    r"`C1`: the answer has options that were not offered\. Options offered: "
+                    r"\['written', 'email'\]\."
+                ),
             ),
             (
                 {**valid_answers, "C1": {"written": 1.0}},
@@ -4784,7 +4822,10 @@ class TestDecisionModels(BaseTest):
             # a level with the label of another scale is not a level offered
             (
                 {**valid_answers, "C2": {"0": 0.2, "1": 0.5, "2": 0.3}},
-                r"`C2`: the answer has options that were not offered: \['0'\]",
+                (
+                    r"`C2`: the answer has options that were not offered\. Options offered: "
+                    r"\['1', '2', '3'\]\."
+                ),
             ),
             # An option repeated
             (
@@ -4800,7 +4841,7 @@ class TestDecisionModels(BaseTest):
                         ),
                     ),
                 },
-                "`C1`: the answer repeats the option `written`",
+                "`C1`: the answer repeats an option.",
             ),
             # No usable probabilities: a zero for each option, as litellm fills
             # in for the options that the provider returns no probability for
@@ -4826,7 +4867,10 @@ class TestDecisionModels(BaseTest):
                         ),
                     ),
                 },
-                "`C1`: the answer picks the option `Written`, which was not offered",
+                (
+                    r"`C1`: the answer picks an option that was not offered\. Options offered: "
+                    r"\['written', 'email'\]\."
+                ),
             ),
             # Fewer or more answers than questions
             (
@@ -4850,12 +4894,13 @@ class TestDecisionModels(BaseTest):
                         response_answers[2],
                     ]
                 ),
-                "`C0`: the answer at the position of the question has the name `C1`",
+                "`C0`: the answer at the position of the question has another name.",
             ),
         ]
 
         for outcome, error_match in invalid_outcomes:
-            decision_model = _create_decision_model()
+            # One call, without retries for invalid data
+            decision_model = _create_decision_model(max_retries_invalid_data=0)
             document = _create_document(concepts=concepts)
             decisions_stub = _DecisionsAPIStub(
                 {_DECISION_MODEL: [outcome]}, input_tokens=300
@@ -4884,7 +4929,7 @@ class TestDecisionModels(BaseTest):
                 and re.search(error_match, log)
                 for log in captured_logs
             ), captured_logs
-            # The request is not sent again: the same response is expected
+            # One request, which is not sent again without retries
             assert len(decisions_stub.requests) == 1
             # One answer that cannot be used makes the whole response invalid
             assert not any(concept._is_processed for concept in document.concepts)
@@ -4898,8 +4943,9 @@ class TestDecisionModels(BaseTest):
             assert call.response is not None
 
         # With concurrency, each concept is extracted in its own request: the valid
-        # responses are used, and the extraction fails for the first invalid one
-        decision_model = _create_decision_model()
+        # responses are used, and the extraction fails for the first invalid one.
+        # One call per concept, without retries for invalid data.
+        decision_model = _create_decision_model(max_retries_invalid_data=0)
         document = _create_document(concepts=concepts)
         decisions_stub = _DecisionsAPIStub(
             {
@@ -4936,7 +4982,9 @@ class TestDecisionModels(BaseTest):
         assert len(usage.calls) == 3
         assert all(call.timestamp_received is not None for call in usage.calls)
 
-        # A warning is logged if `raise_exception_on_extraction_error` is False
+        # A warning is logged if `raise_exception_on_extraction_error` is False,
+        # after the request is sent again `max_retries_invalid_data` times (3 by
+        # default), as the response cannot be used each time
         decision_model = _create_decision_model()
         document = _create_document(concepts=concepts)
         decisions_stub = _DecisionsAPIStub({_DECISION_MODEL: [invalid_outcomes[0][0]]})
@@ -4949,16 +4997,18 @@ class TestDecisionModels(BaseTest):
             )
         assert any(
             re.search(
-                r"an invalid response returned by decision model.*\(0 retries\)", log
+                r"an invalid response returned by decision model.*\(3 retries\)", log
             )
             for log in captured_logs
         ), captured_logs
-        assert len(decisions_stub.requests) == 1
+        assert len(decisions_stub.requests) == 1 + 3
         assert not any(concept._is_processed for concept in document.concepts)
 
         # A refused answer fails the extraction as a refusal, without a fallback
-        # model: the refusal is logged with the concepts of the call, and raised,
-        # or warned about, with the concepts that failed
+        # model, once it is refused again on each retry: the refusal is logged
+        # with the concepts of the call, and raised, or warned about, with
+        # the concepts that failed and the retries
+        n_requests = 1 + 3
         for refused_answers, refused_concept, question_name in [
             ({**valid_answers, "C1": "refusal"}, "Notice form", "C1"),
             ({**valid_answers, "C0": "refusal"}, "NDA check", "C0"),
@@ -4986,28 +5036,32 @@ class TestDecisionModels(BaseTest):
                             decision_model.extract_concepts_from_document(document)
                         assert isinstance(refusal_exc_info.value, ModelRefusalError)
                         assert refusal_exc_info.value.message == refusal_msg
-                        assert refusal_exc_info.value.retry_count == 0
+                        assert refusal_exc_info.value.retry_count == 3
                     else:
                         decision_model.extract_concepts_from_document(
                             document, raise_exception_on_extraction_error=False
                         )
                         assert (
-                            f"{refusal_msg} (0 retries). If you want to raise an "
+                            f"{refusal_msg} (3 retries). If you want to raise an "
                             f"exception instead, set "
                             f"`raise_exception_on_extraction_error` to True."
                         ) in captured_logs, captured_logs
+                    # Logged for each request refused
                     assert (
-                        f"{refusal_sentence} Concepts of the call: {concept_names}"
-                    ) in captured_logs, captured_logs
-                assert len(decisions_stub.requests) == 1
+                        captured_logs.count(
+                            f"{refusal_sentence} Concepts of the call: {concept_names}"
+                        )
+                        == n_requests
+                    ), captured_logs
+                assert len(decisions_stub.requests) == n_requests
                 assert not any(concept._is_processed for concept in document.concepts)
-                # The request succeeded, i.e. its call is recorded as finished,
-                # with its tokens and its refusal
+                # The requests succeeded, i.e. their calls are recorded as finished,
+                # with their tokens and their refusals
                 usage = decision_model.get_usage()[0].usage
-                assert usage.input == 300
-                (call,) = usage.calls
-                assert call.timestamp_received is not None
-                assert call._refusal == "refusal"
+                assert usage.input == 300 * n_requests
+                assert len(usage.calls) == n_requests
+                assert all(call.timestamp_received is not None for call in usage.calls)
+                assert all(call._refusal == "refusal" for call in usage.calls)
 
         # The valid answers are accepted
         decisions_stub = _DecisionsAPIStub({_DECISION_MODEL: [valid_answers]})
@@ -5024,8 +5078,10 @@ class TestDecisionModels(BaseTest):
         Tests the fallback chains with models of different kinds: a decision model
         that falls back to an LLM or to another decision model, and an LLM that
         falls back to a decision model, for a failed request and for a response
-        that cannot be used. A refusal is passed on along the chain as a response
-        that cannot be used is, and raised if the last model refuses too.
+        that cannot be used, which each model is asked again for, up to its
+        ``max_retries_invalid_data`` times, before the next model is tried.
+        A refusal is passed on along the chain as a response that cannot be used
+        is, and raised if the last model refuses too.
         """
         llm_answer = '[{"concept_id": "C0", "extracted_items": [true]}]'
         invalid_llm_answer = "<<<not-json>>>"
@@ -5128,6 +5184,9 @@ class TestDecisionModels(BaseTest):
         # The models in the order the requests were sent to them in the last
         # extraction, to be checked also when the extraction raises an exception
         requested_models: list[str] = []
+        # The requests of a decision model whose responses cannot be used:
+        # the first one, and one with each of its 3 retries (the default)
+        n_decision_model_calls = 1 + 3
 
         # === A decision model with an LLM as its fallback model ===
         def create_decision_model_with_llm_fallback(
@@ -5185,19 +5244,23 @@ class TestDecisionModels(BaseTest):
         assert requested_models == [_DECISION_MODEL] * 3 + [_LLM_MODEL]
         assert document.concepts[0].extracted_items[0].value is True
 
-        # The response of the decision model cannot be used: the request is not sent
-        # to it again, and the fallback LLM is tried
+        # The response of the decision model cannot be used: the request is sent
+        # to it again, up to its `max_retries_invalid_data` times, and then
+        # the fallback LLM is tried
         decision_model = create_decision_model_with_llm_fallback()
         document, _ = extract(
             decision_model,
             {_DECISION_MODEL: [invalid_answers]},
             {_LLM_MODEL: [llm_answer]},
         )
-        assert requested_models == [_DECISION_MODEL, _LLM_MODEL]
+        assert requested_models == [_DECISION_MODEL] * n_decision_model_calls + [
+            _LLM_MODEL
+        ]
         assert document.concepts[0].extracted_items[0].value is True
         assert document.concepts[0].extracted_items[0].probabilities is None
-        (invalid_call,) = decision_model.get_usage()[0].usage.calls
-        assert invalid_call.timestamp_received is not None
+        invalid_calls = decision_model.get_usage()[0].usage.calls
+        assert len(invalid_calls) == n_decision_model_calls
+        assert all(call.timestamp_received is not None for call in invalid_calls)
 
         # The fallback LLM is asked again when it returns invalid data, as an LLM is
         document, _ = extract(
@@ -5205,7 +5268,10 @@ class TestDecisionModels(BaseTest):
             {_DECISION_MODEL: [invalid_answers]},
             {_LLM_MODEL: [invalid_llm_answer, llm_answer]},
         )
-        assert requested_models == [_DECISION_MODEL, _LLM_MODEL, _LLM_MODEL]
+        assert requested_models == [_DECISION_MODEL] * n_decision_model_calls + [
+            _LLM_MODEL,
+            _LLM_MODEL,
+        ]
         assert document.concepts[0].extracted_items[0].value is True
         # ... as many times as it has retries for invalid data, i.e. twice after
         # its first call, and the error is the one of the LLM when it is the last
@@ -5220,7 +5286,10 @@ class TestDecisionModels(BaseTest):
                 {_LLM_MODEL: [invalid_llm_answer]},
             )
         assert extraction_exc_info.value.retry_count == 2
-        assert requested_models == [_DECISION_MODEL] + [_LLM_MODEL] * 3
+        assert (
+            requested_models
+            == [_DECISION_MODEL] * n_decision_model_calls + [_LLM_MODEL] * 3
+        )
         with pytest.raises(ModelAPIError, match="calling LLM API") as exc_info:
             extract(
                 create_decision_model_with_llm_fallback(),
@@ -5261,14 +5330,20 @@ class TestDecisionModels(BaseTest):
                 ]
             )
 
-        for primary_outcome in [auth_error, invalid_answers]:
+        for primary_outcome, n_primary_requests in [
+            # A failed request is not sent again
+            (auth_error, 1),
+            (invalid_answers, n_decision_model_calls),
+        ]:
             decision_model = create_decision_model_with_decision_model_fallback()
             document, _ = extract(
                 decision_model,
                 {_DECISION_MODEL: [primary_outcome], _OTHER_DECISION_MODEL: [answers]},
                 {},
             )
-            assert requested_models == [_DECISION_MODEL, _OTHER_DECISION_MODEL]
+            assert requested_models == [_DECISION_MODEL] * n_primary_requests + [
+                _OTHER_DECISION_MODEL
+            ]
             (item,) = document.concepts[0].extracted_items
             assert item.value is True
             self.check_item_probabilities(item, {True: 0.93, False: 1 - 0.93})
@@ -5278,14 +5353,13 @@ class TestDecisionModels(BaseTest):
                 _OTHER_DECISION_MODEL,
             ]
             assert usage_containers[1].usage.input == 100
-        # The fallback decision model is not asked again either, and the error is
-        # the one of the last model to fail, which was called once, i.e. had
-        # no retries
+        # The fallback decision model is asked again too, after its first call,
+        # and the error is the one of the last model to fail, with its retries
         with pytest.raises(
             ModelExtractionError,
             match=(
                 r"an invalid response returned by decision model"
-                r".*\(after 0 retries\)"
+                r".*\(after 3 retries\)"
             ),
         ) as extraction_exc_info:
             extract(
@@ -5296,8 +5370,11 @@ class TestDecisionModels(BaseTest):
                 },
                 {},
             )
-        assert extraction_exc_info.value.retry_count == 0
-        assert requested_models == [_DECISION_MODEL, _OTHER_DECISION_MODEL]
+        assert extraction_exc_info.value.retry_count == 3
+        assert (
+            requested_models
+            == [_DECISION_MODEL] + [_OTHER_DECISION_MODEL] * n_decision_model_calls
+        )
         other_auth_error = _create_api_error(
             litellm.AuthenticationError, _OTHER_DECISION_MODEL
         )
@@ -5311,7 +5388,9 @@ class TestDecisionModels(BaseTest):
                 {},
             )
         assert exc_info.value.original_error is other_auth_error
-        assert requested_models == [_DECISION_MODEL, _OTHER_DECISION_MODEL]
+        assert requested_models == [_DECISION_MODEL] * n_decision_model_calls + [
+            _OTHER_DECISION_MODEL
+        ]
 
         # === An LLM with a decision model as its fallback model ===
         def create_llm_with_decision_model_fallback() -> DocumentLLM:
@@ -5353,13 +5432,13 @@ class TestDecisionModels(BaseTest):
                 for container in usage_containers
             ] == [(_LLM_MODEL, False), (_DECISION_MODEL, True)]
             assert usage_containers[1].usage.input == 100
-        # The fallback decision model is the last model to fail: it is called once,
-        # i.e. the error has no retries, whatever the retries of the LLM
+        # The fallback decision model is the last model to fail: the error has its
+        # retries, whatever the retries of the LLM
         with pytest.raises(
             ModelExtractionError,
             match=(
                 r"an invalid response returned by decision model"
-                r".*\(after 0 retries\)"
+                r".*\(after 3 retries\)"
             ),
         ) as extraction_exc_info:
             extract(
@@ -5367,8 +5446,10 @@ class TestDecisionModels(BaseTest):
                 {_DECISION_MODEL: [invalid_answers]},
                 {_LLM_MODEL: [llm_auth_error]},
             )
-        assert extraction_exc_info.value.retry_count == 0
-        assert requested_models == [_LLM_MODEL, _DECISION_MODEL]
+        assert extraction_exc_info.value.retry_count == 3
+        assert requested_models == [_LLM_MODEL] + [_DECISION_MODEL] * (
+            n_decision_model_calls
+        )
         with pytest.raises(ModelAPIError, match="decision model API") as exc_info:
             extract(
                 create_llm_with_decision_model_fallback(),
@@ -5400,7 +5481,10 @@ class TestDecisionModels(BaseTest):
             {_DECISION_MODEL: [invalid_answers], _OTHER_DECISION_MODEL: [auth_error]},
             {_LLM_MODEL: [llm_answer]},
         )
-        assert requested_models == [_DECISION_MODEL, _OTHER_DECISION_MODEL, _LLM_MODEL]
+        assert requested_models == [_DECISION_MODEL] * n_decision_model_calls + [
+            _OTHER_DECISION_MODEL,
+            _LLM_MODEL,
+        ]
         assert document.concepts[0].extracted_items[0].value is True
         assert [container.model for container in decision_model.get_usage()] == [
             _DECISION_MODEL,
@@ -5409,7 +5493,8 @@ class TestDecisionModels(BaseTest):
         ]
 
         # === A refusal is passed on to the fallback models ===
-        # A refused answer of the decision model is sent to a fallback model of
+        # A refused answer of the decision model, which is refused again when
+        # the decision model is asked again, is sent to a fallback model of
         # either kind, which answers
         refused_answers = {"C0": "refusal"}
         for fallback_model, fallback_name in [
@@ -5424,15 +5509,17 @@ class TestDecisionModels(BaseTest):
                 {_DECISION_MODEL: [refused_answers], _OTHER_DECISION_MODEL: [answers]},
                 {_LLM_MODEL: [llm_answer]},
             )
-            assert requested_models == [_DECISION_MODEL, fallback_name]
+            assert requested_models == [_DECISION_MODEL] * n_decision_model_calls + [
+                fallback_name
+            ]
             assert document.concepts[0].extracted_items[0].value is True
         # ... and the refusal of the last model of the chain is raised, for that
-        # model
+        # model, after its retries
         document = create_document()
         with pytest.raises(
             ModelRefusalError,
             match=f"Decision model `{_OTHER_DECISION_MODEL}` refused to answer",
-        ):
+        ) as refusal_exc_info:
             extract(
                 _create_decision_model(
                     fallback_models=[
@@ -5446,7 +5533,11 @@ class TestDecisionModels(BaseTest):
                 {},
                 document=document,
             )
-        assert requested_models == [_DECISION_MODEL, _OTHER_DECISION_MODEL]
+        assert refusal_exc_info.value.retry_count == 3
+        assert (
+            requested_models
+            == [_DECISION_MODEL] + [_OTHER_DECISION_MODEL] * n_decision_model_calls
+        )
         assert not document.concepts[0]._is_processed
         # A refusal of an LLM is asked again, as invalid data is, and then sent to
         # its fallback decision model
@@ -7994,7 +8085,8 @@ class TestDecisionModels(BaseTest):
         # The log names the paragraph by its position, as for a paragraph
         # without additional context
         for failed_position in [1, 2]:
-            decision_model = _create_decision_model()
+            # One call, without retries for invalid data
+            decision_model = _create_decision_model(max_retries_invalid_data=0)
             document = create_document()
 
             def respond_or_fail(
@@ -8029,7 +8121,7 @@ class TestDecisionModels(BaseTest):
                 f"Decision model `{_DECISION_MODEL}` returned an invalid response "
                 f"for aspect `Payment` on paragraph {failed_position + 1} of 4 "
                 f"(index {failed_position}), decision question `A1`: "
-                "the probability 1.5 is not a number within [0, 1]."
+                "the probability of the answer is not a number within [0, 1]."
             ) in captured_logs, captured_logs
             assert len(decisions_stub.requests) == failed_position + 1
             assert not any(aspect._is_processed for aspect in document.aspects)
@@ -9685,8 +9777,9 @@ class TestDecisionModels(BaseTest):
         or gets a response that cannot be used, with and without concurrency:
         no further requests are sent, the requests completed are counted in
         the usage, a failed request is recorded as the last call, which is
-        unfinished, and a fallback model takes over. If a request for a paragraph
-        fails, no request for a sentence is sent.
+        unfinished, and a fallback model takes over, after a response that cannot
+        be used is asked for again with the request that got it only. If a request
+        for a paragraph fails, no request for a sentence is sent.
         """
         auth_error = _create_api_error(litellm.AuthenticationError)
         rate_limit_error = _create_api_error(litellm.RateLimitError)
@@ -9955,8 +10048,9 @@ class TestDecisionModels(BaseTest):
 
             # === A response that cannot be used ===
             # The response to the request for one sentence makes the whole call
-            # invalid: no further requests are sent, and each call is finished
-            decision_model = _create_decision_model()
+            # invalid: no further requests are sent, and each call is finished.
+            # One call, without retries for invalid data.
+            decision_model = _create_decision_model(max_retries_invalid_data=0)
             document = create_document()
             decisions_stub = _DecisionsAPIStub(
                 {
@@ -9986,7 +10080,7 @@ class TestDecisionModels(BaseTest):
             assert (
                 f"Decision model `{_DECISION_MODEL}` returned an invalid response "
                 "for aspect `Payment` on sentence 2 of 3 of paragraph 2 of 5 "
-                "(index 1), decision question `A1`: the probability 1.5 is not a number within [0, 1]."
+                "(index 1), decision question `A1`: the probability of the answer is not a number within [0, 1]."
             ) in captured_logs, captured_logs
             assert len(decisions_stub.requests) == n_requests_until_failed
             check_usage(decision_model, all_positions[:n_requests_until_failed], [])
@@ -9994,8 +10088,9 @@ class TestDecisionModels(BaseTest):
 
         # The question on a sentence is named by the position of its aspect in
         # the call, also when the sentence is not asked about for the aspects
-        # before it: the log names the aspect that the answer is for
-        decision_model = _create_decision_model()
+        # before it: the log names the aspect that the answer is for. One call,
+        # without retries for invalid data.
+        decision_model = _create_decision_model(max_retries_invalid_data=0)
         document = create_document()
         decisions_stub = _DecisionsAPIStub(
             {_DECISION_MODEL: [create_responder({(3, 0): {"A1": 1.5}})]}
@@ -10009,12 +10104,16 @@ class TestDecisionModels(BaseTest):
         assert (
             f"Decision model `{_DECISION_MODEL}` returned an invalid response "
             "for aspect `Payment` on sentence 1 of 2 of paragraph 4 of 5 "
-            "(index 3), decision question `A1`: the probability 1.5 is not a number within [0, 1]."
+            "(index 3), decision question `A1`: the probability of the answer is not a number within [0, 1]."
         ) in captured_logs, captured_logs
         assert len(decisions_stub.requests) == 9
         check_not_extracted(document)
 
-        # A fallback model takes over after a response that cannot be used as well
+        # A fallback model takes over after a response that cannot be used as well,
+        # once the decision model is asked again up to its
+        # `max_retries_invalid_data` times (3 by default): with the request for
+        # that sentence only, as the answers on the paragraphs and on
+        # the sentences before it are kept
         decision_model = _create_decision_model(
             fallback_models=[
                 _create_decision_model(_OTHER_DECISION_MODEL, is_fallback=True)
@@ -10030,8 +10129,14 @@ class TestDecisionModels(BaseTest):
         with patch.object(litellm, "adecisions", new=decisions_stub):
             decision_model.extract_aspects_from_document(document)
         assert decisions_stub.requested_models() == (
-            [_DECISION_MODEL] * 9 + [_OTHER_DECISION_MODEL] * len(all_positions)
+            [_DECISION_MODEL] * (9 + 3) + [_OTHER_DECISION_MODEL] * len(all_positions)
         )
+        assert [request["input"] for request in decisions_stub.requests] == [
+            *[get_text_sent(position) for position in all_positions[:9]],
+            *[get_text_sent((3, 0))] * 3,
+            *[get_text_sent(position) for position in all_positions],
+        ]
+        check_usage(decision_model, [*all_positions[:9], *[(3, 0)] * 3], [])
         check_extracted(document)
 
         # === A transient error ===
@@ -10067,7 +10172,8 @@ class TestDecisionModels(BaseTest):
             (auth_error, ModelAPIError),
             ({"A0": 1.5, "A1": 0.9}, ModelExtractionError),
         ]:
-            decision_model = _create_decision_model()
+            # One call, without retries for invalid data
+            decision_model = _create_decision_model(max_retries_invalid_data=0)
             document = create_document()
             decisions_stub = _DecisionsAPIStub(
                 {_DECISION_MODEL: [create_responder({1: outcome})]}
@@ -11197,8 +11303,9 @@ class TestDecisionModels(BaseTest):
 
             # === A response that cannot be used ===
             # The response to the request for one paragraph makes the whole call
-            # invalid: no further requests are sent, and each call is finished
-            decision_model = _create_decision_model()
+            # invalid: no further requests are sent, and each call is finished.
+            # One call, without retries for invalid data.
+            decision_model = _create_decision_model(max_retries_invalid_data=0)
             document = create_document()
             decisions_stub = _DecisionsAPIStub(
                 {
@@ -11228,7 +11335,7 @@ class TestDecisionModels(BaseTest):
                 f"Decision model `{_DECISION_MODEL}` returned an invalid response "
                 f"for aspect `Payment` on paragraph {failed_position + 1} of "
                 f"{n_paragraphs} (index {failed_position}), decision question `A1`: "
-                "the probability 1.5 is not a number within [0, 1]."
+                "the probability of the answer is not a number within [0, 1]."
             ) in captured_logs, captured_logs
             assert len(decisions_stub.requests) == failed_position + 1
             check_usage(decision_model, [0, 1, failed_position], [])
@@ -11504,7 +11611,9 @@ class TestDecisionModels(BaseTest):
         used, a warning names the aspect and what the model refused to answer on,
         and no request is sent again. An aspect that the model refuses to answer
         about on every paragraph is not extracted: its call fails as a refusal,
-        which is final, i.e. no fallback model is tried.
+        which is asked for again on every paragraph, up to
+        ``max_retries_invalid_data`` times, and then passed on to the fallback
+        model.
         """
         n_paragraphs = len(_ASPECTS_PARAGRAPH_TEXTS_SENT)
 
@@ -11690,8 +11799,9 @@ class TestDecisionModels(BaseTest):
 
         # === Refused answers on every paragraph, for one of the aspects ===
         # Nothing is known about the aspect, i.e. the response cannot be used:
-        # no aspect of the call is extracted, and the refusal is raised, as there
-        # is no fallback model
+        # the call is made again, and, as the model refuses again, no aspect of
+        # the call is extracted, and the refusal is raised, as there is no
+        # fallback model
         yes_probabilities = {
             "Termination": {2: 0.9, 4: 0.7},
             "Payment": dict.fromkeys(range(n_paragraphs), "refusal"),
@@ -11701,7 +11811,9 @@ class TestDecisionModels(BaseTest):
             {},
             {"use_concurrency": True, "max_items_per_call": 2},
         ]:
-            decision_model = _create_decision_model()
+            # One retry, which keeps the requests within the rate of the limiter
+            # of the model when they are sent concurrently
+            decision_model = _create_decision_model(max_retries_invalid_data=1)
             document = create_document(yes_probabilities)
             decisions_stub = _DecisionsAPIStub({_DECISION_MODEL: [respond_refusing]})
             with (
@@ -11713,7 +11825,7 @@ class TestDecisionModels(BaseTest):
                     document,
                     **extraction_kwargs,  # ty: ignore[invalid-argument-type]
                 )
-            assert extraction_exc_info.value.retry_count == 0
+            assert extraction_exc_info.value.retry_count == 1
             refusal_sentence = (
                 f"Decision model `{_DECISION_MODEL}` refused to answer the question "
                 "of aspect `Payment` on every paragraph (5 asked about), decision "
@@ -11723,24 +11835,30 @@ class TestDecisionModels(BaseTest):
             assert extraction_exc_info.value.message == (
                 f"{refusal_sentence} Failed aspects: {aspect_names}"
             )
+            # Logged for each call
             assert (
-                f"{refusal_sentence} Aspects of the call: {aspect_names}"
-            ) in captured_logs, captured_logs
+                captured_logs.count(
+                    f"{refusal_sentence} Aspects of the call: {aspect_names}"
+                )
+                == 2
+            ), captured_logs
             # No warning on the paragraphs left out, as no aspect is extracted
             assert not any("not included" in log for log in captured_logs)
-            # Each paragraph is asked about, once
+            # Each paragraph is asked about, and again with the retry, as
+            # the answers of a request with a refused answer are not kept
             assert [request["input"] for request in decisions_stub.requests] == (
-                _ASPECTS_PARAGRAPH_TEXTS_SENT
+                _ASPECTS_PARAGRAPH_TEXTS_SENT * 2
             )
             usage = decision_model.get_usage()[0].usage
             assert all(call.timestamp_received is not None for call in usage.calls)
-            assert len(usage.calls) == n_paragraphs
+            assert len(usage.calls) == n_paragraphs * 2
             # Each request is recorded with the refusal
             assert all(call._refusal == "refusal" for call in usage.calls)
             assert not any(aspect._is_processed for aspect in document.aspects)
             assert not any(aspect.extracted_items for aspect in document.aspects)
 
-        # The fallback model is tried, and its answers are used
+        # The fallback model is tried, after the retries of the decision model (3 by
+        # default), and its answers are used
         answered_probabilities = {"Termination": {2: 0.9, 4: 0.7}, "Payment": {3: 0.8}}
         decision_model = _create_decision_model(
             fallback_models=[
@@ -11758,7 +11876,8 @@ class TestDecisionModels(BaseTest):
         )
         extract_aspects(decision_model, document, decisions_stub)
         assert decisions_stub.requested_models() == (
-            [_DECISION_MODEL] * n_paragraphs + [_OTHER_DECISION_MODEL] * n_paragraphs
+            [_DECISION_MODEL] * n_paragraphs * (1 + 3)
+            + [_OTHER_DECISION_MODEL] * n_paragraphs
         )
         assert all(aspect._is_processed for aspect in document.aspects)
         assert document.get_aspect_by_name("Payment").extracted_items
@@ -11780,7 +11899,7 @@ class TestDecisionModels(BaseTest):
         assert any(
             "refused to answer the question of aspect `Payment` on every paragraph"
             in log
-            and "If you want to raise an exception instead" in log
+            and "(3 retries). If you want to raise an exception instead" in log
             for log in captured_logs
         ), captured_logs
         assert not any(aspect._is_processed for aspect in document.aspects)
@@ -12249,11 +12368,13 @@ class TestDecisionModels(BaseTest):
         assert not any(aspect._is_processed for aspect in document.aspects)
 
         # === A decision model with an LLM as its fallback model ===
-        for decision_model_outcomes in [
-            # The request for the paragraph in the middle fails
-            {2: auth_error},
-            # The response to it cannot be used
-            {2: {"A0": 0.9, "A1": 1.5}},
+        for decision_model_outcomes, n_requests_on_failed_paragraph in [
+            # The request for the paragraph in the middle fails: it is not sent
+            # again
+            ({2: auth_error}, 1),
+            # The response to it cannot be used: it is sent again, up to
+            # the `max_retries_invalid_data` of the decision model (3 by default)
+            ({2: {"A0": 0.9, "A1": 1.5}}, 1 + 3),
         ]:
             decision_model = _create_decision_model(
                 fallback_models=[_create_llm(is_fallback=True)]
@@ -12298,10 +12419,13 @@ class TestDecisionModels(BaseTest):
             ):
                 decision_model.extract_aspects_from_document(document)
             # The aspects are extracted by the LLM, after the decision model fails
-            # for them on the third paragraph. The sub-aspect is extracted by
-            # the decision model, which is asked about each paragraph of its aspect.
+            # for them on the third paragraph, which is the only one that it is
+            # asked about again, as its answers on the paragraphs before it are
+            # kept. The sub-aspect is extracted by the decision model, which is
+            # asked about each paragraph of its aspect.
             assert [request["input"] for request in decisions_stub.requests] == [
-                *_ASPECTS_PARAGRAPH_TEXTS_SENT[:3],
+                *_ASPECTS_PARAGRAPH_TEXTS_SENT[:2],
+                *[_ASPECTS_PARAGRAPH_TEXTS_SENT[2]] * n_requests_on_failed_paragraph,
                 _ASPECTS_PARAGRAPH_TEXTS_SENT[2],
                 _ASPECTS_PARAGRAPH_TEXTS_SENT[4],
             ]
@@ -12754,7 +12878,10 @@ class TestDecisionModels(BaseTest):
                     "confidence": 0.9,
                     "probabilities": {"contract": 0.04, "invoice": 0.06, "letter": 0.9},
                 },
-                "the answer picks the option `letter`, which was not offered",
+                (
+                    "the answer picks an option that was not offered. Options offered: "
+                    "['Contract', 'Invoice', 'Letter']."
+                ),
             ),
             # ... also when only the picked option is named differently
             (
@@ -12765,10 +12892,14 @@ class TestDecisionModels(BaseTest):
                     "confidence": 0.9,
                     "probabilities": {"Contract": 0.04, "Invoice": 0.06, "Letter": 0.9},
                 },
-                "the answer picks the option `LETTER`, which was not offered",
+                (
+                    "the answer picks an option that was not offered. Options offered: "
+                    "['Contract', 'Invoice', 'Letter']."
+                ),
             ),
         ]:
-            decision_model = _create_decision_model()
+            # One call, without retries for invalid data
+            decision_model = _create_decision_model(max_retries_invalid_data=0)
             document = _create_document(concepts=[concept])
             decisions_stub = _DecisionsAPIStub(
                 {_DECISION_MODEL: [create_responder(provider_answer)]}
@@ -12790,6 +12921,7 @@ class TestDecisionModels(BaseTest):
             assert not document.concepts[0]._is_processed
             assert not document.concepts[0].extracted_items
             # The request succeeded: it is counted, and it is not sent again
+            # without retries
             assert len(decisions_stub.requests) == 1
             usage = decision_model.get_usage()[0].usage
             assert usage.input == 50
@@ -15070,22 +15202,26 @@ class TestDecisionModels(BaseTest):
         """
         self._check_concepts_in_parts_of_recorded_tests("microsoft_foundry")
 
-    def test_decision_model_input_blocked_falls_back(self):
+    def test_decision_model_blocked_request_falls_back(self):
         """
-        Tests that a request to a decision model that the provider blocks for its
-        content (``litellm.ContentPolicyViolationError``) is handled as a failed
-        request with a non-transient error, as before refusals had an error of
-        their own: it is passed on to the fallback model, which answers, and
-        without a fallback model, ``ModelRefusalError`` is raised, with the error
-        of litellm, or a warning is logged instead. The blocked request is recorded
-        in the usage as unfinished, with its refusal, and is not sent again to
-        the decision model.
+        Tests that a request to a decision model that the provider blocks, or whose
+        answers it blocks, for their content (``litellm.ContentPolicyViolationError``)
+        is handled as a refusal: the request is sent again, up to
+        ``max_retries_invalid_data`` times, before it is passed on to the fallback
+        model, which answers, and without a fallback model, ``ModelRefusalError``
+        is raised, with the error of litellm for the last request blocked, or
+        a warning is logged instead. Each blocked request is recorded in the usage
+        as a finished call, without a response, with its refusal and the error of
+        litellm.
         """
-        input_blocked_error = _create_api_error(litellm.ContentPolicyViolationError)
+        # The first request, and one with each of the 3 retries (the default)
+        n_requests = 1 + 3
+        concept_names = "['NDA check']"
         refusal_sentence = (
-            f"The provider of decision model `{_DECISION_MODEL}` blocked the request "
-            f"for its content."
+            f"The provider of decision model `{_DECISION_MODEL}` blocked the request, "
+            f"or the answer to it, for its content."
         )
+        refusal_msg = f"{refusal_sentence} Failed concepts: {concept_names}"
         for with_fallback, raise_exception in [
             (True, True),
             (False, True),
@@ -15101,41 +15237,775 @@ class TestDecisionModels(BaseTest):
                     )
                 ]
             )
-            decisions_stub = _DecisionsAPIStub({_DECISION_MODEL: [input_blocked_error]})
+            # An error for each request, to tell the requests apart
+            blocked_errors = [
+                _create_api_error(litellm.ContentPolicyViolationError)
+                for _ in range(n_requests)
+            ]
+            decisions_stub = _DecisionsAPIStub({_DECISION_MODEL: list(blocked_errors)})
             completions_stub = _CompletionsAPIStub(
                 {_LLM_MODEL: ['[{"concept_id": "C0", "extracted_items": [true]}]']}
             )
             with (
                 patch.object(litellm, "adecisions", new=decisions_stub),
                 patch.object(litellm, "acompletion", new=completions_stub),
-                capture_logs(stdlib_logging.WARNING) as captured_logs,
+                capture_logs() as captured_logs,
             ):
                 if with_fallback:
                     decision_model.extract_concepts_from_document(document)
                 elif raise_exception:
                     with pytest.raises(ModelRefusalError) as exc_info:
                         decision_model.extract_concepts_from_document(document)
-                    assert exc_info.value.message == refusal_sentence
-                    assert exc_info.value.original_error is input_blocked_error
-                    assert exc_info.value.retry_count == 0
+                    assert exc_info.value.message == refusal_msg
+                    # The error of litellm for the last request blocked
+                    assert exc_info.value.original_error is blocked_errors[-1]
+                    assert exc_info.value.retry_count == 3
                 else:
                     decision_model.extract_concepts_from_document(
                         document, raise_exception_on_extraction_error=False
                     )
                     assert (
-                        f"{refusal_sentence} (0 retries). If you want to raise an "
+                        f"{refusal_msg} (3 retries). If you want to raise an "
                         f"exception instead, set `raise_exception_on_extraction_error` "
                         f"to True."
                     ) in captured_logs, captured_logs
-            # The refusal is logged when it occurs
-            assert refusal_sentence in captured_logs, captured_logs
-            # The request is not sent again to the decision model, and the fallback
+            # The refusal is logged for each request blocked, with the concepts of
+            # the call, which is made again after each refusal but the last one
+            assert (
+                captured_logs.count(
+                    f"{refusal_sentence} Concepts of the call: {concept_names}"
+                )
+                == n_requests
+            ), captured_logs
+            assert [log for log in captured_logs if log.startswith("Retrying")] == [
+                f"Retrying concepts after a refusal ({i}/3)" for i in range(1, 4)
+            ]
+            # The request is sent again to the decision model, and then the fallback
             # LLM answers it
-            assert len(decisions_stub.requests) == 1
+            assert len(decisions_stub.requests) == n_requests
             assert len(completions_stub.requests) == (1 if with_fallback else 0)
             assert document.concepts[0]._is_processed is with_fallback
             if with_fallback:
                 assert document.concepts[0].extracted_items[0].value is True
-            (call,) = decision_model.get_usage()[0].usage.calls
-            assert call.timestamp_received is None
-            assert call._refusal == "input_blocked"
+            usage = decision_model.get_usage()[0].usage
+            assert usage.input == 0
+            assert len(usage.calls) == n_requests
+            for call, blocked_error in zip(usage.calls, blocked_errors, strict=True):
+                assert call.timestamp_received is not None
+                assert call.response is None
+                assert call._refusal == "blocked"
+                assert call._original_error_of_refusal is blocked_error
+
+    def test_decision_model_retries_invalid_response(self):
+        """
+        Tests that a call for which a decision model returns a response that cannot
+        be used is made again, by default (``max_retries_invalid_data=3``): with
+        a usable response to the retry, the items are extracted from its answers,
+        the retry is logged, and the requests of both calls are counted in
+        the usage.
+        """
+        decision_model = _create_decision_model()
+        document = _create_document(
+            concepts=[
+                BooleanConcept(name="NDA check", description="The document is an NDA")
+            ]
+        )
+        # A probability that is not within [0, 1], and then a valid one
+        decisions_stub = _DecisionsAPIStub(
+            {_DECISION_MODEL: [{"C0": 1.5}, {"C0": 0.8}]}
+        )
+        with (
+            patch.object(litellm, "adecisions", new=decisions_stub),
+            capture_logs() as captured_logs,
+        ):
+            decision_model.extract_concepts_from_document(document)
+        # The same request is sent again, once
+        first_request, second_request = decisions_stub.requests
+        assert first_request["input"] == second_request["input"] == _DOCUMENT_TEXT_SENT
+        assert first_request["questions"] == second_request["questions"]
+        assert (
+            f"Decision model `{_DECISION_MODEL}` returned an invalid response for "
+            "concept `NDA check`, decision question `C0`: the probability of "
+            "the answer is not a number within [0, 1]."
+        ) in captured_logs, captured_logs
+        assert [log for log in captured_logs if log.startswith("Retrying")] == [
+            "Retrying concepts with an invalid response (1/3)"
+        ]
+        # The item is created from the answer to the retry
+        (item,) = document.concepts[0].extracted_items
+        assert item.value is True
+        self.check_item_probabilities(item, {True: 0.8, False: 1 - 0.8})
+        # Both requests are counted, as finished calls with their answers
+        usage = decision_model.get_usage()[0].usage
+        assert usage.input == 2 * 100
+        assert all(call.timestamp_received is not None for call in usage.calls)
+        assert [json.loads(call.response or "null") for call in usage.calls] == [
+            [{"type": "predicate", "name": "C0", "probability": 1.5}],
+            [{"type": "predicate", "name": "C0", "probability": 0.8}],
+        ]
+
+    def test_decision_model_retry_sends_failed_requests_only(self):
+        """
+        Tests that, when a call of a decision model is made again for a response
+        that cannot be used, only the request that got it is sent again, with
+        the requests that were not sent after it, and not the requests whose
+        answers were usable, which are kept: for aspects, asked about on each
+        paragraph, and for concepts, asked about on each part of the text.
+        If the answers cannot be converted into items, which request they are
+        from is not known: all the requests are sent again.
+        """
+        yes_probabilities = {"Termination": {2: 0.9, 4: 0.7}, "Payment": {3: 0.8}}
+        respond = _create_aspects_responder(yes_probabilities)
+        paragraph_texts = _ASPECTS_PARAGRAPH_TEXTS_SENT
+        failed_position = 2
+
+        # === Aspects, asked about on each paragraph ===
+        # The response on the third paragraph cannot be used, once or twice
+        for n_failures in [1, 2]:
+            decision_model = _create_decision_model()
+            document = _create_aspects_document(
+                aspects=[
+                    Aspect(name=name, description=f"Clauses on {name.lower()}")
+                    for name in yes_probabilities
+                ]
+            )
+            # The outcomes in the order of the requests
+            decisions_stub = _DecisionsAPIStub(
+                {
+                    _DECISION_MODEL: [
+                        respond,
+                        respond,
+                        *[{"A0": 0.9, "A1": 1.5}] * n_failures,
+                        respond,
+                    ]
+                }
+            )
+            with (
+                patch.object(litellm, "adecisions", new=decisions_stub),
+                capture_logs() as captured_logs,
+            ):
+                decision_model.extract_aspects_from_document(document)
+            # The paragraphs before the third one are asked about once, as their
+            # answers are kept, the third one with each call, and those after it
+            # once it is answered
+            assert [request["input"] for request in decisions_stub.requests] == [
+                *paragraph_texts[:failed_position],
+                *[paragraph_texts[failed_position]] * (1 + n_failures),
+                *paragraph_texts[failed_position + 1 :],
+            ]
+            assert [log for log in captured_logs if log.startswith("Retrying")] == [
+                f"Retrying aspects with an invalid response ({i}/3)"
+                for i in range(1, n_failures + 1)
+            ]
+            termination, payment = document.aspects
+            paragraphs = document.paragraphs
+            assert [item.value for item in termination.extracted_items] == [
+                paragraphs[2].raw_text,
+                paragraphs[4].raw_text,
+            ]
+            assert [item.value for item in payment.extracted_items] == [
+                paragraphs[3].raw_text
+            ]
+            # Each request sent is counted, as a finished call
+            usage = decision_model.get_usage()[0].usage
+            assert len(usage.calls) == len(paragraph_texts) + n_failures
+            assert all(call.timestamp_received is not None for call in usage.calls)
+            assert usage.input == 100 * len(usage.calls)
+
+        # === Aspects, with concurrency ===
+        # A request whose answers are kept is not sent, and takes no turn of
+        # the limiter: each turn is a request sent
+        n_acquisitions: list[int] = [0]
+
+        class CountingAsyncLimiter(AsyncLimiter):
+            """
+            Counts the times that its capacity is acquired.
+            """
+
+            async def acquire(self, amount: float = 1) -> None:
+                """
+                Counts the acquisition and acquires the capacity.
+
+                :param amount: The capacity to acquire.
+                :type amount: float
+                """
+                n_acquisitions[0] += 1
+                await super().acquire(amount)
+
+        failed_inputs: list[str] = []
+
+        def respond_failing_once(request: dict[str, Any]) -> Any:
+            """
+            Responds to the first request on the third paragraph with a response
+            that cannot be used, and to the other requests with their answers.
+
+            :param request: Keyword arguments of ``litellm.adecisions``.
+            :type request: dict[str, Any]
+            :return: Response of litellm.
+            :rtype: Any
+            """
+            if request["input"] == paragraph_texts[failed_position] and not (
+                failed_inputs
+            ):
+                failed_inputs.append(request["input"])
+                return _create_decisions_response(
+                    request["questions"], {"A0": 0.9, "A1": 1.5}
+                )
+            return respond(request)
+
+        decision_model = _create_decision_model(async_limiter=AsyncLimiter(1000, 1))
+        document = _create_aspects_document(
+            aspects=[
+                Aspect(name=name, description=f"Clauses on {name.lower()}")
+                for name in yes_probabilities
+            ]
+        )
+        decisions_stub = _DecisionsAPIStub({_DECISION_MODEL: [respond_failing_once]})
+        with (
+            patch.object(litellm, "adecisions", new=decisions_stub),
+            # The limiter that the requests are paced by, created from the one
+            # of the model for the event loop of the extraction
+            patch.object(models_module, "AsyncLimiter", new=CountingAsyncLimiter),
+        ):
+            # Both aspects in one call, as without concurrency
+            decision_model.extract_aspects_from_document(
+                document, use_concurrency=True, max_items_per_call=2
+            )
+        sent_inputs = [request["input"] for request in decisions_stub.requests]
+        assert failed_inputs == [paragraph_texts[failed_position]]
+        assert sent_inputs.count(paragraph_texts[failed_position]) == 2, sent_inputs
+        # The paragraphs before the third one were answered before it failed
+        assert all(
+            sent_inputs.count(text) == 1 for text in paragraph_texts[:failed_position]
+        ), sent_inputs
+        assert n_acquisitions[0] == len(sent_inputs), sent_inputs
+        assert all(aspect.extracted_items for aspect in document.aspects)
+
+        # === Concepts, asked about on each part of the text ===
+        part_texts = self._get_texts_of_parts(2)
+
+        def create_concepts_document() -> Document:
+            """
+            Creates a document with five paragraphs and a concept to extract.
+
+            :return: Document.
+            :rtype: Document
+            """
+            return _create_aspects_document(
+                concepts=[
+                    BooleanConcept(
+                        name="NDA check", description="The text is of an NDA"
+                    )
+                ]
+            )
+
+        # The answer on the second part cannot be used: the retry asks about it,
+        # and about the part after it, and not about the first part
+        decision_model = _create_decision_model()
+        document = create_concepts_document()
+        decisions_stub = _DecisionsAPIStub(
+            {_DECISION_MODEL: [{"C0": 0.9}, {"C0": 1.5}, {"C0": 0.4}]}
+        )
+        with patch.object(litellm, "adecisions", new=decisions_stub):
+            decision_model.extract_concepts_from_document(
+                document, max_paragraphs_to_analyze_per_call=2
+            )
+        assert [request["input"] for request in decisions_stub.requests] == [
+            part_texts[0],
+            part_texts[1],
+            part_texts[1],
+            part_texts[2],
+        ]
+        assert [item.value for item in document.concepts[0].extracted_items] == [
+            True,
+            False,
+            False,
+        ]
+
+        # === Answers that cannot be converted into items ===
+        # The answers on every part are asked for again
+        original_get_concepts_items = _DocumentDecisionModel._get_concepts_items
+        conversion_errors = [ValueError("Simulated conversion error")]
+
+        def get_concepts_items(*args: Any, **kwargs: Any) -> Any:
+            """
+            Fails the first conversion of the answers into the items of
+            the concepts, and converts them afterwards.
+
+            :param args: Arguments of the conversion.
+            :type args: Any
+            :param kwargs: Keyword arguments of the conversion.
+            :type kwargs: Any
+            :return: The concepts with their items.
+            :rtype: Any
+            """
+            if conversion_errors:
+                raise conversion_errors.pop()
+            return original_get_concepts_items(*args, **kwargs)
+
+        decision_model = _create_decision_model()
+        document = create_concepts_document()
+        decisions_stub = _DecisionsAPIStub({_DECISION_MODEL: [{"C0": 0.9}]})
+        with (
+            patch.object(litellm, "adecisions", new=decisions_stub),
+            patch.object(
+                _DocumentDecisionModel,
+                "_get_concepts_items",
+                new=staticmethod(get_concepts_items),
+            ),
+        ):
+            decision_model.extract_concepts_from_document(
+                document, max_paragraphs_to_analyze_per_call=2
+            )
+        assert [request["input"] for request in decisions_stub.requests] == (
+            part_texts * 2
+        )
+        assert [item.value for item in document.concepts[0].extracted_items] == [
+            True
+        ] * len(part_texts)
+
+    def test_decision_model_retry_sends_refused_requests_again(self):
+        """
+        Tests that, when a call of a decision model for aspects is made again,
+        a request with a refused answer, which is accepted for an aspect on some
+        of the paragraphs, is sent again with the call, as the model may answer it
+        then, while the requests with usable answers are not. An aspect that
+        the model refuses to answer about on every paragraph is asked about again
+        on every paragraph.
+        """
+        yes_probabilities = {"Termination": {0: 0.9, 2: 0.9}, "Payment": {4: 0.8}}
+        respond = _create_aspects_responder(yes_probabilities)
+        paragraph_texts = _ASPECTS_PARAGRAPH_TEXTS_SENT
+        n_paragraphs = len(paragraph_texts)
+
+        def extract_aspects(
+            decisions_stub: _DecisionsAPIStub,
+        ) -> tuple[Document, DocumentDecisionModel, list[str]]:
+            """
+            Extracts the aspects of a new document with a new decision model.
+
+            :param decisions_stub: The stub of the Decisions API.
+            :type decisions_stub: _DecisionsAPIStub
+            :return: The document, the decision model, and the messages logged.
+            :rtype: tuple[Document, DocumentDecisionModel, list[str]]
+            """
+            decision_model = _create_decision_model()
+            document = _create_aspects_document(
+                aspects=[
+                    Aspect(name=name, description=f"Clauses on {name.lower()}")
+                    for name in yes_probabilities
+                ]
+            )
+            with (
+                patch.object(litellm, "adecisions", new=decisions_stub),
+                capture_logs() as captured_logs,
+            ):
+                decision_model.extract_aspects_from_document(document)
+            return document, decision_model, captured_logs
+
+        def check_extracted(document: Document) -> None:
+            """
+            Checks that the aspects are extracted with the answers of ``respond``.
+
+            :param document: The document.
+            :type document: Document
+            """
+            termination, payment = document.aspects
+            paragraphs = document.paragraphs
+            assert [item.value for item in termination.extracted_items] == [
+                paragraphs[0].raw_text,
+                paragraphs[2].raw_text,
+            ]
+            assert [item.value for item in payment.extracted_items] == [
+                paragraphs[4].raw_text
+            ]
+
+        # === A refused answer on a paragraph, then a response that cannot be used ===
+        # The model refuses to answer about the first aspect on the first
+        # paragraph, which is accepted, and its response on the fourth paragraph
+        # cannot be used: the call is made again with the request on the first
+        # paragraph, and with those on the fourth paragraph and after it
+        decisions_stub = _DecisionsAPIStub(
+            {
+                _DECISION_MODEL: [
+                    {"A0": "refusal", "A1": 0.1},
+                    respond,
+                    respond,
+                    {"A0": 0.1, "A1": 1.5},
+                    respond,
+                ]
+            }
+        )
+        document, _, captured_logs = extract_aspects(decisions_stub)
+        assert [request["input"] for request in decisions_stub.requests] == [
+            *paragraph_texts[:4],
+            paragraph_texts[0],
+            *paragraph_texts[3:],
+        ]
+        assert [log for log in captured_logs if log.startswith("Retrying")] == [
+            "Retrying aspects with an invalid response (1/3)"
+        ]
+        # The model answers about the first paragraph when asked again: it is
+        # included in the aspect, and no answer is left refused
+        check_extracted(document)
+        assert not any("not included in the aspect" in log for log in captured_logs)
+
+        # === An aspect refused on every paragraph ===
+        # The model refuses to answer about the second aspect on every paragraph,
+        # and answers when it is asked again: every paragraph is asked about again,
+        # as no request has answers to keep
+        refusing_probabilities: dict[str, Any] = {
+            "Termination": {0: 0.9, 2: 0.9},
+            "Payment": dict.fromkeys(range(n_paragraphs), "refusal"),
+        }
+        decisions_stub = _DecisionsAPIStub(
+            {
+                _DECISION_MODEL: [
+                    *[_create_aspects_responder(refusing_probabilities)] * n_paragraphs,
+                    respond,
+                ]
+            }
+        )
+        document, decision_model, captured_logs = extract_aspects(decisions_stub)
+        assert [request["input"] for request in decisions_stub.requests] == (
+            paragraph_texts * 2
+        )
+        assert [log for log in captured_logs if log.startswith("Retrying")] == [
+            "Retrying aspects after a refusal (1/3)"
+        ]
+        check_extracted(document)
+        # The requests of the first call are recorded with the refusal
+        usage = decision_model.get_usage()[0].usage
+        assert [call._refusal for call in usage.calls] == (
+            ["refusal"] * n_paragraphs + [None] * n_paragraphs
+        )
+
+    def test_decision_model_without_retries_for_invalid_data(self):
+        """
+        Tests that a decision model with ``max_retries_invalid_data=0`` is called
+        once for a response that cannot be used, a refused answer and a blocked
+        request: the error is raised with no retries, or the fallback model is
+        tried right away.
+        """
+        blocked_error = _create_api_error(litellm.ContentPolicyViolationError)
+
+        def create_document() -> Document:
+            """
+            Creates a document with a concept to extract.
+
+            :return: Document.
+            :rtype: Document
+            """
+            return _create_document(
+                concepts=[
+                    BooleanConcept(
+                        name="NDA check", description="The document is an NDA"
+                    )
+                ]
+            )
+
+        for outcome, error_class in [
+            # A probability that is not within [0, 1]
+            ({"C0": 1.5}, ModelExtractionError),
+            ({"C0": "refusal"}, ModelRefusalError),
+            (blocked_error, ModelRefusalError),
+        ]:
+            # Without a fallback model, the error is raised
+            decision_model = _create_decision_model(max_retries_invalid_data=0)
+            document = create_document()
+            decisions_stub = _DecisionsAPIStub({_DECISION_MODEL: [outcome]})
+            with (
+                patch.object(litellm, "adecisions", new=decisions_stub),
+                capture_logs() as captured_logs,
+                pytest.raises(error_class, match=r"\(after 0 retries\)") as exc_info,
+            ):
+                decision_model.extract_concepts_from_document(document)
+            assert exc_info.value.retry_count == 0
+            assert len(decisions_stub.requests) == 1
+            assert not any(log.startswith("Retrying") for log in captured_logs)
+            assert not document.concepts[0]._is_processed
+
+            # With a fallback model, it is tried right away
+            decision_model = _create_decision_model(
+                max_retries_invalid_data=0,
+                fallback_models=[
+                    _create_decision_model(_OTHER_DECISION_MODEL, is_fallback=True)
+                ],
+            )
+            document = create_document()
+            decisions_stub = _DecisionsAPIStub(
+                {_DECISION_MODEL: [outcome], _OTHER_DECISION_MODEL: [{"C0": 0.9}]}
+            )
+            with patch.object(litellm, "adecisions", new=decisions_stub):
+                decision_model.extract_concepts_from_document(document)
+            assert decisions_stub.requested_models() == [
+                _DECISION_MODEL,
+                _OTHER_DECISION_MODEL,
+            ]
+            assert document.concepts[0].extracted_items[0].value is True
+
+    def test_fallback_decision_model_retries_invalid_data(self):
+        """
+        Tests that a fallback decision model is asked once, and then again up to
+        its own ``max_retries_invalid_data`` times, once the model that it falls
+        back from has used up its own, with the answers that it keeps of its own:
+        it is asked about every part of the text first, as the answers of
+        the model before it are not given to it, and then about the part that
+        failed.
+        """
+        part_texts = self._get_texts_of_parts(2)
+        invalid_answers = {"C0": 1.5}
+        # The requests of the last extraction, as their models and texts, and
+        # the messages logged in it on the retries and on the fallback model, to be
+        # checked also when the extraction raises an exception
+        requests_sent: list[tuple[str, str]] = []
+        retry_logs: list[str] = []
+
+        def extract(
+            fallback_outcomes: list[Any],
+        ) -> tuple[Document, DocumentDecisionModel]:
+            """
+            Extracts a concept from a document in parts with a decision model that
+            fails on the second part, also when it is asked again, and that has
+            a fallback decision model with the given outcomes.
+
+            :param fallback_outcomes: The outcomes of the requests to the fallback
+                decision model, in the order of the requests.
+            :type fallback_outcomes: list[Any]
+            :return: The document and the decision model.
+            :rtype: tuple[Document, DocumentDecisionModel]
+            """
+            # Retries of their own: 1 for the model, 2 for its fallback model
+            decision_model = _create_decision_model(
+                max_retries_invalid_data=1,
+                fallback_models=[
+                    _create_decision_model(
+                        _OTHER_DECISION_MODEL,
+                        is_fallback=True,
+                        max_retries_invalid_data=2,
+                    )
+                ],
+            )
+            document = _create_aspects_document(
+                concepts=[
+                    BooleanConcept(
+                        name="NDA check", description="The text is of an NDA"
+                    )
+                ]
+            )
+            decisions_stub = _DecisionsAPIStub(
+                {
+                    _DECISION_MODEL: [{"C0": 0.9}, invalid_answers],
+                    _OTHER_DECISION_MODEL: fallback_outcomes,
+                }
+            )
+            with (
+                patch.object(litellm, "adecisions", new=decisions_stub),
+                capture_logs() as captured_logs,
+            ):
+                try:
+                    decision_model.extract_concepts_from_document(
+                        document, max_paragraphs_to_analyze_per_call=2
+                    )
+                finally:
+                    requests_sent[:] = [
+                        (request["model"], request["input"])
+                        for request in decisions_stub.requests
+                    ]
+                    retry_logs[:] = [
+                        log
+                        for log in captured_logs
+                        if log.startswith(("Retrying", "Trying with fallback"))
+                    ]
+            return document, decision_model
+
+        expected_retry_logs = [
+            "Retrying concepts with an invalid response (1/1)",
+            f"Trying with fallback decision model {_OTHER_DECISION_MODEL} (1/1)",
+            "Retrying concepts with an invalid response (1/2)",
+            "Retrying concepts with an invalid response (2/2)",
+        ]
+        # The requests of the model, and then of its fallback model, which fails
+        # on the third part on its first call and when asked again the first time
+        expected_requests = [
+            *[(_DECISION_MODEL, part_texts[position]) for position in [0, 1, 1]],
+            *[
+                (_OTHER_DECISION_MODEL, part_texts[position])
+                for position in [0, 1, 2, 2, 2]
+            ],
+        ]
+
+        # === The fallback model answers when asked again the second time ===
+        document, decision_model = extract(
+            [{"C0": 0.9}, {"C0": 0.8}, invalid_answers, invalid_answers, {"C0": 0.3}]
+        )
+        assert requests_sent == expected_requests
+        assert retry_logs == expected_retry_logs
+        # The items are created from the answers of the fallback model
+        assert [item.value for item in document.concepts[0].extracted_items] == [
+            True,
+            True,
+            False,
+        ]
+        fallback_usage = decision_model.get_usage()[1].usage
+        assert [json.loads(call.prompt)["input"] for call in fallback_usage.calls] == [
+            part_texts[position] for position in [0, 1, 2, 2, 2]
+        ]
+
+        # === The fallback model fails each time ===
+        # The error is the one of the fallback model, with its retries
+        with pytest.raises(
+            ModelExtractionError,
+            match=r"an invalid response returned by decision model.*\(after 2 retries\)",
+        ) as exc_info:
+            extract([{"C0": 0.9}, {"C0": 0.8}, invalid_answers])
+        assert exc_info.value.retry_count == 2
+        assert requests_sent == expected_requests
+        assert retry_logs == expected_retry_logs
+
+    def test_decision_model_blocked_request_retried(self):
+        """
+        Tests that a request that the provider of a decision model blocks for its
+        content (``litellm.ContentPolicyViolationError``) is sent again when
+        the call is made again, as the verdict of a content filter can differ on
+        another request: the items are extracted from the answers to it, and
+        the requests whose answers were usable are not sent again.
+        """
+        blocked_error = _create_api_error(litellm.ContentPolicyViolationError)
+
+        # === Concepts ===
+        decision_model = _create_decision_model()
+        document = _create_document(
+            concepts=[
+                BooleanConcept(name="NDA check", description="The document is an NDA")
+            ]
+        )
+        decisions_stub = _DecisionsAPIStub(
+            {_DECISION_MODEL: [blocked_error, {"C0": 0.8}]}
+        )
+        with (
+            patch.object(litellm, "adecisions", new=decisions_stub),
+            capture_logs() as captured_logs,
+        ):
+            decision_model.extract_concepts_from_document(document)
+        assert len(decisions_stub.requests) == 2
+        assert (
+            f"The provider of decision model `{_DECISION_MODEL}` blocked the request, "
+            "or the answer to it, for its content. Concepts of the call: "
+            "['NDA check']"
+        ) in captured_logs, captured_logs
+        assert [log for log in captured_logs if log.startswith("Retrying")] == [
+            "Retrying concepts after a refusal (1/3)"
+        ]
+        (item,) = document.concepts[0].extracted_items
+        assert item.value is True
+        self.check_item_probabilities(item, {True: 0.8, False: 1 - 0.8})
+        # The blocked request is a finished call without a response, with
+        # the refusal and the error of litellm
+        usage = decision_model.get_usage()[0].usage
+        blocked_call, answered_call = usage.calls
+        assert blocked_call.timestamp_received is not None
+        assert blocked_call.response is None
+        assert blocked_call._refusal == "blocked"
+        assert blocked_call._original_error_of_refusal is blocked_error
+        assert answered_call.response is not None
+        assert answered_call._refusal is None
+        assert usage.input == 100
+
+        # === Aspects ===
+        # The request on the third paragraph is blocked once: the call is made
+        # again with it and with the requests after it, while the answers on
+        # the paragraphs before it are kept
+        yes_probabilities = {"Termination": {2: 0.9, 4: 0.7}, "Payment": {3: 0.8}}
+        respond = _create_aspects_responder(yes_probabilities)
+        decision_model = _create_decision_model()
+        document = _create_aspects_document(
+            aspects=[
+                Aspect(name=name, description=f"Clauses on {name.lower()}")
+                for name in yes_probabilities
+            ]
+        )
+        decisions_stub = _DecisionsAPIStub(
+            {_DECISION_MODEL: [respond, respond, blocked_error, respond]}
+        )
+        with patch.object(litellm, "adecisions", new=decisions_stub):
+            decision_model.extract_aspects_from_document(document)
+        assert [request["input"] for request in decisions_stub.requests] == [
+            *_ASPECTS_PARAGRAPH_TEXTS_SENT[:3],
+            *_ASPECTS_PARAGRAPH_TEXTS_SENT[2:],
+        ]
+        termination, payment = document.aspects
+        paragraphs = document.paragraphs
+        assert [item.value for item in termination.extracted_items] == [
+            paragraphs[2].raw_text,
+            paragraphs[4].raw_text,
+        ]
+        assert [item.value for item in payment.extracted_items] == [
+            paragraphs[3].raw_text
+        ]
+        usage = decision_model.get_usage()[0].usage
+        assert [call._refusal for call in usage.calls] == [
+            None,
+            None,
+            "blocked",
+            None,
+            None,
+            None,
+        ]
+
+    def test_decision_model_max_retries_invalid_data_param(self):
+        """
+        Tests the validation of ``max_retries_invalid_data`` of a decision model,
+        a non-negative integer, also when it is assigned, and that it is serialized
+        with the model and with its fallback decision model.
+        """
+        # Valid values
+        for value in [0, 1, 10]:
+            decision_model = _create_decision_model(max_retries_invalid_data=value)
+            assert decision_model.max_retries_invalid_data == value
+            assert decision_model._retries_invalid_data == value
+        # Invalid values: a negative one, and a value that is not an integer, also
+        # a bool or a float with an integral value
+        invalid_values: list[Any] = [-1, True, 1.0, "1", None]
+        for value in invalid_values:
+            with pytest.raises(ValueError, match="max_retries_invalid_data"):
+                _create_decision_model(max_retries_invalid_data=value)
+        # ... also when assigned
+        decision_model = _create_decision_model(max_retries_invalid_data=2)
+        for value in invalid_values:
+            with pytest.raises(ValueError, match="max_retries_invalid_data"):
+                decision_model.max_retries_invalid_data = value
+        assert decision_model.max_retries_invalid_data == 2
+
+        # Serialized with the model and with its fallback model
+        decision_model = _create_decision_model(
+            max_retries_invalid_data=5,
+            fallback_models=[
+                _create_decision_model(
+                    _OTHER_DECISION_MODEL, is_fallback=True, max_retries_invalid_data=0
+                )
+            ],
+        )
+        decision_model_dict = decision_model.to_dict()
+        assert decision_model_dict["max_retries_invalid_data"] == 5
+        assert (
+            decision_model_dict["fallback_models"][0]["max_retries_invalid_data"] == 0
+        )
+        for restored_decision_model in [
+            DocumentDecisionModel.from_dict(decision_model_dict),
+            DocumentDecisionModel.from_json(decision_model.to_json()),
+        ]:
+            assert decision_model._eq_deserialized_model_config(restored_decision_model)
+            assert restored_decision_model.max_retries_invalid_data == 5
+            (restored_fallback_model,) = restored_decision_model.fallback_models
+            assert isinstance(restored_fallback_model, DocumentDecisionModel)
+            assert restored_fallback_model.max_retries_invalid_data == 0
+        # A model restored with another value is another config
+        decision_model_dict["max_retries_invalid_data"] = 4
+        assert not decision_model._eq_deserialized_model_config(
+            DocumentDecisionModel.from_dict(decision_model_dict)
+        )
+        # ... and an invalid value is rejected in the serialized data as well
+        decision_model_dict["max_retries_invalid_data"] = -1
+        with pytest.raises(ValueError, match="max_retries_invalid_data"):
+            DocumentDecisionModel.from_dict(decision_model_dict)

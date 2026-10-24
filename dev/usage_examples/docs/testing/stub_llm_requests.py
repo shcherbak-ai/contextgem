@@ -32,14 +32,13 @@ answer = '[{"concept_id": "C0", "extracted_items": ["INV-001"]}]'
 
 # The requests that ContextGem sends, e.g. to check their prompts
 requests = []
-real_acompletion = litellm.acompletion
 
 
 async def fake_acompletion(**kwargs):
     requests.append(kwargs)
-    # With `mock_response`, litellm returns a response with this answer
-    # without sending the request
-    return await real_acompletion(**kwargs, mock_response=answer)
+    # litellm builds a response with this answer, and sends no request whatever
+    # it is given: the real litellm.acompletion is not called
+    return litellm.mock_completion(**kwargs, mock_response=answer)
 
 
 # No API key, neither here nor in the environment of the tests: a request that

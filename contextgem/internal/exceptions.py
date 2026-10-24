@@ -86,7 +86,8 @@ class ModelExtractionError(ContextGemError):
     - the response of an LLM cannot be parsed or validated, also after the LLM
       was asked again ``max_retries_invalid_data`` times;
     - the response of a decision model cannot be used, e.g. an answer without
-      valid probabilities. A decision model is not asked again;
+      valid probabilities, also after the requests whose answers cannot be used
+      were sent again ``max_retries_invalid_data`` times;
     - the model or its provider declined to answer, also after the retries and
       the fallback models: then the subclass :class:`ModelRefusalError` is raised.
 
@@ -118,25 +119,22 @@ class ModelRefusalError(ModelExtractionError):
       with the ``content_filter`` finish reason for all the providers, e.g. for
       a refusal of a Claude model, the safety filters of Gemini and of Azure
       OpenAI, and the guardrails of Amazon Bedrock;
-    - the provider blocked the request on its input, which litellm raises as
-      ``litellm.ContentPolicyViolationError``.
+    - the provider blocked the request or its answer for their content, which
+      litellm raises as ``litellm.ContentPolicyViolationError`` for both, e.g.
+      the content filter of Azure OpenAI on a prompt, or a blocked answer of
+      a Gemini or a Claude model on Vertex AI.
 
     litellm reports a model's refusal and a content filter with the same finish
     reason, i.e. the message cannot always tell them apart. It also reports
     a question that a decision model left unanswered as a refused answer.
 
-    It is raised in the circumstances in which the same failure raised
-    :class:`ModelExtractionError` or :class:`ModelAPIError` before refusals had
-    an error of their own. The answer of a refused request is not used, also if it
-    is valid JSON. In extraction, a refused answer is asked for again as invalid
-    data is, up to ``max_retries_invalid_data`` times for an LLM, as the verdict of
-    a model or of a content filter can differ on another request, and then from
-    the fallback models, each with its own retries. A request that the provider
-    blocked on its input is handled as a failed request with a non-transient error:
-    it is not sent again to the same model, and the next fallback model is tried.
-    In chat, a refused answer that has a text is returned as it is, with a warning
-    logged, while a refused answer without a text is handled as an empty answer:
-    the next fallback LLM is tried.
+    The answer of a refused request is not used, also if it is valid JSON. A refusal
+    is asked for again as invalid data is, up to ``max_retries_invalid_data`` times,
+    as the verdict of a model or of a content filter can differ on another request,
+    and then from the fallback models, each with its own retries. In a chat,
+    a refused answer that has a text is returned as it is, with a warning logged,
+    while a refused answer without a text, or a blocked request, is asked for again
+    as an empty answer is, and then from the next fallback LLM.
 
     As a subclass of :class:`ModelExtractionError`, it is caught by
     ``except ModelExtractionError`` and ``except ContextGemError``. If
@@ -153,11 +151,12 @@ class ModelRefusalError(ModelExtractionError):
     :vartype message: str
     :ivar retry_count: Number of times that the model the error is for, i.e. the last
         model that was tried, was called again, as for
-        :class:`ModelExtractionError`. 0 in a chat, and for a blocked request.
+        :class:`ModelExtractionError`. In a chat, the number of times that
+        the request was sent again.
     :vartype retry_count: int or None
-    :ivar original_error: The exception of litellm for a request that the provider
-        blocked on its input (``litellm.ContentPolicyViolationError``), as
-        :class:`ModelAPIError` had it, None otherwise
+    :ivar original_error: The exception of litellm for a request or an answer that
+        the provider blocked (``litellm.ContentPolicyViolationError``), of the last
+        request that was sent, None otherwise
     :vartype original_error: Exception or None
     """
 
@@ -174,11 +173,11 @@ class ModelAPIError(ContextGemError):
     - the request fails with a transient error (request timeout, rate limit, server
       or connection error), also after ``num_retries_failed_request`` retries;
     - the response of an LLM is cut off at the max output tokens during extraction,
-      or is empty in a chat.
+      or is empty in a chat, also after the request was sent again
+      ``max_retries_invalid_data`` times.
 
-    A request that the provider blocks for its content is handled as such
-    a failure, with a non-transient error, but raises :class:`ModelRefusalError`
-    instead.
+    A request that the provider blocks for its content, or whose answer it blocks,
+    is a refusal, which raises :class:`ModelRefusalError`.
 
     During extraction, if ``raise_exception_on_extraction_error=False`` is passed
     to the extraction method, a warning is logged instead.
@@ -187,9 +186,14 @@ class ModelAPIError(ContextGemError):
 
     :ivar message: Human-readable error description
     :vartype message: str
-    :ivar retry_count: Number of retries attempted for the failed request
+    :ivar retry_count: Number of retries attempted for the failed request, or, for
+        an empty response in a chat, the number of times that the request was sent
+        again. None for a response cut off at the max output tokens during
+        extraction, which is not requested again.
     :vartype retry_count: int or None
-    :ivar original_error: The underlying exception that caused the failure
+    :ivar original_error: The underlying exception that caused the failure, of
+        ``litellm`` for a failed request. None for a response that is cut off or
+        empty, which the message describes.
     :vartype original_error: Exception or None
     """
 

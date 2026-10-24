@@ -120,6 +120,24 @@ ACCEPTED_ADVISORIES: dict[str, str] = {
         "katex 0.16, which markdownlint's math parser allows (^0.16): fixed in 0.18 "
         "only; markdownlint parses math and renders none"
     ),
+    "GHSA-v4x8-3wr5-3wq8": (
+        "filelock 3.x, which the pinned litellm 1.105.2 requires (<4.0): fixed in "
+        "4.2.1 only; it is in ReadWriteLock, which no installed package uses"
+    ),
+    "GHSA-9vhv-jxww-xfm5": (
+        "filelock 3.x, which the pinned litellm 1.105.2 requires (<4.0): fixed in "
+        "4.2.1 only; Windows only, in ReadWriteLock, which no installed package uses"
+    ),
+    "GHSA-567q-5qvw-pf92": (
+        "filelock 3.x, which the pinned litellm 1.105.2 requires (<4.0): fixed in "
+        "4.2.1 only; Windows only, in the soft locks, which huggingface_hub uses only "
+        "where the file system has no file locking, and a lock is only held up"
+    ),
+    "GHSA-cx6f-vjhg-g3cc": (
+        "virtualenv 21.14.11, of pre-commit (dev only): fixed in 21.14.13, uploaded "
+        "on 2026-10-22, which the cooldown keeps out until 2026-10-29; it is in "
+        "the Bash activator's prompt, which pre-commit does not use"
+    ),
 }
 
 # The batch query of osv.dev, for the advisories of many versions at once
