@@ -4012,6 +4012,72 @@ class TestDecisionModels(BaseTest):
         assert [item.value for item in items] == [True] * n_parts
         assert all(item.probabilities is None for item in items)
 
+    def test_decision_model_concept_parts_refusal_after_invalid_response(self):
+        """
+        Tests the extraction of a concept with a decision model in parts, with
+        concurrency, when the request for one part gets a response that cannot be
+        used, and the request for another part, sent before it and completed after
+        it, a refused answer: the call fails as a refusal, i.e. the refusal is
+        raised, with the question that was refused, as the refused request is
+        recorded with its refusal.
+        """
+        part_texts = self._get_texts_of_parts(2)
+        respond = self._create_concepts_responder(
+            part_texts,
+            [{"NDA check": "refusal"}, {"NDA check": 1.5}, {"NDA check": 0.9}],
+        )
+        invalid_response_received = asyncio.Event()
+
+        async def respond_after_invalid_response(
+            request: dict[str, Any],
+        ) -> OpenAIDecisionResponse:
+            """
+            Responds to the request for a part: to the request for the first part,
+            with the refused answer, after the response that cannot be used to
+            the request for the second part.
+
+            :param request: Keyword arguments of the request.
+            :type request: dict[str, Any]
+            :return: Response of litellm.
+            :rtype: OpenAIDecisionResponse
+            """
+            position = part_texts.index(request["input"])
+            if position == 0:
+                await asyncio.wait_for(invalid_response_received.wait(), timeout=10)
+            response = respond(request)
+            if position == 1:
+                invalid_response_received.set()
+            return response
+
+        # One call, without retries for invalid data
+        decision_model = _create_decision_model(
+            async_limiter=AsyncLimiter(20, 5), max_retries_invalid_data=0
+        )
+        document = _create_aspects_document(
+            concepts=[
+                BooleanConcept(name="NDA check", description="The text is of an NDA")
+            ]
+        )
+        decisions_stub = _DecisionsAPIStub(
+            {_DECISION_MODEL: [respond_after_invalid_response]}
+        )
+        with (
+            patch.object(litellm, "adecisions", new=decisions_stub),
+            pytest.raises(ModelRefusalError) as exc_info,
+        ):
+            decision_model.extract_concepts_from_document(
+                document, max_paragraphs_to_analyze_per_call=2, use_concurrency=True
+            )
+        assert [request["input"] for request in decisions_stub.requests][:2] == (
+            part_texts[:2]
+        )
+        assert exc_info.value.message == (
+            f"Decision model `{_DECISION_MODEL}` refused to answer the question of "
+            "concept `NDA check` on part 1 of 3 of the text, decision question `C0`. "
+            "Failed concepts: ['NDA check']"
+        )
+        assert not document.concepts[0]._is_processed
+
     def test_extract_all_in_parts_with_decision_model(self):
         """
         Tests the extraction of everything that a document has with a decision

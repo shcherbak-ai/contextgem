@@ -2844,7 +2844,15 @@ class _DocumentDecisionModel(_DocumentModel):
         if blocked_errors:
             raise blocked_errors[0]
         if response_errors:
-            raise response_errors[0]
+            # A refused answer comes first: its call is recorded with the refusal,
+            # which tells the call apart as a refused one, also if a response of
+            # another concurrent request cannot be used either
+            refusal_errors = [
+                error
+                for error in response_errors
+                if isinstance(error, _RefusedDecisionAnswerError)
+            ]
+            raise (refusal_errors or response_errors)[0]
 
         # Merge the answers of the requests on the same text
         answers_of_texts: list[dict[str, _DecisionAnswer]] = [{} for _ in units]
