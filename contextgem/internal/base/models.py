@@ -59,6 +59,7 @@ from contextgem.internal.exceptions import (
     ModelAPIError,
     ModelExtractionError,
     ModelRefusalError,
+    UnknownPricesWarning,
 )
 from contextgem.internal.items import _ExtractedItem, _StringItem
 from contextgem.internal.loggers import logger
@@ -5002,7 +5003,8 @@ class _DocumentModel(_GenericModelProcessor):
                     _warn_from_caller_code(
                         f"Unable to fetch pricing data for model `{self.model}`: {e}. "
                         "Auto-pricing is skipped. "
-                        f"{self._get_missing_auto_pricing_advice()}"
+                        f"{self._get_missing_auto_pricing_advice()}",
+                        category=UnknownPricesWarning,
                     )
 
             cost_total = cost_input + cost_output
@@ -5151,9 +5153,7 @@ class _DocumentModel(_GenericModelProcessor):
                 "Auto-pricing will be skipped. "
                 f"{self._get_missing_auto_pricing_advice()}"
             )
-            _warn_from_caller_code(
-                warning_msg,
-            )
+            _warn_from_caller_code(warning_msg, category=UnknownPricesWarning)
 
 
 @_disable_direct_initialization

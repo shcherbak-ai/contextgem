@@ -23,6 +23,7 @@ from contextgem.public.exceptions import (
     ModelAPIError,
     ModelExtractionError,
     ModelRefusalError,
+    UnknownPricesWarning,
 )
 from contextgem.public.images import Image
 from contextgem.public.llms import ChatSession, DocumentLLM
@@ -87,4 +88,5 @@ __all__ = (  # noqa: RUF022 - grouped by kind
     "ModelRefusalError",
     "LLMToolLoopLimitError",
     "ContextGemWarning",
+    "UnknownPricesWarning",
 )

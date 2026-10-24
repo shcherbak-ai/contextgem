@@ -43,6 +43,7 @@ from contextgem.public import (
     ModelPricing,
     RatingConcept,
     StringConcept,
+    UnknownPricesWarning,
 )
 from tests.base import BaseTest
 from tests.utils import get_test_document_text
@@ -1067,7 +1068,7 @@ class TestUsageAndCost(BaseTest):
         """
         Tests the documented way to keep a model whose costs are not known from
         running: a warning filter that makes the warnings on unknown prices errors,
-        by the start of their text. A model that genai-prices has no prices for
+        by their category, `UnknownPricesWarning`. A model that genai-prices has no prices for
         then raises where it is created, while a model with prices is created.
         For a model created before the filter is set,
         the warning issued when the usage of its calls is recorded is attributed
@@ -1097,16 +1098,14 @@ class TestUsageAndCost(BaseTest):
             """
             Sets the warning filter of the documentation.
             """
-            warnings.filterwarnings(
-                "error",
-                message="Unable to fetch pricing data",
-                category=ContextGemWarning,
-            )
+            warnings.filterwarnings("error", category=UnknownPricesWarning)
 
         # === Where the model is created ===
         with warnings.catch_warnings():
             make_unknown_prices_errors()
-            with pytest.raises(ContextGemWarning, match="Unable to fetch pricing data"):
+            with pytest.raises(
+                UnknownPricesWarning, match="Unable to fetch pricing data"
+            ):
                 DocumentLLM(
                     model="openai/model-without-prices",
                     api_key="test_api_key",
@@ -1118,7 +1117,7 @@ class TestUsageAndCost(BaseTest):
             )
 
         # === Where the usage of the calls is recorded ===
-        with pytest.warns(ContextGemWarning, match="Unable to fetch pricing data"):
+        with pytest.warns(UnknownPricesWarning, match="Unable to fetch pricing data"):
             llm = DocumentLLM(
                 model="openai/model-without-prices",
                 api_key="test_api_key",
@@ -1129,7 +1128,7 @@ class TestUsageAndCost(BaseTest):
         with (
             patch.object(litellm, "acompletion", new=acompletion_stub),
             pytest.warns(
-                ContextGemWarning, match="Unable to fetch pricing data"
+                UnknownPricesWarning, match="Unable to fetch pricing data"
             ) as caught_warnings,
         ):
             llm.extract_concepts_from_document(document)
@@ -1142,7 +1141,9 @@ class TestUsageAndCost(BaseTest):
             warnings.catch_warnings(),
         ):
             make_unknown_prices_errors()
-            with pytest.raises(ContextGemWarning, match="Unable to fetch pricing data"):
+            with pytest.raises(
+                UnknownPricesWarning, match="Unable to fetch pricing data"
+            ):
                 llm.extract_concepts_from_document(document, overwrite_existing=True)
         # The usage of both calls is recorded, and their cost is not known
         usage = llm.get_usage()[0].usage

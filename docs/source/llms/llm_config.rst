@@ -317,20 +317,16 @@ Some LLM providers cache the beginning of a prompt and reuse it across requests 
 🛑 Stopping a Model Whose Prices Are Unknown
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-With ``auto_pricing=True``, a model that ``genai-prices`` has no prices for gets a warning when it is created, and again when the usage of its calls is recorded, and its costs stay at zero. A budget check of your own, e.g. one that stops a run when ``get_cost()`` reaches a limit, would therefore never stop it: ContextGem has no budget of its own, and checks no cost before a request. To have such a model raise where it is created, make these warnings errors with a warning filter on the start of their text:
+With ``auto_pricing=True``, a model that ``genai-prices`` has no prices for gets a warning when it is created, and again when the usage of its calls is recorded, and its costs stay at zero. A budget check of your own, e.g. one that stops a run when ``get_cost()`` reaches a limit, would therefore never stop it: ContextGem has no budget of its own, and checks no cost before a request. The warning has a category of its own, :class:`~contextgem.public.exceptions.UnknownPricesWarning`, a subclass of ``ContextGemWarning``. To have such a model raise where it is created, make it an error with a warning filter:
 
 .. code-block:: python
 
    import warnings
 
-   from contextgem import ContextGemWarning
+   from contextgem import UnknownPricesWarning
 
    # An LLM or a decision model without prices raises where it is created
-   warnings.filterwarnings(
-       "error",
-       message="Unable to fetch pricing data",
-       category=ContextGemWarning,
-   )
+   warnings.filterwarnings("error", category=UnknownPricesWarning)
 
 For a model created before the filter is set, the warning issued when the usage of a call is recorded raises instead, and stops the extraction method after the usage of that call is recorded. See :doc:`../logging_config` for the warnings of ContextGem and how to filter them.
 

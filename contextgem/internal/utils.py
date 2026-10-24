@@ -620,9 +620,12 @@ def _run_sync(coro: Coroutine[Any, Any, T]) -> T:
         return asyncio.run(coro)
 
 
-def _warn_from_caller_code(message: str) -> None:
+def _warn_from_caller_code(
+    message: str, category: type[ContextGemWarning] = ContextGemWarning
+) -> None:
     """
-    Issues a ``ContextGemWarning`` attributed to the code that called the framework,
+    Issues a ``ContextGemWarning``, or a warning of one of its subclasses, e.g.
+    ``UnknownPricesWarning``, attributed to the code that called the framework,
     i.e. to the first frame of the call stack outside the framework, Pydantic and
     the event loop that the framework runs its coroutines in, e.g. to the line that
     creates a model, assigns a value to its param or calls an extraction method.
@@ -638,6 +641,8 @@ def _warn_from_caller_code(message: str) -> None:
 
     :param message: The message of the warning.
     :type message: str
+    :param category: The category of the warning. Defaults to ``ContextGemWarning``.
+    :type category: type[ContextGemWarning]
     :return: None
     :rtype: None
     """
@@ -656,7 +661,7 @@ def _warn_from_caller_code(message: str) -> None:
         stacklevel += 1
     # The frames are released before the warning is issued (reference cycles)
     del current_frame, frame
-    warnings.warn(message, ContextGemWarning, stacklevel=stacklevel)
+    warnings.warn(message, category, stacklevel=stacklevel)
 
 
 def _model_call_result_is_valid(res: tuple[Any, _ModelUsage] | None) -> bool:

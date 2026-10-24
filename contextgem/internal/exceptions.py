@@ -238,6 +238,25 @@ class ContextGemWarning(UserWarning):
     """
 
 
+class UnknownPricesWarning(ContextGemWarning):
+    """
+    Category of the warning that the framework issues for a model whose costs it
+    cannot calculate: a model with ``auto_pricing=True`` that ``genai-prices`` has
+    no prices for. The warning is issued when such a model is created, or when its
+    ``model`` or ``auto_pricing`` is assigned, and again when the usage of its calls
+    is recorded. The costs of the model stay at zero.
+
+    To keep such a model from running, e.g. where its costs count against a budget
+    of your own, make the warning an error:
+    ``warnings.filterwarnings("error", category=UnknownPricesWarning)``. The model
+    then raises where it is created, and a model created before the filter is set
+    stops the extraction method after the usage of the call is recorded. A subclass
+    of ``ContextGemWarning``, which a filter on that category matches as well.
+
+    Can be imported from ``contextgem``.
+    """
+
+
 class _ToolReturnValueError(Exception):
     """
     Internal exception that carries the error for an invalid value returned by

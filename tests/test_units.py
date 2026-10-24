@@ -41,7 +41,13 @@ from pydantic import BaseModel, Field, StringConstraints
 from vcr.request import Request as VCRRequest
 
 import contextgem
-from contextgem import Aspect, ContextGemWarning, Document, StringConcept
+from contextgem import (
+    Aspect,
+    ContextGemWarning,
+    Document,
+    StringConcept,
+    UnknownPricesWarning,
+)
 from contextgem.internal.tools.docstring_parser import _ParsedDocstring
 from contextgem.internal.tools.schema_generator import (
     _class_to_json_schema,
@@ -1355,32 +1361,78 @@ def test_env_example_lists_the_api_variables_commented_out() -> None:
 
 def test_every_warning_of_the_package_has_its_category() -> None:
     """Every warning that the package issues has the ``ContextGemWarning``
-    category, which is exported from ``contextgem``: the calling code can filter
-    the warnings by it, while a warning about the configuration is attributed to
-    the calling code, i.e. a filter by the module of the package misses it."""
+    category, which is exported from ``contextgem``, or one of its subclasses
+    exported from ``contextgem``, e.g. ``UnknownPricesWarning``: the calling code
+    can filter the warnings by it, while a warning about the configuration is
+    attributed to the calling code, i.e. a filter by the module of the package
+    misses it. ``_warn_from_caller_code()`` issues the warning of the category that
+    it is given, which its callers name."""
     assert issubclass(ContextGemWarning, UserWarning)
     assert "ContextGemWarning" in contextgem.__all__
+    assert issubclass(UnknownPricesWarning, ContextGemWarning)
+    assert "UnknownPricesWarning" in contextgem.__all__
 
-    calls = []
+    def get_category(node: ast.Call) -> ast.expr | None:
+        """
+        Returns the category given to a call, as its second argument or by keyword.
+        """
+        keyword_categories = [k.value for k in node.keywords if k.arg == "category"]
+        return (
+            node.args[1] if len(node.args) > 1 else next(iter(keyword_categories), None)
+        )
+
+    # The calls of `warnings.warn()`, each with the function that it is in (the
+    # innermost one), and the calls of `_warn_from_caller_code()`
+    warn_calls: dict[int, tuple[Path, str | None, ast.Call]] = {}
+    caller_code_calls: list[tuple[Path, ast.Call]] = []
     for path in Path(contextgem.__file__).parent.rglob("*.py"):
         tree = ast.parse(path.read_text(encoding="utf-8"))
-        calls.extend(
+        for scope in ast.walk(tree):
+            if isinstance(scope, ast.FunctionDef | ast.AsyncFunctionDef):
+                function_name = scope.name
+            elif scope is tree:
+                function_name = None
+            else:
+                continue
+            # A call in a nested function is found again in the walk of that
+            # function, which comes later, i.e. it is kept with the innermost one
+            for node in ast.walk(scope):
+                if (
+                    isinstance(node, ast.Call)
+                    and isinstance(node.func, ast.Attribute)
+                    and node.func.attr == "warn"
+                    and isinstance(node.func.value, ast.Name)
+                    and node.func.value.id == "warnings"
+                ):
+                    warn_calls[id(node)] = (path, function_name, node)
+        caller_code_calls.extend(
             (path, node)
             for node in ast.walk(tree)
             if isinstance(node, ast.Call)
-            and isinstance(node.func, ast.Attribute)
-            and node.func.attr == "warn"
-            and isinstance(node.func.value, ast.Name)
-            and node.func.value.id == "warnings"
+            and isinstance(node.func, ast.Name)
+            and node.func.id == "_warn_from_caller_code"
         )
-    assert calls
-    for path, node in calls:
-        keyword_categories = [k.value for k in node.keywords if k.arg == "category"]
-        category = (
-            node.args[1] if len(node.args) > 1 else next(iter(keyword_categories), None)
-        )
-        assert isinstance(category, ast.Name) and category.id == "ContextGemWarning", (
+    assert warn_calls
+    for path, function_name, node in warn_calls.values():
+        category = get_category(node)
+        allowed = {"ContextGemWarning"}
+        if function_name == "_warn_from_caller_code":
+            allowed.add("category")
+        assert isinstance(category, ast.Name) and category.id in allowed, (
             f"{path.name}:{node.lineno}: a warning without the ContextGemWarning category"
+        )
+    assert caller_code_calls
+    for path, node in caller_code_calls:
+        category = get_category(node)
+        if category is None:
+            continue
+        assert (
+            isinstance(category, ast.Name)
+            and category.id in contextgem.__all__
+            and issubclass(getattr(contextgem, category.id), ContextGemWarning)
+        ), (
+            f"{path.name}:{node.lineno}: a warning of a category that is not "
+            f"a subclass of ContextGemWarning exported from `contextgem`"
         )
 
 
