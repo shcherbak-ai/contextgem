@@ -4155,14 +4155,13 @@ class _DocumentModel(_GenericModelProcessor):
     @_post_init_method
     def _post_init(self, context: Any, /):
         """
-        Post-initialization method that logs model information and API configuration.
+        Post-initialization method that logs the model, and the information that
+        applies to its kind.
 
         :param context: Pydantic context (unused).
         :type context: Any
         """
         logger.info(f"Using model {self.model}")
-        if self.api_key is None:
-            logger.info("API key was not provided. Set `api_key`, if applicable.")
 
         # Log the information that applies to the specific kind of the model
         self._log_kind_specific_info()

@@ -20,6 +20,7 @@ from pathlib import Path
 from typing import Any, ClassVar
 from unittest.mock import patch
 
+import openai
 import pytest
 from aiolimiter import AsyncLimiter
 from pydantic import ValidationError
@@ -1060,6 +1061,27 @@ class TestLLMs(BaseTest):
             other_llm.chat("Hi again")
             assert counted_models == ["openai/gpt-6-luna"] + ["openai/gpt-5.6-luna"] * 2
 
+    def test_missing_api_key_not_retried(self, monkeypatch):
+        """
+        Tests that a request without an API key, which the client of the OpenAI SDK
+        rejects before sending it, and which litellm raises as a server error, fails
+        at once, without the retries of a transient error.
+
+        No request is sent: the client raises before it is built, and the API base
+        is a local port where nothing listens, in case a key were found.
+        """
+        for name in ["OPENAI_API_KEY", "OPENAI_ADMIN_KEY"]:
+            monkeypatch.delenv(name, raising=False)
+        llm = DocumentLLM(
+            model="openai/gpt-6-luna",
+            api_base="http://127.0.0.1:9/v1",
+            system_message="",
+        )
+        with capture_logs() as logs, pytest.raises(ModelAPIError) as exc_info:
+            llm.chat("Hi")
+        assert "Missing credentials" in str(exc_info.value.original_error)
+        assert not any("Retrying" in message for message in logs), logs
+
     def test_init_api_llm(self):
         """
         Tests the behaviour of the `DocumentLLM` class initialization.
@@ -1667,6 +1689,48 @@ class TestLLMs(BaseTest):
             ValueError("Simulated error of a stand-in"),
         ]:
             assert not _is_retryable_model_api_error(error)
+
+        # A request that the OpenAI SDK rejects before sending it, e.g. for a missing
+        # API key, which litellm raises as a server error, is not retried, unlike
+        # a server error of an HTTP exchange
+        def raise_from(error: Exception, cause: Exception) -> Exception:
+            """
+            Returns the error, raised from the cause, as litellm raises its errors.
+            """
+            try:
+                raise error from cause
+            except Exception as raised:  # noqa: BLE001 - returned for the checks
+                return raised
+
+        for cause, is_retryable in [
+            # The client of the SDK raises its base class itself
+            (
+                openai.OpenAIError(
+                    "Missing credentials. Please pass an `api_key`, or set "
+                    "the `OPENAI_API_KEY` environment variable."
+                ),
+                False,
+            ),
+            # ... and its subclasses for the other errors, e.g. after a response
+            (openai.ContentFilterFinishReasonError(), True),
+            # An error that is not of the SDK
+            (RuntimeError("Simulated error"), True),
+        ]:
+            for error in [
+                # As for an OpenAI model and for an Azure OpenAI model
+                create_api_error(litellm.InternalServerError),
+                litellm.APIError(
+                    status_code=500,
+                    message="Simulated API error",
+                    llm_provider="azure",
+                    model="azure/my-deployment",
+                ),
+            ]:
+                # litellm wraps the error of the SDK in an error of its own
+                # first, as for the requests of OpenAI
+                wrapped = raise_from(RuntimeError("OpenAIException"), cause)
+                raised = raise_from(error, wrapped)
+                assert _is_retryable_model_api_error(raised) is is_retryable
 
         # === Backoff with jitter ===
         for retry_number, backoff in [

@@ -841,6 +841,10 @@ def _is_retryable_model_api_error(error: Exception) -> bool:
     a timeout or a connection error of Python (``TimeoutError``, ``ConnectionError``),
     e.g. one that a stand-in raises to simulate such a failure.
 
+    A request that the client of the OpenAI SDK rejects before sending it, e.g. for
+    a missing API key, is not retryable either, whatever its status code (see
+    ``_is_rejected_by_sdk_before_sending``).
+
     :param error: The exception raised by the model API request.
     :type error: Exception
     :return: True if the request is worth retrying, False otherwise.
@@ -849,7 +853,46 @@ def _is_retryable_model_api_error(error: Exception) -> bool:
     status_code = getattr(error, "status_code", None)
     if not isinstance(status_code, int):
         return isinstance(error, TimeoutError | ConnectionError)
+    if _is_rejected_by_sdk_before_sending(error):
+        return False
     return status_code in _MODEL_API_RETRYABLE_STATUS_CODES or status_code >= 500
+
+
+def _is_rejected_by_sdk_before_sending(error: BaseException) -> bool:
+    """
+    Returns whether a failed model API request was rejected by the client of
+    the OpenAI SDK, with which litellm sends the requests of OpenAI, Azure OpenAI
+    and other providers, before the request was sent: e.g. for a missing API key,
+    the client raises ``openai.OpenAIError`` itself, the base class of the errors
+    of the SDK, where an error of an HTTP exchange (an error status, a failed
+    connection, a timeout) is an ``openai.APIError``.
+
+    litellm raises such an error as a server error (500), e.g. ``InternalServerError``
+    for a missing key of an OpenAI model and ``APIError`` for one of an Azure OpenAI
+    model (litellm 1.105.2, openai 2.54.0), as it no longer recognizes the message of
+    the SDK, while the request would fail again in the same way. The error of the SDK
+    is found among the errors that the error of litellm was raised from.
+
+    :param error: The exception raised by the model API request.
+    :type error: BaseException
+    :return: True if the client of the OpenAI SDK rejected the request before
+        sending it.
+    :rtype: bool
+    """
+    # Imported here, as the module is imported without litellm, which the SDK
+    # is imported with
+    import openai
+
+    seen: set[int] = set()
+    current: BaseException | None = error
+    while current is not None and id(current) not in seen:
+        seen.add(id(current))
+        # Only the base class itself: the errors of litellm and those of an HTTP
+        # exchange are its subclasses
+        if type(current) is openai.OpenAIError:
+            return True
+        current = current.__cause__ or current.__context__
+    return False
 
 
 def _get_model_api_retry_delay(retry_number: int) -> float:
