@@ -1361,10 +1361,12 @@ class _DocumentDecisionModel(_DocumentModel):
                     undecided_on_aspects=undecided_on_aspects,
                 ):
                     logger.warning(warning_msg)
-        except Exception:
+        except (Exception, asyncio.CancelledError):
             # e.g. an aspect or a concept that was processed by another call while
-            # the requests of this call were made. No usage is returned when
-            # an exception is raised, i.e. the usage of the requests would be lost.
+            # the requests of this call were made, or a cancellation while
+            # the fallback models are asked about what the model refused to answer
+            # on. No usage is returned when an exception is raised, i.e. the usage
+            # of the requests would be lost.
             await self._update_usage_and_cost((None, usage))
             raise
 

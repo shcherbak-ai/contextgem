@@ -16715,6 +16715,77 @@ class TestDecisionModels(BaseTest):
             )
         ]
 
+    def test_cancelled_fallback_of_refusals_keeps_usage(self):
+        """
+        Tests that the requests of a decision model are recorded in its usage when
+        the extraction is cancelled, e.g. on a timeout set by the calling code,
+        while its fallback model is asked about what it refused to answer on.
+        """
+        n_paragraphs = len(_ASPECTS_PARAGRAPH_TEXTS_SENT)
+        primary_probabilities: dict[str, Any] = {
+            "Termination": {2: 0.9},
+            "Payment": {0: "refusal", 3: 0.8},
+        }
+
+        async def extract_and_cancel(
+            decision_model: DocumentDecisionModel, document: Document
+        ) -> _DecisionsAPIStub:
+            """
+            Starts the extraction of the aspects of the document, and cancels it
+            when the request to the fallback model is sent, which gets no response.
+
+            :param decision_model: Decision model to extract with.
+            :type decision_model: DocumentDecisionModel
+            :param document: Document to extract from.
+            :type document: Document
+            :return: The stub with the requests received.
+            :rtype: _DecisionsAPIStub
+            """
+            fallback_request_sent = asyncio.Event()
+
+            async def get_no_response(request: dict[str, Any]) -> None:
+                """
+                Signals that the request is sent, and waits for a response that
+                does not come.
+
+                :param request: Keyword arguments of the request.
+                :type request: dict[str, Any]
+                """
+                fallback_request_sent.set()
+                await asyncio.sleep(3600)
+
+            decisions_stub = _DecisionsAPIStub(
+                {
+                    _DECISION_MODEL: [_create_aspects_responder(primary_probabilities)],
+                    _OTHER_DECISION_MODEL: [get_no_response],
+                }
+            )
+            with patch.object(litellm, "adecisions", new=decisions_stub):
+                extraction = asyncio.ensure_future(
+                    decision_model.extract_aspects_from_document_async(document)
+                )
+                await fallback_request_sent.wait()
+                extraction.cancel()
+                with pytest.raises(asyncio.CancelledError):
+                    await extraction
+            return decisions_stub
+
+        decision_model = _create_decision_model(
+            fallback_models=[
+                _create_decision_model(_OTHER_DECISION_MODEL, is_fallback=True)
+            ]
+        )
+        document = self._create_refusals_document()
+        decisions_stub = asyncio.run(extract_and_cancel(decision_model, document))
+        assert decisions_stub.requested_models() == [
+            *[_DECISION_MODEL] * n_paragraphs,
+            _OTHER_DECISION_MODEL,
+        ]
+        assert not any(aspect._is_processed for aspect in document.aspects)
+        calls = decision_model.get_usage()[0].usage.calls
+        assert len(calls) == n_paragraphs
+        assert all(call.timestamp_received is not None for call in calls)
+
     def test_fallback_decides_refused_sentences(self):
         """
         Tests that the fallback decision model of a decision model that extracts
