@@ -137,6 +137,31 @@ def _get_model_fields(cls) -> dict[str, Any]:
     return get_type_hints(cls)
 
 
+def _get_unresolved_class_advice(error: Exception) -> str:
+    """
+    Returns the advice on an error of the conversion of a class structure whose
+    annotations name a class that cannot be found, e.g. a class defined inside
+    a function, in a module with ``from __future__ import annotations``: there,
+    the annotations are strings, which are resolved in the namespace of the module,
+    where a class local to a function is not.
+
+    :param error: The error of the conversion.
+    :type error: Exception
+    :return: The advice, to follow the message of the error, or an empty string
+        for an error of another kind.
+    :rtype: str
+    """
+    if not isinstance(error, NameError):
+        return ""
+    return (
+        ". A class defined inside a function, in a module with `from __future__ "
+        "import annotations`, is found by the annotations that name it only if it "
+        "inherits from JsonObjectClassStruct, as the classes that name it do. "
+        "Let the classes of the structure inherit from JsonObjectClassStruct, "
+        "define them at module level, or give the structure as a dictionary"
+    )
+
+
 def _raise_dict_class_type_error(
     type_name: str, field_name: str, type_arg: Any
 ) -> None:

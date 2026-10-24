@@ -10,7 +10,7 @@ from __future__ import annotations
 import json
 import os
 import types
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, make_dataclass
 from datetime import date
 from typing import Any, Dict, List, Literal, Optional  # noqa: UP035
 from unittest.mock import patch
@@ -1489,6 +1489,115 @@ class TestAspectsAndConcepts(BaseTest):
 
         # Test instance serialization and cloning
         self.check_instance_serialization_and_cloning(vision_concept)
+
+    def test_json_object_class_structures(self):
+        """
+        Tests the structures of JSON object concepts given as classes defined inside
+        functions, in this module, which has postponed annotations, i.e. the types of
+        their fields are strings: the classes that inherit from JsonObjectClassStruct
+        are found among the classes of the functions that they are defined in, and
+        a class is never taken for another class of the same name, e.g. in another
+        function or module. Classes without the base class are rejected with an
+        error that names the concept and says what to do.
+        """
+
+        def create_invoice() -> type:
+            """
+            Returns a class of an invoice, with a class `Address` of its own.
+            """
+
+            @dataclass
+            class Address(JsonObjectClassStruct):
+                iban: str
+
+            @dataclass
+            class Invoice(JsonObjectClassStruct):
+                number: str
+                address: Address
+                history: list[Address]
+
+            return Invoice
+
+        def create_parcel() -> type:
+            """
+            Returns a class of a parcel, with another class `Address` of its own,
+            and a class of a function that encloses the class that names it.
+            """
+
+            @dataclass
+            class Address(JsonObjectClassStruct):
+                street: str
+
+            def create_class() -> type:
+                """
+                Returns the class of the parcel, in a function of its own.
+                """
+
+                @dataclass
+                class Parcel(JsonObjectClassStruct):
+                    weight: float
+                    address: Address
+
+                return Parcel
+
+            return create_class()
+
+        def structure_of(structure: Any) -> type | dict[str, Any]:
+            """
+            Returns the structure of a concept created with the structure.
+            """
+            return JsonObjectConcept(
+                name="Thing", description="A thing", structure=structure
+            ).structure
+
+        invoice_structure = {
+            "number": str,
+            "address": {"iban": str},
+            "history": [{"iban": str}],
+        }
+        invoice = create_invoice()
+        assert invoice.__annotations__["address"] == "Address"
+        parcel = create_parcel()
+        assert structure_of(invoice) == invoice_structure
+        assert structure_of(parcel) == {"weight": float, "address": {"street": str}}
+        # The classes of another call of the function, defined after the others
+        assert structure_of(create_invoice()) == invoice_structure
+        assert structure_of(invoice) == invoice_structure
+
+        # A class of the same name as a subclass, which is not a subclass itself,
+        # e.g. an `Address` of another module
+        other_address = make_dataclass("Address", [("postcode", str)])
+        assert structure_of({"address": other_address}) == {
+            "address": {"postcode": str}
+        }
+
+        # Classes without the base class
+        @dataclass
+        class LocalAddress:
+            street: str
+
+        @dataclass
+        class LocalPerson:
+            name: str
+            address: LocalAddress
+
+        for structure in [
+            LocalPerson,
+            {"person": LocalPerson},
+            {"people": list[LocalPerson]},
+            {"people": [LocalPerson]},
+        ]:
+            with pytest.raises(ValueError) as exc_info:
+                JsonObjectConcept(
+                    name="Person", description="A person", structure=structure
+                )
+            message = str(exc_info.value)
+            assert "concept `Person`" in message
+            assert "name 'LocalAddress' is not defined" in message
+            assert (
+                "Let the classes of the structure inherit from JsonObjectClassStruct"
+                in message
+            )
 
     @pytest.mark.vcr
     def test_extract_complex_json_object_concept(self):

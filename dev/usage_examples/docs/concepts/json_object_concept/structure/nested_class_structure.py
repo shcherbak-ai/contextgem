@@ -1,23 +1,21 @@
 from dataclasses import dataclass
 
-from contextgem import JsonObjectClassStruct, JsonObjectConcept
+from contextgem import JsonObjectConcept
 
 
 # Use dataclasses to define the structure of the JSON object
+# (Pydantic models and other classes with type annotations work the same way)
 
 
-# All classes in the nested class structure must inherit from JsonObjectClassStruct
-# to enable automatic conversion of the class hierarchy to a dictionary structure
-# for JsonObjectConcept
 @dataclass
-class Location(JsonObjectClassStruct):
+class Location:
     latitude: float
     longitude: float
     altitude: float
 
 
 @dataclass
-class Sensor(JsonObjectClassStruct):
+class Sensor:
     id: str
     type: str
     location: Location  # reference to another class
@@ -25,7 +23,7 @@ class Sensor(JsonObjectClassStruct):
 
 
 @dataclass
-class SensorNetwork(JsonObjectClassStruct):
+class SensorNetwork:
     network_id: str
     primary_sensor: Sensor  # reference to another class
     backup_sensors: list[Sensor]  # list of another class

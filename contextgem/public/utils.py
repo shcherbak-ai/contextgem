@@ -267,12 +267,18 @@ def release_sat_model() -> None:
 
 class JsonObjectClassStruct(_JsonObjectClassStruct):
     """
-    A base class that automatically converts class hierarchies to dictionary representations.
+    A base class for the classes of the structure of a JsonObjectConcept that are defined
+    inside a function, in a module with ``from __future__ import annotations``.
 
-    This class enables the use of existing class hierarchies (such as dataclasses or Pydantic models)
-    with nested type hints as a structure definition for JsonObjectConcept. When you need to use
-    typed class hierarchies with JsonObjectConcept, inherit from this class in all parts of your
-    class structure.
+    Classes with type annotations, such as dataclasses or Pydantic models, need no base class
+    to be a structure of a JsonObjectConcept, with their nested classes: their types are read
+    with ``typing.get_type_hints()``, which finds the classes of their module. In a module with
+    postponed annotations, the types are strings, and a class defined inside a function cannot
+    be found by its name. With this base class, a class named by the annotation of another class
+    is found among the subclasses defined in the same function, or in a function that encloses
+    it, as Python finds such names: each class of the structure is to inherit from it. A class
+    is never found by its name alone, i.e. classes of the same name in other modules or
+    functions are not mixed up.
 
     Example:
         .. literalinclude:: ../../../dev/usage_examples/docstrings/utils/json_object_cls_struct.py

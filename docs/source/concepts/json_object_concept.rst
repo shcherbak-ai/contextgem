@@ -119,12 +119,12 @@ While dictionary structures provide the simplest way to define JSON schemas, you
 
 4. **Using nested classes for complex structures:**
 
-For hierarchical data structures, you can also use nested class definitions, e.g. when your application code already has dataclasses or Pydantic models for the data.
-
-When using nested class definitions, all classes in the structure must inherit from the ``JsonObjectClassStruct`` utility class to enable automatic conversion of the whole class hierarchy to a dictionary structure:
+For hierarchical data structures, you can also use nested class definitions, e.g. when your application code already has dataclasses or Pydantic models for the data. A field whose type is another class, or a list of such a class, is converted to a nested structure, at any depth:
 
 .. literalinclude:: ../../../dev/usage_examples/docs/concepts/json_object_concept/structure/nested_class_structure.py
    :language: python
+
+The types of the fields are read with ``typing.get_type_hints()``, which finds the classes of the module. A class defined inside a function, in a module with ``from __future__ import annotations``, is not found that way: the types of the fields are then strings, which name classes local to the function. For such classes, let each class of the structure inherit from :class:`~contextgem.public.utils.JsonObjectClassStruct`, with which a class is found among the classes of the functions that the class naming it is defined in, or define the classes at module level. Otherwise, the concept raises ``ValueError`` when it is created.
 
 **Supported types and validation**
 

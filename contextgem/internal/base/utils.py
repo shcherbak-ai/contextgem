@@ -8,6 +8,7 @@ Module defining utility functions for the base classes.
 from __future__ import annotations
 
 import re
+import sys
 from typing import Any, get_type_hints
 
 from contextgem.internal.decorators import _disable_direct_initialization
@@ -31,19 +32,54 @@ class _JsonObjectClassStruct:
     Internal implementation of the JsonObjectClassStruct class.
     """
 
-    # Registry to store all subclasses for type resolution during structure generation:
-    # 1. Resolves string type annotations and forward references
-    # 2. Enables lookup of already defined classes by name when traversing class hierarchies
-    # 3. Provides a shared namespace for the entire type structure
-    # 4. Critical for resolving classes used in generic containers like list[Class]
+    # The subclasses, by their module and their qualified name, e.g.
+    # `test_person.<locals>.Address` for a class defined inside a function. They
+    # are what the string annotations of a subclass that are not found in its module
+    # name, e.g. the classes defined inside a function, in a module with postponed
+    # annotations (`from __future__ import annotations`), where the annotations are
+    # strings (see `_get_enclosing_classes`). A class is never looked up by its name
+    # alone: two classes of the same name in other modules or scopes, e.g. an
+    # `Address` in each of two modules, are different classes. A class defined again
+    # with the same qualified name, e.g. in each call of a function, replaces
+    # the class defined before
     _registry = {}  # noqa: RUF012 - annotated, it would be a field of the user's classes
 
     def __init_subclass__(cls, **kwargs):
         """
-        Registers each subclass in the registry
+        Registers each subclass in the registry, by its module and its qualified name.
         """
         super().__init_subclass__(**kwargs)
-        _JsonObjectClassStruct._registry[cls.__name__] = cls
+        _JsonObjectClassStruct._registry[(cls.__module__, cls.__qualname__)] = cls
+
+    @classmethod
+    def _get_enclosing_classes(cls) -> dict[str, type]:
+        """
+        Returns the subclasses defined in the scopes that enclose the class, i.e.
+        in the functions that it is defined in, by their names, as Python finds
+        the names of these scopes from the class: a class of an inner scope
+        hides a class of the same name of an outer one. The classes of the module
+        itself are found in its namespace.
+
+        :return: The subclasses of the enclosing scopes, by their names.
+        :rtype: dict[str, type]
+        """
+        # The scopes of the functions that the class is defined in, from the outermost:
+        # `f.<locals>` and `f.<locals>.g.<locals>` for `f.<locals>.g.<locals>.Address`
+        parts = cls.__qualname__.split(".")[:-1]
+        scopes = [
+            ".".join(parts[: i + 1])
+            for i, part in enumerate(parts)
+            if part == "<locals>"
+        ]
+        classes: dict[str, type] = {}
+        for scope in scopes:
+            for (module, qualname), registered_class in list(
+                _JsonObjectClassStruct._registry.items()
+            ):
+                scope_of_class, _, name = qualname.rpartition(".")
+                if module == cls.__module__ and scope_of_class == scope:
+                    classes[name] = registered_class
+        return classes
 
     @classmethod
     def _as_dict_structure(cls) -> dict[str, Any]:
@@ -55,18 +91,20 @@ class _JsonObjectClassStruct:
         """
         result = {}
 
+        # The namespace for the names of the annotations: that of the module of
+        # the class, and the subclasses of the scopes that enclose the class
+        module = sys.modules.get(cls.__module__)
+        enclosing_classes = cls._get_enclosing_classes()
+        namespace: dict[str, Any] = dict(vars(module)) if module else {}
+        namespace.update(enclosing_classes)
+
         # Get annotations using get_type_hints to resolve forward references
         # This correctly handles Pydantic and other typed classes
         try:
-            annotations = get_type_hints(cls)
+            annotations = get_type_hints(cls, localns=enclosing_classes)
         except Exception:  # noqa: BLE001 - falls back to the raw annotations
             # Fallback to raw annotations if get_type_hints fails
             annotations = cls.__annotations__ if hasattr(cls, "__annotations__") else {}
-
-        # Create a combined namespace for resolving types
-        namespace = {}
-        namespace.update(globals())  # Start with global namespace
-        namespace.update(_JsonObjectClassStruct._registry)  # Add registered classes
 
         for field_name, field_type in annotations.items():
             # Normalize field type to handle generic types consistently
@@ -107,14 +145,12 @@ class _JsonObjectClassStruct:
         if isinstance(field_type, str):
             return cls._process_string_type(field_type, field_name, namespace)
 
-        # Case 2: Types in registry (_JsonObjectClassStruct subclasses)
-        if (
-            hasattr(field_type, "__name__")
-            and field_type.__name__ in _JsonObjectClassStruct._registry
+        # Case 2: A subclass, converted by itself. Another class, e.g. a dataclass
+        # of the same name, is converted as any other typed class
+        if isinstance(field_type, type) and issubclass(
+            field_type, _JsonObjectClassStruct
         ):
-            return _JsonObjectClassStruct._registry[
-                field_type.__name__
-            ]._as_dict_structure()
+            return field_type._as_dict_structure()
 
         # Case 3: List types
         if hasattr(field_type, "__origin__") and field_type.__origin__ is list:
@@ -155,8 +191,8 @@ class _JsonObjectClassStruct:
         list_match = re.compile(r"list\[(.*)\]").match(field_type)
         if list_match:
             inner_type_name = list_match.group(1).strip()
-            if inner_type_name in _JsonObjectClassStruct._registry:
-                inner_class = _JsonObjectClassStruct._registry[inner_type_name]
+            inner_class = namespace.get(inner_type_name)
+            if hasattr(inner_class, "_as_dict_structure"):
                 return [inner_class._as_dict_structure()]
 
         # Try to resolve the type from our namespace
@@ -173,8 +209,10 @@ class _JsonObjectClassStruct:
         # If we can't resolve the type, raise an error
         raise ValueError(
             f"Could not resolve type '{field_type}' for field '{field_name}'. "
-            f"Make sure the type is either a built-in type or registered "
-            f"with JsonObjectClassStruct."
+            f"Make sure the type is either a built-in type, a class of the module, "
+            f"or a class that inherits from JsonObjectClassStruct, defined in "
+            f"the same function as the class of the field or in a function "
+            f"that encloses it."
         )
 
     @classmethod
@@ -203,13 +241,11 @@ class _JsonObjectClassStruct:
         # Get the item type
         item_type = field_type.__args__[0]
 
-        # Check if item_type is registered by name in our registry
-        if (
-            hasattr(item_type, "__name__")
-            and item_type.__name__ in _JsonObjectClassStruct._registry
+        # A subclass as the item type, converted by itself
+        if isinstance(item_type, type) and issubclass(
+            item_type, _JsonObjectClassStruct
         ):
-            resolved_class = _JsonObjectClassStruct._registry[item_type.__name__]
-            return [resolved_class._as_dict_structure()]
+            return [item_type._as_dict_structure()]
 
         # Handle string item types
         if isinstance(item_type, str):
@@ -225,8 +261,10 @@ class _JsonObjectClassStruct:
             # Can't resolve - raise error
             raise ValueError(
                 f"Could not resolve list item type '{item_type}' for field '{field_name}'. "
-                f"Make sure the type is either a built-in type or registered "
-                f"with JsonObjectClassStruct."
+                f"Make sure the type is either a built-in type, a class of the module, "
+                f"or a class that inherits from JsonObjectClassStruct, defined in "
+                f"the same function as the class of the field or in a function "
+                f"that encloses it."
             )
 
         # Default case: keep the list type as is

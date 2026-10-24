@@ -19,6 +19,7 @@ from pydantic import (
     StrictBool,
     StrictFloat,
     StrictInt,
+    ValidationInfo,
     field_validator,
     model_validator,
 )
@@ -42,6 +43,7 @@ from contextgem.internal.llm_output_structs.concept_structs import (
 )
 from contextgem.internal.typings.typed_class_utils import (
     _get_model_fields,
+    _get_unresolved_class_advice,
     _is_typed_class,
     _raise_dict_class_type_error,
 )
@@ -555,7 +557,7 @@ class _JsonObjectConcept(_Concept):
 
     @classmethod
     def _convert_structure_to_dict(
-        cls, structure: type | dict[str, Any]
+        cls, structure: type | dict[str, Any], concept_name: str
     ) -> dict[str, Any]:
         """
         Converts the structure (class or dictionary) to a standardized dictionary format
@@ -563,6 +565,8 @@ class _JsonObjectConcept(_Concept):
 
         :param structure: Class or dictionary defining the JSON structure.
         :type structure: type | dict[str, Any]
+        :param concept_name: The name of the concept, for the error messages.
+        :type concept_name: str
         :return: Dictionary representation of the structure.
         :rtype: dict[str, Any]
         :raises ValueError: If conversion fails.
@@ -587,35 +591,39 @@ class _JsonObjectConcept(_Concept):
                 }
             except Exception as e:
                 raise ValueError(
-                    f"Invalid structure for concept `{cls.__name__}`: {e}"
+                    f"Invalid structure for concept `{concept_name}`: {e}"
+                    f"{_get_unresolved_class_advice(e)}"
                 ) from e
 
         # Ensure we have a dictionary at this point
         if not isinstance(structure, dict):
             raise ValueError(  # noqa: TRY004 - pydantic and the callers handle ValueError
-                f"Invalid structure for concept `{cls.__name__}`: "
+                f"Invalid structure for concept `{concept_name}`: "
                 f"Processed structure must be a dict."
             )
 
         if not structure:
             raise ValueError(
-                f"Invalid structure for concept `{cls.__name__}`: empty dictionary"
+                f"Invalid structure for concept `{concept_name}`: empty dictionary"
             )
 
         # Recursively process dictionary to handle nested classes and special types
         processed_structure = {}
         for key, value in structure.items():
-            processed_structure[key] = cls._process_structure_value(value, f"{key}")
+            processed_structure[key] = cls._process_structure_value(
+                value, f"{key}", concept_name
+            )
 
         return processed_structure
 
     @classmethod
-    def _process_structure_value(cls, value: Any, path: str = "") -> Any:
+    def _process_structure_value(cls, value: Any, path: str, concept_name: str) -> Any:
         """
         Recursively processes a structure value, handling all nested scenarios.
 
         :param value: The value to process (class, dict, list, or other type).
         :param path: Current path in the structure for error reporting.
+        :param concept_name: The name of the concept, for the error messages.
         :return: Processed value with all nested classes converted to dictionaries.
         :raises ValueError: If processing fails for any nested component.
         """
@@ -629,12 +637,12 @@ class _JsonObjectConcept(_Concept):
                 dict_structure = value._as_dict_structure()
                 # Process each item in the dictionary
                 return {
-                    k: cls._process_structure_value(v, f"{path}.{k}")
+                    k: cls._process_structure_value(v, f"{path}.{k}", concept_name)
                     for k, v in dict_structure.items()
                 }
             except Exception as e:
                 raise ValueError(
-                    f"Invalid structure at `{path}` in concept `{cls.__name__}`: {e}"
+                    f"Invalid structure at `{path}` in concept `{concept_name}`: {e}"
                 ) from e
 
         # Handle other typed classes
@@ -642,19 +650,20 @@ class _JsonObjectConcept(_Concept):
             try:
                 fields = _get_model_fields(value)
                 return {
-                    k: cls._process_structure_value(v, f"{path}.{k}")
+                    k: cls._process_structure_value(v, f"{path}.{k}", concept_name)
                     for k, v in fields.items()
                 }
             except Exception as e:
                 raise ValueError(
-                    f"Invalid structure at `{path}` in concept `{cls.__name__}`: {e}"
+                    f"Invalid structure at `{path}` in concept `{concept_name}`: {e}"
+                    f"{_get_unresolved_class_advice(e)}"
                 ) from e
 
         # Handle list type hint (must have exactly one element for type annotation)
         elif isinstance(value, list):
             if not value or len(value) != 1:
                 raise ValueError(
-                    f"Invalid list at `{path}` in concept `{cls.__name__}`: "
+                    f"Invalid list at `{path}` in concept `{concept_name}`: "
                     f"List must contain exactly one element representing the item type"
                 )
 
@@ -662,7 +671,9 @@ class _JsonObjectConcept(_Concept):
 
             # If it's a dictionary, process as nested structure
             if isinstance(item_type, dict):
-                processed_item = cls._process_structure_value(item_type, f"{path}[0]")
+                processed_item = cls._process_structure_value(
+                    item_type, f"{path}[0]", concept_name
+                )
                 return [processed_item]
 
             # If it's not a dictionary, validate that it's an allowed type for list instances
@@ -682,12 +693,14 @@ class _JsonObjectConcept(_Concept):
                 _is_typed_class(item_type)
             ):
                 # For allowed types, process normally and return
-                processed_item = cls._process_structure_value(item_type, f"{path}[0]")
+                processed_item = cls._process_structure_value(
+                    item_type, f"{path}[0]", concept_name
+                )
                 return [processed_item]
             else:
                 # For other complex types, provide helpful error message
                 raise ValueError(
-                    f"Invalid list instance at `{path}` in concept `{cls.__name__}`: "
+                    f"Invalid list instance at `{path}` in concept `{concept_name}`: "
                     f"List instances can only contain primitive types (str, int, float, bool, None), "
                     f"union types (str | int, Optional[str]), literal types (Literal['a', 'b']), "
                     f"or typed classes (Pydantic models, dataclasses, etc.). "
@@ -704,7 +717,9 @@ class _JsonObjectConcept(_Concept):
                         f"Invalid dictionary key at `{path}`: {k}. "
                         f"Dictionary keys must be strings, got {type(k).__name__}"
                     )
-                processed_dict[k] = cls._process_structure_value(v, f"{path}.{k}")
+                processed_dict[k] = cls._process_structure_value(
+                    v, f"{path}.{k}", concept_name
+                )
             return processed_dict
 
         # Handle special generic types like list[TypedClass]
@@ -714,7 +729,7 @@ class _JsonObjectConcept(_Concept):
         ):
             if len(value.__args__) > 1:
                 raise ValueError(
-                    f"Invalid list type annotation at `{path}` in concept `{cls.__name__}`: "
+                    f"Invalid list type annotation at `{path}` in concept `{concept_name}`: "
                     f"List must have exactly one type argument, got {len(value.__args__)}"
                 )
             if len(value.__args__) == 1:
@@ -727,9 +742,18 @@ class _JsonObjectConcept(_Concept):
                         dict_structure = arg_type._as_dict_structure()
                         return [dict_structure]
                     else:
-                        fields = _get_model_fields(arg_type)
+                        try:
+                            fields = _get_model_fields(arg_type)
+                        except Exception as e:
+                            raise ValueError(
+                                f"Invalid structure at `{path}[0]` in concept "
+                                f"`{concept_name}`: {e}"
+                                f"{_get_unresolved_class_advice(e)}"
+                            ) from e
                         processed_fields = {
-                            k: cls._process_structure_value(v, f"{path}[0].{k}")
+                            k: cls._process_structure_value(
+                                v, f"{path}[0].{k}", concept_name
+                            )
                             for k, v in fields.items()
                         }
                         return [processed_fields]
@@ -756,13 +780,13 @@ class _JsonObjectConcept(_Concept):
                                 if not isinstance(literal_arg, JSON_PRIMITIVE_TYPES):
                                     raise ValueError(  # noqa: TRY004 - pydantic and the callers handle ValueError
                                         f"Invalid Literal value in Optional[Literal] at `{path}` "
-                                        f"in concept `{cls.__name__}`: "
+                                        f"in concept `{concept_name}`: "
                                         f"Literal value '{literal_arg}' is not a JSON primitive type."
                                     )
                         # For non-Literal types, check for primitive types
                         elif arg not in JSON_PRIMITIVE_TYPES:
                             raise ValueError(
-                                f"Invalid Optional type at `{path}` in concept `{cls.__name__}`: "
+                                f"Invalid Optional type at `{path}` in concept `{concept_name}`: "
                                 f"Optional[{arg.__name__}] is not allowed. "
                                 f"Optional[] can only be used with primitive types "
                                 f"(str, int, float, bool) or Literal types, "
@@ -804,7 +828,7 @@ class _JsonObjectConcept(_Concept):
     @field_validator("structure")
     @classmethod
     def _validate_structure(
-        cls, structure: type | dict[str, Any]
+        cls, structure: type | dict[str, Any], info: ValidationInfo
     ) -> type | dict[str, Any]:
         """
         Validates that the structure adheres to required format and can be properly rendered.
@@ -813,11 +837,16 @@ class _JsonObjectConcept(_Concept):
 
         :param structure: Class or dictionary defining the JSON structure.
         :type structure: type | dict[str, Any]
+        :param info: The validation info, with the name of the concept, validated
+            before the structure.
+        :type info: ValidationInfo
         :return: Validated structure converted to a dictionary representation.
         :rtype: dict[str, Any]
         :raises ValueError: If structure format is invalid or cannot be properly processed.
         """
-        processed_structure = cls._convert_structure_to_dict(structure)
+        # The name of the concept, unless it is invalid itself
+        concept_name = info.data.get("name") or cls.__name__
+        processed_structure = cls._convert_structure_to_dict(structure, concept_name)
 
         try:
             # Check that the prompt types can be rendered in a prompt-compatible string
@@ -826,7 +855,7 @@ class _JsonObjectConcept(_Concept):
             _dynamic_pydantic_model(processed_structure)
         except (TypeError, ValueError, RuntimeError) as e:
             raise ValueError(
-                f"Invalid structure for concept `{cls.__name__}`: {e}"
+                f"Invalid structure for concept `{concept_name}`: {e}"
             ) from e
         return processed_structure
 
@@ -845,7 +874,7 @@ class _JsonObjectConcept(_Concept):
                 structure_validator_model.model_validate(example.content)
         except ValueError as e:
             raise ValueError(
-                f"Invalid JSON object structure for concept `{self.__class__.__name__}`: {e}"
+                f"Invalid JSON object structure for concept `{self.name}`: {e}"
             ) from e
         return self
 

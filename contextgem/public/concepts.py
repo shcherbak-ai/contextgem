@@ -362,9 +362,11 @@ class JsonObjectConcept(_JsonObjectConcept):
         ``dict[str, Address]`` is not allowed. Use alternative structures like nested objects
         or lists of objects instead.
 
-        **Note**: When using classes that contain other classes as type hints, inherit from
-        ``JsonObjectClassStruct`` in all parts of the class hierarchy, to ensure proper conversion
-        of nested class hierarchies to dictionary representations for serialization.
+        **Note**: A class may have fields whose types are other classes, at any depth: they
+        are converted to nested structures, with no base class needed. Only the classes
+        defined inside a function, in a module with ``from __future__ import annotations``,
+        are to inherit from ``JsonObjectClassStruct``, as the classes that their annotations
+        name cannot be found otherwise.
 
         **Tip**: do not overcomplicate the structure to avoid prompt overloading.
     :vartype structure: type | dict[str, Any]
