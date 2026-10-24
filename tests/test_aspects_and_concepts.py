@@ -58,6 +58,23 @@ from tests.utils import (
 )
 
 
+class _Customer(JsonObjectClassStruct):
+    """
+    A class of a customer, at module level, whose field names a class defined in
+    its body (see `test_json_object_class_structures`).
+    """
+
+    class Address(JsonObjectClassStruct):
+        """
+        The address of the customer.
+        """
+
+        city: str
+
+    name: str
+    address: Address
+
+
 class TestAspectsAndConcepts(BaseTest):
     """
     Tests for the initialization and validation of aspects, concepts, examples
@@ -1563,6 +1580,28 @@ class TestAspectsAndConcepts(BaseTest):
         # The classes of another call of the function, defined after the others
         assert structure_of(create_invoice()) == invoice_structure
         assert structure_of(invoice) == invoice_structure
+
+        # A class defined in the body of the class that names it, at module level
+        # and in a function, and an inherited field that names such a class of its
+        # base class, in a subclass defined in a function
+        @dataclass
+        class Order(JsonObjectClassStruct):
+            @dataclass
+            class Line(JsonObjectClassStruct):
+                sku: str
+
+            lines: list[Line]
+
+        class Customer(_Customer):
+            email: str
+
+        assert structure_of(_Customer) == {"name": str, "address": {"city": str}}
+        assert structure_of(Order) == {"lines": [{"sku": str}]}
+        assert structure_of(Customer) == {
+            "name": str,
+            "address": {"city": str},
+            "email": str,
+        }
 
         # A class of the same name as a subclass, which is not a subclass itself,
         # e.g. an `Address` of another module

@@ -26,6 +26,21 @@ from contextgem.internal.typings.types_to_strings import (
 from contextgem.internal.typings.user_type_hints_validation import _is_string_type
 
 
+def _get_body_classes(cls: type) -> dict[str, type]:
+    """
+    Returns the classes defined in the body of a class, e.g. its nested classes,
+    by their names. Only the classes: the default value of a field, e.g. ``None``
+    for ``date: date | None = None``, would hide in the annotations the class that
+    its name is of.
+
+    :param cls: The class.
+    :type cls: type
+    :return: The classes of its body, by their names.
+    :rtype: dict[str, type]
+    """
+    return {name: value for name, value in vars(cls).items() if isinstance(value, type)}
+
+
 @_disable_direct_initialization
 class _JsonObjectClassStruct:
     """
@@ -91,17 +106,29 @@ class _JsonObjectClassStruct:
         """
         result = {}
 
-        # The namespace for the names of the annotations: that of the module of
-        # the class, and the subclasses of the scopes that enclose the class
+        # The namespace for the names of the annotations, as Python looks them up:
+        # the classes defined in the body of the class, e.g. a nested class, then
+        # the subclasses of the scopes that enclose the class, then its module
         module = sys.modules.get(cls.__module__)
-        enclosing_classes = cls._get_enclosing_classes()
         namespace: dict[str, Any] = dict(vars(module)) if module else {}
-        namespace.update(enclosing_classes)
+        namespace.update(cls._get_enclosing_classes())
+        namespace.update(_get_body_classes(cls))
 
         # Get annotations using get_type_hints to resolve forward references
-        # This correctly handles Pydantic and other typed classes
+        # This correctly handles Pydantic and other typed classes. The names of
+        # the enclosing scopes are given to it only for a class defined in a function.
+        # Names given to it replace the namespace of each class of the hierarchy,
+        # i.e. they include the classes of the bodies of the base classes, e.g. a class
+        # that an inherited field names, which the names of the class itself hide
+        localns: dict[str, Any] | None = None
+        if "<locals>" in cls.__qualname__.split("."):
+            localns = {}
+            for base in reversed(cls.__mro__):
+                if issubclass(base, _JsonObjectClassStruct):
+                    localns.update(base._get_enclosing_classes())
+                localns.update(_get_body_classes(base))
         try:
-            annotations = get_type_hints(cls, localns=enclosing_classes)
+            annotations = get_type_hints(cls, localns=localns)
         except Exception:  # noqa: BLE001 - falls back to the raw annotations
             # Fallback to raw annotations if get_type_hints fails
             annotations = cls.__annotations__ if hasattr(cls, "__annotations__") else {}
