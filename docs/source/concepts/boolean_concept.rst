@@ -82,7 +82,7 @@ When creating a :class:`~contextgem.public.concepts.BooleanConcept`, you can spe
    * - ``singular_occurrence``
      - ``bool``
      - ``False``
-     - Whether this concept has at most one extracted item. If ``True``, at most one item is extracted, and none if there is nothing to extract: an LLM that returns more than one is asked again, as for any other invalid data. For boolean concepts, this parameter is particularly useful when you want to make a single true/false determination about the entire document (e.g., "contains confidential information") or a unique determination about a specific matter (e.g., "is the payment schedule finalized"). This helps distinguish between evaluating overall document properties versus identifying multiple instances where a condition might be true/false. Note that with advanced LLMs, this constraint may not be required as they can often infer the appropriate number of items to extract from the concept's name, description, and type (e.g., "contains confidential information" vs "compliance violations"). With a decision model (:class:`~contextgem.public.decision_models.DocumentDecisionModel`), a concept gets at most one item with or without this parameter, unless the text is sent in parts, i.e. ``max_paragraphs_to_analyze_per_call`` is passed to the extraction method: a decision model then returns an item for each part, and rejects a concept with ``singular_occurrence=True`` with ``ValueError`` before any request is sent. See :ref:`sending a long text in parts <decision-models-parts-label>`.
+     - Whether this concept has at most one extracted item. If ``True``, at most one item is extracted, and none if there is nothing to extract: an LLM that returns more than one is asked again, as for any other invalid data. For boolean concepts, this parameter is particularly useful when you want to make a single true/false determination about the entire document (e.g., "contains confidential information") or a unique determination about a specific matter (e.g., "is the payment schedule finalized"). This helps distinguish between evaluating overall document properties versus identifying multiple instances where a condition might be true/false. Without it, an LLM infers the number of items from the name and the description of the concept. With a decision model (:class:`~contextgem.public.decision_models.DocumentDecisionModel`), a concept gets at most one item with or without this parameter, unless the text is sent in parts, i.e. ``max_paragraphs_to_analyze_per_call`` is passed to the extraction method: a decision model then returns an item for each part, and rejects a concept with ``singular_occurrence=True`` with ``ValueError`` before any request is sent. See :ref:`sending a long text in parts <decision-models-parts-label>`.
    * - ``custom_data``
      - ``dict``
      - ``{}``
@@ -104,7 +104,7 @@ You can configure a :class:`~contextgem.public.concepts.BooleanConcept` to inclu
 📊 Extracted Items
 --------------------
 
-When a :class:`~contextgem.public.concepts.BooleanConcept` is extracted, it is populated with **a list of extracted items** accessible through the ``.extracted_items`` property. Each item is an instance of the ``_BooleanItem`` class with the following attributes:
+When a :class:`~contextgem.public.concepts.BooleanConcept` is extracted, it is populated with **a list of extracted items** accessible through the ``.extracted_items`` property. Each item has the following attributes:
 
 .. list-table::
    :widths: 20 20 60

@@ -82,7 +82,7 @@ When creating a :class:`~contextgem.public.concepts.StringConcept`, you can spec
    * - ``singular_occurrence``
      - ``bool``
      - ``False``
-     - Whether this concept has at most one extracted item. If ``True``, at most one item is extracted, and none if there is nothing to extract: an LLM that returns more than one is asked again, as for any other invalid data. This is particularly relevant when it might be unclear for the LLM whether to focus on the concept as a single item or extract multiple items. For example, when extracting the total amount of payments in a contract, where payments might be mentioned in different parts of the document but you only want the final total. Note that with advanced LLMs, this constraint may not be strictly required as they can often infer the appropriate number of items to extract from the concept's name, description, and type (e.g., "document title" vs "key findings").
+     - Whether this concept has at most one extracted item. If ``True``, at most one item is extracted, and none if there is nothing to extract: an LLM that returns more than one is asked again, as for any other invalid data. This is particularly relevant when it might be unclear for the LLM whether to focus on the concept as a single item or extract multiple items. For example, when extracting the total amount of payments in a contract, where payments might be mentioned in different parts of the document but you only want the final total. Without it, an LLM infers the number of items from the name and the description of the concept.
    * - ``custom_data``
      - ``dict``
      - ``{}``
@@ -112,7 +112,7 @@ You can configure a :class:`~contextgem.public.concepts.StringConcept` to includ
 📊 Extracted Items
 --------------------
 
-When a :class:`~contextgem.public.concepts.StringConcept` is extracted, it is populated with **a list of extracted items** accessible through the ``.extracted_items`` property. Each item is an instance of the ``_StringItem`` class with the following attributes:
+When a :class:`~contextgem.public.concepts.StringConcept` is extracted, it is populated with **a list of extracted items** accessible through the ``.extracted_items`` property. Each item has the following attributes:
 
 .. list-table::
    :widths: 20 20 60

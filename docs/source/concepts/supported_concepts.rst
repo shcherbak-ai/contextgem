@@ -23,4 +23,4 @@ ContextGem provides several types of concepts, each tailored for specific extrac
 This section provides detailed documentation for each concept type, including usage examples and best practices.
 
 .. note::
-   All concept types are extracted with LLMs. :doc:`BooleanConcept <boolean_concept>`, :doc:`LabelConcept <label_concept>` and :doc:`RatingConcept <rating_concept>` can also be extracted with a decision model, which returns the probabilities of the possible values instead of generating text. See :doc:`../decision_models/decision_models`.
+   Every concept type can be extracted with an LLM. :doc:`BooleanConcept <boolean_concept>`, :doc:`LabelConcept <label_concept>` and :doc:`RatingConcept <rating_concept>` can also be extracted with a decision model, which returns the probabilities of the possible values instead of generating text. See :doc:`../decision_models/decision_models`.

@@ -70,7 +70,7 @@ Performs comprehensive extraction by processing a :class:`~contextgem.public.doc
    * - ``use_concurrency``
      - ``bool``
      - ``False``
-     - Enable concurrent processing of multiple :class:`~contextgem.public.aspects.Aspect` and/or :class:`~contextgem.internal.base.concepts._Concept` instances. Can significantly reduce processing time by executing multiple extraction tasks in parallel, especially beneficial for documents with many aspects and concepts. However, it might cause rate limit errors with LLM providers. When enabled, adjust the ``async_limiter`` on your :class:`~contextgem.public.llms.DocumentLLM` to control request frequency (default is 10 acquisitions per 10 seconds). With concurrency enabled, each aspect/concept is processed in a separate LLM call (LLM prompt), unless ``max_items_per_call`` is set to a higher number, which increases the LLM API costs. See :doc:`../optimizations/optimization_speed` for examples of concurrency configuration.
+     - Enable concurrent processing of multiple :class:`~contextgem.public.aspects.Aspect` and/or :class:`~contextgem.internal.base.concepts._Concept` instances. Can significantly reduce processing time by executing multiple extraction tasks in parallel, especially beneficial for documents with many aspects and concepts. However, it might cause rate limit errors with LLM providers. When enabled, adjust the ``async_limiter`` on your :class:`~contextgem.public.llms.DocumentLLM` to control request frequency (default is 10 acquisitions per 10 seconds). With concurrency enabled, each aspect/concept is processed in a separate LLM call (LLM prompt), unless ``max_items_per_call`` is set to a higher number: as each call is sent the text, separate calls increase the LLM API costs. See :doc:`../optimizations/optimization_speed` for examples of concurrency configuration.
    * - ``max_paragraphs_to_analyze_per_call``
      - ``int``
      - ``0``
@@ -82,7 +82,7 @@ Performs comprehensive extraction by processing a :class:`~contextgem.public.doc
    * - ``raise_exception_on_extraction_error``
      - ``bool``
      - ``True``
-     - Whether to raise an exception if the extraction fails due to invalid data returned by a model or an error in the model API. If True (default): if the model returns invalid data, :class:`~contextgem.public.exceptions.ModelExtractionError` will be raised, and if the model API call fails or the response is cut off at the max output tokens, :class:`~contextgem.public.exceptions.ModelAPIError` will be raised, and if the model or its provider declines to answer, :class:`~contextgem.public.exceptions.ModelRefusalError` will be raised (see :ref:`llm-refusals-label`). All can be imported from ``contextgem``. If False, a warning is logged instead, and no extracted items are returned. The concepts of an aspect that could not be extracted are then left out, with a warning that names them, and the concepts of the other aspects and of the document are extracted.
+     - Whether to raise an exception if the extraction fails due to invalid data returned by a model or an error in the model API. If True (default): if the model returns invalid data, :class:`~contextgem.public.exceptions.ModelExtractionError` will be raised, and if the model API call fails or the response is cut off at the max output tokens, :class:`~contextgem.public.exceptions.ModelAPIError` will be raised, and if the model or its provider declines to answer, :class:`~contextgem.public.exceptions.ModelRefusalError` will be raised (see :ref:`llm-refusals-label`). All can be imported from ``contextgem``. If False, a warning is logged instead: the aspects or concepts of the call that failed get no items, and the others are extracted. The concepts of an aspect that could not be extracted are then left out, with a warning that names them, and the concepts of the other aspects and of the document are extracted.
 
 |
 
@@ -154,7 +154,7 @@ Extracts :class:`~contextgem.public.aspects.Aspect` instances from a :class:`~co
    * - ``use_concurrency``
      - ``bool``
      - ``False``
-     - Enable concurrent processing of multiple :class:`~contextgem.public.aspects.Aspect` instances. Can significantly reduce processing time by executing multiple extraction tasks concurrently, especially beneficial for documents with many aspects. However, it might cause rate limit errors with LLM providers. When enabled, adjust the ``async_limiter`` on your :class:`~contextgem.public.llms.DocumentLLM` to control request frequency (default is 10 acquisitions per 10 seconds). With concurrency enabled, each aspect is processed in a separate LLM call (LLM prompt), unless ``max_items_per_call`` is set to a higher number, which increases the LLM API costs. See :doc:`../optimizations/optimization_speed` for examples of concurrency configuration.
+     - Enable concurrent processing of multiple :class:`~contextgem.public.aspects.Aspect` instances. Can significantly reduce processing time by executing multiple extraction tasks concurrently, especially beneficial for documents with many aspects. However, it might cause rate limit errors with LLM providers. When enabled, adjust the ``async_limiter`` on your :class:`~contextgem.public.llms.DocumentLLM` to control request frequency (default is 10 acquisitions per 10 seconds). With concurrency enabled, each aspect is processed in a separate LLM call (LLM prompt), unless ``max_items_per_call`` is set to a higher number: as each call is sent the text, separate calls increase the LLM API costs. See :doc:`../optimizations/optimization_speed` for examples of concurrency configuration.
    * - ``max_paragraphs_to_analyze_per_call``
      - ``int``
      - ``0``
@@ -162,7 +162,7 @@ Extracts :class:`~contextgem.public.aspects.Aspect` instances from a :class:`~co
    * - ``raise_exception_on_extraction_error``
      - ``bool``
      - ``True``
-     - Whether to raise an exception if the extraction fails due to invalid data returned by a model or an error in the model API. If True (default): if the model returns invalid data, :class:`~contextgem.public.exceptions.ModelExtractionError` will be raised, and if the model API call fails or the response is cut off at the max output tokens, :class:`~contextgem.public.exceptions.ModelAPIError` will be raised, and if the model or its provider declines to answer, :class:`~contextgem.public.exceptions.ModelRefusalError` will be raised (see :ref:`llm-refusals-label`). All can be imported from ``contextgem``. If False, a warning is logged instead, and no extracted items are returned.
+     - Whether to raise an exception if the extraction fails due to invalid data returned by a model or an error in the model API. If True (default): if the model returns invalid data, :class:`~contextgem.public.exceptions.ModelExtractionError` will be raised, and if the model API call fails or the response is cut off at the max output tokens, :class:`~contextgem.public.exceptions.ModelAPIError` will be raised, and if the model or its provider declines to answer, :class:`~contextgem.public.exceptions.ModelRefusalError` will be raised (see :ref:`llm-refusals-label`). All can be imported from ``contextgem``. If False, a warning is logged instead: the aspects or concepts of the call that failed get no items, and the others are extracted.
 
 |
 
@@ -235,7 +235,7 @@ Extracts :class:`~contextgem.internal.base.concepts._Concept` instances from a :
    * - ``use_concurrency``
      - ``bool``
      - ``False``
-     - Enable concurrent processing of multiple :class:`~contextgem.internal.base.concepts._Concept` instances. Can significantly reduce processing time by executing multiple extraction tasks concurrently, especially beneficial for documents with many concepts. However, it might cause rate limit errors with LLM providers. When enabled, adjust the ``async_limiter`` on your :class:`~contextgem.public.llms.DocumentLLM` to control request frequency (default is 10 acquisitions per 10 seconds). With concurrency enabled, each concept is processed in a separate LLM call (LLM prompt), unless ``max_items_per_call`` is set to a higher number, which increases the LLM API costs. See :doc:`../optimizations/optimization_speed` for examples of concurrency configuration.
+     - Enable concurrent processing of multiple :class:`~contextgem.internal.base.concepts._Concept` instances. Can significantly reduce processing time by executing multiple extraction tasks concurrently, especially beneficial for documents with many concepts. However, it might cause rate limit errors with LLM providers. When enabled, adjust the ``async_limiter`` on your :class:`~contextgem.public.llms.DocumentLLM` to control request frequency (default is 10 acquisitions per 10 seconds). With concurrency enabled, each concept is processed in a separate LLM call (LLM prompt), unless ``max_items_per_call`` is set to a higher number: as each call is sent the text, separate calls increase the LLM API costs. See :doc:`../optimizations/optimization_speed` for examples of concurrency configuration.
    * - ``max_paragraphs_to_analyze_per_call``
      - ``int``
      - ``0``
@@ -247,7 +247,7 @@ Extracts :class:`~contextgem.internal.base.concepts._Concept` instances from a :
    * - ``raise_exception_on_extraction_error``
      - ``bool``
      - ``True``
-     - Whether to raise an exception if the extraction fails due to invalid data returned by a model or an error in the model API. If True (default): if the model returns invalid data, :class:`~contextgem.public.exceptions.ModelExtractionError` will be raised, and if the model API call fails or the response is cut off at the max output tokens, :class:`~contextgem.public.exceptions.ModelAPIError` will be raised, and if the model or its provider declines to answer, :class:`~contextgem.public.exceptions.ModelRefusalError` will be raised (see :ref:`llm-refusals-label`). All can be imported from ``contextgem``. If False, a warning is logged instead, and no extracted items are returned.
+     - Whether to raise an exception if the extraction fails due to invalid data returned by a model or an error in the model API. If True (default): if the model returns invalid data, :class:`~contextgem.public.exceptions.ModelExtractionError` will be raised, and if the model API call fails or the response is cut off at the max output tokens, :class:`~contextgem.public.exceptions.ModelAPIError` will be raised, and if the model or its provider declines to answer, :class:`~contextgem.public.exceptions.ModelRefusalError` will be raised (see :ref:`llm-refusals-label`). All can be imported from ``contextgem``. If False, a warning is logged instead: the aspects or concepts of the call that failed get no items, and the others are extracted.
 
 |
 
@@ -321,7 +321,7 @@ The aspect must be previously processed before concept extraction can occur. Thi
    * - ``use_concurrency``
      - ``bool``
      - ``False``
-     - Enable concurrent processing of multiple :class:`~contextgem.internal.base.concepts._Concept` instances. Can significantly reduce processing time by executing multiple extraction tasks concurrently, especially beneficial for aspects with many concepts. However, it might cause rate limit errors with LLM providers. When enabled, adjust the ``async_limiter`` on your :class:`~contextgem.public.llms.DocumentLLM` to control request frequency (default is 10 acquisitions per 10 seconds). With concurrency enabled, each concept is processed in a separate LLM call (LLM prompt), unless ``max_items_per_call`` is set to a higher number, which increases the LLM API costs. See :doc:`../optimizations/optimization_speed` for examples of concurrency configuration.
+     - Enable concurrent processing of multiple :class:`~contextgem.internal.base.concepts._Concept` instances. Can significantly reduce processing time by executing multiple extraction tasks concurrently, especially beneficial for aspects with many concepts. However, it might cause rate limit errors with LLM providers. When enabled, adjust the ``async_limiter`` on your :class:`~contextgem.public.llms.DocumentLLM` to control request frequency (default is 10 acquisitions per 10 seconds). With concurrency enabled, each concept is processed in a separate LLM call (LLM prompt), unless ``max_items_per_call`` is set to a higher number: as each call is sent the text, separate calls increase the LLM API costs. See :doc:`../optimizations/optimization_speed` for examples of concurrency configuration.
    * - ``max_paragraphs_to_analyze_per_call``
      - ``int``
      - ``0``
@@ -329,7 +329,7 @@ The aspect must be previously processed before concept extraction can occur. Thi
    * - ``raise_exception_on_extraction_error``
      - ``bool``
      - ``True``
-     - Whether to raise an exception if the extraction fails due to invalid data returned by a model or an error in the model API. If True (default): if the model returns invalid data, :class:`~contextgem.public.exceptions.ModelExtractionError` will be raised, and if the model API call fails or the response is cut off at the max output tokens, :class:`~contextgem.public.exceptions.ModelAPIError` will be raised, and if the model or its provider declines to answer, :class:`~contextgem.public.exceptions.ModelRefusalError` will be raised (see :ref:`llm-refusals-label`). All can be imported from ``contextgem``. If False, a warning is logged instead, and no extracted items are returned.
+     - Whether to raise an exception if the extraction fails due to invalid data returned by a model or an error in the model API. If True (default): if the model returns invalid data, :class:`~contextgem.public.exceptions.ModelExtractionError` will be raised, and if the model API call fails or the response is cut off at the max output tokens, :class:`~contextgem.public.exceptions.ModelAPIError` will be raised, and if the model or its provider declines to answer, :class:`~contextgem.public.exceptions.ModelRefusalError` will be raised (see :ref:`llm-refusals-label`). All can be imported from ``contextgem``. If False, a warning is logged instead: the aspects or concepts of the call that failed get no items, and the others are extracted.
 
 |
 

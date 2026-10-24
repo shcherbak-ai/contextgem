@@ -16009,3 +16009,981 @@ class TestDecisionModels(BaseTest):
         decision_model_dict["max_retries_invalid_data"] = -1
         with pytest.raises(ValueError, match="max_retries_invalid_data"):
             DocumentDecisionModel.from_dict(decision_model_dict)
+
+    @staticmethod
+    def _extract_with_refusal_fallbacks(
+        decision_model: DocumentDecisionModel,
+        document: Document,
+        decisions_outcomes: dict[str, list[Any]],
+        completions_outcomes: dict[str, list[Any]] | None = None,
+        **extraction_kwargs: Any,
+    ) -> tuple[
+        _DecisionsAPIStub, _CompletionsAPIStub, list[str], list[tuple[str, bool]]
+    ]:
+        """
+        Extracts the aspects of a document with a decision model that has fallback
+        models, with the given outcomes of the requests to the models, and records
+        the extractions that the fallback models are asked to make.
+
+        :param decision_model: The decision model.
+        :type decision_model: DocumentDecisionModel
+        :param document: The document.
+        :type document: Document
+        :param decisions_outcomes: The outcomes of the requests to each decision
+            model (see :class:`_DecisionsAPIStub`).
+        :type decisions_outcomes: dict[str, list[Any]]
+        :param completions_outcomes: The outcomes of the requests to each LLM (see
+            :class:`_CompletionsAPIStub`). Defaults to None, i.e. no LLM is asked.
+        :type completions_outcomes: dict[str, list[Any]] | None
+        :param extraction_kwargs: Other params of the extraction method.
+        :type extraction_kwargs: Any
+        :return: The stubs with the requests received, the messages logged at
+            the INFO level and above, and the extractions made by models other
+            than the decision model, each as the model and whether it was made
+            with concurrency, in the order they were made.
+        :rtype: tuple[_DecisionsAPIStub, _CompletionsAPIStub, list[str],
+            list[tuple[str, bool]]]
+        """
+        decisions_stub = _DecisionsAPIStub(decisions_outcomes)
+        completions_stub = _CompletionsAPIStub(completions_outcomes or {})
+        original_extract = (
+            models_module._DocumentModel.extract_aspects_from_document_async
+        )
+        fallback_extractions: list[tuple[str, bool]] = []
+
+        async def record_extraction(model: Any, *args: Any, **kwargs: Any) -> Any:
+            """
+            Records an extraction of aspects made by a model other than
+            the decision model, and makes it.
+
+            :param model: The model that extracts the aspects.
+            :type model: Any
+            :param args: Arguments of the extraction method.
+            :type args: Any
+            :param kwargs: Keyword arguments of the extraction method.
+            :type kwargs: Any
+            :return: The aspects extracted.
+            :rtype: Any
+            """
+            if model is not decision_model:
+                fallback_extractions.append(
+                    (model.model, kwargs.get("use_concurrency", False))
+                )
+            return await original_extract(model, *args, **kwargs)
+
+        with (
+            patch.object(litellm, "adecisions", new=decisions_stub),
+            patch.object(litellm, "acompletion", new=completions_stub),
+            patch.object(
+                models_module._DocumentModel,
+                "extract_aspects_from_document_async",
+                new=record_extraction,
+            ),
+            capture_logs() as captured_logs,
+        ):
+            decision_model.extract_aspects_from_document(document, **extraction_kwargs)
+        return decisions_stub, completions_stub, captured_logs, fallback_extractions
+
+    @staticmethod
+    def _create_refusals_document() -> Document:
+        """
+        Creates the document created by :func:`_create_aspects_document`, with
+        the aspects `Termination` and `Payment` to extract.
+
+        :return: Document.
+        :rtype: Document
+        """
+        return _create_aspects_document(
+            aspects=[
+                Aspect(name=name, description=f"Clauses on {name.lower()}")
+                for name in ["Termination", "Payment"]
+            ]
+        )
+
+    @staticmethod
+    def _get_aspect_request_questions(aspect_names: list[str]) -> list[dict[str, Any]]:
+        """
+        Returns the questions expected in a request on a paragraph without
+        additional context for the aspects with the given names, created as by
+        :meth:`_create_refusals_document`, in the given order.
+
+        :param aspect_names: The names of the aspects.
+        :type aspect_names: list[str]
+        :return: The questions of the request.
+        :rtype: list[dict[str, Any]]
+        """
+        return [
+            {
+                "type": "predicate",
+                "name": question.name,
+                "instructions": question.instructions,
+            }
+            for question in _build_aspect_questions(
+                [
+                    Aspect(name=name, description=f"Clauses on {name.lower()}")
+                    for name in aspect_names
+                ]
+            )
+        ]
+
+    @staticmethod
+    def _get_refusal_fallback_logs(captured_logs: list[str]) -> list[str]:
+        """
+        Returns the messages logged on the fallback models asked about what
+        a decision model refused to answer on, and on what they decided.
+
+        :param captured_logs: The messages logged.
+        :type captured_logs: list[str]
+        :return: The messages on the fallback models, in the order logged.
+        :rtype: list[str]
+        """
+        return [
+            log
+            for log in captured_logs
+            if log.startswith(("Asking fallback ", "Fallback "))
+        ]
+
+    @staticmethod
+    def _get_asking_fallback_log(
+        fallback_kind: str,
+        fallback_model: str,
+        aspect_names: list[str],
+        n_paragraphs: int,
+    ) -> str:
+        """
+        Returns the message expected before a fallback model is asked about what
+        the decision model used in the tests refused to answer on.
+
+        :param fallback_kind: The kind of the fallback model, e.g. "LLM".
+        :type fallback_kind: str
+        :param fallback_model: The fallback model.
+        :type fallback_model: str
+        :param aspect_names: The names of the aspects asked about.
+        :type aspect_names: list[str]
+        :param n_paragraphs: The number of the paragraphs asked about.
+        :type n_paragraphs: int
+        :return: The message.
+        :rtype: str
+        """
+        return (
+            f"Asking fallback {fallback_kind} `{fallback_model}` about what decision "
+            f"model `{_DECISION_MODEL}` refused to answer on for aspects "
+            f"{aspect_names}, on {n_paragraphs} paragraph(s)"
+        )
+
+    @staticmethod
+    def _get_fallback_outcome_log(
+        fallback_kind: str,
+        fallback_model: str,
+        aspect_names: list[str],
+        decided: bool = True,
+    ) -> str:
+        """
+        Returns the message expected after a fallback model is asked about what
+        the decision model used in the tests refused to answer on.
+
+        :param fallback_kind: The kind of the fallback model, e.g. "LLM".
+        :type fallback_kind: str
+        :param fallback_model: The fallback model.
+        :type fallback_model: str
+        :param aspect_names: The names of the aspects that the message names.
+        :type aspect_names: list[str]
+        :param decided: Whether the fallback model decided what it was asked about
+            for these aspects, or failed. Defaults to True.
+        :type decided: bool
+        :return: The message.
+        :rtype: str
+        """
+        outcome = "decided" if decided else "did not decide"
+        return (
+            f"Fallback {fallback_kind} `{fallback_model}` {outcome} what decision "
+            f"model `{_DECISION_MODEL}` refused to answer on for aspects "
+            f"{aspect_names}."
+        )
+
+    @staticmethod
+    def _get_refusal_warnings(captured_logs: list[str]) -> list[str]:
+        """
+        Returns the warnings logged on what is not included in an aspect, as
+        a decision model, or its fallback model, refused to answer on it.
+
+        :param captured_logs: The messages logged.
+        :type captured_logs: list[str]
+        :return: The warnings, in the order logged.
+        :rtype: list[str]
+        """
+        return [
+            log
+            for log in captured_logs
+            if "These are not included in the aspect" in log
+        ]
+
+    def _check_aspect_items(
+        self,
+        document: Document,
+        aspect: _Aspect,
+        expected_items: list[tuple[int | tuple[int, int], float | None]],
+    ) -> None:
+        """
+        Checks the items of an aspect of the document, in their order: the text
+        of each, its paragraph, or its sentence and the paragraph of it, as
+        objects of the document, and its probabilities.
+
+        :param document: The document.
+        :type document: Document
+        :param aspect: The aspect of the document.
+        :type aspect: _Aspect
+        :param expected_items: For each item, the position of its paragraph in
+            the document, or the positions of its paragraph and of its sentence in
+            it, and the probability of "yes", or None for an item without
+            probabilities, i.e. extracted by an LLM.
+        :type expected_items: list[tuple[int | tuple[int, int], float | None]]
+        """
+        assert len(aspect.extracted_items) == len(expected_items)
+        for item, (position, probability) in zip(
+            aspect.extracted_items, expected_items, strict=True
+        ):
+            if isinstance(position, int):
+                paragraph = document.paragraphs[position]
+                assert item.value == paragraph.raw_text
+                assert item.reference_sentences == []
+            else:
+                paragraph = document.paragraphs[position[0]]
+                sentence = paragraph.sentences[position[1]]
+                assert item.value == sentence.raw_text
+                (reference_sentence,) = item.reference_sentences
+                assert reference_sentence is sentence
+            (reference_paragraph,) = item.reference_paragraphs
+            assert reference_paragraph is paragraph
+            self.check_item_probabilities(
+                item,
+                None
+                if probability is None
+                else {True: probability, False: 1 - probability},
+            )
+
+    def test_decision_model_fallback_decides_refused_paragraphs(self):
+        """
+        Tests that the fallback decision model of a decision model that refused to
+        answer the question of an aspect on some paragraphs, in a call that
+        succeeds, is asked about these paragraphs, with and without concurrency:
+        it is sent these paragraphs only, with the questions of the aspects
+        refused on them, its decisions on them are added to the items of
+        the aspect, in the order of the paragraphs, with its probabilities,
+        the other items are those of the decision model, its requests are in its
+        usage, and no warning on refused answers is logged.
+        """
+        texts = _ASPECTS_PARAGRAPH_TEXTS_SENT
+        # The decision model refuses to answer about the second aspect on the first
+        # and the last paragraphs, which the fallback model decides
+        primary_probabilities: dict[str, Any] = {
+            "Termination": {2: 0.9},
+            "Payment": {0: "refusal", 3: 0.8, 4: "refusal"},
+        }
+        fallback_probabilities = {"Payment": {0: 0.2, 4: 0.7}}
+        for extraction_kwargs in [
+            {},
+            {"use_concurrency": True, "max_items_per_call": 2},
+        ]:
+            decision_model = _create_decision_model(
+                fallback_models=[
+                    _create_decision_model(_OTHER_DECISION_MODEL, is_fallback=True)
+                ]
+            )
+            document = self._create_refusals_document()
+            decisions_stub, _, captured_logs, fallback_extractions = (
+                self._extract_with_refusal_fallbacks(
+                    decision_model,
+                    document,
+                    {
+                        _DECISION_MODEL: [
+                            _create_aspects_responder(primary_probabilities)
+                        ],
+                        _OTHER_DECISION_MODEL: [
+                            _create_aspects_responder(fallback_probabilities)
+                        ],
+                    },
+                    **extraction_kwargs,  # ty: ignore[invalid-argument-type]
+                )
+            )
+            # The decision model is asked about each paragraph, and then its
+            # fallback model about the paragraphs refused, with the question of
+            # the aspect refused only, which is the first one of its requests
+            assert [
+                (request["model"], request["input"])
+                for request in decisions_stub.requests
+            ] == [
+                *[(_DECISION_MODEL, text) for text in texts],
+                (_OTHER_DECISION_MODEL, texts[0]),
+                (_OTHER_DECISION_MODEL, texts[4]),
+            ]
+            assert decisions_stub.requests[0]["questions"] == (
+                self._get_aspect_request_questions(["Termination", "Payment"])
+            )
+            for request in decisions_stub.requests[len(texts) :]:
+                assert request["questions"] == self._get_aspect_request_questions(
+                    ["Payment"]
+                )
+            # ... with concurrency if the call has it
+            assert fallback_extractions == [
+                (_OTHER_DECISION_MODEL, bool(extraction_kwargs))
+            ]
+            # The decisions of the fallback model are added to those of
+            # the decision model, in the order of the paragraphs
+            termination, payment = document.aspects
+            self._check_aspect_items(document, termination, [(2, 0.9)])
+            self._check_aspect_items(document, payment, [(3, 0.8), (4, 0.7)])
+            assert payment.reference_paragraphs == [
+                document.paragraphs[3],
+                document.paragraphs[4],
+            ]
+            # The usage of each model has its own requests
+            primary_usage, fallback_usage = (
+                container.usage for container in decision_model.get_usage()
+            )
+            assert len(primary_usage.calls) == len(texts)
+            assert [
+                json.loads(call.prompt)["input"] for call in fallback_usage.calls
+            ] == [
+                texts[0],
+                texts[4],
+            ]
+            assert fallback_usage.input == 2 * 100
+            assert self._get_refusal_fallback_logs(captured_logs) == [
+                self._get_asking_fallback_log(
+                    "decision model", _OTHER_DECISION_MODEL, ["Payment"], 2
+                ),
+                self._get_fallback_outcome_log(
+                    "decision model", _OTHER_DECISION_MODEL, ["Payment"]
+                ),
+            ]
+            assert self._get_refusal_warnings(captured_logs) == []
+
+    def test_llm_fallback_decides_refused_paragraphs(self):
+        """
+        Tests that the fallback LLM of a decision model that refused to answer
+        the questions of aspects on some paragraphs, in a call that succeeds,
+        extracts the aspects from these paragraphs only: its items on what was
+        refused for an aspect are added to the items of the aspect, in the order
+        of the paragraphs, without probabilities, and with the paragraphs of
+        the document as their references, while its items on what the decision
+        model decided are ignored.
+        """
+        # The decision model refuses to answer about each aspect on another
+        # paragraph
+        primary_probabilities: dict[str, Any] = {
+            "Termination": {1: "refusal", 2: 0.9},
+            "Payment": {3: 0.8, 4: "refusal"},
+        }
+        # The LLM answers that both paragraphs that it is asked about belong to
+        # both aspects
+        llm_answer = json.dumps(
+            [
+                {"aspect_id": "A0", "paragraph_ids": ["P0", "P1"]},
+                {"aspect_id": "A1", "paragraph_ids": ["P0", "P1"]},
+            ]
+        )
+        decision_model = _create_decision_model(
+            fallback_models=[_create_llm(is_fallback=True)]
+        )
+        document = self._create_refusals_document()
+        decisions_stub, completions_stub, captured_logs, fallback_extractions = (
+            self._extract_with_refusal_fallbacks(
+                decision_model,
+                document,
+                {_DECISION_MODEL: [_create_aspects_responder(primary_probabilities)]},
+                {_LLM_MODEL: [llm_answer]},
+            )
+        )
+        assert len(decisions_stub.requests) == len(_ASPECTS_PARAGRAPH_TEXTS_SENT)
+        assert fallback_extractions == [(_LLM_MODEL, False)]
+        # The prompt lists the two paragraphs refused, for the two aspects
+        (llm_request,) = completions_stub.requests
+        prompt = "\n".join(
+            str(message["content"]) for message in llm_request["messages"]
+        )
+        assert re.findall(r'<paragraph id="(P\d+)">(.*?)</paragraph>', prompt) == [
+            ("P0", _ASPECTS_PARAGRAPH_TEXTS_CLEANED[1]),
+            ("P1", _ASPECTS_PARAGRAPH_TEXTS_CLEANED[4]),
+        ]
+        assert re.findall(
+            r"<aspect_name>(.*?)</aspect_name>", prompt.split("DOCUMENT ASPECTS:")[1]
+        ) == ["Termination", "Payment"]
+        # Only the items on the paragraph refused for each aspect are taken
+        termination, payment = document.aspects
+        self._check_aspect_items(document, termination, [(1, None), (2, 0.9)])
+        self._check_aspect_items(document, payment, [(3, 0.8), (4, None)])
+        (_, llm_usage_container) = decision_model.get_usage()
+        assert llm_usage_container.model == _LLM_MODEL
+        assert len(llm_usage_container.usage.calls) == 1
+        assert self._get_refusal_fallback_logs(captured_logs) == [
+            self._get_asking_fallback_log(
+                "LLM", _LLM_MODEL, ["Termination", "Payment"], 2
+            ),
+            self._get_fallback_outcome_log(
+                "LLM", _LLM_MODEL, ["Termination", "Payment"]
+            ),
+        ]
+        assert self._get_refusal_warnings(captured_logs) == []
+
+    def test_decision_model_refusal_fallback_chain(self):
+        """
+        Tests a chain of fallback models asked about what a decision model refused
+        to answer on, in a call that succeeds: what a fallback decision model
+        refuses to answer on in turn is passed on to the next fallback model, and
+        what none of them decides is not included in the aspect, with a warning
+        that tells it. The call stands, i.e. nothing is raised, also if every
+        fallback model fails or refuses.
+        """
+        texts = _ASPECTS_PARAGRAPH_TEXTS_SENT
+        # The decision model refuses to answer about the second aspect on three of
+        # the paragraphs
+        primary_probabilities: dict[str, Any] = {
+            "Termination": {2: 0.9},
+            "Payment": {0: "refusal", 1: 0.8, 3: "refusal", 4: "refusal"},
+        }
+        refused_positions = [0, 3, 4]
+        # The fallback decision model refuses to answer on the first of them in turn
+        partly_refusing_probabilities: dict[str, Any] = {
+            "Payment": {0: "refusal", 3: 0.6, 4: 0.2}
+        }
+        llm_answer = json.dumps([{"aspect_id": "A0", "paragraph_ids": ["P0"]}])
+        invalid_llm_answer = "<<<not-json>>>"
+
+        def extract(
+            fallback_decision_outcome: Any, llm_outcome: str
+        ) -> tuple[Document, _DecisionsAPIStub, _CompletionsAPIStub, list[str]]:
+            """
+            Extracts the aspects with the decision model, which has a fallback
+            decision model and then a fallback LLM, each asked again once for
+            a response that cannot be used.
+
+            :param fallback_decision_outcome: The outcome of each request to
+                the fallback decision model.
+            :type fallback_decision_outcome: Any
+            :param llm_outcome: The outcome of each request to the fallback LLM.
+            :type llm_outcome: str
+            :return: The document, the stubs with the requests received, and
+                the messages logged.
+            :rtype: tuple[Document, _DecisionsAPIStub, _CompletionsAPIStub,
+                list[str]]
+            """
+            decision_model = _create_decision_model(
+                fallback_models=[
+                    _create_decision_model(
+                        _OTHER_DECISION_MODEL,
+                        is_fallback=True,
+                        max_retries_invalid_data=1,
+                    ),
+                    _create_llm(is_fallback=True, max_retries_invalid_data=1),
+                ]
+            )
+            document = self._create_refusals_document()
+            decisions_stub, completions_stub, captured_logs, _ = (
+                self._extract_with_refusal_fallbacks(
+                    decision_model,
+                    document,
+                    {
+                        _DECISION_MODEL: [
+                            _create_aspects_responder(primary_probabilities)
+                        ],
+                        _OTHER_DECISION_MODEL: [fallback_decision_outcome],
+                    },
+                    {_LLM_MODEL: [llm_outcome]},
+                    raise_exception_on_extraction_error=True,
+                )
+            )
+            # The items of the decision model stand in any case
+            termination, payment = document.aspects
+            assert termination._is_processed and payment._is_processed
+            self._check_aspect_items(document, termination, [(2, 0.9)])
+            return document, decisions_stub, completions_stub, captured_logs
+
+        def get_fallback_inputs(decisions_stub: _DecisionsAPIStub) -> list[str]:
+            """
+            Returns the texts of the requests to the fallback decision model.
+
+            :param decisions_stub: The stub with the requests received.
+            :type decisions_stub: _DecisionsAPIStub
+            :return: The texts, in the order of the requests.
+            :rtype: list[str]
+            """
+            return [
+                request["input"]
+                for request in decisions_stub.requests
+                if request["model"] == _OTHER_DECISION_MODEL
+            ]
+
+        def get_prompt_paragraphs(request: dict[str, Any]) -> list[tuple[str, str]]:
+            """
+            Returns the paragraphs listed in the prompt of a request to the LLM,
+            each by its ID in the prompt, with its text.
+
+            :param request: Keyword arguments of the request.
+            :type request: dict[str, Any]
+            :return: The IDs and the texts of the paragraphs.
+            :rtype: list[tuple[str, str]]
+            """
+            prompt = "\n".join(
+                str(message["content"]) for message in request["messages"]
+            )
+            return re.findall(r'<paragraph id="(P\d+)">(.*?)</paragraph>', prompt)
+
+        asking_fallback_decision_model_log = self._get_asking_fallback_log(
+            "decision model", _OTHER_DECISION_MODEL, ["Payment"], 3
+        )
+
+        # === The second fallback model decides what the first one refused ===
+        document, decisions_stub, completions_stub, captured_logs = extract(
+            _create_aspects_responder(partly_refusing_probabilities), llm_answer
+        )
+        assert get_fallback_inputs(decisions_stub) == [
+            texts[position] for position in refused_positions
+        ]
+        (llm_request,) = completions_stub.requests
+        assert get_prompt_paragraphs(llm_request) == [
+            ("P0", _ASPECTS_PARAGRAPH_TEXTS_CLEANED[0])
+        ]
+        # The items of the three models, in the order of the paragraphs
+        self._check_aspect_items(
+            document, document.aspects[1], [(0, None), (1, 0.8), (3, 0.6)]
+        )
+        assert self._get_refusal_fallback_logs(captured_logs) == [
+            asking_fallback_decision_model_log,
+            self._get_asking_fallback_log("LLM", _LLM_MODEL, ["Payment"], 1),
+            self._get_fallback_outcome_log("LLM", _LLM_MODEL, ["Payment"]),
+        ]
+        # No warning, also of the fallback decision model on what it refused
+        assert self._get_refusal_warnings(captured_logs) == []
+
+        # === The second fallback model fails ===
+        # What the first one refused stays undecided
+        document, decisions_stub, completions_stub, captured_logs = extract(
+            _create_aspects_responder(partly_refusing_probabilities),
+            invalid_llm_answer,
+        )
+        # The LLM is asked again once, for its invalid data
+        assert len(completions_stub.requests) == 2
+        self._check_aspect_items(document, document.aspects[1], [(1, 0.8), (3, 0.6)])
+        assert self._get_refusal_fallback_logs(captured_logs) == [
+            asking_fallback_decision_model_log,
+            self._get_asking_fallback_log("LLM", _LLM_MODEL, ["Payment"], 1),
+            self._get_fallback_outcome_log(
+                "LLM", _LLM_MODEL, ["Payment"], decided=False
+            ),
+        ]
+        assert self._get_refusal_warnings(captured_logs) == [
+            (
+                f"Decision model `{_DECISION_MODEL}` refused to answer the question of "
+                "aspect `Payment` on 3 of 5 paragraphs (indices: [0, 3, 4]), and its "
+                "fallback models did not answer on the paragraphs with indices [0] "
+                "either. These are not included in the aspect."
+            )
+        ]
+
+        # === Each fallback model fails or refuses ===
+        # The fallback decision model refuses to answer on every paragraph, also
+        # when asked again, and the fallback LLM returns invalid data
+        refusing_probabilities: dict[str, Any] = {
+            "Payment": dict.fromkeys(refused_positions, "refusal")
+        }
+        document, decisions_stub, completions_stub, captured_logs = extract(
+            _create_aspects_responder(refusing_probabilities), invalid_llm_answer
+        )
+        assert (
+            get_fallback_inputs(decisions_stub)
+            == [texts[position] for position in refused_positions] * 2
+        )
+        assert len(completions_stub.requests) == 2
+        # The LLM is asked about each paragraph refused
+        assert get_prompt_paragraphs(completions_stub.requests[0]) == [
+            ("P0", _ASPECTS_PARAGRAPH_TEXTS_CLEANED[0]),
+            ("P1", _ASPECTS_PARAGRAPH_TEXTS_CLEANED[3]),
+            ("P2", _ASPECTS_PARAGRAPH_TEXTS_CLEANED[4]),
+        ]
+        self._check_aspect_items(document, document.aspects[1], [(1, 0.8)])
+        assert self._get_refusal_fallback_logs(captured_logs) == [
+            asking_fallback_decision_model_log,
+            self._get_fallback_outcome_log(
+                "decision model", _OTHER_DECISION_MODEL, ["Payment"], decided=False
+            ),
+            self._get_asking_fallback_log("LLM", _LLM_MODEL, ["Payment"], 3),
+            self._get_fallback_outcome_log(
+                "LLM", _LLM_MODEL, ["Payment"], decided=False
+            ),
+        ]
+        assert self._get_refusal_warnings(captured_logs) == [
+            (
+                f"Decision model `{_DECISION_MODEL}` refused to answer the question of "
+                "aspect `Payment` on 3 of 5 paragraphs (indices: [0, 3, 4]), and its "
+                "fallback models did not answer on the paragraphs with indices "
+                "[0, 3, 4] either. These are not included in the aspect."
+            )
+        ]
+
+    def test_failed_fallback_decides_nothing_refused(self):
+        """
+        Tests that a fallback model whose request fails, asked about what
+        a decision model refused to answer on in a call that succeeds, decides
+        nothing: the next fallback model is asked, and without one, the warning
+        tells that everything refused stays undecided. The call stands, i.e.
+        nothing is raised.
+        """
+        texts = _ASPECTS_PARAGRAPH_TEXTS_SENT
+        primary_probabilities: dict[str, Any] = {
+            "Termination": {2: 0.9},
+            "Payment": {0: "refusal", 3: 0.8, 4: "refusal"},
+        }
+        other_auth_error = _create_api_error(
+            litellm.AuthenticationError, _OTHER_DECISION_MODEL
+        )
+        failed_fallback_logs = [
+            self._get_asking_fallback_log(
+                "decision model", _OTHER_DECISION_MODEL, ["Payment"], 2
+            ),
+            self._get_fallback_outcome_log(
+                "decision model", _OTHER_DECISION_MODEL, ["Payment"], decided=False
+            ),
+        ]
+
+        # === The next fallback model decides ===
+        decision_model = _create_decision_model(
+            fallback_models=[
+                _create_decision_model(_OTHER_DECISION_MODEL, is_fallback=True),
+                _create_llm(is_fallback=True),
+            ]
+        )
+        document = self._create_refusals_document()
+        decisions_stub, completions_stub, captured_logs, fallback_extractions = (
+            self._extract_with_refusal_fallbacks(
+                decision_model,
+                document,
+                {
+                    _DECISION_MODEL: [_create_aspects_responder(primary_probabilities)],
+                    _OTHER_DECISION_MODEL: [other_auth_error],
+                },
+                {
+                    _LLM_MODEL: [
+                        json.dumps([{"aspect_id": "A0", "paragraph_ids": ["P1"]}])
+                    ]
+                },
+            )
+        )
+        # The failed request is not sent again, and the requests after it are not
+        # sent
+        assert decisions_stub.requested_models() == [_DECISION_MODEL] * len(texts) + [
+            _OTHER_DECISION_MODEL
+        ]
+        assert decisions_stub.requests[-1]["input"] == texts[0]
+        assert len(completions_stub.requests) == 1
+        assert fallback_extractions == [
+            (_OTHER_DECISION_MODEL, False),
+            (_LLM_MODEL, False),
+        ]
+        termination, payment = document.aspects
+        self._check_aspect_items(document, termination, [(2, 0.9)])
+        self._check_aspect_items(document, payment, [(3, 0.8), (4, None)])
+        # The failed request is in the usage of the fallback decision model
+        (failed_call,) = decision_model.get_usage()[1].usage.calls
+        assert failed_call.timestamp_received is None
+        assert self._get_refusal_fallback_logs(captured_logs) == [
+            *failed_fallback_logs,
+            self._get_asking_fallback_log("LLM", _LLM_MODEL, ["Payment"], 2),
+            self._get_fallback_outcome_log("LLM", _LLM_MODEL, ["Payment"]),
+        ]
+        assert self._get_refusal_warnings(captured_logs) == []
+
+        # === No next fallback model ===
+        decision_model = _create_decision_model(
+            fallback_models=[
+                _create_decision_model(_OTHER_DECISION_MODEL, is_fallback=True)
+            ]
+        )
+        document = self._create_refusals_document()
+        _, _, captured_logs, _ = self._extract_with_refusal_fallbacks(
+            decision_model,
+            document,
+            {
+                _DECISION_MODEL: [_create_aspects_responder(primary_probabilities)],
+                _OTHER_DECISION_MODEL: [other_auth_error],
+            },
+            raise_exception_on_extraction_error=True,
+        )
+        termination, payment = document.aspects
+        self._check_aspect_items(document, termination, [(2, 0.9)])
+        self._check_aspect_items(document, payment, [(3, 0.8)])
+        assert self._get_refusal_fallback_logs(captured_logs) == failed_fallback_logs
+        assert self._get_refusal_warnings(captured_logs) == [
+            (
+                f"Decision model `{_DECISION_MODEL}` refused to answer the question of "
+                "aspect `Payment` on 2 of 5 paragraphs (indices: [0, 4]), and its "
+                "fallback models did not answer on the paragraphs with indices [0, 4] "
+                "either. These are not included in the aspect."
+            )
+        ]
+
+    def test_fallback_decides_refused_sentences(self):
+        """
+        Tests that the fallback decision model of a decision model that extracts
+        aspects with sentences as their items is asked about what the decision
+        model refused to answer on, with and without concurrency: about
+        a paragraph refused, with its sentences if the paragraph belongs to
+        the aspect, and about a sentence refused of a paragraph that belongs to
+        the aspect, which is not included if the fallback model answers that its
+        paragraph does not belong to the aspect. What the fallback model refuses
+        to answer on in turn is not included, with a warning that tells it, in
+        the order of the document.
+        """
+
+        def get_sentence_texts(
+            positions: list[int | tuple[int, int]],
+        ) -> list[str]:
+            """
+            Returns the texts of the requests for paragraphs or for sentences.
+
+            :param positions: The position of each paragraph, or the positions of
+                each paragraph and of the sentence in it.
+            :type positions: list[int | tuple[int, int]]
+            :return: The texts of the requests.
+            :rtype: list[str]
+            """
+            return [
+                _SENTENCES_PARAGRAPH_TEXTS_SENT[position]
+                if isinstance(position, int)
+                else _SENTENCES_TEXTS_SENT[position]
+                for position in positions
+            ]
+
+        def extract(
+            primary_probabilities: dict[str, Any],
+            fallback_probabilities: dict[str, Any],
+            extraction_kwargs: dict[str, Any],
+        ) -> tuple[Document, _DecisionsAPIStub, list[str]]:
+            """
+            Extracts an aspect with sentences as its items with a decision model
+            that has a fallback decision model.
+
+            :param primary_probabilities: The answers of the decision model (see
+                :func:`_create_sentences_responder`).
+            :type primary_probabilities: dict[str, Any]
+            :param fallback_probabilities: The answers of the fallback model.
+            :type fallback_probabilities: dict[str, Any]
+            :param extraction_kwargs: Params of the extraction method.
+            :type extraction_kwargs: dict[str, Any]
+            :return: The document, the stub with the requests received, and
+                the messages logged.
+            :rtype: tuple[Document, _DecisionsAPIStub, list[str]]
+            """
+            decision_model = _create_decision_model(
+                fallback_models=[
+                    _create_decision_model(_OTHER_DECISION_MODEL, is_fallback=True)
+                ]
+            )
+            document = _create_sentences_document(
+                aspects=[
+                    Aspect(
+                        name="Termination",
+                        description="Clauses on termination",
+                        reference_depth="sentences",
+                    )
+                ]
+            )
+            decisions_stub, _, captured_logs, fallback_extractions = (
+                self._extract_with_refusal_fallbacks(
+                    decision_model,
+                    document,
+                    {
+                        _DECISION_MODEL: [
+                            _create_sentences_responder(primary_probabilities)
+                        ],
+                        _OTHER_DECISION_MODEL: [
+                            _create_sentences_responder(fallback_probabilities)
+                        ],
+                    },
+                    **extraction_kwargs,
+                )
+            )
+            assert fallback_extractions == [
+                (_OTHER_DECISION_MODEL, bool(extraction_kwargs))
+            ]
+            # The questions of the fallback model are those of the aspect
+            for request in decisions_stub.requests:
+                assert [question["name"] for question in request["questions"]] == ["A0"]
+            return document, decisions_stub, captured_logs
+
+        def get_inputs(decisions_stub: _DecisionsAPIStub, model: str) -> list[str]:
+            """
+            Returns the texts of the requests to a decision model.
+
+            :param decisions_stub: The stub with the requests received.
+            :type decisions_stub: _DecisionsAPIStub
+            :param model: The decision model.
+            :type model: str
+            :return: The texts, in the order of the requests.
+            :rtype: list[str]
+            """
+            return [
+                request["input"]
+                for request in decisions_stub.requests
+                if request["model"] == model
+            ]
+
+        for extraction_kwargs in [
+            {},
+            {"use_concurrency": True, "max_items_per_call": 2},
+        ]:
+            # === A paragraph refused ===
+            # The fallback model answers that it belongs to the aspect, and is
+            # asked about its sentences
+            document, decisions_stub, captured_logs = extract(
+                {"Termination": {1: "refusal", 3: 0.9, (3, 0): 0.8}},
+                {"Termination": {1: 0.9, (1, 0): 0.9, (1, 1): 0.2, (1, 2): 0.7}},
+                extraction_kwargs,
+            )
+            assert get_inputs(decisions_stub, _DECISION_MODEL) == get_sentence_texts(
+                [0, 1, 2, 3, 4, (3, 0), (3, 1)]
+            )
+            assert get_inputs(
+                decisions_stub, _OTHER_DECISION_MODEL
+            ) == get_sentence_texts([1, (1, 0), (1, 1), (1, 2)])
+            (termination,) = document.aspects
+            self._check_aspect_items(
+                document, termination, [((1, 0), 0.9), ((1, 2), 0.7), ((3, 0), 0.8)]
+            )
+            assert termination.reference_paragraphs == [
+                document.paragraphs[1],
+                document.paragraphs[3],
+            ]
+            assert self._get_refusal_fallback_logs(captured_logs) == [
+                self._get_asking_fallback_log(
+                    "decision model", _OTHER_DECISION_MODEL, ["Termination"], 1
+                ),
+                self._get_fallback_outcome_log(
+                    "decision model", _OTHER_DECISION_MODEL, ["Termination"]
+                ),
+            ]
+            assert self._get_refusal_warnings(captured_logs) == []
+
+            # === Sentences refused of paragraphs that belong to the aspect ===
+            # The fallback model answers about the sentence refused of the second
+            # paragraph, of whose other sentences its answers are ignored, and
+            # answers that the fourth paragraph does not belong to the aspect,
+            # i.e. its sentence refused does not either
+            document, decisions_stub, captured_logs = extract(
+                {
+                    "Termination": {
+                        1: 0.9,
+                        (1, 0): 0.8,
+                        (1, 1): "refusal",
+                        3: 0.9,
+                        (3, 1): "refusal",
+                    }
+                },
+                {"Termination": {1: 0.9, (1, 1): 0.85, (1, 2): 0.9, 3: 0.2}},
+                extraction_kwargs,
+            )
+            assert get_inputs(decisions_stub, _DECISION_MODEL) == get_sentence_texts(
+                [0, 1, 2, 3, 4, (1, 0), (1, 1), (1, 2), (3, 0), (3, 1)]
+            )
+            assert get_inputs(
+                decisions_stub, _OTHER_DECISION_MODEL
+            ) == get_sentence_texts([1, 3, (1, 0), (1, 1), (1, 2)])
+            (termination,) = document.aspects
+            self._check_aspect_items(
+                document, termination, [((1, 0), 0.8), ((1, 1), 0.85)]
+            )
+            assert self._get_refusal_fallback_logs(captured_logs) == [
+                self._get_asking_fallback_log(
+                    "decision model", _OTHER_DECISION_MODEL, ["Termination"], 2
+                ),
+                self._get_fallback_outcome_log(
+                    "decision model", _OTHER_DECISION_MODEL, ["Termination"]
+                ),
+            ]
+            assert self._get_refusal_warnings(captured_logs) == []
+
+            # === What the fallback model refuses in turn ===
+            # It refuses to answer on the paragraph that the decision model refused,
+            # on a sentence that the decision model refused, and on the paragraph
+            # of another one, which are not included in the aspect
+            document, decisions_stub, captured_logs = extract(
+                {
+                    "Termination": {
+                        0: "refusal",
+                        1: 0.9,
+                        (1, 0): 0.8,
+                        (1, 1): "refusal",
+                        3: 0.9,
+                        (3, 1): "refusal",
+                    }
+                },
+                {
+                    "Termination": {
+                        0: "refusal",
+                        1: 0.9,
+                        (1, 1): "refusal",
+                        3: "refusal",
+                    }
+                },
+                extraction_kwargs,
+            )
+            assert get_inputs(
+                decisions_stub, _OTHER_DECISION_MODEL
+            ) == get_sentence_texts([0, 1, 3, (1, 0), (1, 1), (1, 2)])
+            (termination,) = document.aspects
+            self._check_aspect_items(document, termination, [((1, 0), 0.8)])
+            assert self._get_refusal_fallback_logs(captured_logs) == [
+                self._get_asking_fallback_log(
+                    "decision model", _OTHER_DECISION_MODEL, ["Termination"], 3
+                ),
+            ]
+            assert self._get_refusal_warnings(captured_logs) == [
+                (
+                    f"Decision model `{_DECISION_MODEL}` refused to answer the question "
+                    "of aspect `Termination` on 1 of 5 paragraphs (indices: [0]) and on "
+                    "2 of 5 sentences (paragraph index, sentence index: [(1, 1), "
+                    "(3, 1)]), and its fallback models did not answer on the paragraphs "
+                    "with indices [0] and on the sentences with (paragraph index, "
+                    "sentence index) [(1, 1), (3, 1)] either. These are not included in "
+                    "the aspect."
+                )
+            ]
+
+        # === The order of what stays undecided ===
+        # A sentence that the fallback model refuses of a paragraph that
+        # the decision model refused comes, among what stays undecided, in
+        # the order of the sentences in the document
+        document, decisions_stub, captured_logs = extract(
+            {
+                "Termination": {
+                    1: 0.9,
+                    (1, 0): 0.8,
+                    (1, 1): "refusal",
+                    3: "refusal",
+                }
+            },
+            {
+                "Termination": {
+                    1: 0.9,
+                    (1, 1): "refusal",
+                    3: 0.9,
+                    (3, 0): "refusal",
+                }
+            },
+            {},
+        )
+        assert get_inputs(decisions_stub, _OTHER_DECISION_MODEL) == get_sentence_texts(
+            [1, 3, (1, 0), (1, 1), (1, 2), (3, 0), (3, 1)]
+        )
+        (termination,) = document.aspects
+        self._check_aspect_items(document, termination, [((1, 0), 0.8)])
+        assert self._get_refusal_warnings(captured_logs) == [
+            (
+                f"Decision model `{_DECISION_MODEL}` refused to answer the question "
+                "of aspect `Termination` on 1 of 5 paragraphs (indices: [3]) and on "
+                "1 of 3 sentences (paragraph index, sentence index: [(1, 1)]), and "
+                "its fallback models did not answer on the sentences with "
+                "(paragraph index, sentence index) [(1, 1), (3, 0)] either. These "
+                "are not included in the aspect."
+            )
+        ]

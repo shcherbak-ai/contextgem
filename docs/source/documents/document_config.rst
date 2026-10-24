@@ -47,9 +47,9 @@ The :class:`~contextgem.public.documents.Document` class accepts the following p
      - ``[]``
      - List of :class:`~contextgem.public.aspects.Aspect` instances associated with the document for focused analysis. Must have unique names and descriptions. See :doc:`../aspects/aspects` for more details.
    * - ``concepts``
-     - ``list[_Concept]``
+     - ``list`` of concepts
      - ``[]``
-     - List of ``_Concept`` instances associated with the document for information extraction. Must have unique names and descriptions. See supported concept types in :doc:`../concepts/supported_concepts`.
+     - Concepts associated with the document for information extraction. Must have unique names and descriptions. See supported concept types in :doc:`../concepts/supported_concepts`.
    * - ``paragraph_segmentation_mode``
      - ``Literal["newlines", "sat"]``
      - ``"newlines"``
@@ -101,7 +101,7 @@ The additional context:
 - should be a single-line string: it is cleaned before it is sent to a model, as the text of the paragraph is, i.e. control characters are removed, and whitespace, line breaks included, is collapsed to single spaces. A warning is logged if it has line breaks, as they are not kept. Additional context of which nothing is left is not sent;
 - is passed to the LLM together with the paragraph text in the prompts that list paragraphs, i.e. when aspects are extracted, or when concepts are extracted with references (``add_references=True``). It is not used when concepts are extracted from the document text as a whole;
 - is sent to a decision model together with the paragraph text when aspects are extracted, also with each sentence of the paragraph that the model is asked about, for an aspect with ``reference_depth="sentences"`` (see :ref:`decision-models-aspects-label`);
-- is inherited by the sentences segmented from the paragraph. When sentence-level references are used (``reference_depth="sentences"``), the LLM gets it once, with the paragraph, as a decision model does: the additional context of a sentence is passed with the sentence only if it differs from that of its paragraph, e.g. for a paragraph that you create with its sentences;
+- is inherited by the sentences segmented from the paragraph, i.e. set it on the paragraph, and give a sentence an additional context of its own only where it differs, e.g. for a paragraph that you create with its sentences: a model is sent the additional context of a paragraph once, and that of a sentence only if it differs;
 - is preserved when the document is serialized.
 
 

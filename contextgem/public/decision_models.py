@@ -82,11 +82,12 @@ class DocumentDecisionModel(_DocumentDecisionModel):
         to answer: a refused answer to a question of a concept, the question of
         an aspect refused on every paragraph, or a request that the provider blocks.
         Only the requests whose answers cannot be used are sent again, and those
-        that were not sent after them: the answers that were usable are kept.
+        not sent yet: the answers that were usable are kept.
         A fallback model applies its own setting in the same way: it is asked once,
         and then again up to its ``max_retries_invalid_data`` times. A model that
         gives the same answers to the same request gains nothing from the retries,
-        which then only add requests: set it to 0 for such a model. Defaults to 3.
+        which then only add requests: set it to 0 for such a model, which also stops
+        refused and blocked requests from being sent again. Defaults to 3.
     :vartype max_retries_invalid_data: int
     :ivar timeout: Timeout in seconds for API calls. Defaults to 600 seconds.
     :vartype timeout: int
@@ -97,11 +98,12 @@ class DocumentDecisionModel(_DocumentDecisionModel):
     :ivar auto_pricing: Enable automatic cost calculation using genai-prices. Cannot be
         set together with ``pricing_details``. For an OpenAI model (``openai/``),
         the prices of the decision requests are used, which genai-prices has apart
-        from the prices of the chat requests to the model. Not supported for
-        a model for which genai-prices has the prices of a text-generating model,
-        i.e. a price of output tokens, which are the prices of the chat requests
-        to the model (e.g. ``openrouter/openai/gpt-6-luna``), and for self-hosted
-        models (``strands_decider/``): set ``pricing_details`` for them instead.
+        from the prices of the chat requests to the model. ``ValueError`` is raised
+        when the model is created for a model for which genai-prices has the prices
+        of a text-generating model, i.e. a price of output tokens, those of the chat
+        requests to the model (e.g. ``openrouter/openai/gpt-6-luna``), and for
+        self-hosted models (``strands_decider/``): set ``pricing_details`` for them
+        instead.
         For a model that genai-prices has no prices for, e.g. a model deployed in
         Microsoft Foundry, a warning is issued and the costs stay at zero:
         ``pricing_details`` is to be set instead for such a model too. Defaults to
@@ -122,6 +124,9 @@ class DocumentDecisionModel(_DocumentDecisionModel):
         the current model has used up its ``max_retries_invalid_data``, and is asked
         again up to its own ``max_retries_invalid_data`` times. A refusal of
         the current model or of its provider is passed on to the fallbacks as well.
+        So are the paragraphs, and the sentences, that the current model refuses to
+        answer on for an aspect while it answers on the others: the fallback models
+        are asked about these only, and what they decide is added to the aspect.
         Defaults to an empty list.
     :vartype fallback_models: list[DocumentDecisionModel | DocumentLLM]
     :ivar decision_threshold: The lowest probability of "yes" (above 0, up to 1) with

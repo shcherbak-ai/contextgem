@@ -140,9 +140,10 @@ class DocumentLLM(_DocumentLLM):
         from each other in at least one config param, and must support vision if
         the current LLM is used to extract concepts from images. A decision model
         (``DocumentDecisionModel``) with ``is_fallback=True`` and the same role can
-        also be a fallback: it replaces the LLM only in the extraction, provided that
-        a decision model can extract everything the LLM is to extract, and is skipped
-        in a chat. Each fallback applies its own retry settings: a fallback model that
+        also be a fallback: it replaces the LLM only in the extraction, and is skipped
+        in a chat. An extraction raises ``ValueError`` before any request is sent if
+        such a fallback cannot extract an aspect or a concept that the LLM is to
+        extract. Each fallback applies its own retry settings: a fallback model that
         returns data that cannot be used is asked again up to its
         ``max_retries_invalid_data`` times, as the current LLM is. A refusal of
         the current LLM or of its provider is passed on to the fallbacks as well.

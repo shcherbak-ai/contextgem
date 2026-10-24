@@ -163,6 +163,12 @@ class _Document(_AssignedInstancesProcessor):
     # For the same reason, the references of the aspects of such a document are
     # not relinked (see `_relink_references`).
     _suppress_aspect_nesting_normalization: bool = PrivateAttr(default=False)
+    # When True, the document is a throwaway one that a decision model builds from
+    # the paragraphs it refused to answer on for some aspects, for its fallback
+    # models to extract copies of these aspects from. What a fallback decision
+    # model refuses to answer on in it is passed back to that decision model,
+    # which reports what stays undecided, i.e. it is not logged for this document.
+    _for_fallback_of_refusals: bool = PrivateAttr(default=False)
 
     def __setattr__(self, name: str, value: Any) -> None:
         """

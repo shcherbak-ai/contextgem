@@ -110,6 +110,13 @@ class _Aspect(
     _reference_sentences: list[_Sentence] = PrivateAttr(default_factory=list)
     _nesting_level: StrictInt = PrivateAttr(default=0)
     _is_processed: StrictBool = PrivateAttr(default=False)
+    # The paragraphs and the sentences that a fallback decision model refused to
+    # answer on, by their unique IDs, when it extracted a copy of the aspect from
+    # what the decision model that it is a fallback model of refused to answer on
+    # itself: passed back to that model, which asks its next fallback model about
+    # them. Set only on such a copy, i.e. empty on any other aspect.
+    _refused_paragraph_ids: set[str] = PrivateAttr(default_factory=set)
+    _refused_sentence_ids: set[str] = PrivateAttr(default_factory=set)
 
     def __setattr__(self, name: str, value: Any) -> None:
         """

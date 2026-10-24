@@ -81,7 +81,7 @@ When creating a :class:`~contextgem.public.concepts.NumericalConcept`, you can s
    * - ``singular_occurrence``
      - ``bool``
      - ``False``
-     - Whether this concept has at most one extracted item. If ``True``, at most one numerical value is extracted, and none if there is nothing to extract: an LLM that returns more than one is asked again, as for any other invalid data. For numerical concepts, this parameter is particularly useful when you want to extract a single specific value rather than identifying multiple numerical values throughout the document. This helps distinguish between single-value concepts versus multi-value concepts (e.g., *"total contract value"* vs *"all payment amounts"*). Note that with advanced LLMs, this constraint may not be required as they can often infer the appropriate number of items to extract from the concept's name, description, and type.
+     - Whether this concept has at most one extracted item. If ``True``, at most one numerical value is extracted, and none if there is nothing to extract: an LLM that returns more than one is asked again, as for any other invalid data. For numerical concepts, this parameter is particularly useful when you want to extract a single specific value rather than identifying multiple numerical values throughout the document. This helps distinguish between single-value concepts versus multi-value concepts (e.g., *"total contract value"* vs *"all payment amounts"*). Without it, an LLM infers the number of items from the name and the description of the concept.
    * - ``custom_data``
      - ``dict``
      - ``{}``
@@ -103,7 +103,7 @@ You can configure a :class:`~contextgem.public.concepts.NumericalConcept` to inc
 📊 Extracted Items
 --------------------
 
-When a :class:`~contextgem.public.concepts.NumericalConcept` is extracted, it is populated with **a list of extracted items** accessible through the ``.extracted_items`` property. Each item is an instance of the ``_IntegerItem``, ``_FloatItem`` or ``_IntegerOrFloatItem`` class, for ``numeric_type`` set to ``"int"``, ``"float"`` or ``"any"`` (default) respectively, with the following attributes:
+When a :class:`~contextgem.public.concepts.NumericalConcept` is extracted, it is populated with **a list of extracted items** accessible through the ``.extracted_items`` property. Each item has the following attributes, its ``value`` an ``int``, a ``float``, or either, for ``numeric_type`` set to ``"int"``, ``"float"`` or ``"any"`` (default) respectively:
 
 .. list-table::
    :widths: 20 20 60

@@ -173,8 +173,8 @@ class ModelAPIError(ContextGemError):
     - the request fails with a transient error (request timeout, rate limit, server
       or connection error), also after ``num_retries_failed_request`` retries;
     - the response of an LLM is cut off at the max output tokens during extraction,
-      or is empty in a chat, also after the request was sent again
-      ``max_retries_invalid_data`` times.
+      which is not requested again, or is empty in a chat, also after the request
+      was sent again ``max_retries_invalid_data`` times.
 
     A request that the provider blocks for its content, or whose answer it blocks,
     is a refusal, which raises :class:`ModelRefusalError`.

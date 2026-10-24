@@ -120,7 +120,7 @@ The additional context is sent to the models together with the paragraph, in the
 📍 Pages and Positions
 -----------------------
 
-The ``page_numbers`` of a paragraph are the numbers of the pages that its text is on, e.g. ``[4, 5]`` for a paragraph that continues on the next page, and its sentences have them too. The ``reference_page_numbers`` of an aspect or an extracted item are the pages of its reference paragraphs and sentences, as in the example above.
+The ``page_numbers`` of a paragraph are the numbers of the pages that its text is on, e.g. ``[4, 5]`` for a paragraph that continues on the next page, and its sentences have them too. A row of a table has the pages of its table, also when the table continues on the next page. The ``reference_page_numbers`` of an aspect or an extracted item are the pages of its reference paragraphs and sentences, as in the example above.
 
 .. list-table::
    :header-rows: 1

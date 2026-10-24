@@ -86,7 +86,7 @@ When creating a :class:`~contextgem.public.concepts.JsonObjectConcept`, you can 
    * - ``singular_occurrence``
      - ``bool``
      - ``False``
-     - Whether this concept has at most one extracted item. If ``True``, at most one JSON object is extracted, and none if there is nothing to extract: an LLM that returns more than one is asked again, as for any other invalid data. For JSON object concepts, this parameter is particularly useful when you want to extract a comprehensive structured representation of a single entity (e.g., "product specifications" or "company profile") rather than multiple instances of structured data scattered throughout the document. This is especially valuable when extracting complex nested objects that aggregate information from different parts of the document into a cohesive whole. Note that with advanced LLMs, this constraint may not be required as they can often infer the appropriate number of objects to extract from the concept's name, description, and schema structure.
+     - Whether this concept has at most one extracted item. If ``True``, at most one JSON object is extracted, and none if there is nothing to extract: an LLM that returns more than one is asked again, as for any other invalid data. For JSON object concepts, this parameter is particularly useful when you want to extract a comprehensive structured representation of a single entity (e.g., "product specifications" or "company profile") rather than multiple instances of structured data scattered throughout the document. This is especially valuable when extracting complex nested objects that aggregate information from different parts of the document into a cohesive whole. Without it, an LLM infers the number of items from the name and the description of the concept.
    * - ``custom_data``
      - ``dict``
      - ``{}``
@@ -96,7 +96,7 @@ When creating a :class:`~contextgem.public.concepts.JsonObjectConcept`, you can 
 🏗️ Defining Structure
 -----------------------
 
-The ``structure`` parameter defines the schema for the data you want to extract. JsonObjectConcept uses Pydantic models internally to validate all structures, ensuring type safety and data integrity. Dictionary-based definitions provide a simpler abstraction for defining JSON object structures, while still benefiting from Pydantic's robust validation system under the hood.
+The ``structure`` parameter defines the schema for the data you want to extract. The structure is checked when the concept is created, and each extracted value is validated against it (see below), whether the structure is a dictionary or a class.
 
 You can define the structure in several ways:
 
@@ -157,7 +157,7 @@ You can configure a :class:`~contextgem.public.concepts.JsonObjectConcept` to in
 📊 Extracted Items
 --------------------
 
-When a :class:`~contextgem.public.concepts.JsonObjectConcept` is extracted, it is populated with **a list of extracted items** accessible through the ``.extracted_items`` property. Each item is an instance of the ``_JsonObjectItem`` class with the following attributes:
+When a :class:`~contextgem.public.concepts.JsonObjectConcept` is extracted, it is populated with **a list of extracted items** accessible through the ``.extracted_items`` property. Each item has the following attributes:
 
 .. list-table::
    :widths: 20 20 60

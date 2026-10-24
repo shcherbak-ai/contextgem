@@ -143,7 +143,7 @@ Here's an example that demonstrates using :class:`~contextgem.public.concepts.La
 📊 Extracted Items
 --------------------
 
-When a :class:`~contextgem.public.concepts.LabelConcept` is extracted, it is populated with **a list of extracted items** accessible through the ``.extracted_items`` property. Each item is an instance of the ``_LabelItem`` class with the following attributes:
+When a :class:`~contextgem.public.concepts.LabelConcept` is extracted, it is populated with **a list of extracted items** accessible through the ``.extracted_items`` property. Each item has the following attributes:
 
 .. list-table::
    :widths: 20 20 60

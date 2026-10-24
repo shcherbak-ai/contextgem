@@ -86,7 +86,7 @@ When creating a :class:`~contextgem.public.concepts.DateConcept`, you can specif
    * - ``singular_occurrence``
      - ``bool``
      - ``False``
-     - Whether this concept has at most one extracted item. If ``True``, at most one date is extracted, and none if there is nothing to extract: an LLM that returns more than one is asked again, as for any other invalid data. For date concepts, this parameter is particularly useful when you want to extract a specific, unique date in the document (e.g., *"publication date"* or *"contract signing date"*) rather than identifying multiple dates throughout the document. Note that with advanced LLMs, this constraint may not be required as they can often infer the appropriate cardinality from the concept's name, description, and type.
+     - Whether this concept has at most one extracted item. If ``True``, at most one date is extracted, and none if there is nothing to extract: an LLM that returns more than one is asked again, as for any other invalid data. For date concepts, this parameter is particularly useful when you want to extract a specific, unique date in the document (e.g., *"publication date"* or *"contract signing date"*) rather than identifying multiple dates throughout the document. Without it, an LLM infers the number of items from the name and the description of the concept.
    * - ``custom_data``
      - ``dict``
      - ``{}``
@@ -108,7 +108,7 @@ You can configure a :class:`~contextgem.public.concepts.DateConcept` to include 
 📊 Extracted Items
 --------------------
 
-When a :class:`~contextgem.public.concepts.DateConcept` is extracted, it is populated with **a list of extracted items** accessible through the ``.extracted_items`` property. Each item is an instance of the ``_DateItem`` class with the following attributes:
+When a :class:`~contextgem.public.concepts.DateConcept` is extracted, it is populated with **a list of extracted items** accessible through the ``.extracted_items`` property. Each item has the following attributes:
 
 .. list-table::
    :widths: 20 20 60

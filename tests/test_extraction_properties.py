@@ -3092,6 +3092,9 @@ def _fallback_chains(draw: st.DrawFn) -> list[_ScriptedModel]:
     """
     Generates a primary model and up to two fallback models, each an LLM or
     a decision model, with what their APIs do with the requests sent to them.
+    The answers of some decision models are all usable, some refused, so that
+    their calls often succeed with paragraphs refused, which the fallback models
+    of a primary model are asked about.
 
     :param draw: Function to draw values from strategies.
     :type draw: st.DrawFn
@@ -3111,6 +3114,8 @@ def _fallback_chains(draw: st.DrawFn) -> list[_ScriptedModel]:
             outcomes, script_length = _LLM_OUTCOMES, _LLM_SCRIPT_LENGTH
         else:
             outcomes, script_length = _DECISION_OUTCOMES, _DECISION_SCRIPT_LENGTH
+            if draw(st.booleans()):
+                outcomes = ["valid", "refused"]
         chain.append(
             _ScriptedModel(
                 kind=kind,
@@ -3167,9 +3172,24 @@ class _SimulatedExtraction:
         the last call was sent again, for transient errors.
     :vartype retries_attempted: int
     :ivar refused_paragraphs: Positions of the paragraphs that a decision model
-        refused to answer on in its call that succeeded, which the aspects do not
-        include.
+        refused to answer on in its call that succeeded.
     :vartype refused_paragraphs: list[int]
+    :ivar fallbacks_asked: Whether the fallback models were asked about
+        the paragraphs refused, i.e. whether the call that succeeded is one of
+        the primary model, a decision model with fallback models.
+    :vartype fallbacks_asked: bool
+    :ivar undecided_paragraphs: Positions of the paragraphs refused that no
+        fallback model decided either, which the aspects do not include.
+    :vartype undecided_paragraphs: list[int]
+    :ivar deciders: Kind of the model that decided each of the other paragraphs
+        for the aspects, i.e. that each aspect includes, by its position: "llm"
+        or "decision".
+    :vartype deciders: dict[int, str]
+    :ivar documents: Positions of the paragraphs that each model called extracts
+        the aspects from, by its identifier: all the paragraphs of the document,
+        or those still undecided for a fallback model asked about the paragraphs
+        refused.
+    :vartype documents: dict[str, list[int]]
     :ivar usage: Usage of each model, by its identifier.
     :vartype usage: dict[str, _SimulatedUsage]
     """
@@ -3178,6 +3198,10 @@ class _SimulatedExtraction:
     last_model: _ScriptedModel | None = None
     retries_attempted: int = 0
     refused_paragraphs: list[int] = field(default_factory=list)
+    fallbacks_asked: bool = False
+    undecided_paragraphs: list[int] = field(default_factory=list)
+    deciders: dict[int, str] = field(default_factory=dict)
+    documents: dict[str, list[int]] = field(default_factory=dict)
     usage: dict[str, _SimulatedUsage] = field(default_factory=dict)
 
 
@@ -3207,7 +3231,15 @@ def _simulate_extraction(
       the models before it;
     - a model is not called again once its request failed for good, or its
       response was cut off at the max output tokens: the next fallback model is
-      tried.
+      tried;
+    - when the call of the primary model succeeds, but it is a decision model
+      that refused to answer on some paragraphs, its fallback models are asked
+      about these paragraphs in turn, each in an extraction of its own from
+      a document of the paragraphs still undecided, with its own retries.
+      A fallback model whose extraction fails decides nothing, and a fallback
+      decision model that refused to answer on some of these paragraphs leaves
+      them to the next fallback model. What the fallback models decide is
+      added to the result of the primary model, which stands in any case.
 
     :param chain: The models, the primary one first.
     :type chain: list[_ScriptedModel]
@@ -3243,10 +3275,13 @@ def _simulate_extraction(
             return outcome, attempt
         raise AssertionError("Unreachable")
 
-    def call(model: _ScriptedModel, answered: set[int]) -> tuple[str, int, list[int]]:
+    def call(
+        model: _ScriptedModel, answered: set[int], positions: list[int]
+    ) -> tuple[str, int, list[int]]:
         """
-        Makes a call with the model, and returns its outcome, how many times
-        the last request of the call was sent again, and the paragraphs that
+        Makes a call with the model on a document of the paragraphs at the given
+        positions, and returns its outcome, how many times the last request of
+        the call was sent again, and the positions of the paragraphs that
         a decision model refused to answer on in a call that succeeded.
         A decision model does not ask about the paragraphs of ``answered``, which
         it has usable answers on from its previous calls, and adds to them those
@@ -3256,7 +3291,7 @@ def _simulate_extraction(
             outcome, retries = send(model)
             return outcome, retries, []
         refused = []
-        for paragraph_position in range(paragraph_count):
+        for paragraph_position in positions:
             if paragraph_position in answered:
                 continue
             outcome, retries = send(model)
@@ -3266,33 +3301,67 @@ def _simulate_extraction(
             if outcome != "valid":
                 return outcome, retries, []
             answered.add(paragraph_position)
-        if len(refused) == paragraph_count:
+        if len(refused) == len(positions):
             return "refused", 0, []
         return "valid", 0, refused
 
-    primary, *fallback_models = chain
-    simulated.last_model = primary
-    # The paragraphs with usable answers of the model called
-    answered: set[int] = set()
-    outcome, retries, refused = call(primary, answered)
-    if outcome in retried_outcomes:
-        for _ in range(primary.retries_invalid_data):
-            outcome, retries, refused = call(primary, answered)
+    def extract(
+        model: _ScriptedModel, positions: list[int]
+    ) -> tuple[str, int, list[int]]:
+        """
+        Makes the call with the model on a document of the paragraphs at
+        the given positions, and again for invalid data or a refusal, and
+        returns the outcome of the last call (see ``call``).
+        """
+        simulated.documents[model.model] = positions
+        # The paragraphs with usable answers of the model
+        answered: set[int] = set()
+        outcome, retries, refused = call(model, answered, positions)
+        for _ in range(model.retries_invalid_data):
             if outcome not in retried_outcomes:
                 break
-    if outcome != "valid":
-        for fallback_model in fallback_models:
-            simulated.last_model = fallback_model
-            answered = set()
-            for _ in range(fallback_model.retries_invalid_data + 1):
-                outcome, retries, refused = call(fallback_model, answered)
-                if outcome not in retried_outcomes:
-                    break
-            if outcome == "valid":
-                break
+            outcome, retries, refused = call(model, answered, positions)
+        return outcome, retries, refused
+
+    primary, *fallback_models = chain
+    all_positions = list(range(paragraph_count))
+    simulated.last_model = primary
+    outcome, retries, refused = extract(primary, all_positions)
+    for fallback_model in fallback_models:
+        if outcome == "valid":
+            break
+        simulated.last_model = fallback_model
+        outcome, retries, refused = extract(fallback_model, all_positions)
     simulated.outcome = outcome
     simulated.retries_attempted = retries
+    if outcome != "valid":
+        return simulated
     simulated.refused_paragraphs = refused
+    simulated.deciders = {
+        position: simulated.last_model.kind
+        for position in all_positions
+        if position not in refused
+    }
+    undecided = refused
+    if simulated.last_model is primary and refused and fallback_models:
+        # The fallback models are asked about the paragraphs refused
+        simulated.fallbacks_asked = True
+        for fallback_model in fallback_models:
+            if not undecided:
+                break
+            outcome, _, refused = extract(fallback_model, undecided)
+            if outcome != "valid":
+                # The fallback model decides nothing
+                continue
+            simulated.deciders.update(
+                {
+                    position: fallback_model.kind
+                    for position in undecided
+                    if position not in refused
+                }
+            )
+            undecided = refused
+    simulated.undecided_paragraphs = undecided
     return simulated
 
 
@@ -4433,17 +4502,17 @@ class TestExtractionProperties(BaseTest):
         event(f"outcome: {simulated.outcome}, last model: {simulated.last_model.kind}")
         if simulated.refused_paragraphs:
             event("paragraphs refused")
+        if simulated.fallbacks_asked:
+            event(
+                "fallback models asked about the paragraphs refused, which they "
+                + (
+                    "did not decide all"
+                    if simulated.undecided_paragraphs
+                    else "decided"
+                )
+            )
 
         scripts = {model.model: iter(model.outcomes) for model in chain}
-        valid_output = json.dumps(
-            [
-                {
-                    "aspect_id": f"A{position}",
-                    "paragraph_ids": [f"P{p}" for p in range(paragraph_count)],
-                }
-                for position in range(aspect_count)
-            ]
-        )
         # The errors of litellm for the requests that the providers blocked, in
         # the order of the requests
         blocked_errors: list[Exception] = []
@@ -4462,13 +4531,23 @@ class TestExtractionProperties(BaseTest):
 
         def complete(request: dict[str, Any]) -> Any:
             """
-            Does with a request to an LLM what the script of the LLM says.
+            Does with a request to an LLM what the script of the LLM says:
+            a valid output has each paragraph of the prompt belong to each aspect.
+            The prompt has the paragraphs of the document, or those that
+            the primary decision model refused to answer on.
             """
             outcome = next(scripts[request["model"]])
             if outcome in ("transient", "permanent"):
                 return _api_error(outcome == "transient", request["model"])
             if outcome == "blocked":
                 return block(request["model"])
+            paragraph_ids = re.findall(r'<paragraph id="(P\d+)">', _get_prompt(request))
+            valid_output = json.dumps(
+                [
+                    {"aspect_id": f"A{position}", "paragraph_ids": paragraph_ids}
+                    for position in range(aspect_count)
+                ]
+            )
             if outcome == "truncated":
                 return _completion(
                     valid_output[: len(valid_output) // 2], finish_reason="length"
@@ -4477,7 +4556,12 @@ class TestExtractionProperties(BaseTest):
                 # A paragraph that is not in the prompt
                 return _completion(
                     json.dumps(
-                        [{"aspect_id": "A0", "paragraph_ids": [f"P{paragraph_count}"]}]
+                        [
+                            {
+                                "aspect_id": "A0",
+                                "paragraph_ids": [f"P{len(paragraph_ids)}"],
+                            }
+                        ]
                     )
                 )
             return _completion(valid_output)
@@ -4533,6 +4617,19 @@ class TestExtractionProperties(BaseTest):
         assert requests == Counter(
             {model: usage.requests for model, usage in simulated.usage.items()}
         )
+        # The paragraphs that the requests are on: all the paragraphs of
+        # the document of the model in each prompt of an LLM, and one of them in
+        # each request of a decision model
+        for request in stub.completion_requests:
+            assert (
+                sorted(
+                    {int(p) for p in re.findall(r"Clause (\d+)-", _get_prompt(request))}
+                )
+                == simulated.documents[request["model"]]
+            )
+        for request in stub.decision_requests:
+            paragraph_position, _ = _get_marker(request["input"])
+            assert paragraph_position in simulated.documents[request["model"]]
         usages = {entry.model: entry.usage for entry in primary_model.get_usage()}
         costs = {entry.model: entry.cost for entry in primary_model.get_cost()}
         for model in chain:
@@ -4553,26 +4650,47 @@ class TestExtractionProperties(BaseTest):
         if simulated.outcome == "valid":
             assert error is None
             # A warning for each aspect on the paragraphs that the decision model
-            # refused to answer on, which the aspect does not include
+            # refused to answer on, if some stay undecided, which the aspect does
+            # not include, and which its fallback models did not decide either
+            # if they were asked
             refused = simulated.refused_paragraphs
-            assert len(messages) == (aspect_count if refused else 0)
+            undecided = simulated.undecided_paragraphs
+            assert len(messages) == (aspect_count if undecided else 0)
             for position, message in enumerate(messages):
-                assert (
+                expected_message = (
                     f"refused to answer the question of aspect `Aspect {position}` "
                     f"on {len(refused)} of {paragraph_count} paragraphs "
                     f"(indices: {refused})"
+                )
+                if simulated.fallbacks_asked:
+                    expected_message += (
+                        f", and its fallback models did not answer on the paragraphs "
+                        f"with indices {undecided} either"
+                    )
+                assert (
+                    f"{expected_message}. These are not included in the aspect."
                 ) in message
-            decided = simulated.last_model.kind == "decision"
+            # The paragraphs decided, in the order of the document, each with
+            # the probabilities of the decision model that decided it
+            included = sorted(simulated.deciders)
             for aspect in document.aspects:
                 assert aspect._is_processed
                 assert [item.value for item in aspect.extracted_items] == [
-                    paragraph.raw_text
-                    for p, paragraph in enumerate(document.paragraphs)
-                    if p not in refused
+                    document.paragraphs[p].raw_text for p in included
                 ]
+                for item, p in zip(aspect.extracted_items, included, strict=True):
+                    assert item.reference_paragraphs[0] is document.paragraphs[p]
+                    assert item.probabilities == (
+                        {True: 0.9, False: 1 - 0.9}
+                        if simulated.deciders[p] == "decision"
+                        else None
+                    )
+                assert len(aspect.reference_paragraphs) == len(included)
                 assert all(
-                    (item.probabilities is not None) is decided
-                    for item in aspect.extracted_items
+                    reference is document.paragraphs[p]
+                    for reference, p in zip(
+                        aspect.reference_paragraphs, included, strict=True
+                    )
                 )
             return
 

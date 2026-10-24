@@ -33,10 +33,10 @@ Aspects support nested structures through sub-aspects, allowing you to break dow
 Integration with Concepts
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Aspects can contain :class:`~contextgem.internal.base.concepts._Concept` instances for detailed data extraction within the identified sections, creating a two-stage extraction workflow.
+Aspects can contain concepts (see :doc:`../concepts/supported_concepts`) for detailed data extraction within the identified sections, creating a two-stage extraction workflow.
 
 .. note::
-   See supported concept types in :doc:`../concepts/supported_concepts`. All public concept types inherit from the internal :class:`~contextgem.internal.base.concepts._Concept` base class.
+   See supported concept types in :doc:`../concepts/supported_concepts`.
 
 
 💻 Basic Usage
@@ -85,7 +85,7 @@ When creating an :class:`~contextgem.public.aspects.Aspect`, you can configure t
      - ``[]``
      - *Optional*. List of sub-aspects for hierarchical organization. Limited to one nesting level.
    * - ``concepts``
-     - ``list[_Concept]``
+     - ``list`` of concepts
      - ``[]``
      - *Optional*. List of concepts associated with the aspect for detailed data extraction within the aspect's scope. Aspects are extracted from text, so only concepts with the ``"text"`` modality (the default) can be assigned to an aspect. See supported concept types in :doc:`../concepts/supported_concepts`.
    * - ``model_role``
@@ -121,7 +121,7 @@ When creating an :class:`~contextgem.public.aspects.Aspect`, you can configure t
 📊 Extracted Items
 --------------------
 
-When an :class:`~contextgem.public.aspects.Aspect` is extracted, it is populated with **a list of extracted items** accessible through the ``.extracted_items`` property. Each item is an instance of the ``_StringItem`` class with the following attributes:
+When an :class:`~contextgem.public.aspects.Aspect` is extracted, it is populated with **a list of extracted items** accessible through the ``.extracted_items`` property. Each item has the following attributes:
 
 .. list-table::
    :widths: 20 20 60

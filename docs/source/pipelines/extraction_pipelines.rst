@@ -79,9 +79,9 @@ When creating an :class:`~contextgem.public.pipelines.ExtractionPipeline`, you c
      - ``[]``
      - *Optional*. List of :class:`~contextgem.public.aspects.Aspect` instances to extract from documents. Aspects represent structural categories of information and can contain their own sub-aspects and concepts for detailed analysis. See :doc:`../aspects/aspects` for more information.
    * - ``concepts``
-     - ``list[_Concept]``
+     - ``list`` of concepts
      - ``[]``
-     - *Optional*. List of ``_Concept`` instances to identify within or infer from documents. These are document-level concepts that apply to the entire document content. See supported concept types in :doc:`../concepts/supported_concepts`.
+     - *Optional*. Concepts to identify within or infer from documents. These are document-level concepts that apply to the entire document content. See supported concept types in :doc:`../concepts/supported_concepts`.
    * - ``custom_data``
      - ``dict``
      - ``{}``

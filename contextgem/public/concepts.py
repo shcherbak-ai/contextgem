@@ -68,10 +68,10 @@ class StringConcept(_StringConcept):
     :ivar singular_occurrence: Whether this concept has at most one extracted item. If True,
         at most one item is extracted, and none if there is nothing to extract: an LLM that
         returns more than one is asked again, as for any other invalid data. Defaults to
-        False (multiple extracted items are allowed). Note that with advanced LLMs, this
-        constraint may not be strictly required as they can often infer the appropriate
-        number of items to extract from the concept's name, description, and type (e.g.,
-        "document title" vs "key findings").
+        False (multiple extracted items are allowed). Set it for a
+        concept with one value, e.g. "document title",
+        rather than several, e.g. "key findings". Without it,
+        an LLM infers the number of items from the concept's name and description.
     :vartype singular_occurrence: StrictBool
     :ivar extracted_items: The items extracted for the concept, set by the extraction
         methods: each has the extracted ``value``, and its ``justification``, references
@@ -136,10 +136,11 @@ class BooleanConcept(_BooleanConcept):
     :ivar singular_occurrence: Whether this concept has at most one extracted item. If True,
         at most one item is extracted, and none if there is nothing to extract: an LLM that
         returns more than one is asked again, as for any other invalid data. Defaults to
-        False (multiple extracted items are allowed). Note that with advanced LLMs, this
-        constraint may not be strictly required as they can often infer the appropriate
-        number of items to extract from the concept's name, description, and type (e.g.,
-        "contains confidential information" vs "compliance violations"). A decision model
+        False (multiple extracted items are allowed). Set it for a
+        concept with one value, e.g. "contains confidential information",
+        rather than several, e.g. "compliance violations". Without it,
+        an LLM infers the number of items from the concept's name and description.
+        A decision model
         (``DocumentDecisionModel``) extracts at most one item for a concept in any case,
         unless the text is sent in parts (``max_paragraphs_to_analyze_per_call`` passed to
         the extraction method): it then returns an item for each part, and rejects a concept
@@ -216,10 +217,10 @@ class NumericalConcept(_NumericalConcept):
     :ivar singular_occurrence: Whether this concept has at most one extracted item. If True,
         at most one item is extracted, and none if there is nothing to extract: an LLM that
         returns more than one is asked again, as for any other invalid data. Defaults to
-        False (multiple extracted items are allowed). Note that with advanced LLMs, this
-        constraint may not be strictly required as they can often infer the appropriate
-        number of items to extract from the concept's name, description, and type (e.g.,
-        "total revenue" vs "monthly sales figures").
+        False (multiple extracted items are allowed). Set it for a
+        concept with one value, e.g. "total revenue",
+        rather than several, e.g. "monthly sales figures". Without it,
+        an LLM infers the number of items from the concept's name and description.
     :vartype singular_occurrence: StrictBool
     :ivar extracted_items: The items extracted for the concept, set by the extraction
         methods: each has the extracted ``value``, and its ``justification``, references
@@ -287,10 +288,11 @@ class RatingConcept(_RatingConcept):
     :ivar singular_occurrence: Whether this concept has at most one extracted item. If True,
         at most one item is extracted, and none if there is nothing to extract: an LLM that
         returns more than one is asked again, as for any other invalid data. Defaults to
-        False (multiple extracted items are allowed). Note that with advanced LLMs, this
-        constraint may not be strictly required as they can often infer the appropriate
-        number of items to extract from the concept's name, description, and type (e.g.,
-        "product rating score" vs "customer satisfaction ratings"). A decision model
+        False (multiple extracted items are allowed). Set it for a
+        concept with one value, e.g. "product rating score",
+        rather than several, e.g. "customer satisfaction ratings". Without it,
+        an LLM infers the number of items from the concept's name and description.
+        A decision model
         (``DocumentDecisionModel``) extracts at most one item for a concept in any case,
         unless the text is sent in parts (``max_paragraphs_to_analyze_per_call`` passed to
         the extraction method): it then returns an item for each part, and rejects a concept
@@ -393,10 +395,10 @@ class JsonObjectConcept(_JsonObjectConcept):
     :ivar singular_occurrence: Whether this concept has at most one extracted item. If True,
         at most one item is extracted, and none if there is nothing to extract: an LLM that
         returns more than one is asked again, as for any other invalid data. Defaults to
-        False (multiple extracted items are allowed). Note that with advanced LLMs, this
-        constraint may not be strictly required as they can often infer the appropriate
-        number of items to extract from the concept's name, description, and type (e.g.,
-        "product specifications" vs "customer order details").
+        False (multiple extracted items are allowed). Set it for a
+        concept with one value, e.g. "product specifications",
+        rather than several, e.g. "customer order details". Without it,
+        an LLM infers the number of items from the concept's name and description.
     :vartype singular_occurrence: StrictBool
     :ivar extracted_items: The items extracted for the concept, set by the extraction
         methods: each has the extracted ``value``, and its ``justification``, references
@@ -461,10 +463,10 @@ class DateConcept(_DateConcept):
     :ivar singular_occurrence: Whether this concept has at most one extracted item. If True,
         at most one item is extracted, and none if there is nothing to extract: an LLM that
         returns more than one is asked again, as for any other invalid data. Defaults to
-        False (multiple extracted items are allowed). Note that with advanced LLMs, this
-        constraint may not be strictly required as they can often infer the appropriate
-        number of items to extract from the concept's name, description, and type (e.g.,
-        "contract signing date" vs "meeting dates").
+        False (multiple extracted items are allowed). Set it for a
+        concept with one value, e.g. "contract signing date",
+        rather than several, e.g. "meeting dates". Without it,
+        an LLM infers the number of items from the concept's name and description.
     :vartype singular_occurrence: StrictBool
     :ivar extracted_items: The items extracted for the concept, set by the extraction
         methods: each has the extracted ``value``, and its ``justification``, references
@@ -545,10 +547,11 @@ class LabelConcept(_LabelConcept):
     :ivar singular_occurrence: Whether this concept has at most one extracted item. If True,
         at most one item is extracted, and none if there is nothing to extract: an LLM that
         returns more than one is asked again, as for any other invalid data. Defaults to
-        False (multiple extracted items are allowed). Note that with advanced LLMs, this
-        constraint may not be strictly required as they can often infer the appropriate
-        number of items to extract from the concept's name, description, and type (e.g.,
-        "document type" vs "content topics"). A decision model (``DocumentDecisionModel``)
+        False (multiple extracted items are allowed). Set it for a
+        concept with one value, e.g. "document type",
+        rather than several, e.g. "content topics". Without it,
+        an LLM infers the number of items from the concept's name and description.
+        A decision model (``DocumentDecisionModel``)
         extracts at most one item for a concept in any case, unless the text is sent in
         parts (``max_paragraphs_to_analyze_per_call`` passed to the extraction method): it
         then returns an item for each part, and rejects a concept with

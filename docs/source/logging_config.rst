@@ -33,7 +33,7 @@ ContextGem uses the following environment variables for logging configuration:
   **Default:** ``1``
 
 .. warning::
-   **Not recommended:** Setting the level to ``OFF`` or above ``INFO`` (such as ``WARNING`` or ``ERROR``) may cause you to miss helpful messages, guidance, recommendations, and important information about the extraction process. The default ``INFO`` level provides a good balance of useful information without being too verbose.
+   **Not recommended:** Setting the level above ``INFO`` hides what ContextGem reports at that level, e.g. the retries and the fallback models that it tries. ``ERROR`` and above, or ``OFF``, also hide the warnings on what happens while it runs, e.g. an extraction that fails when ``raise_exception_on_extraction_error=False`` is passed. The default ``INFO`` level shows these without being too verbose.
 
 
 🔧 Setting Environment Variables

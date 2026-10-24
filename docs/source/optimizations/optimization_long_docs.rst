@@ -25,7 +25,7 @@ Unlike many systems that rely on chunking (e.g. RAG), ContextGem intelligently s
 - **⚡ Optional: Enable Concurrency**: Enable running extractions concurrently if your API setup permits. This will reduce the overall processing time. (See :doc:`optimization_speed` for guidance on configuring concurrency.)
 
 .. note::
-   With a decision model, the maximum number of paragraphs per call changes nothing for aspects, as each paragraph is sent in a request of its own. For concepts, a longer text is sent in parts, and each concept gets one extracted item for each part: the answers on the parts are not combined. A concept with ``singular_occurrence=True`` cannot be extracted by a decision model in parts, also when the decision model is a fallback model: ``ValueError`` is raised before any requests are sent. See :ref:`sending a long text in parts <decision-models-parts-label>`.
+   With a decision model, the maximum number of paragraphs per call changes nothing for aspects, as each paragraph is sent in a request of its own. For concepts, it splits the text into parts, and each concept gets one extracted item for each part: the answers on the parts are not combined. Leave it unset for a decision model unless the text is too long for it, or attach the concepts to aspects, whose text is shorter. A concept with ``singular_occurrence=True`` cannot be extracted by a decision model in parts, also when the decision model is a fallback model: ``ValueError`` is raised before any requests are sent. See :ref:`sending a long text in parts <decision-models-parts-label>`.
 
 Since each use case has unique requirements, experiment with different configurations to find your optimal setup.
 

@@ -41,7 +41,7 @@ For an application, :doc:`dependency_security` shows how to keep the versions of
 Optional Extras
 ~~~~~~~~~~~~~~~~
 
-* ``docling``: `Docling <https://github.com/docling-project/docling>`_, to convert files such as PDF, DOCX, PPTX, XLSX and HTML, and create documents from them (see :doc:`documents/docling`): ``uv add "contextgem[docling]"``. Docling runs its models on PyTorch, which the extra installs. The extra does not install on an Intel Mac: docling-parse, the PDF parser of Docling, publishes no packages for Intel Macs from version 7, which Docling needs.
+* ``docling``: `Docling <https://github.com/docling-project/docling>`_, to convert files such as PDF, DOCX, PPTX, XLSX and HTML, and create documents from them (see :doc:`documents/docling`): ``uv add "contextgem[docling]"``. Docling runs its models on PyTorch, which the extra installs. The extra does not install on an Intel Mac: docling-parse, the PDF parser of Docling, publishes no packages for Intel Macs from version 7, which Docling needs. On an Intel Mac, convert the files elsewhere, e.g. with a Docling Serve instance, and create the documents from the Docling documents with ``docling-core`` only (see :doc:`documents/docling`).
 
 Development Installation
 ~~~~~~~~~~~~~~~~~~~~~~~~~

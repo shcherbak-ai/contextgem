@@ -61,12 +61,14 @@ from contextgem.internal.decisions import (
 )
 from contextgem.internal.decorators import _disable_direct_initialization
 from contextgem.internal.exceptions import (
+    ContextGemError,
     ModelAPIError,
     _InvalidDecisionResponseError,
     _RefusedDecisionAnswerError,
 )
 from contextgem.internal.items import _StringItem
 from contextgem.internal.loggers import logger
+from contextgem.internal.registry import _publicize
 from contextgem.internal.suppressions import _suppress_litellm_warnings_context
 from contextgem.internal.typings.types import ExtractedInstanceType, ItemProbabilities
 from contextgem.internal.utils import (
@@ -223,6 +225,83 @@ class _QuestionsOnText:
     text: str
     questions: list[_DecisionQuestion]
     location: str = ""
+
+
+@dataclass
+class _RefusedOnAspect:
+    """
+    What a decision model refused to answer the question of an aspect on, i.e.
+    what is not decided for the aspect: paragraphs, and sentences of
+    the paragraphs that belong to the aspect, in the order of the source.
+
+    :ivar paragraphs: The paragraphs refused.
+    :vartype paragraphs: list[_Paragraph]
+    :ivar sentences: The sentences refused, each with its paragraph.
+    :vartype sentences: list[tuple[_Paragraph, _Sentence]]
+    :ivar n_paragraphs_asked_about: The number of the paragraphs that the model
+        was asked about for the aspect.
+    :vartype n_paragraphs_asked_about: int
+    :ivar n_sentences_asked_about: The number of the sentences that the model
+        was asked about for the aspect.
+    :vartype n_sentences_asked_about: int
+    """
+
+    paragraphs: list[_Paragraph]
+    sentences: list[tuple[_Paragraph, _Sentence]]
+    n_paragraphs_asked_about: int = 0
+    n_sentences_asked_about: int = 0
+
+    @property
+    def has_refusals(self) -> bool:
+        """
+        Returns whether the model refused to answer on any paragraph or sentence.
+
+        :return: True if it did, False otherwise.
+        :rtype: bool
+        """
+        return bool(self.paragraphs or self.sentences)
+
+
+def _get_sentence_position(paragraph: _Paragraph, sentence: _Sentence) -> int:
+    """
+    Returns the position of a sentence among the sentences of its paragraph.
+
+    :param paragraph: The paragraph.
+    :type paragraph: _Paragraph
+    :param sentence: The sentence, an object of the paragraph.
+    :type sentence: _Sentence
+    :return: The position of the sentence.
+    :rtype: int
+    """
+    return next(
+        position
+        for position, paragraph_sentence in enumerate(paragraph.sentences)
+        if paragraph_sentence is sentence
+    )
+
+
+def _copy_aspect_for_fallback(aspect: _Aspect) -> _Aspect:
+    """
+    Returns a copy of an aspect for a fallback model to extract from what
+    a decision model refused to answer on: with the params of the aspect, and
+    without its sub-aspects, its concepts, its items and its references, i.e.
+    as an aspect that is not processed.
+
+    :param aspect: The aspect.
+    :type aspect: _Aspect
+    :return: The copy.
+    :rtype: _Aspect
+    """
+    copy = aspect.clone()
+    copy.aspects = []
+    copy.concepts = []
+    copy.extracted_items = []
+    copy.reference_paragraphs = []
+    copy.reference_sentences = []
+    copy._is_processed = False
+    copy._refused_paragraph_ids = set()
+    copy._refused_sentence_ids = set()
+    return copy
 
 
 def _get_request_question(question: _DecisionQuestion) -> dict[str, Any]:
@@ -935,6 +1014,9 @@ class _DocumentDecisionModel(_DocumentModel):
         on is not included in the aspect, the other answers are used, and a warning
         is issued for each aspect with such answers, which names the aspect and
         what the model refused to answer on. The request is not sent again.
+        If the model has fallback models, they are asked about what it refused to
+        answer on first (see ``_ask_fallbacks_about_refused``), and the warning names
+        what none of them decided.
         Only if the model refuses to answer the question of an aspect on every
         paragraph, the response cannot be used, as nothing is known about
         the aspect. A refused answer to a question of a concept cannot be used
@@ -946,7 +1028,7 @@ class _DocumentDecisionModel(_DocumentModel):
 
         When the call is made again, the requests whose answers were usable are not
         sent again (see ``answers_cache``): only the request whose response cannot
-        be used, or that was refused, and those that were not sent after it.
+        be used, or that was refused, and those not sent yet.
 
         If there are more questions on a text than a request can hold, they are
         sent in several requests on the same text.
@@ -1188,6 +1270,35 @@ class _DocumentDecisionModel(_DocumentModel):
                 )
                 return None, usage
 
+            # What the model refused to answer on for the aspects, and what stays
+            # undecided once its fallback models are asked about it, if it has any
+            refused_on_aspects: list[_RefusedOnAspect] = []
+            undecided_on_aspects: list[_RefusedOnAspect] | None = None
+            if extracted_item_type == "aspect":
+                # Safe cast: only aspects are extracted with the "aspect" item type
+                aspects = cast(list[_Aspect], instances_to_process)
+                refused_on_aspects = self._get_refused_on_aspects(
+                    aspects=aspects,
+                    paragraphs=paragraphs,
+                    answers_of_paragraphs=answers_of_texts,
+                    answers_of_sentences=answers_of_sentences,
+                )
+                if self.fallback_models and any(
+                    refused.has_refusals for refused in refused_on_aspects
+                ):
+                    items_of_aspects = [items for _, items in instances_and_items]
+                    undecided_on_aspects = await self._ask_fallbacks_about_refused(
+                        aspects=aspects,
+                        items_of_aspects=items_of_aspects,
+                        refused_on_aspects=refused_on_aspects,
+                        source_paragraphs=source_paragraphs,
+                        max_paragraphs_to_analyze_per_call=max_paragraphs_to_analyze_per_call,
+                        use_concurrency=async_limiter is not None,
+                    )
+                    instances_and_items = list(
+                        zip(aspects, items_of_aspects, strict=True)
+                    )
+
             # Process all gathered results for all processed instances
             async with (
                 self._async_lock
@@ -1214,17 +1325,40 @@ class _DocumentDecisionModel(_DocumentModel):
                         # and not all the sentences of its reference paragraphs.
                         instance._add_references_of_extracted_items()
                     instance._is_processed = True
+                if (
+                    extracted_item_type == "aspect"
+                    and document._for_fallback_of_refusals
+                ):
+                    # What the model refused to answer on for each aspect, passed
+                    # back to the decision model that it is a fallback model of
+                    for instance, undecided in zip(
+                        instances_to_process,
+                        undecided_on_aspects or refused_on_aspects,
+                        strict=True,
+                    ):
+                        # Safe cast: only aspects are extracted with the "aspect"
+                        # item type
+                        aspect = cast(_Aspect, instance)
+                        aspect._refused_paragraph_ids = {
+                            paragraph.unique_id for paragraph in undecided.paragraphs
+                        }
+                        aspect._refused_sentence_ids = {
+                            sentence.unique_id for _, sentence in undecided.sentences
+                        }
 
-            # The aspects are extracted without what the model refused to answer on
-            if extracted_item_type == "aspect":
+            # The aspects are extracted without what stays undecided. In a document
+            # of what a decision model refused to answer on, this is passed back to
+            # that model, which reports it.
+            if extracted_item_type == "aspect" and not (
+                document._for_fallback_of_refusals
+            ):
                 for warning_msg in self._get_refused_answers_msgs(
                     # Safe cast: only aspects are extracted with the "aspect"
                     # item type
                     aspects=cast(list[_Aspect], instances_to_process),
                     source_paragraphs=source_paragraphs,
-                    paragraphs=paragraphs,
-                    answers_of_paragraphs=answers_of_texts,
-                    answers_of_sentences=answers_of_sentences,
+                    refused_on_aspects=refused_on_aspects,
+                    undecided_on_aspects=undecided_on_aspects,
                 ):
                     logger.warning(warning_msg)
         except Exception:
@@ -1404,34 +1538,22 @@ class _DocumentDecisionModel(_DocumentModel):
         )
         return None, usage
 
-    def _get_refused_answers_msgs(
-        self,
+    @staticmethod
+    def _get_refused_on_aspects(
         *,
         aspects: list[_Aspect],
-        source_paragraphs: list[_Paragraph],
         paragraphs: list[_Paragraph],
         answers_of_paragraphs: list[dict[str, _DecisionAnswer]],
         answers_of_sentences: list[_AnswersOnSentences],
-    ) -> list[str]:
+    ) -> list[_RefusedOnAspect]:
         """
-        Returns the messages on the answers that the decision model refused to give
-        to the questions of the aspects: one message for each aspect with such
-        answers, which names the aspect and what the model refused to answer on,
-        i.e. what is not included in the aspect for that reason.
-
-        A paragraph is given by its index among the paragraphs that the aspects
-        are extracted from, i.e. those of the document, or of the parent aspect
-        for sub-aspects, and a sentence by the index of its paragraph and its own
-        index among the sentences of that paragraph. The paragraphs and
-        the sentences are counted out of those that the model was asked about
-        for the aspect.
+        Returns what the decision model refused to answer the questions of
+        the aspects on: for each aspect, the paragraphs, and the sentences, with
+        the numbers of the paragraphs and of the sentences asked about for it.
 
         :param aspects: The aspects that the questions of the call were built for,
             in the order of their questions.
         :type aspects: list[_Aspect]
-        :param source_paragraphs: The paragraphs that the aspects are extracted
-            from.
-        :type source_paragraphs: list[_Paragraph]
         :param paragraphs: The paragraphs that the questions were asked on.
         :type paragraphs: list[_Paragraph]
         :param answers_of_paragraphs: For each of these paragraphs, the answers of
@@ -1442,8 +1564,69 @@ class _DocumentDecisionModel(_DocumentModel):
             by the names of the questions.
         :type answers_of_sentences:
             list[list[tuple[_Sentence, dict[str, _DecisionAnswer]]]]
-        :return: The messages, in the order of the aspects. Empty if the model
-            answered each question.
+        :return: What the model refused to answer on, for each aspect, in
+            the order of the aspects.
+        :rtype: list[_RefusedOnAspect]
+        """
+        refused_on_aspects: list[_RefusedOnAspect] = []
+        for position in range(len(aspects)):
+            question_name = _get_aspect_question_name(position)
+            refused = _RefusedOnAspect(
+                paragraphs=[], sentences=[], n_paragraphs_asked_about=len(paragraphs)
+            )
+            for paragraph, answers, sentences_answers in zip(
+                paragraphs, answers_of_paragraphs, answers_of_sentences, strict=True
+            ):
+                if _is_refused_answer(answers, question_name):
+                    refused.paragraphs.append(paragraph)
+                for sentence, sentence_answers in sentences_answers:
+                    if question_name not in sentence_answers:
+                        # The sentence is asked about for other aspects only
+                        continue
+                    refused.n_sentences_asked_about += 1
+                    if _is_refused_answer(sentence_answers, question_name):
+                        refused.sentences.append((paragraph, sentence))
+            refused_on_aspects.append(refused)
+        return refused_on_aspects
+
+    def _get_refused_answers_msgs(
+        self,
+        *,
+        aspects: list[_Aspect],
+        source_paragraphs: list[_Paragraph],
+        refused_on_aspects: list[_RefusedOnAspect],
+        undecided_on_aspects: list[_RefusedOnAspect] | None = None,
+    ) -> list[str]:
+        """
+        Returns the messages on the answers that the decision model refused to give
+        to the questions of the aspects: one message for each aspect with such
+        answers that stay undecided, which names the aspect and what the model
+        refused to answer on, i.e. what is not included in the aspect for that
+        reason. If the fallback models of the model were asked about it,
+        the message tells what none of them answered on either.
+
+        A paragraph is given by its index among the paragraphs that the aspects
+        are extracted from, i.e. those of the document, or of the parent aspect
+        for sub-aspects, and a sentence by the index of its paragraph and its own
+        index among the sentences of that paragraph. The paragraphs and
+        the sentences that the model refused to answer on are counted out of those
+        that the model was asked about for the aspect.
+
+        :param aspects: The aspects that the questions of the call were built for,
+            in the order of their questions.
+        :type aspects: list[_Aspect]
+        :param source_paragraphs: The paragraphs that the aspects are extracted
+            from.
+        :type source_paragraphs: list[_Paragraph]
+        :param refused_on_aspects: What the model refused to answer on, for each
+            aspect.
+        :type refused_on_aspects: list[_RefusedOnAspect]
+        :param undecided_on_aspects: What none of the fallback models answered on
+            either, for each aspect, if they were asked about it. Defaults to None,
+            i.e. they were not.
+        :type undecided_on_aspects: list[_RefusedOnAspect] | None
+        :return: The messages, in the order of the aspects. Empty if nothing stays
+            undecided.
         :rtype: list[str]
         """
         # The paragraphs of the source are distinct objects
@@ -1451,50 +1634,317 @@ class _DocumentDecisionModel(_DocumentModel):
             id(paragraph): position
             for position, paragraph in enumerate(source_paragraphs)
         }
+
+        def get_paragraph_indices(paragraphs: list[_Paragraph]) -> list[int]:
+            """
+            Returns the indices of paragraphs among those of the source.
+
+            :param paragraphs: The paragraphs.
+            :type paragraphs: list[_Paragraph]
+            :return: The indices.
+            :rtype: list[int]
+            """
+            return [source_positions[id(paragraph)] for paragraph in paragraphs]
+
+        def get_sentence_indices(
+            sentences: list[tuple[_Paragraph, _Sentence]],
+        ) -> list[tuple[int, int]]:
+            """
+            Returns the index of the paragraph of each sentence among those of
+            the source, with the index of the sentence among those of its paragraph.
+
+            :param sentences: The sentences, each with its paragraph.
+            :type sentences: list[tuple[_Paragraph, _Sentence]]
+            :return: The indices.
+            :rtype: list[tuple[int, int]]
+            """
+            return [
+                (
+                    source_positions[id(paragraph)],
+                    _get_sentence_position(paragraph, sentence),
+                )
+                for paragraph, sentence in sentences
+            ]
+
         msgs: list[str] = []
-        for position, aspect in enumerate(aspects):
-            question_name = _get_aspect_question_name(position)
-            refused_paragraphs: list[int] = []
-            refused_sentences: list[tuple[int, int]] = []
-            n_sentences_asked_about = 0
-            for paragraph, answers, sentences_answers in zip(
-                paragraphs, answers_of_paragraphs, answers_of_sentences, strict=True
-            ):
-                source_position = source_positions[id(paragraph)]
-                if _is_refused_answer(answers, question_name):
-                    refused_paragraphs.append(source_position)
-                for sentence, sentence_answers in sentences_answers:
-                    if question_name not in sentence_answers:
-                        # The sentence is asked about for other aspects only
-                        continue
-                    n_sentences_asked_about += 1
-                    if _is_refused_answer(sentence_answers, question_name):
-                        sentence_position = next(
-                            sentence_position
-                            for sentence_position, paragraph_sentence in enumerate(
-                                paragraph.sentences
-                            )
-                            if paragraph_sentence is sentence
-                        )
-                        refused_sentences.append((source_position, sentence_position))
-            refused: list[str] = []
-            if refused_paragraphs:
-                refused.append(
-                    f"{len(refused_paragraphs)} of {len(paragraphs)} paragraphs "
-                    f"(indices: {refused_paragraphs})"
+        for position, (aspect, refused) in enumerate(
+            zip(aspects, refused_on_aspects, strict=True)
+        ):
+            undecided = (
+                refused
+                if undecided_on_aspects is None
+                else undecided_on_aspects[position]
+            )
+            if not undecided.has_refusals:
+                continue
+            refused_parts: list[str] = []
+            if refused.paragraphs:
+                refused_parts.append(
+                    f"{len(refused.paragraphs)} of {refused.n_paragraphs_asked_about} "
+                    f"paragraphs (indices: {get_paragraph_indices(refused.paragraphs)})"
                 )
-            if refused_sentences:
-                refused.append(
-                    f"{len(refused_sentences)} of {n_sentences_asked_about} "
-                    f"sentences (paragraph index, sentence index: {refused_sentences})"
+            if refused.sentences:
+                refused_parts.append(
+                    f"{len(refused.sentences)} of {refused.n_sentences_asked_about} "
+                    f"sentences (paragraph index, sentence index: "
+                    f"{get_sentence_indices(refused.sentences)})"
                 )
-            if refused:
-                msgs.append(
-                    f"Decision model `{self.model}` refused to answer the question "
-                    f"of aspect `{aspect.name}` on {' and on '.join(refused)}. "
-                    f"These are not included in the aspect."
+            msg = (
+                f"Decision model `{self.model}` refused to answer the question "
+                f"of aspect `{aspect.name}` on {' and on '.join(refused_parts)}"
+            )
+            if undecided_on_aspects is not None:
+                undecided_parts: list[str] = []
+                if undecided.paragraphs:
+                    undecided_parts.append(
+                        f"the paragraphs with indices "
+                        f"{get_paragraph_indices(undecided.paragraphs)}"
+                    )
+                if undecided.sentences:
+                    undecided_parts.append(
+                        f"the sentences with (paragraph index, sentence index) "
+                        f"{get_sentence_indices(undecided.sentences)}"
+                    )
+                msg += (
+                    f", and its fallback models did not answer on "
+                    f"{' and on '.join(undecided_parts)} either"
                 )
+            msgs.append(f"{msg}. These are not included in the aspect.")
         return msgs
+
+    async def _ask_fallbacks_about_refused(
+        self,
+        *,
+        aspects: list[_Aspect],
+        items_of_aspects: list[list[_ExtractedItem]],
+        refused_on_aspects: list[_RefusedOnAspect],
+        source_paragraphs: list[_Paragraph],
+        max_paragraphs_to_analyze_per_call: int = 0,
+        use_concurrency: bool = False,
+    ) -> list[_RefusedOnAspect]:
+        """
+        Asks the fallback models of the decision model about what it refused to
+        answer the questions of the aspects of a call on, and adds what they decide
+        to the items of the aspects.
+
+        The fallback models are tried in their order. Each extracts copies of
+        the aspects with what is still undecided from a document of the paragraphs
+        that it is on: the paragraphs refused for any of these aspects, and those
+        with refused sentences, as an LLM or a decision model extracts aspects,
+        with its own retries. Of what it extracts, only its decisions on what is
+        undecided are taken: on a refused paragraph, also on its sentences for
+        an aspect with the "sentences" reference depth, and on a refused sentence.
+        A fallback decision model can refuse to answer on some of it in turn: that
+        is passed on to the next fallback model. A fallback model that fails, e.g.
+        on an error of its API, decides nothing, and the next one is tried. What
+        none of them decides stays undecided, i.e. is not included in the aspect,
+        as without fallback models: the result of the call stands in any case.
+
+        The items that the fallback models give are relinked to the paragraphs and
+        the sentences of the source, and added to the items of their aspects, which
+        are then in the order of the paragraphs and of the sentences in them.
+        An item of a fallback LLM has no probabilities. The usage of the requests
+        of each fallback model is recorded for that model.
+
+        :param aspects: The aspects of the call, in the order of their questions.
+        :type aspects: list[_Aspect]
+        :param items_of_aspects: The items of each aspect, which the items that
+            the fallback models give are added to.
+        :type items_of_aspects: list[list[_ExtractedItem]]
+        :param refused_on_aspects: What the decision model refused to answer on,
+            for each aspect.
+        :type refused_on_aspects: list[_RefusedOnAspect]
+        :param source_paragraphs: The paragraphs that the aspects are extracted from.
+        :type source_paragraphs: list[_Paragraph]
+        :param max_paragraphs_to_analyze_per_call: The max number of paragraphs
+            that a fallback LLM is sent in one request. Defaults to 0, i.e. no limit.
+        :type max_paragraphs_to_analyze_per_call: int
+        :param use_concurrency: Whether the fallback models extract the aspects with
+            concurrency, as the decision model does. Defaults to False.
+        :type use_concurrency: bool
+        :return: What none of the fallback models decided, for each aspect.
+        :rtype: list[_RefusedOnAspect]
+        """
+        undecided_on_aspects = [
+            _RefusedOnAspect(
+                paragraphs=list(refused.paragraphs),
+                sentences=list(refused.sentences),
+            )
+            for refused in refused_on_aspects
+        ]
+        # The paragraphs and the sentences of the source, by their unique IDs, which
+        # the references of the items that the fallback models give are relinked to
+        paragraphs_by_id = {
+            paragraph.unique_id: paragraph for paragraph in source_paragraphs
+        }
+        sentences_by_id = {
+            sentence.unique_id: sentence
+            for paragraph in source_paragraphs
+            for sentence in paragraph.sentences
+        }
+        # The positions of the paragraphs of the source, which are distinct objects
+        source_positions = {
+            id(paragraph): position
+            for position, paragraph in enumerate(source_paragraphs)
+        }
+
+        def get_sentence_source_position(
+            paragraph_and_sentence: tuple[_Paragraph, _Sentence],
+        ) -> tuple[int, int]:
+            """
+            Returns the position of a sentence in the source: of its paragraph, and
+            its own among the sentences of the paragraph.
+
+            :param paragraph_and_sentence: The sentence, with its paragraph.
+            :type paragraph_and_sentence: tuple[_Paragraph, _Sentence]
+            :return: The position.
+            :rtype: tuple[int, int]
+            """
+            paragraph, sentence = paragraph_and_sentence
+            return (
+                source_positions[id(paragraph)],
+                _get_sentence_position(paragraph, sentence),
+            )
+
+        for fallback in self.fallback_models:
+            pending = [
+                position
+                for position, undecided in enumerate(undecided_on_aspects)
+                if undecided.has_refusals
+            ]
+            if not pending:
+                break
+            asked_ids = {
+                paragraph.unique_id
+                for position in pending
+                for paragraph in undecided_on_aspects[position].paragraphs
+            } | {
+                paragraph.unique_id
+                for position in pending
+                for paragraph, _ in undecided_on_aspects[position].sentences
+            }
+            sub_document = _publicize(
+                _Document,
+                paragraphs=[
+                    paragraph
+                    for paragraph in source_paragraphs
+                    if paragraph.unique_id in asked_ids
+                ],
+            )
+            sub_document._for_fallback_of_refusals = True
+            sub_document.add_aspects(
+                [_copy_aspect_for_fallback(aspects[position]) for position in pending]
+            )
+            pending_names = [aspects[position].name for position in pending]
+            logger.info(
+                f"Asking fallback {fallback._kind_name} `{fallback.model}` about "
+                f"what decision model `{self.model}` refused to answer on for "
+                f"aspects {pending_names}, on {len(sub_document.paragraphs)} "
+                f"paragraph(s)"
+            )
+            try:
+                await fallback.extract_aspects_from_document_async(
+                    sub_document,
+                    use_concurrency=use_concurrency,
+                    max_paragraphs_to_analyze_per_call=max_paragraphs_to_analyze_per_call,
+                )
+            except ContextGemError:
+                # The failure is logged by the fallback model, which decides
+                # nothing: the next fallback model is tried
+                logger.info(
+                    f"Fallback {fallback._kind_name} `{fallback.model}` did not decide "
+                    f"what decision model `{self.model}` refused to answer on for "
+                    f"aspects {pending_names}."
+                )
+                continue
+            for position, copy in zip(pending, sub_document.aspects, strict=True):
+                undecided = undecided_on_aspects[position]
+                undecided_paragraph_ids = {
+                    paragraph.unique_id for paragraph in undecided.paragraphs
+                }
+                undecided_sentence_ids = {
+                    sentence.unique_id for _, sentence in undecided.sentences
+                }
+                # The decisions of the fallback model on what is undecided
+                for item in copy.extracted_items:
+                    if not item.reference_paragraphs:
+                        continue
+                    paragraph_id = item.reference_paragraphs[0].unique_id
+                    sentence_id = (
+                        item.reference_sentences[0].unique_id
+                        if item.reference_sentences
+                        else None
+                    )
+                    if (
+                        paragraph_id not in undecided_paragraph_ids
+                        and sentence_id not in undecided_sentence_ids
+                    ):
+                        continue
+                    item.reference_paragraphs = [paragraphs_by_id[paragraph_id]]
+                    if sentence_id is not None:
+                        item.reference_sentences = [sentences_by_id[sentence_id]]
+                    items_of_aspects[position].append(item)
+                # What the fallback model refused to answer on in turn: a refused
+                # paragraph, a sentence of a paragraph that it decided, or a refused
+                # sentence that it did not decide, in the order of the source
+                undecided_on_aspects[position] = _RefusedOnAspect(
+                    paragraphs=[
+                        paragraph
+                        for paragraph in undecided.paragraphs
+                        if paragraph.unique_id in copy._refused_paragraph_ids
+                    ],
+                    sentences=sorted(
+                        [
+                            (paragraph, sentence)
+                            for paragraph in undecided.paragraphs
+                            if paragraph.unique_id not in copy._refused_paragraph_ids
+                            for sentence in paragraph.sentences
+                            if sentence.unique_id in copy._refused_sentence_ids
+                        ]
+                        + [
+                            (paragraph, sentence)
+                            for paragraph, sentence in undecided.sentences
+                            if paragraph.unique_id in copy._refused_paragraph_ids
+                            or sentence.unique_id in copy._refused_sentence_ids
+                        ],
+                        key=get_sentence_source_position,
+                    ),
+                )
+            decided = [
+                aspects[position].name
+                for position in pending
+                if not undecided_on_aspects[position].has_refusals
+            ]
+            if decided:
+                logger.info(
+                    f"Fallback {fallback._kind_name} `{fallback.model}` decided what "
+                    f"decision model `{self.model}` refused to answer on for "
+                    f"aspects {decided}."
+                )
+
+        # The items of each aspect in the order of the paragraphs and of
+        # the sentences in them
+        def get_item_position(item: _ExtractedItem) -> tuple[int, int]:
+            """
+            Returns the position of an item of an aspect in the source: of its
+            paragraph, and of its sentence, or -1 for an item of a paragraph.
+
+            :param item: The item.
+            :type item: _ExtractedItem
+            :return: The position.
+            :rtype: tuple[int, int]
+            """
+            paragraph = item.reference_paragraphs[0]
+            sentence_position = (
+                _get_sentence_position(paragraph, item.reference_sentences[0])
+                if item.reference_sentences
+                else -1
+            )
+            return source_positions[id(paragraph)], sentence_position
+
+        for items in items_of_aspects:
+            items.sort(key=get_item_position)
+        return undecided_on_aspects
 
     async def _ask_about_aspects(
         self,

@@ -158,7 +158,7 @@ See :class:`~contextgem.public.models.DocumentModelGroup` and :ref:`model-roles-
    :alt: ContextGem - How it works: a model group with two LLMs and a decision model
    :align: center
 
-   The models of the example above at work. The two LLMs extract an aspect and a concept of that aspect. The decision model is the alternative flow: in place of an LLM, it takes a closed question about the document, which it answers with probabilities.
+   The models of the example above at work. The two LLMs extract an aspect and a concept of that aspect. The decision model takes a closed question about the document, which it answers with probabilities.
 
 
 ℹ️ What ContextGem Doesn't Offer
