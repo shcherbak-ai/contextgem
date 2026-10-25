@@ -16,7 +16,8 @@ cooldown, ``exclude-newer`` can be a fixed date, past which nothing enters
 ``uv.lock``: the check warns of it until every version of ``uv.lock`` is older
 than the cooldown, and then fails until it is set to the span.
 
-A security fix younger than the cooldown is taken through
+A security fix younger than the cooldown, or a release of the maintainer's own
+whose wheel matches its tag, is taken through
 ``[tool.uv.exclude-newer-package]``, dated at its upload: the check passes the
 entries to ``uv pip compile`` too, warns of each until the cooldown admits it, and
 then fails until it is removed. Their versions are left out of the newest upload
@@ -334,7 +335,7 @@ def _cooldown(
         findings.append(
             f'pyproject.toml: [tool.uv] exclude-newer is "{cutoff}": set it to "{span}"'
         )
-    # A security fix taken before the cooldown admits it, until it does
+    # A release taken before the cooldown admits it, until it does
     table = "pyproject.toml: [tool.uv.exclude-newer-package]"
     for name, date in sorted(exemptions.items()):
         try:

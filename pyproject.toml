@@ -142,6 +142,7 @@ dev = [
     "fabric (>=3.2.0,<4.0.0)",
     "hypothesis (>=6.122.0,<7.0.0)",
     "interrogate (>=1.7.0,<2.0.0)",
+    "omerta (>=0.1.0,<1.0.0)", # the hook that keeps the values of .env, e.g. the API keys of the tests, out of git
     "pre-commit (>=4.1.0,<5.0.0)",
     "pre-commit-hooks (>=6.0.0,<7.0.0)", # the hooks for whitespace, the ends of files, YAML and TOML, from uv.lock rather than installed by pre-commit
     "ty (>=0.0.88,<1.0.0)",
@@ -188,16 +189,19 @@ include = ["/contextgem"]
 # file. From 2026-10-28, "7 days" (the latest-versions hook says when)
 exclude-newer = "2026-10-21T00:06:00Z"
 
-# Security fixes taken before the cooldown admits them, by decision of the
-# maintainer, each dated at its upload: the latest-versions hook fails once the
+# Releases taken before the cooldown admits them, by decision of the maintainer:
+# security fixes, and the maintainer's own releases whose wheel matches their
+# tag. Each is dated at its upload: the latest-versions hook fails once the
 # cooldown admits it, to remove the entry. The releases of Docling that allow
-# Pillow 13, which fixes the advisories of Pillow 12 (2026-10-22)
+# Pillow 13, which fixes the advisories of Pillow 12 (2026-10-22), and omerta
+# 0.1.0 (2026-10-25)
 [tool.uv.exclude-newer-package]
 docling = "2026-10-22T14:32:00Z"
 docling-core = "2026-10-22T14:03:00Z"
 docling-ibm-models = "2026-10-21T11:35:00Z"
 docling-parse = "2026-10-22T14:54:00Z"
 docling-slim = "2026-10-22T14:30:00Z"
+omerta = "2026-10-25T08:26:00Z"
 
 [tool.ruff]
 line-length = 88
@@ -287,7 +291,6 @@ DEP003 = [
 ]
 DEP004 = [
     "fabric",       # required for development tasks
-    "dotenv",       # reads .env for the check that no value of it is tracked (dev/check_env_secrets.py)
 ]
 
 [tool.interrogate]
