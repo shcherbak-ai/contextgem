@@ -48,7 +48,10 @@ from contextgem import (
     StringConcept,
     UnknownPricesWarning,
 )
-from contextgem.internal.tools.docstring_parser import _ParsedDocstring
+from contextgem.internal.tools.docstring_parser import (
+    _parse_docstring,
+    _ParsedDocstring,
+)
 from contextgem.internal.tools.schema_generator import (
     _class_to_json_schema,
     _contains_collection_type,
@@ -357,6 +360,44 @@ def test_generate_tool_schema_concatenates_summary_and_description() -> None:
     docstring = _ParsedDocstring(summary="Short.", description="Longer text.")
     schema = _generate_tool_schema(f, docstring)
     assert schema["function"]["description"] == "Short.\n\nLonger text."
+
+
+@pytest.mark.parametrize(
+    "docstring, summary, description",
+    [
+        ("Short.\n\nLonger text.", "Short.", "Longer text."),
+        ("Short.\n:param x: The value", "Short.", ""),
+        # A first sentence that goes on in the next line is kept together
+        (
+            (
+                "Looks up an order: its status, carrier and\ndelivery date.\n\n"
+                "Longer text.\n\n:param x: The value"
+            ),
+            "Looks up an order: its status, carrier and\ndelivery date.",
+            "Longer text.",
+        ),
+        (
+            (
+                "Looks up an order: its status, carrier and\ndelivery date.\n\n"
+                ":param x: The value"
+            ),
+            "Looks up an order: its status, carrier and\ndelivery date.",
+            "",
+        ),
+        (
+            "Looks up an order.\n\nArgs:\n    x: The value",
+            "Looks up an order.",
+            "",
+        ),
+    ],
+)
+def test_parse_docstring_summary_and_description(
+    docstring: str, summary: str, description: str
+) -> None:
+    """The summary is the first paragraph of the docstring, also when it spans several
+    lines, and the description the paragraphs after it, without the parameters."""
+    parsed = _parse_docstring(docstring)
+    assert (parsed.summary, parsed.description) == (summary, description)
 
 
 def test_generate_tool_schema_set_param_emits_warning() -> None:

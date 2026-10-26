@@ -21,9 +21,10 @@ class _ParsedDocstring:
     """
     Parsed docstring data extracted from a function's docstring.
 
-    :ivar summary: The first line of the docstring (short description).
+    :ivar summary: The first paragraph of the docstring (short description), which
+        can span several lines.
     :vartype summary: str
-    :ivar description: Extended description after the first line (may be empty).
+    :ivar description: Extended description after the first paragraph (may be empty).
     :vartype description: str
     :ivar params: Mapping of parameter names to their descriptions.
     :vartype params: dict[str, str]
@@ -60,8 +61,15 @@ def _parse_docstring(docstring: str | None) -> _ParsedDocstring:
         if param.arg_name and param.description:
             params[param.arg_name] = param.description
 
-    return _ParsedDocstring(
-        summary=parsed.short_description or "",
-        description=parsed.long_description or "",
-        params=params,
-    )
+    summary = parsed.short_description or ""
+    description = parsed.long_description or ""
+    if description and not parsed.blank_after_short_description:
+        # `docstring_parser` takes the first line as the short description, also
+        # when the first sentence goes on in the next line: the rest of the first
+        # paragraph is kept with it, so that the sentence is not split by the blank
+        # line that the tool description has between the two
+        continuation, _, description = description.partition("\n\n")
+        summary = f"{summary}\n{continuation}"
+        description = description.strip()
+
+    return _ParsedDocstring(summary=summary, description=description, params=params)
