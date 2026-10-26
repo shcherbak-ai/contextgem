@@ -15,11 +15,13 @@ group, are defined in the ``models`` module of this package.
 from __future__ import annotations
 
 import asyncio
+import contextlib
 import functools
 import hashlib
 import inspect
 import json
-from collections.abc import Sequence
+import threading
+from collections.abc import Generator, Sequence
 from pathlib import Path
 from typing import Any, cast
 
@@ -107,6 +109,12 @@ _LLM_CAPABILITY_PARAMS: dict[str, tuple[str, str]] = {
 # them, e.g. without network access: the input tokens of their requests are not
 # counted again, as each count would try the download again
 _MODELS_WITHOUT_TOKEN_COUNT: set[str] = set()
+
+# The chat sessions that are answering a turn, by the IDs of the objects (see
+# `_ChatSession._answering_turn()`). Kept outside the sessions, so that a copy
+# of a session that is made during a turn is not taken for one that answers it
+_CHAT_SESSIONS_IN_TURN: set[int] = set()
+_CHAT_SESSIONS_IN_TURN_LOCK = threading.Lock()
 
 # Where the documentation says how to prepare the token encodings without
 # network access
@@ -540,6 +548,8 @@ class _DocumentLLM(_DocumentModel):
             parallel tool calls are set for a fallback LLM that does not support them
         :raises ValueError: If the prompt exceeds the context window of the LLM, and
             no fallback LLM is left to try
+        :raises ValueError: If the chat session is answering another message, e.g.
+            one sent from another task or thread
         :raises ModelAPIError: If the request to the LLM fails, or the LLM returns
             an empty response, and no fallback LLM is left to try
         :raises ModelRefusalError: If the LLM or its provider declines to answer
@@ -587,6 +597,8 @@ class _DocumentLLM(_DocumentModel):
             parallel tool calls are set for a fallback LLM that does not support them
         :raises ValueError: If the prompt exceeds the context window of the LLM, and
             no fallback LLM is left to try
+        :raises ValueError: If the chat session is answering another message, e.g.
+            one sent from another task or thread
         :raises ModelAPIError: If the request to the LLM fails, or the LLM returns
             an empty response, and no fallback LLM is left to try
         :raises ModelRefusalError: If the LLM or its provider declines to answer
@@ -626,20 +638,27 @@ class _DocumentLLM(_DocumentModel):
         for fallback_llm in fallback_llms:
             fallback_llm._check_request_params(use_tools=True)
 
-        # Try this LLM first, then each fallback LLM in the given order
+        # Try this LLM first, then each fallback LLM in the given order. A chat
+        # session answers one turn at a time, i.e. a turn sent on it meanwhile,
+        # e.g. from another task, is refused.
         llms_to_try = [self, *fallback_llms]
         response: str | None = None
-        for i, llm in enumerate(llms_to_try):
-            if i > 0:
-                logger.info(f"Using fallback LLM {llm.model} for chat")
-            response = await llm._chat_async(
-                prompt=prompt,
-                images=images,
-                chat_session=chat_session,
-                has_fallback_pending=i < len(llms_to_try) - 1,
-            )
-            if response is not None:
-                break
+        with (
+            chat_session._answering_turn()
+            if chat_session is not None
+            else contextlib.nullcontext()
+        ):
+            for i, llm in enumerate(llms_to_try):
+                if i > 0:
+                    logger.info(f"Using fallback LLM {llm.model} for chat")
+                response = await llm._chat_async(
+                    prompt=prompt,
+                    images=images,
+                    chat_session=chat_session,
+                    has_fallback_pending=i < len(llms_to_try) - 1,
+                )
+                if response is not None:
+                    break
 
         if response is None:
             # This should never happen: a failed request or an empty response of an LLM
@@ -2875,6 +2894,37 @@ class _ChatSession(_InstanceBase):
         self._pending_tool_messages = []
         self._pending_answer_thinking_blocks = None
         self._pending_answer_thinking_blocks_key = None
+
+    @contextlib.contextmanager
+    def _answering_turn(self) -> Generator[None, None, None]:
+        """
+        Marks the session as answering a turn while the context is open, i.e. during
+        a call of ``chat()`` or ``chat_async()``, with its fallback LLMs.
+
+        A session answers one turn at a time: a turn sent while another is being
+        answered, e.g. from another task or thread, would be sent the message
+        of the user of the other, and the tool calls of one turn would be lost,
+        or kept with the answer of the other, as the turns share the pending tool
+        calls of the session.
+
+        :return: A context manager for the turn.
+        :rtype: Generator[None, None, None]
+        :raises ValueError: If the session is already answering a turn.
+        """
+        with _CHAT_SESSIONS_IN_TURN_LOCK:
+            if id(self) in _CHAT_SESSIONS_IN_TURN:
+                raise ValueError(
+                    "The chat session is answering another message. Send the next "
+                    "message once the answer to the previous one is returned, e.g. "
+                    "with a lock for each session where the messages of "
+                    "a conversation can come at once."
+                )
+            _CHAT_SESSIONS_IN_TURN.add(id(self))
+        try:
+            yield
+        finally:
+            with _CHAT_SESSIONS_IN_TURN_LOCK:
+                _CHAT_SESSIONS_IN_TURN.discard(id(self))
 
     def _add_answer(self, answer: str) -> None:
         """

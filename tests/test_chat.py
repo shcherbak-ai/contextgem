@@ -2087,6 +2087,166 @@ class TestChat(BaseTest):
                 assert asyncio.run(run_chat())
             assert len(requests) == 1
 
+    def test_chat_session_refuses_message_while_answering(self):
+        """
+        Tests that a chat session refuses a message sent while it answers another,
+        from another task or from another thread, with ``ValueError`` and before
+        any request is sent for it, and that the turn being answered is kept as if
+        it were alone, with its tool calls.
+
+        LLM API calls are stubbed, i.e. no cassette is required.
+        """
+
+        started = threading.Event()
+        released = threading.Event()
+
+        @register_tool
+        def wait_for_release() -> str:
+            """
+            Waits until the test releases it.
+            """
+            started.set()
+            if not released.wait(timeout=10):
+                raise TimeoutError("The tool was not released")
+            return "released"
+
+        llm = _create_llm_for_stubbed_chat(
+            with_fallback=False, tools=[wait_for_release]
+        )
+        chat_session = ChatSession()
+        acompletion_stub, requests = _stub_llm_api(
+            {
+                _MAIN_MODEL: [
+                    _create_completion(None, ("wait_for_release", "{}")),
+                    _create_completion("Released."),
+                ],
+            }
+        )
+
+        async def send_while_answering() -> str:
+            """
+            Sends messages on the session while it answers the first one, from
+            another task and from another thread, and returns the first answer.
+            """
+            first_turn = asyncio.create_task(
+                llm.chat_async("Wait.", chat_session=chat_session)
+            )
+            while not started.is_set():
+                await asyncio.sleep(0.01)
+            with pytest.raises(ValueError, match="answering another message"):
+                await llm.chat_async("Another message.", chat_session=chat_session)
+            with pytest.raises(ValueError, match="answering another message"):
+                await asyncio.to_thread(
+                    llm.chat, "Another message.", chat_session=chat_session
+                )
+            released.set()
+            return await first_turn
+
+        with patch.object(llms_module.litellm, "acompletion", new=acompletion_stub):
+            assert asyncio.run(send_while_answering()) == "Released."
+
+        # Only the requests of the first turn are sent, and the session has
+        # the first turn only, with its tool call
+        assert len(requests) == 2
+        assert [m.content for m in chat_session.messages] == ["Wait.", "Released."]
+        assert [m.role for m in chat_session._messages] == [
+            "user",
+            "assistant",
+            "tool",
+            "assistant",
+        ]
+
+    def test_chat_session_takes_next_message_after_turn(self):
+        """
+        Tests that a chat session takes a message once its turn has ended, also when
+        the turn failed or was cancelled, and that turns on different sessions are
+        answered at the same time.
+
+        LLM API calls are stubbed, i.e. no cassette is required.
+        """
+
+        started = threading.Event()
+        released = threading.Event()
+
+        @register_tool
+        def get_order_status(order_id: str) -> str:
+            """
+            Returns the status of the order, or fails for an order of ID "BUG".
+            """
+            if order_id == "BUG":
+                raise RuntimeError("The lookup failed")
+            started.set()
+            if not released.wait(timeout=10):
+                raise TimeoutError("The tool was not released")
+            return "shipped"
+
+        llm = _create_llm_for_stubbed_chat(
+            with_fallback=False, tools=[get_order_status]
+        )
+
+        def status_call(order_id: str) -> Any:
+            """
+            Creates a completion that calls the tool for the order.
+            """
+            return _create_completion(
+                None, ("get_order_status", json.dumps({"order_id": order_id}))
+            )
+
+        # After a turn that fails, and after a turn that is cancelled
+        chat_session = ChatSession()
+        acompletion_stub, requests = _stub_llm_api(
+            {
+                _MAIN_MODEL: [
+                    status_call("BUG"),
+                    status_call("ORD-1"),
+                    _create_completion("The order is answered."),
+                ],
+            }
+        )
+
+        async def fail_cancel_and_ask_again() -> str:
+            """
+            Sends a turn that fails, a turn that is cancelled while its tool runs,
+            and then a turn that is answered, on the same session.
+            """
+            with pytest.raises(RuntimeError, match="The lookup failed"):
+                await llm.chat_async("Status of BUG?", chat_session=chat_session)
+            cancelled_turn = asyncio.create_task(
+                llm.chat_async("Status of ORD-1?", chat_session=chat_session)
+            )
+            while not started.is_set():
+                await asyncio.sleep(0.01)
+            cancelled_turn.cancel()
+            released.set()
+            with pytest.raises(asyncio.CancelledError):
+                await cancelled_turn
+            return await llm.chat_async("Any news?", chat_session=chat_session)
+
+        with patch.object(llms_module.litellm, "acompletion", new=acompletion_stub):
+            assert asyncio.run(fail_cancel_and_ask_again()) == "The order is answered."
+        assert len(requests) == 3
+
+        # Different sessions at the same time
+        acompletion_stub, requests = _stub_llm_api(
+            {_MAIN_MODEL: [_create_completion("Answered.")] * 2}
+        )
+
+        async def ask_on_two_sessions() -> tuple[str, str]:
+            """
+            Sends a message on each of two sessions at the same time.
+            """
+            return await asyncio.gather(
+                llm.chat_async("Hello.", chat_session=ChatSession()),
+                llm.chat_async("Hello.", chat_session=ChatSession()),
+            )
+
+        with patch.object(llms_module.litellm, "acompletion", new=acompletion_stub):
+            assert list(asyncio.run(ask_on_two_sessions())) == [
+                "Answered.",
+                "Answered.",
+            ]
+        assert len(requests) == 2
+
     @pytest.mark.parametrize(
         "malformed_tool_call",
         [

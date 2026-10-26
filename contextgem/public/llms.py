@@ -269,11 +269,11 @@ class ChatSession(_ChatSession):
     To be used as ``chat_session=...`` parameter for ``DocumentLLM.chat(...)``
     or ``DocumentLLM.chat_async(...)``.
 
-    A session takes one turn at a time: wait for the answer to a message before
-    sending the next, e.g. with a lock for each session in a server, where two
-    messages of a conversation can come at once. Turns sent on the same session at
-    the same time, e.g. with ``asyncio.gather()``, are not kept apart: each is sent
-    the message of the other.
+    A session answers one turn at a time: a message sent on it while it answers
+    another, e.g. from another task with ``asyncio.gather()`` or from another
+    thread, raises ``ValueError``. Where two messages of a conversation can come at
+    once, e.g. in a server, wait for the answer to one before sending the next,
+    e.g. with a lock for each session.
 
     :ivar messages: The messages of the session, in order: the system message, if any,
         the messages of the user, and the answers of the LLM. Read-only. The tool calls
