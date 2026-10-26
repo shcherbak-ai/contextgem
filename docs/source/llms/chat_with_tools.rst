@@ -27,6 +27,7 @@ A tool is a Python function decorated with ``@register_tool``. The function defi
 
 * Decorate a function with ``@register_tool``, and pass the function itself to ``tools=[...]`` when creating the LLM, or assign the functions to ``llm.tools`` later. This is the only way to define and assign tools
 * A tool function must have a docstring and type hints for all its parameters, and must not have positional-only parameters, ``*args`` or ``**kwargs``
+* To use an object of your application in a tool, e.g. a database connection or a client, define the tool as a function that uses it, e.g. a closure in the function that sets up the LLM. A bound method or a ``functools.partial`` cannot be registered
 * A parameter that has a default value, or is typed as ``Optional``, is optional for the LLM
 * Tool handlers must return a non-empty string (serialize structured data with ``json.dumps`` if needed)
 * A tool function can be sync or async. A sync function runs in a worker thread, so that it does not block the event loop of the chat (see :ref:`llm-tools-sync-async-label`)

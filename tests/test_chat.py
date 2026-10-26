@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import asyncio
 import contextvars
+import functools
 import json
 import os
 import re
@@ -3179,6 +3180,31 @@ class TestChat(BaseTest):
         # 6) register_tool does not accept arguments, e.g. a custom tool definition
         with pytest.raises(TypeError):
             register_tool(schema={})  # type: ignore[call-arg]  # ty: ignore[missing-argument, unknown-argument]
+
+        # 7) register_tool with a bound method or a functools.partial
+        class OrderStore:
+            """
+            Holds the orders of an application.
+            """
+
+            def get_order(self, order_id: str) -> str:
+                """
+                Returns the order.
+                """
+                return order_id
+
+        def get_order(store: OrderStore, order_id: str) -> str:
+            """
+            Returns the order from the store.
+            """
+            return store.get_order(order_id)
+
+        for invalid_handler in [
+            OrderStore().get_order,
+            functools.partial(get_order, OrderStore()),
+        ]:
+            with pytest.raises(TypeError, match="bound method or a functools.partial"):
+                register_tool(invalid_handler)
 
         # === Invalid tools of an LLM ===
 

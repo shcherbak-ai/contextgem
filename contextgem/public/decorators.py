@@ -10,6 +10,7 @@ for end users to apply to their own functions or classes.
 
 from __future__ import annotations
 
+import functools
 import inspect
 
 from contextgem.internal.typings.types import ToolHandler
@@ -25,7 +26,10 @@ def register_tool(func: ToolHandler, /) -> ToolHandler:
     parameters are taken from the docstring, or from ``Annotated`` type hints, which
     can also set constraints, e.g. ``Annotated[int, Field(description="...", ge=1)]``.
 
-    Pass the decorated function to ``tools`` of the LLM.
+    Pass the decorated function to ``tools`` of the LLM. To use an object of your
+    application in a tool, e.g. a database connection, define the tool as a function
+    that uses it, e.g. a closure: a bound method or a ``functools.partial`` cannot be
+    registered.
 
     An async function runs in the event loop of the chat, and a sync function in
     a worker thread, without an event loop, so that it does not block the loop and
@@ -43,8 +47,8 @@ def register_tool(func: ToolHandler, /) -> ToolHandler:
     :type func: ToolHandler
     :return: The same function, marked as a registered tool.
     :rtype: ToolHandler
-    :raises TypeError: If the provided object is not callable, or if a parameter
-        of the function has no type hint.
+    :raises TypeError: If the provided object is not callable, if it is a bound method
+        or a ``functools.partial``, or if a parameter of the function has no type hint.
     :raises ValueError: If the signature cannot be inspected, if the function has
         positional-only parameters or accepts ``*args`` or ``**kwargs``, if it has
         no docstring, or if the function name is empty.
@@ -52,6 +56,14 @@ def register_tool(func: ToolHandler, /) -> ToolHandler:
 
     if not callable(func):
         raise TypeError("Tool handler must be callable")
+    if inspect.ismethod(func) or isinstance(func, functools.partial):
+        # Neither can be marked as a tool, nor has the name and signature of a tool
+        raise TypeError(
+            "Tool handler must be a function: a bound method or a functools.partial "
+            "cannot be registered as a tool. To use an object of your application in "
+            "a tool, e.g. a database connection, define a function that uses it, "
+            "e.g. a closure."
+        )
     try:
         sig = inspect.signature(func)
     except (TypeError, ValueError) as e:

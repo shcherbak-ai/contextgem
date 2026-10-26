@@ -20,6 +20,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 ### Fixed
 
 - The description of a tool no longer splits a first sentence that goes on in the next line of the docstring: the first line was taken as the summary and the rest as the description, which were joined with a blank line, so that the LLM was sent e.g. `Looks up an order: its status and\n\ndelivery date.`. The first paragraph is now kept together. Only the tool descriptions of such docstrings change.
+- `register_tool()` now raises `TypeError` for a bound method or a `functools.partial`, which cannot be registered, with what to do instead: a function that uses the object, e.g. a closure. A bound method raised `AttributeError` (`'method' object has no attribute '__contextgem_tool__'`), and a partial an error on its parameters or on the name of the tool.
 
 ## [1.3.0] - 2026-10-25
 
