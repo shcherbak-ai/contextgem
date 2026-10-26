@@ -161,6 +161,7 @@ class DocumentLLM(_DocumentLLM):
         The rate applies to all the requests to the LLM that are sent concurrently, i.e.
         the extraction calls that run at the same time share it.
         Requests to a fallback model are controlled by the limiter of that fallback model.
+        The requests of ``chat()`` and ``chat_async()`` are not paced by it.
         See https://github.com/mjpieters/aiolimiter for configuration details.
     :vartype async_limiter: AsyncLimiter
     :ivar seed: Seed for random number generation to help produce more consistent outputs
@@ -267,6 +268,12 @@ class ChatSession(_ChatSession):
 
     To be used as ``chat_session=...`` parameter for ``DocumentLLM.chat(...)``
     or ``DocumentLLM.chat_async(...)``.
+
+    A session takes one turn at a time: wait for the answer to a message before
+    sending the next, e.g. with a lock for each session in a server, where two
+    messages of a conversation can come at once. Turns sent on the same session at
+    the same time, e.g. with ``asyncio.gather()``, are not kept apart: each is sent
+    the message of the other.
 
     :ivar messages: The messages of the session, in order: the system message, if any,
         the messages of the user, and the answers of the LLM. Read-only. The tool calls

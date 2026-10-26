@@ -11,6 +11,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 ### Added
 
 - Added `ToolCallError`, which can be imported from `contextgem`: the exception that a tool function raises to tell the LLM why a call failed, e.g. that no record has the ID that the LLM passed. Its message is sent to the LLM as the result of the tool call, and the LLM can call the tool again (see "Changed"). It is not a subclass of `ContextGemError`, the base of the errors that ContextGem raises. See [Errors in tool calls](https://contextgem.shcherbak.ai/llms/chat_with_tools/#errors-in-tool-calls).
+- The documentation now says that a chat session takes one turn at a time, that the requests of a chat are not paced by `async_limiter`, and that `LITELLM_LOCAL_MODEL_COST_MAP` is to be set before ContextGem is imported, which a warning filter in the configuration of pytest does before `conftest.py` runs.
 
 ### Changed
 
