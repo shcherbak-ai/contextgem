@@ -20,6 +20,7 @@ import pytest
 from _pytest.nodes import Item as PytestItem
 from aiolimiter import AsyncLimiter
 
+from contextgem.internal.base import llms as llms_module
 from contextgem.internal.base.aspects import _Aspect
 from contextgem.internal.base.attrs import (
     _AssignedAspectsProcessor,
@@ -48,7 +49,7 @@ from contextgem.internal.base.paras_and_sents import _Paragraph, _Sentence
 from contextgem.internal.base.pipelines import _ExtractionPipeline
 from contextgem.internal.base.utils import _JsonObjectClassStruct
 from contextgem.internal.registry import _publicize, _resolve_public_type
-from contextgem.internal.utils import _run_async_calls
+from contextgem.internal.utils import _run_async_calls, _run_sync
 from contextgem.public import (
     Aspect,
     Document,
@@ -771,3 +772,145 @@ class TestInternals(BaseTest):
             assert sorted(cancelled) == ["also waiting", "waiting"]
 
         asyncio.run(check())
+
+    def test_run_sync_closes_litellm_clients(self):
+        """
+        Tests that a sync method closes the HTTP clients that litellm created for
+        the event loop of the method before the event loop is closed, whether its
+        coroutine returns or fails, and whether or not an event loop runs in
+        the calling thread, and leaves open the clients that litellm was given and
+        those of other event loops.
+        """
+        from litellm.llms.custom_httpx.http_handler import get_async_httpx_client
+
+        cache = llms_module.litellm.in_memory_llm_clients_cache
+
+        class Client:
+            """
+            Stands in for an HTTP client, whose close fails if asked.
+            """
+
+            def __init__(self, fails: bool = False) -> None:
+                self.fails = fails
+                self.closed = False
+
+            def _close(self) -> None:
+                """
+                Closes the client, or fails.
+                """
+                if self.fails:
+                    raise RuntimeError("Simulated close error")
+                self.closed = True
+
+        class AsyncClient(Client):
+            """
+            Stands in for an HTTP client whose close is a coroutine function.
+            """
+
+            async def aclose(self) -> None:
+                """
+                Closes the client, or fails.
+                """
+                self._close()
+
+        class SyncClient(Client):
+            """
+            Stands in for an HTTP client whose close is a function.
+            """
+
+            def close(self) -> None:
+                """
+                Closes the client, or fails.
+                """
+                self._close()
+
+        def remove_from_cache(key: str) -> None:
+            """
+            Removes a client from the cache of litellm, as litellm removes an expired
+            client.
+            """
+            cache.cache_dict.pop(key, None)
+            cache.ttl_dict.pop(key, None)
+
+        # A client of no event loop, which litellm created
+        client_without_loop = AsyncClient()
+        cache.set_cache(
+            "test_client_without_loop", client_without_loop, litellm_owned_client=True
+        )
+        assert "test_client_without_loop" in cache.cache_dict
+
+        # The clients of the event loops of the sync calls, by their keys
+        created_clients: dict[str, Any] = {}
+        given_clients: dict[str, AsyncClient] = {}
+
+        async def use_clients(error: Exception | None = None) -> str:
+            """
+            Creates HTTP clients of the running event loop as litellm does, and then
+            fails with the error, if given.
+            """
+            created_clients.clear()
+            given_clients.clear()
+            handler = get_async_httpx_client(llm_provider="anthropic")
+            for key, client in cache.cache_dict.items():
+                if client is handler:
+                    created_clients[key] = handler
+            for name, client in [
+                ("test_async_client", AsyncClient()),
+                ("test_sync_client", SyncClient()),
+                ("test_failing_client", AsyncClient(fails=True)),
+            ]:
+                cache.set_cache(name, client, litellm_owned_client=True)
+                created_clients[cache.update_cache_key_with_event_loop(name)] = client
+            given_client = AsyncClient()
+            cache.set_cache("test_given_client", given_client)
+            given_clients[
+                cache.update_cache_key_with_event_loop("test_given_client")
+            ] = given_client
+            assert len(created_clients) == 4
+            assert all(key in cache.cache_dict for key in created_clients)
+            if error is not None:
+                raise error
+            return "Done"
+
+        async def run_from_event_loop() -> str:
+            """
+            Runs the sync call from a thread in which an event loop runs.
+            """
+            return _run_sync(use_clients())
+
+        error = ValueError("Simulated error")
+        for run_call, raised_error in [
+            (lambda: _run_sync(use_clients()), None),
+            (lambda: _run_sync(use_clients(error)), error),
+            (lambda: asyncio.run(run_from_event_loop()), None),
+        ]:
+            if raised_error is None:
+                assert run_call() == "Done"
+            else:
+                with pytest.raises(ValueError) as exc_info:
+                    run_call()
+                assert exc_info.value is raised_error
+            try:
+                # The clients that litellm created are closed and removed from
+                # its cache, also when one of them fails to close
+                for key, client in created_clients.items():
+                    assert key not in cache.cache_dict
+                    if isinstance(client, Client):
+                        assert client.closed is not client.fails
+                    else:
+                        assert client._client.is_closed
+                # The client that litellm was given is left open
+                for key, client in given_clients.items():
+                    assert cache.cache_dict.get(key) is client
+                    assert not client.closed
+            finally:
+                for key in given_clients:
+                    remove_from_cache(key)
+        # The client of no event loop is left open
+        try:
+            assert cache.cache_dict.get("test_client_without_loop") is (
+                client_without_loop
+            )
+            assert not client_without_loop.closed
+        finally:
+            remove_from_cache("test_client_without_loop")

@@ -6,6 +6,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 - **Refactor**: Code reorganization that doesn't change functionality but improves structure or maintainability
 
+## [Unreleased]
+
+### Fixed
+
+- A sync method, e.g. `extract_all()` or `chat()`, now closes the connections that it opened to the API of the model before it returns. A sync method runs in an event loop of its own, and the HTTP clients that `litellm` keeps for each event loop stayed open with their connections after the method returned, for ten minutes or more, often until the program exited, when Python reported them as unclosed sockets and transports if its warnings were shown, e.g. with `-W default`. A program that called sync methods one after another kept a connection open for each call. The clients given to `litellm`, e.g. `litellm.aclient_session`, are left open. The async methods are not affected.
+
 ## [1.4.0] - 2026-10-26
 
 ### Added
@@ -722,6 +728,7 @@ See the [migration guide](https://contextgem.shcherbak.ai/migration_v1/) for upd
 
 - Added DocxConverter for converting DOCX files into ContextGem Document objects
 
+[Unreleased]: https://github.com/shcherbak-ai/contextgem/compare/v1.4.0...HEAD
 [1.4.0]: https://github.com/shcherbak-ai/contextgem/compare/v1.3.0...v1.4.0
 [1.3.0]: https://github.com/shcherbak-ai/contextgem/compare/v1.2.1...v1.3.0
 [1.2.1]: https://github.com/shcherbak-ai/contextgem/compare/v1.2.0...v1.2.1

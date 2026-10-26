@@ -15,6 +15,7 @@ import math
 import os
 import random
 import re
+import sys
 import threading
 import warnings
 import weakref
@@ -592,11 +593,85 @@ async def _run_async_calls(
         return results
 
 
+async def _close_litellm_clients_of_running_loop() -> None:
+    """
+    Closes the HTTP clients that ``litellm`` created for the running event loop,
+    and removes them from its cache of clients.
+
+    ``litellm`` keeps a client for each event loop that it sends requests in, with
+    its connections open, for minutes after its last use, and closes it from that
+    event loop only. A sync method runs its coroutine in an event loop of its own,
+    which is closed when the method returns: the connections of its clients would
+    stay open until the program exits, when Python reports them as unclosed.
+    The clients that ``litellm`` was given, e.g. ``litellm.aclient_session``, are
+    left open, as ``litellm`` leaves them. Nothing is raised: a client that cannot
+    be closed is left as it is.
+
+    :return: None
+    :rtype: None
+    """
+    litellm = sys.modules.get("litellm")
+    cache = getattr(litellm, "in_memory_llm_clients_cache", None)
+    if cache is None:
+        # No request was sent
+        return
+    try:
+        # The keys of the clients of an event loop end with the ID of the loop
+        loop_key_suffix = cache.update_cache_key_with_event_loop("")
+        is_created_by_litellm = cache.evicted_client_closer._is_owned
+        keys = list(cache.cache_dict)
+    except Exception as e:  # noqa: BLE001 - the cleanup must not fail the call
+        logger.debug(f"Could not find the HTTP clients of litellm to close: {e}")
+        return
+    if not loop_key_suffix:
+        # No event loop is running, i.e. no client is kept for it
+        return
+    for key in keys:
+        if not key.endswith(loop_key_suffix):
+            continue
+        client = cache.cache_dict.get(key)
+        if client is None or not is_created_by_litellm(client):
+            continue
+        # Removed as litellm removes an expired client, but without queueing it to be
+        # closed later from this event loop, which is closed when the method returns
+        cache.cache_dict.pop(key, None)
+        cache.ttl_dict.pop(key, None)
+        close = getattr(client, "aclose", None) or getattr(client, "close", None)
+        if close is None:
+            continue
+        try:
+            closing = close()
+            if inspect.isawaitable(closing):
+                await closing
+        except Exception as e:  # noqa: BLE001 - the cleanup must not fail the call
+            logger.debug(f"Could not close an HTTP client of litellm: {e}")
+
+
+async def _run_and_close_litellm_clients(coro: Coroutine[Any, Any, T]) -> T:
+    """
+    Runs the coroutine of a sync method in the event loop of the method, and then
+    closes the HTTP clients that ``litellm`` created for the event loop (see
+    `_close_litellm_clients_of_running_loop()`), whether the coroutine returns or
+    fails.
+
+    :param coro: A coroutine object to run.
+    :return: Whatever the coroutine returns.
+    """
+    try:
+        return await coro
+    finally:
+        await _close_litellm_clients_of_running_loop()
+
+
 @_suppress_litellm_warnings
 def _run_sync(coro: Coroutine[Any, Any, T]) -> T:
     """
     Synchronously runs an async function, whether or not an event
     loop is already running (e.g. in a Jupyter notebook).
+
+    The coroutine runs in an event loop of its own, which is closed when it is done.
+    The HTTP clients that ``litellm`` created for the event loop are closed before,
+    with their connections (see `_close_litellm_clients_of_running_loop()`).
 
     :param coro: A coroutine object to run.
     :return: Whatever the coroutine returns.
@@ -613,11 +688,11 @@ def _run_sync(coro: Coroutine[Any, Any, T]) -> T:
         # We are in an environment (like Jupyter) that already has a running loop.
         # Start a new loop in a fresh thread to avoid conflicts.
         with concurrent.futures.ThreadPoolExecutor() as pool:
-            future = pool.submit(asyncio.run, coro)
+            future = pool.submit(asyncio.run, _run_and_close_litellm_clients(coro))
             return future.result()  # ty: ignore[invalid-return-type]
     else:
         # No running loop, so just run it directly.
-        return asyncio.run(coro)
+        return asyncio.run(_run_and_close_litellm_clients(coro))
 
 
 async def _run_in_thread(func: Callable[..., T], /, **kwargs: Any) -> T:
