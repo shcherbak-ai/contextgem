@@ -51,7 +51,8 @@ from contextgem.internal.exceptions import (
     LLMToolLoopLimitError,
     ModelAPIError,
     ModelRefusalError,
-    _ToolReturnValueError,
+    ToolCallError,
+    _ToolFunctionError,
 )
 from contextgem.internal.loggers import logger
 from contextgem.internal.suppressions import _suppress_litellm_warnings_context
@@ -75,6 +76,7 @@ from contextgem.internal.utils import (
     _is_retryable_model_api_error,
     _model_call_result_is_api_failure,
     _run_async_calls,
+    _run_in_thread,
     _run_sync,
     _setup_jinja2_template,
     _warn_from_caller_code,
@@ -545,6 +547,11 @@ class _DocumentLLM(_DocumentModel):
             and no fallback LLM is left to try
         :raises LLMToolLoopLimitError: If the LLM keeps calling tools after
             ``tool_max_rounds`` rounds of tool calls
+        :raises TypeError: If a tool function returns a value other than a string
+        :raises ValueError: If a tool function returns an empty string
+        :raises Exception: The exception that a tool function raises, other than
+            ``ToolCallError``, whose message is sent to the LLM: it is raised as it is,
+            with a note that names the tool
         """
         return _run_sync(
             self.chat_async(prompt=prompt, images=images, chat_session=chat_session)
@@ -587,6 +594,11 @@ class _DocumentLLM(_DocumentModel):
             and no fallback LLM is left to try
         :raises LLMToolLoopLimitError: If the LLM keeps calling tools after
             ``tool_max_rounds`` rounds of tool calls
+        :raises TypeError: If a tool function returns a value other than a string
+        :raises ValueError: If a tool function returns an empty string
+        :raises Exception: The exception that a tool function raises, other than
+            ``ToolCallError``, whose message is sent to the LLM: it is raised as it is,
+            with a note that names the tool
         """
 
         # Only LLMs can chat. A fallback model of another kind, such as a decision
@@ -679,6 +691,11 @@ class _DocumentLLM(_DocumentModel):
             ``max_retries_invalid_data`` times, and no fallback LLM is yet to be tried
         :raises LLMToolLoopLimitError: If the LLM keeps calling tools after
             ``tool_max_rounds`` rounds of tool calls
+        :raises TypeError: If a tool function returns a value other than a string
+        :raises ValueError: If a tool function returns an empty string
+        :raises Exception: The exception that a tool function raises, other than
+            ``ToolCallError``, whose message is sent to the LLM: it is raised as it is,
+            with a note that names the tool
         """
 
         # Validate prompt
@@ -1854,10 +1871,11 @@ class _DocumentLLM(_DocumentModel):
         :type tc_obj: Any
         :return: The tool message object.
         :rtype: _Message
-        :raises _ToolReturnValueError: If the tool returns a value other than
-            a non-empty string. It carries the error to be raised to the calling code:
-            ``TypeError`` for a value other than a string, or ``ValueError`` for
-            an empty string.
+        :raises _ToolFunctionError: If the tool raises an exception other than
+            ``ToolCallError``, or returns a value other than a non-empty string.
+            It carries the error to be raised to the calling code: the exception
+            of the tool, with a note that names the tool, ``TypeError`` for a value
+            other than a string, or ``ValueError`` for an empty string.
         """
 
         fn = tc_obj.get("function")
@@ -1914,27 +1932,41 @@ class _DocumentLLM(_DocumentModel):
             if inspect.iscoroutinefunction(handler):
                 res = await handler(**args_dict)
             else:
-                res = handler(**args_dict)
-        except Exception as ex:  # noqa: BLE001 - a tool's errors go back to the model
-            content_text = json.dumps(
-                {"error": "ToolExecutionError", "message": str(ex)}
-            )
+                # In a worker thread, so that the function does not block the event
+                # loop, e.g. the other tool calls of the round, and can use libraries
+                # that refuse to run where an event loop is running
+                res = await _run_in_thread(handler, **args_dict)
+        except ToolCallError as ex:
+            # The tool tells the LLM why the call failed: the LLM can correct it
+            # in another round
+            logger.debug(f"Tool {name} raised ToolCallError: {ex}")
+            content_text = json.dumps({"error": "ToolCallError", "message": str(ex)})
             return _Message(
                 role="tool", content=content_text, tool_call_id=call_id, name=name
             )
+        except Exception as ex:
+            # Any other exception is an error in the tool, e.g. a bug: it stops
+            # the chat, and its message, which can hold anything, is not sent
+            # to the LLM
+            ex.add_note(
+                f"Raised by the tool `{name}`, which the LLM called. An exception of "
+                f"a tool stops the chat, unless it is a ToolCallError, whose message "
+                f"is sent to the LLM."
+            )
+            raise _ToolFunctionError(ex) from ex
 
         # Abort immediately for developer error to prevent extra LLM roundtrips.
         # Such an error is told apart from an error of the LLM API, e.g. tool calls
         # of the LLM that cannot be processed, i.e. is not a reason to try a fallback LLM.
         if not isinstance(res, str):
-            raise _ToolReturnValueError(
+            raise _ToolFunctionError(
                 TypeError(
                     f"Tool handler {name} must return a string. "
                     "Use `json.dumps` for objects."
                 )
             )
         if not res.strip():
-            raise _ToolReturnValueError(
+            raise _ToolFunctionError(
                 ValueError(f"Tool handler {name} must return a non-empty string.")
             )
 
@@ -2092,8 +2124,9 @@ class _DocumentLLM(_DocumentModel):
         :type max_retries_unusable_answer: int
         :return: The tuple containing the answer and whether tool calls were still requested.
         :rtype: tuple[str | None, bool]
-        :raises _ToolReturnValueError: If a tool returns a value other than a non-empty
-            string. It carries the error to be raised to the calling code.
+        :raises _ToolFunctionError: If a tool raises an exception other than
+            ``ToolCallError``, or returns a value other than a non-empty string.
+            It carries the error to be raised to the calling code.
         :raises litellm.ContentPolicyViolationError: If the provider blocks the last
             request that is sent, or its answer.
         """
@@ -2375,6 +2408,9 @@ class _DocumentLLM(_DocumentModel):
             no fallback model is yet to be tried, and exceptions are to be raised.
         :raises LLMToolLoopLimitError: If the LLM keeps requesting tool calls after
             the configured max rounds.
+        :raises Exception: The error of a tool function: the exception that it raises,
+            other than ``ToolCallError``, or the ``TypeError`` or ``ValueError`` for
+            a value other than a non-empty string that it returns.
         """
 
         # Validate vision support and convert messages
@@ -2432,6 +2468,7 @@ class _DocumentLLM(_DocumentModel):
                 usage.calls.append(model_call_obj)
 
         # Make API call and process response (with tool loop if enabled)
+        tool_function_error: Exception | None = None
         try:
             answer, tool_calls_remaining = await self._send_messages_with_tools(
                 request_config=request_config,
@@ -2528,11 +2565,12 @@ class _DocumentLLM(_DocumentModel):
             # Propagate tool loop limit errors without wrapping
             await self._update_usage_and_cost((None, usage))
             raise
-        except _ToolReturnValueError as e:
-            # Raise the error for the invalid value returned by a tool as it is:
-            # it is not an error of the LLM API, i.e. no fallback LLM is to be tried
+        except _ToolFunctionError as e:
+            # The error of a tool, e.g. a bug in it or an invalid value that it
+            # returned, is raised as it is below: it is not an error of the LLM API,
+            # i.e. no fallback LLM is to be tried
             await self._update_usage_and_cost((None, usage))
-            raise e.error from None
+            tool_function_error = e.error
         except asyncio.CancelledError:
             # The call is cancelled, e.g. on a timeout set by the calling code
             await self._update_usage_and_cost((None, usage))
@@ -2559,6 +2597,11 @@ class _DocumentLLM(_DocumentModel):
                         + f" ({n_retries} retries)."
                     )
                     logger.warning(warning_msg)
+
+        if tool_function_error is not None:
+            # Raised outside the `except` clause, which would replace the context
+            # of the exception, e.g. the error that the tool raised it while handling
+            raise tool_function_error
 
         # The failed call is recorded in the usage as unfinished at this point,
         # or as refused if the provider blocked it

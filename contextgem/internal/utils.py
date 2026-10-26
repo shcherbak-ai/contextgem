@@ -620,6 +620,32 @@ def _run_sync(coro: Coroutine[Any, Any, T]) -> T:
         return asyncio.run(coro)
 
 
+async def _run_in_thread(func: Callable[..., T], /, **kwargs: Any) -> T:
+    """
+    Runs a sync function in a worker thread, as ``asyncio.to_thread()`` does: the function
+    does not block the event loop, and no event loop runs in its thread, e.g. for
+    a library that refuses to run where one is running, such as the ORM of Django.
+    The context variables of the caller are copied into the thread.
+
+    When the call is cancelled, the function is waited for before the cancellation
+    is raised: a thread cannot be stopped, i.e. the function would otherwise go on
+    in the background, e.g. change objects, after the caller gets the cancellation.
+
+    :param func: A sync function.
+    :param kwargs: The keyword arguments to call the function with.
+    :return: What the function returns.
+    """
+
+    task = asyncio.ensure_future(asyncio.to_thread(func, **kwargs))
+    try:
+        # Shielded, so that a cancellation of the caller leaves the task running,
+        # to be waited for
+        return await asyncio.shield(task)
+    except asyncio.CancelledError:
+        await asyncio.wait([task])
+        raise
+
+
 def _warn_from_caller_code(
     message: str, category: type[ContextGemWarning] = ContextGemWarning
 ) -> None:

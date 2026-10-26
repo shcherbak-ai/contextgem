@@ -206,8 +206,16 @@ class TestInternals(BaseTest):
             assert issubclass(getattr(contextgem, name), contextgem.ContextGemError)
         assert contextgem.ContextGemError.__bases__ == (Exception,)
 
+        # The exception that a tool raises for the LLM is the class that the framework
+        # catches, and not an error of the framework, i.e. not a ContextGemError
+        assert "ToolCallError" in contextgem.__all__
+        assert "ToolCallError" in public.__all__
+        assert contextgem.ToolCallError is exceptions.ToolCallError
+        assert public.ToolCallError is exceptions.ToolCallError
+        assert contextgem.ToolCallError.__bases__ == (Exception,)
+
         # Internal exceptions are not exported
-        for name in ["_ToolReturnValueError", "_InvalidDecisionResponseError"]:
+        for name in ["_ToolFunctionError", "_InvalidDecisionResponseError"]:
             assert not hasattr(contextgem, name)
 
     def test_pre_v1_names_rejected(self):

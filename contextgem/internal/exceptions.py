@@ -214,6 +214,30 @@ class LLMToolLoopLimitError(ContextGemError):
     """
 
 
+class ToolCallError(Exception):
+    """
+    Exception that a tool function raises to tell the LLM why its call failed, e.g.
+    that no record has the ID that the LLM passed. The chat goes on: the message
+    of the exception is sent to the LLM in the result of the tool call,
+    ``{"error": "ToolCallError", "message": "<the message>"}``, and the LLM can
+    call the tool again in the next round.
+
+    Any other exception that a tool function raises is an error in the function,
+    e.g. a bug, and is raised from ``chat()`` as it is, with a note that names
+    the tool: its message is not sent to the LLM, no further requests are sent,
+    and no fallback LLM is tried.
+
+    The message is sent unchanged: write it for the LLM, and keep out of it what
+    the LLM should not receive.
+
+    Not a subclass of :class:`ContextGemError`, which is the base of the errors that
+    the framework raises: the framework does not raise this one, but sends its
+    message to the LLM.
+
+    Can be imported from ``contextgem``.
+    """
+
+
 # Warnings
 
 
@@ -257,15 +281,17 @@ class UnknownPricesWarning(ContextGemWarning):
     """
 
 
-class _ToolReturnValueError(Exception):
+class _ToolFunctionError(Exception):
     """
-    Internal exception that carries the error for an invalid value returned by
-    a tool function (a value other than a non-empty string) out of the tool-calling
+    Internal exception that carries an error of a tool function out of the tool-calling
     loop, so that it is not handled as an error of the LLM API: it is an error
-    in the calling code. It is never raised to the calling code: the error
-    it carries is raised instead.
+    in the calling code. The error is an exception that the tool function raised,
+    other than :class:`ToolCallError`, or the error for an invalid value that it
+    returned (a value other than a non-empty string). It is never raised to
+    the calling code: the error it carries is raised instead.
 
-    :ivar error: The error for the invalid value returned by the tool function
+    :ivar error: The exception raised by the tool function, or the error for
+        the invalid value that it returned
     :vartype error: Exception
     """
 
@@ -273,7 +299,8 @@ class _ToolReturnValueError(Exception):
         """
         Initialize the exception.
 
-        :param error: The error for the invalid value returned by the tool function
+        :param error: The exception raised by the tool function, or the error for
+            the invalid value that it returned
         :type error: Exception
         """
         super().__init__(str(error))

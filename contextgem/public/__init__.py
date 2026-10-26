@@ -23,6 +23,7 @@ from contextgem.public.exceptions import (
     ModelAPIError,
     ModelExtractionError,
     ModelRefusalError,
+    ToolCallError,
     UnknownPricesWarning,
 )
 from contextgem.public.images import Image
@@ -87,6 +88,7 @@ __all__ = (  # noqa: RUF022 - grouped by kind
     "ModelExtractionError",
     "ModelRefusalError",
     "LLMToolLoopLimitError",
+    "ToolCallError",
     "ContextGemWarning",
     "UnknownPricesWarning",
 )

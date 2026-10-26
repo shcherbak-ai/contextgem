@@ -46,6 +46,7 @@ from contextgem.public import (
     Sentence,
     StringConcept,
     StringExample,
+    ToolCallError,
     UnknownPricesWarning,
     create_image,
     image_to_base64,
@@ -102,6 +103,7 @@ __all__ = (  # noqa: RUF022 - grouped by kind
     "ModelExtractionError",
     "ModelRefusalError",
     "LLMToolLoopLimitError",
+    "ToolCallError",
     "ContextGemWarning",
     "UnknownPricesWarning",
 )

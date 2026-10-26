@@ -183,8 +183,11 @@ class DocumentLLM(_DocumentLLM):
         the default of the API applies.
     :vartype tool_choice: str | dict | None
     :ivar parallel_tool_calls: Whether the LLM may call several tools at once in a chat,
-        where the model supports it. Defaults to None, in which case the default of
-        the model applies.
+        where the model supports it. With True, the tool calls of a response also run
+        at the same time, each sync tool function in a worker thread of its own, i.e.
+        a function that changes shared state must be thread-safe; otherwise they run
+        one after another. Defaults to None, in which case the default of the model
+        applies.
     :vartype parallel_tool_calls: bool | None
     :ivar tool_max_rounds: The maximum number of rounds of tool calls in a chat turn: if
         the LLM still calls tools after them, ``LLMToolLoopLimitError`` is raised.
@@ -291,9 +294,10 @@ class ChatSession(_ChatSession):
 
         In a chat with tools, the history of the session keeps the tool calls
         of each answered turn and their results, which are sent to the LLM with
-        the next turns. The results include the errors of the tools, which the LLM
-        receives as it calls them. A turn that ends without an answer, e.g. on
-        an error of the LLM API, is started over when it is sent again, i.e. its
+        the next turns. The results include the errors that the LLM receives for its
+        tool calls, e.g. the message of a ``ToolCallError`` that a tool raised. A turn
+        that ends without an answer, e.g. on an error of the LLM API or on another
+        exception of a tool, is started over when it is sent again, i.e. its
         tool calls are not kept. Its message of the user stays in the session, as
         not answered: sent again as it is, it is answered as that turn, while
         another message sent then comes after it, i.e. the LLM is sent both.

@@ -27,6 +27,17 @@ def register_tool(func: ToolHandler, /) -> ToolHandler:
 
     Pass the decorated function to ``tools`` of the LLM.
 
+    An async function runs in the event loop of the chat, and a sync function in
+    a worker thread, without an event loop, so that it does not block the loop and
+    can use libraries that refuse to run where one is running, e.g. the ORM of Django.
+    Such a function does not see what the calling code keeps for its own thread,
+    e.g. an open database transaction.
+
+    To tell the LLM why a call failed, e.g. that a record does not exist, the function
+    raises ``ToolCallError``, whose message is sent to the LLM, which can call
+    the tool again. Any other exception that it raises stops the chat, and is raised
+    from ``chat()`` as it is.
+
     :param func: A function to be used as a tool. Can be sync or async, and must
         return a non-empty string.
     :type func: ToolHandler

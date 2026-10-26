@@ -8,8 +8,12 @@ Module defining tests for chat and tools.
 from __future__ import annotations
 
 import asyncio
+import contextvars
+import json
 import os
 import re
+import threading
+import time
 import types
 import warnings
 from collections.abc import Callable
@@ -27,6 +31,7 @@ from contextgem.internal.exceptions import (
     LLMToolLoopLimitError,
     ModelAPIError,
     ModelRefusalError,
+    ToolCallError,
 )
 from contextgem.internal.loggers import logger
 from contextgem.public import (
@@ -1690,7 +1695,7 @@ class TestChat(BaseTest):
     def test_chat_tool_call_errors_are_returned_to_llm(self):
         """
         Tests that the LLM receives an error, and can correct the call, when it calls
-        a tool that does not exist, or when a tool raises an exception. Such errors
+        a tool that does not exist, or when a tool raises ``ToolCallError``. Such errors
         are not a reason to try a fallback LLM.
 
         LLM API calls are stubbed, i.e. no cassette is required.
@@ -1705,7 +1710,7 @@ class TestChat(BaseTest):
             """
             tool_runs.append(order_id)
             if order_id != "ORD-123":
-                raise LookupError("Order not found")
+                raise ToolCallError("Order not found")
             return "shipped"
 
         llm = _create_llm_for_stubbed_chat(tools=[get_order_status])
@@ -1741,11 +1746,345 @@ class TestChat(BaseTest):
         assert unknown_tool_message["role"] == "tool"
         assert "UnknownTool" in unknown_tool_message["content"]
         assert "get_order_status" in unknown_tool_message["content"]
-        # ...and for the exception raised by the tool, the message of the exception
+        # ...and for the ToolCallError raised by the tool, the message of the exception
         tool_error_message = requests[2]["messages"][-1]
         assert tool_error_message["role"] == "tool"
-        assert "ToolExecutionError" in tool_error_message["content"]
-        assert "Order not found" in tool_error_message["content"]
+        assert json.loads(tool_error_message["content"]) == {
+            "error": "ToolCallError",
+            "message": "Order not found",
+        }
+
+    @pytest.mark.parametrize("is_async", [False, True])
+    def test_chat_with_tool_exception(self, is_async: bool):
+        """
+        Tests that an exception that a tool raises, other than ``ToolCallError``, e.g.
+        for a bug in the tool, stops the chat: it is raised from ``chat()`` as it is,
+        with its own cause and a note that names the tool, and its message is not sent
+        to any LLM, i.e. no further request is sent and no fallback LLM is tried.
+        The turn of the chat session is left unanswered, without its tool calls.
+
+        LLM API calls are stubbed, i.e. no cassette is required.
+        """
+
+        raised: list[Exception] = []
+
+        def look_up(order_id: str) -> str:
+            """
+            Fails as a lookup in a database that cannot be reached.
+            """
+            try:
+                raise ConnectionError(f"db.internal:5432 refused the lookup {order_id}")
+            except ConnectionError as e:
+                error = RuntimeError("The lookup failed")
+                raised.append(error)
+                raise error from e
+
+        if is_async:
+
+            @register_tool
+            async def get_order_status(order_id: str) -> str:
+                """
+                Returns the status of the order.
+                """
+                return look_up(order_id)
+
+        else:
+
+            @register_tool
+            def get_order_status(order_id: str) -> str:
+                """
+                Returns the status of the order.
+                """
+                return look_up(order_id)
+
+        llm = _create_llm_for_stubbed_chat(tools=[get_order_status])
+        chat_session = ChatSession()
+        acompletion_stub, requests = _stub_llm_api(
+            {
+                _MAIN_MODEL: [
+                    _create_completion(
+                        None, ("get_order_status", '{"order_id": "ORD-123"}')
+                    ),
+                    _create_completion("The order is shipped."),
+                ],
+                _FALLBACK_MODEL: [_create_completion("The order is shipped.")],
+            }
+        )
+        with (
+            patch.object(llms_module.litellm, "acompletion", new=acompletion_stub),
+            pytest.raises(RuntimeError, match="The lookup failed") as exc_info,
+        ):
+            llm.chat(
+                "What is the status of the order ORD-123?", chat_session=chat_session
+            )
+
+        # The exception that the tool raised, with its own cause and context, and
+        # a note that names the tool
+        assert exc_info.value is raised[0]
+        assert isinstance(exc_info.value.__cause__, ConnectionError)
+        assert exc_info.value.__context__ is exc_info.value.__cause__
+        notes = getattr(exc_info.value, "__notes__", [])
+        assert len(notes) == 1
+        assert "`get_order_status`" in notes[0]
+        assert "ToolCallError" in notes[0]
+
+        # No request is sent after the tool call
+        assert [request["model"] for request in requests] == [_MAIN_MODEL]
+        main_usage = llm.get_usage()[0].usage
+        assert (main_usage.input, main_usage.output) == (10, 5)
+        assert len(main_usage.calls) == 1
+
+        # The turn is not answered, and its tool calls are not kept
+        assert [m.role for m in chat_session._messages] == ["user"]
+        assert chat_session._messages[0]._response_succeeded is False
+
+    def test_chat_sync_tool_runs_in_worker_thread(self):
+        """
+        Tests that a sync tool function runs in a worker thread, in which no event loop
+        is running, e.g. for the ORM of Django, which refuses to run where one is, with
+        the context variables of the calling code, in ``chat()`` and in
+        ``chat_async()``. An async tool function runs in the event loop of the chat.
+
+        LLM API calls are stubbed, i.e. no cassette is required.
+        """
+
+        request_id: contextvars.ContextVar[str] = contextvars.ContextVar("request_id")
+        runs: dict[str, tuple[int, bool, str | None]] = {}
+
+        def record_run(kind: str) -> None:
+            """
+            Records the thread that a tool runs in, whether an event loop is running
+            in it, and the value of the context variable that it sees.
+            """
+            try:
+                asyncio.get_running_loop()
+                loop_is_running = True
+            except RuntimeError:
+                loop_is_running = False
+            runs[kind] = (threading.get_ident(), loop_is_running, request_id.get(None))
+
+        @register_tool
+        def sync_tool() -> str:
+            """
+            Records where it runs.
+            """
+            record_run("sync")
+            return "recorded"
+
+        @register_tool
+        async def async_tool() -> str:
+            """
+            Records where it runs.
+            """
+            record_run("async")
+            return "recorded"
+
+        llm = _create_llm_for_stubbed_chat(
+            with_fallback=False, tools=[sync_tool, async_tool]
+        )
+
+        async def chat_async() -> tuple[str, int]:
+            """
+            Chats with the LLM in an event loop, with the context variable set.
+            """
+            request_id.set("async-request")
+            return await llm.chat_async("Record."), threading.get_ident()
+
+        for use_chat_async in (False, True):
+            runs.clear()
+            acompletion_stub, _ = _stub_llm_api(
+                {
+                    _MAIN_MODEL: [
+                        _create_completion(
+                            None, ("sync_tool", "{}"), ("async_tool", "{}")
+                        ),
+                        _create_completion("Recorded."),
+                    ],
+                }
+            )
+            with patch.object(llms_module.litellm, "acompletion", new=acompletion_stub):
+                if use_chat_async:
+                    answer, loop_thread = asyncio.run(chat_async())
+                    expected_request_id = "async-request"
+                else:
+                    token = request_id.set("sync-request")
+                    try:
+                        answer = llm.chat("Record.")
+                    finally:
+                        request_id.reset(token)
+                    # The event loop of chat() runs in the thread of the calling code
+                    loop_thread = threading.get_ident()
+                    expected_request_id = "sync-request"
+
+            assert answer == "Recorded."
+            assert runs["async"] == (loop_thread, True, expected_request_id)
+            sync_thread, loop_is_running, seen_request_id = runs["sync"]
+            assert sync_thread != loop_thread
+            assert not loop_is_running
+            assert seen_request_id == expected_request_id
+
+    def test_chat_sync_tools_do_not_block_event_loop(self):
+        """
+        Tests that sync tool functions do not block the event loop: with
+        ``parallel_tool_calls=True``, the sync tool calls of a response run at the same
+        time, and in ``chat_async()``, the other tasks of the event loop run while
+        a sync tool function does.
+
+        LLM API calls are stubbed, i.e. no cassette is required.
+        """
+
+        # The calls of a response run at the same time
+        barrier = threading.Barrier(2, timeout=10)
+
+        @register_tool
+        def get_order_status(order_id: str) -> str:
+            """
+            Returns the status of the order.
+            """
+            # Returns only when the other call has started as well
+            barrier.wait()
+            return f"{order_id}: shipped"
+
+        llm = _create_llm_for_stubbed_chat(
+            with_fallback=False,
+            tools=[get_order_status],
+            parallel_tool_calls=True,
+            supports_parallel_tool_calls=True,
+        )
+        acompletion_stub, requests = _stub_llm_api(
+            {
+                _MAIN_MODEL: [
+                    _create_completion(
+                        None,
+                        ("get_order_status", '{"order_id": "ORD-1"}'),
+                        ("get_order_status", '{"order_id": "ORD-2"}'),
+                    ),
+                    _create_completion("Both orders are shipped."),
+                ],
+            }
+        )
+        with patch.object(llms_module.litellm, "acompletion", new=acompletion_stub):
+            assert llm.chat("Status of ORD-1 and ORD-2?") == "Both orders are shipped."
+        assert [m["content"] for m in requests[1]["messages"][-2:]] == [
+            "ORD-1: shipped",
+            "ORD-2: shipped",
+        ]
+
+        # Other tasks run while a sync tool function does
+        started = threading.Event()
+        released = threading.Event()
+
+        @register_tool
+        def wait_for_release() -> str:
+            """
+            Waits until another task of the event loop releases it.
+            """
+            started.set()
+            if not released.wait(timeout=10):
+                raise TimeoutError("The tool was not released")
+            return "released"
+
+        llm = _create_llm_for_stubbed_chat(
+            with_fallback=False, tools=[wait_for_release]
+        )
+        acompletion_stub, _ = _stub_llm_api(
+            {
+                _MAIN_MODEL: [
+                    _create_completion(None, ("wait_for_release", "{}")),
+                    _create_completion("Released."),
+                ],
+            }
+        )
+
+        async def chat_and_release() -> str:
+            """
+            Chats with the LLM, and releases the tool from another task.
+            """
+            chat_task = asyncio.create_task(llm.chat_async("Wait."))
+            while not started.is_set():
+                await asyncio.sleep(0.01)
+            released.set()
+            return await chat_task
+
+        with patch.object(llms_module.litellm, "acompletion", new=acompletion_stub):
+            assert asyncio.run(chat_and_release()) == "Released."
+
+    def test_chat_waits_for_running_sync_tools(self):
+        """
+        Tests that a sync tool function that is running when the chat stops, i.e. when
+        another tool call of the response raises an exception, or when ``chat_async()``
+        is cancelled, e.g. on a timeout, has returned when the error reaches
+        the calling code: its thread cannot be stopped, and the function is not to go
+        on in the background, e.g. change objects, after that.
+
+        LLM API calls are stubbed, i.e. no cassette is required.
+        """
+
+        started = threading.Event()
+        finished = threading.Event()
+
+        @register_tool
+        def update_order(order_id: str) -> str:
+            """
+            Updates the order, slowly.
+            """
+            started.set()
+            time.sleep(0.3)
+            finished.set()
+            return f"{order_id}: updated"
+
+        @register_tool
+        def get_order_status(order_id: str) -> str:
+            """
+            Returns the status of the order, and fails once the update has started.
+            """
+            if not started.wait(timeout=10):
+                raise TimeoutError("The update did not start")
+            raise RuntimeError(f"The lookup of {order_id} failed")
+
+        tool_calls = (
+            ("update_order", '{"order_id": "ORD-1"}'),
+            ("get_order_status", '{"order_id": "ORD-1"}'),
+        )
+        llm = _create_llm_for_stubbed_chat(
+            with_fallback=False,
+            tools=[update_order, get_order_status],
+            parallel_tool_calls=True,
+            supports_parallel_tool_calls=True,
+        )
+
+        async def chat_with_failing_tool() -> bool:
+            """
+            Chats until a tool fails, and returns whether the other tool had returned
+            by then.
+            """
+            with pytest.raises(RuntimeError, match="The lookup of ORD-1 failed"):
+                await llm.chat_async("Update ORD-1.")
+            return finished.is_set()
+
+        async def cancel_chat_while_tool_runs() -> bool:
+            """
+            Cancels the chat while a tool runs, and returns whether the tool had
+            returned when the cancellation was raised.
+            """
+            chat_task = asyncio.create_task(llm.chat_async("Update ORD-1."))
+            while not started.is_set():
+                await asyncio.sleep(0.01)
+            chat_task.cancel()
+            with pytest.raises(asyncio.CancelledError):
+                await chat_task
+            return finished.is_set()
+
+        for run_chat, responses in [
+            (chat_with_failing_tool, [_create_completion(None, *tool_calls)]),
+            (cancel_chat_while_tool_runs, [_create_completion(None, tool_calls[0])]),
+        ]:
+            started.clear()
+            finished.clear()
+            acompletion_stub, requests = _stub_llm_api({_MAIN_MODEL: responses})
+            with patch.object(llms_module.litellm, "acompletion", new=acompletion_stub):
+                assert asyncio.run(run_chat())
+            assert len(requests) == 1
 
     @pytest.mark.parametrize(
         "malformed_tool_call",

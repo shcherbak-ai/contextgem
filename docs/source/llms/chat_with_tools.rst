@@ -1,5 +1,5 @@
 .. meta::
-   :description: How to give an LLM Python functions to call as tools in chat: registering them, how their schemas are built from type hints and docstrings, and how tool errors are handled.
+   :description: How to give an LLM Python functions to call as tools in chat: registering them, how their schemas are built from type hints and docstrings, where sync and async functions run, and how tool errors are handled.
 
 
 Chat with Tools
@@ -29,6 +29,8 @@ A tool is a Python function decorated with ``@register_tool``. The function defi
 * A tool function must have a docstring and type hints for all its parameters, and must not have positional-only parameters, ``*args`` or ``**kwargs``
 * A parameter that has a default value, or is typed as ``Optional``, is optional for the LLM
 * Tool handlers must return a non-empty string (serialize structured data with ``json.dumps`` if needed)
+* A tool function can be sync or async. A sync function runs in a worker thread, so that it does not block the event loop of the chat (see :ref:`llm-tools-sync-async-label`)
+* To tell the LLM why a call failed, e.g. that a record does not exist, raise ``ToolCallError`` in the function: its message is sent to the LLM. Any other exception stops the chat, and is raised from ``chat(...)`` (see :ref:`llm-tools-errors-label`)
 * Use :class:`~contextgem.public.llms.ChatSession` to maintain conversation history across turns. The history keeps the tool calls of each turn and their results, so the LLM is sent them with the next turns and does not need to call the tools again for what it already found. ``ChatSession.messages`` lists the system message, if any, the messages of the user and the answers of the LLM, without the tool calls
 * The thinking blocks that an LLM returns with its tool calls and answers, e.g. those of Claude when ``reasoning_effort`` is set, are sent back to it unchanged in the next tool rounds and, in a chat session, in the next turns, so that it keeps its reasoning. They are sent back only to the same model with the same tools and system message, as a provider may reject them otherwise
 
@@ -268,8 +270,10 @@ The :class:`~contextgem.public.llms.DocumentLLM` class accepts several tool-rela
        being forced to call tools in every round until ``tool_max_rounds`` is reached.
    * - ``parallel_tool_calls``
      - ``None``
-     - Whether to enable parallel tool execution. When ``None``, defers to the API/model default.
+     - Whether the LLM may call several tools at once. When ``None``, defers to the API/model default.
        Set to ``True`` to explicitly enable or ``False`` to disable (if supported by the model).
+       With ``True``, the tool calls of a response also run at the same time, each sync function
+       in a thread of its own; otherwise they run one after another.
    * - ``tool_max_rounds``
      - ``10``
      - Maximum number of tool execution rounds per request. Prevents infinite or excessively
@@ -300,12 +304,42 @@ The LLM will interpret the returned string and incorporate it into its response.
 If a tool returns a value of another type, ``TypeError`` is raised from ``chat(...)``, and if it returns an empty string, ``ValueError`` is raised. No further requests are sent in such cases.
 
 
+.. _llm-tools-sync-async-label:
+
+Sync and Async Tool Functions
+------------------------------
+
+A tool function can be sync or async (``async def``). An async function runs in the event loop of the chat, and a sync function runs in a worker thread, so that it does not block the loop: while it runs, the other tool calls of the same response run too, with ``parallel_tool_calls=True``, and so do the other tasks of your event loop, in ``chat_async(...)``. Use an async function for work that awaits, e.g. an extraction with the ``_async`` methods (see :ref:`agentic-tool-label`).
+
+* **No event loop runs in the thread of a sync function**, so it can use libraries that refuse to run where one is running, e.g. the ORM of Django
+* **The thread is not the thread of the code that calls** ``chat(...)``: what that code keeps for its own thread is not there, e.g. a database transaction that it has open, and an object that works only in the thread that created it fails, e.g. a ``sqlite3`` connection opened when your application starts, which raises ``sqlite3.ProgrammingError``. Open such a connection in the function, or open it with ``check_same_thread=False`` and let one call use it at a time, e.g. with a ``threading.Lock``, as parallel tool calls run at the same time. A library that opens a database connection for each thread, as Django does, opens one in the worker thread, which the function can close when it is done, e.g. with ``django.db.connection.close()``. The context variables of the calling code (``contextvars``) are copied into the thread
+* **With** ``parallel_tool_calls=True``, **the sync tool calls of a response run at the same time**, each in a thread of its own: a function that changes state that the calls share must be thread-safe
+* **A sync function cannot be stopped once it has started.** When the chat stops while it runs, e.g. when ``chat_async(...)`` is cancelled on a timeout, or when another tool call of the response raises an exception, the chat waits for it to return before the error reaches your code, so that the function changes nothing after that
+
+
 .. _llm-tools-errors-label:
 
 Errors in Tool Calls
 ---------------------
 
-When the LLM can correct a failed tool call, the chat is not stopped: the error is sent to the LLM as the result of the tool call, and the LLM can call the tool again in the next round.
+When the LLM can correct a failed tool call, the chat is not stopped: the error is sent to the LLM as the result of the tool call, a JSON object with the kind of the error and its message, e.g. ``{"error": "ToolCallError", "message": "No order has the ID 'ORD-1010'"}``, and the LLM can call the tool again in the next round. The other kinds are ``UnknownTool``, ``InvalidToolArguments`` (arguments that are not valid JSON) and ``SchemaValidationError``, which a stand-in for the LLM in a test can check (see :doc:`../testing`). A tool function tells the LLM why a call failed by raising :class:`~contextgem.public.exceptions.ToolCallError`, e.g. for a record that does not exist. Any other exception that it raises is an error in the function, e.g. a bug, and stops the chat:
+
+.. code-block:: python
+
+   from contextgem import ToolCallError, register_tool
+
+   @register_tool
+   def get_order_status(order_id: str) -> str:
+       """
+       Returns the status of an order.
+
+       :param order_id: The ID of the order, e.g. "ORD-123"
+       """
+       order = orders.get(order_id)  # e.g. a lookup in your database
+       if order is None:
+           # Sent to the LLM, which can call the tool again with another ID
+           raise ToolCallError(f"No order has the ID {order_id!r}")
+       return order.status
 
 .. list-table::
    :header-rows: 1
@@ -317,8 +351,10 @@ When the LLM can correct a failed tool call, the chat is not stopped: the error 
      - The LLM receives an error with the names of the available tools
    * - The LLM passes arguments that are not valid JSON, or that do not match the parameters of the tool or their constraints
      - The tool is not called, and the LLM receives the validation error
-   * - The tool function raises an exception
+   * - The tool function raises ``ToolCallError``
      - The LLM receives the message of the exception
+   * - The tool function raises another exception
+     - The exception is raised from ``chat(...)`` as it is, with a note that names the tool. Its message is not sent to the LLM, no further requests are sent, and no fallback LLM is tried
    * - The LLM returns a tool call that cannot be processed, e.g. without the name of the tool or the ID of the call
      - No tool is called. This is handled as a failed request: a fallback LLM is tried, or :class:`~contextgem.public.exceptions.ModelAPIError` is raised
    * - The tool function returns a value other than a non-empty string
@@ -331,7 +367,7 @@ When the LLM can correct a failed tool call, the chat is not stopped: the error 
 When ``chat(...)`` raises an error, or is cancelled (e.g. on a timeout set by the calling code), the requests completed before that are still counted in the usage and cost of the LLM.
 
 .. note::
-   The message of an exception raised by a tool function is sent to the LLM. Make sure that it does not contain anything that the LLM should not receive.
+   The message of a ``ToolCallError`` is sent to the LLM unchanged, in the result of the tool call: write it for the LLM, and keep out of it anything that the LLM should not receive. The message of any other exception is not sent.
 
 
 .. _llm-tools-fallback-label:
@@ -346,6 +382,6 @@ A fallback LLM takes over when a request to the current LLM fails, at any point 
 .. warning::
    If an LLM fails after it has called tools, the fallback LLM may call the same tools again, i.e. a tool can be called more than once in a single ``chat(...)`` call. Make sure that the tools that change something (e.g. send a message or create a record) can be safely called again with the same arguments.
 
-A fallback LLM is not tried when the chat is stopped for a reason other than a failure of the LLM, i.e. when a tool function returns an invalid value, or when ``tool_max_rounds`` is reached (see :ref:`llm-tools-errors-label`).
+A fallback LLM is not tried when the chat is stopped for a reason other than a failure of the LLM, i.e. when a tool function raises an exception other than ``ToolCallError`` or returns an invalid value, or when ``tool_max_rounds`` is reached (see :ref:`llm-tools-errors-label`).
 
 An empty response is handled as a failure of the LLM: the request is sent again, up to ``max_retries_invalid_data`` times (3 by default), then the next fallback LLM is tried, and ``ModelAPIError`` is raised if there is none left to try. A response cut off at the max output tokens is returned as it is, with a warning logged (see :ref:`llm-max-output-tokens-label`). A refused response with a text is returned as it is, with a warning logged, while a refused response without a text, or a request that the provider blocks, is handled as an empty response, and raises ``ModelRefusalError`` if no fallback LLM is left to try (see :ref:`llm-refusals-label`).

@@ -139,7 +139,7 @@ The :class:`~contextgem.public.llms.DocumentLLM` class accepts the following par
    * - ``parallel_tool_calls``
      - ``bool | None``
      - ``None``
-     - Enable parallel tool calls during chat tool usage, if supported by the model/provider. Ignored by extraction methods.
+     - Enable parallel tool calls during chat tool usage, if supported by the model/provider. With ``True``, the tool calls of a response also run at the same time (see :ref:`llm-tools-sync-async-label`). Ignored by extraction methods.
    * - ``tool_max_rounds``
      - ``int``
      - ``10``

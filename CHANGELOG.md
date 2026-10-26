@@ -6,6 +6,17 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 - **Refactor**: Code reorganization that doesn't change functionality but improves structure or maintainability
 
+## [Unreleased]
+
+### Added
+
+- Added `ToolCallError`, which can be imported from `contextgem`: the exception that a tool function raises to tell the LLM why a call failed, e.g. that no record has the ID that the LLM passed. Its message is sent to the LLM as the result of the tool call, and the LLM can call the tool again (see "Changed"). It is not a subclass of `ContextGemError`, the base of the errors that ContextGem raises. See [Errors in tool calls](https://contextgem.shcherbak.ai/llms/chat_with_tools/#errors-in-tool-calls).
+
+### Changed
+
+- An exception that a tool function raises, other than `ToolCallError`, now stops the chat: it is raised from `chat()` and `chat_async()` as it is, with a note that names the tool, no further requests are sent, and no fallback LLM is tried. Its message was sent to the LLM, as the result of the tool call, and the chat went on, so that a bug in a tool, e.g. an error of a database, went unnoticed but in the answer, and its message, which can hold anything, reached the LLM. To send an error to the LLM, raise `ToolCallError` with a message written for it, e.g. `raise ToolCallError(f"No order has the ID {order_id!r}")`, where the function raised another exception for the LLM. The result of the tool call that the LLM receives for it has `"error": "ToolCallError"`, where it had `"error": "ToolExecutionError"`: change a stand-in for the LLM in your tests that checks it.
+- A sync tool function now runs in a worker thread, as `asyncio.to_thread()` runs it, where it ran in the event loop of the chat and blocked it: in `chat_async()`, the other tasks of the event loop of your code now run while it does, and with `parallel_tool_calls=True`, the sync tool calls of a response now run at the same time, where they ran one after another. No event loop runs in its thread, so that it can use a library that refuses to run where one is running, e.g. the ORM of Django, which raised `SynchronousOnlyOperation` in a tool. The function no longer runs in the thread of the code that calls `chat()`: it does not see what that code keeps for its thread, e.g. an open database transaction, while it gets its context variables. A function that changes state that parallel tool calls share must be thread-safe. When the chat stops while a sync function runs, e.g. on a cancelled `chat_async()`, the chat waits for it to return before the error reaches your code. See [Sync and async tool functions](https://contextgem.shcherbak.ai/llms/chat_with_tools/#sync-and-async-tool-functions).
+
 ## [1.3.0] - 2026-10-25
 
 ### Added
@@ -705,6 +716,7 @@ See the [migration guide](https://contextgem.shcherbak.ai/migration_v1/) for upd
 
 - Added DocxConverter for converting DOCX files into ContextGem Document objects
 
+[Unreleased]: https://github.com/shcherbak-ai/contextgem/compare/v1.3.0...HEAD
 [1.3.0]: https://github.com/shcherbak-ai/contextgem/compare/v1.2.1...v1.3.0
 [1.2.1]: https://github.com/shcherbak-ai/contextgem/compare/v1.2.0...v1.2.1
 [1.2.0]: https://github.com/shcherbak-ai/contextgem/compare/v1.1.0...v1.2.0
