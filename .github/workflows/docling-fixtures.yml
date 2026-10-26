@@ -78,11 +78,16 @@ jobs:
       # downloaded): an attempt to download them that takes more than 3 minutes,
       # where all of them take seconds, is stopped and made again, on new
       # connections, and apt resumes the files that it has partly downloaded.
+      # The mirror can stall again on each new connection (three attempts in a
+      # row on 2026-10-26), so a stopped attempt takes it out of the runner's
+      # list of mirrors, which apt reads at each download: the next attempts
+      # download from the next mirror of the list, archive.ubuntu.com.
       # The installation, from the downloaded files, is never stopped half-way
       - name: Install LibreOffice and ffmpeg
         timeout-minutes: 15
         env:
           PACKAGES: libreoffice-writer libreoffice-calc libreoffice-impress ffmpeg
+          MIRRORS: /etc/apt/apt-mirrors.txt
         run: |
           sudo apt-get update
           for attempt in 1 2 3; do
@@ -95,6 +100,9 @@ jobs:
               exit 1
             fi
             echo "::warning::Attempt $attempt to download the packages stopped"
+            if [ -f "$MIRRORS" ]; then
+              sudo sed -i '/azure\.archive\.ubuntu\.com/d' "$MIRRORS"
+            fi
           done
           sudo apt-get install -y --no-install-recommends $PACKAGES
 
