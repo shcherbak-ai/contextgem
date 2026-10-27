@@ -1,7 +1,13 @@
 name: Publish
 
+# Runs after each run of the tests, a pull request's from a fork too, with the
+# workflow and the context of the default branch (main). Nothing is checked out
+# from the run or published unless the run was a push, the gate finds a v* tag
+# of this repository on its commit and that commit on main, and the pypi
+# environment accepts deployments from main only: that is why zizmor's
+# dangerous-triggers finding is ignored on the trigger
 on:
-  workflow_run:
+  workflow_run:  # zizmor: ignore[dangerous-triggers]
     workflows: [tests]
     types: [completed]
 
@@ -12,26 +18,39 @@ concurrency:
 permissions:
   contents: read
 
+# The SHA-256 of the Linux archive of that uv
+# (uv-x86_64-unknown-linux-gnu.tar.gz.sha256 on its release page) changes with
+# it: setup-uv 10.3.0 holds the checksums of uv up to 0.13.0 only, and checks a
+# newer one against a list it downloads at run time, which is not enough for
+# the job that builds the release
 env:
   UV_VERSION: "0.13.5"
+  UV_SHA256: "f68d291c75783122dad58ab77def0e13f3233f358731db5d6d7e8715603b928f"
 
 jobs:
   publish-gate:
-    if: github.event.workflow_run.conclusion == 'success'
+    # A release is the push of a commit of main with its tag: the runs of the
+    # tests on a pull request stop here
+    if: >-
+      github.event.workflow_run.conclusion == 'success'
+      && github.event.workflow_run.event == 'push'
     runs-on: ubuntu-latest
     timeout-minutes: 10
     outputs:
       should_publish: ${{ steps.check.outputs.should_publish }}
     steps:
+      # Without the token in .git/config, where checkout leaves it for the later
+      # steps, which push nothing
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
         with:
           fetch-depth: 0
+          persist-credentials: false
 
       - name: Verify v* tag on main
         id: check
+        env:
+          SHA: ${{ github.event.workflow_run.head_sha }}
         run: |
-          SHA="${{ github.event.workflow_run.head_sha }}"
-
           # Check for an actual v* tag pointing at this commit
           TAG=$(git tag --points-at "$SHA" | grep '^v' | head -n1)
           if [ -z "$TAG" ]; then
@@ -60,11 +79,17 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
         with:
           ref: ${{ github.event.workflow_run.head_sha }}
+          persist-credentials: false
 
+      # Without the cache of uv, which the jobs of other workflows can write: a
+      # job that ran a compromised package could leave one for the build (as
+      # setup-uv's default does on workflow_run)
       - name: Install uv
         uses: astral-sh/setup-uv@1c37ad07a6a961277cf70c0d37d6f313000f5884  # v10.3.0
         with:
           version: ${{ env.UV_VERSION }}
+          checksum: ${{ env.UV_SHA256 }}
+          enable-cache: false
 
       - name: Set up Python from .python-version
         run: uv python install

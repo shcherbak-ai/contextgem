@@ -34,11 +34,14 @@ jobs:
           fetch-depth: 0
           persist-credentials: false
 
+      # Without the cache of uv for the build of main, which is published: a job
+      # of any workflow that runs on main writes the caches that main reads, so
+      # one that ran a compromised package could leave one for this build
       - name: Install uv
         uses: astral-sh/setup-uv@1c37ad07a6a961277cf70c0d37d6f313000f5884  # v10.3.0
         with:
           version: ${{ env.UV_VERSION }}
-          enable-cache: true
+          enable-cache: ${{ github.ref != 'refs/heads/main' }}
 
       - name: Set up Python from .python-version
         run: uv python install

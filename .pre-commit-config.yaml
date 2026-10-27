@@ -117,6 +117,17 @@ repos:
         types_or: [python, toml]
         pass_filenames: false
 
+      # The GitHub workflows, for what an attacker could reach through them: a
+      # checkout that leaves its token in the workspace, a value of the event
+      # written into a script, a trigger that runs on untrusted code. Offline:
+      # the audits that ask GitHub's API are left out
+      - id: zizmor
+        name: zizmor
+        entry: uv run zizmor --offline --no-progress .github/workflows
+        language: system
+        files: ^\.github/workflows/
+        pass_filenames: false
+
       - id: uv-lock
         name: uv lock check
         entry: uv lock --check

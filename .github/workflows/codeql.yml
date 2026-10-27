@@ -12,9 +12,6 @@ on:
 permissions:
   contents: read
 
-env:
-  UV_VERSION: "0.13.5"
-
 jobs:
   analyze:
     name: Analyze
@@ -30,26 +27,21 @@ jobs:
       matrix:
         language: [ 'python' ]
 
+    # Nothing is installed: CodeQL has not used the installed dependencies of
+    # Python code since its version 2.16, and the code of a dependency would run
+    # here with the token that writes the results. Without the token in
+    # .git/config, where checkout leaves it for the later steps, which push
+    # nothing
     steps:
     - name: Checkout repository
       uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
+      with:
+        persist-credentials: false
 
     - name: Initialize CodeQL
       uses: github/codeql-action/init@6f2ac81f5cd81fe351a197ba0b00d91d03cd2aee  # v4.39.0
       with:
         languages: ${{ matrix.language }}
-
-    - name: Install uv
-      uses: astral-sh/setup-uv@1c37ad07a6a961277cf70c0d37d6f313000f5884  # v10.3.0
-      with:
-        version: ${{ env.UV_VERSION }}
-        enable-cache: true
-
-    - name: Set up Python from .python-version
-      run: uv python install
-
-    - name: Install dependencies
-      run: uv sync --locked --all-groups
 
     - name: Perform CodeQL Analysis
       uses: github/codeql-action/analyze@6f2ac81f5cd81fe351a197ba0b00d91d03cd2aee  # v4.39.0

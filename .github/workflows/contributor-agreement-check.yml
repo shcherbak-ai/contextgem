@@ -44,19 +44,25 @@ jobs:
               return false;
             }
 
+      # Without the token in .git/config, where checkout leaves it for the later
+      # steps, which push nothing and fetch from a public repository
       - name: Checkout code
         if: steps.check-maintainer.outputs.result != 'true'
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
         with:
           ref: ${{ github.event.pull_request.head.sha }}
           fetch-depth: 0
+          persist-credentials: false
 
+      # The values of the pull request reach the scripts as environment
+      # variables, never written into them by `${{ }}`, where a value would run
+      # as part of the script
       - name: Check for contributor agreement
         if: steps.check-maintainer.outputs.result != 'true'
         id: check-agreement
+        env:
+          PR_AUTHOR: ${{ github.event.pull_request.user.login }}
         run: |
-          # Get the PR author's username
-          PR_AUTHOR="${{ github.event.pull_request.user.login }}"
           echo "PR author: $PR_AUTHOR"
 
           # Check if contributor agreement file exists
@@ -86,12 +92,14 @@ jobs:
       - name: Check for deleted contributor agreements
         if: steps.check-maintainer.outputs.result != 'true'
         id: check-deleted
+        env:
+          BASE_REF: ${{ github.base_ref }}
         run: |
           # Set proper base ref
-          git fetch origin ${{ github.base_ref }}
+          git fetch origin "$BASE_REF"
 
           # Get the list of deleted files in this PR
-          DELETED_FILES=$(git diff --name-only --diff-filter=D origin/${{ github.base_ref }} HEAD | grep -E "^.github/contributors/.*\.md$" || true)
+          DELETED_FILES=$(git diff --name-only --diff-filter=D "origin/$BASE_REF" HEAD | grep -E "^.github/contributors/.*\.md$" || true)
 
           if [ -n "$DELETED_FILES" ]; then
             echo "❌ The following contributor agreement files are being deleted in this PR:"
@@ -105,13 +113,16 @@ jobs:
       - name: Comment on PR if checks fail
         if: ${{ failure() && steps.check-maintainer.outputs.result != 'true' }}
         uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3  # v9.0.0
+        env:
+          AGREEMENT_OUTCOME: ${{ steps.check-agreement.outcome }}
+          DELETED_OUTCOME: ${{ steps.check-deleted.outcome }}
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
             const author = context.payload.pull_request.user.login;
             let message = '';
 
-            if ('${{ steps.check-agreement.outcome }}' === 'failure') {
+            if (process.env.AGREEMENT_OUTCOME === 'failure') {
               message = `Hi @${author}! 👋
 
               Thank you for your contribution! We require all contributors to sign our Contributor Agreement.
@@ -124,7 +135,7 @@ jobs:
               This helps ensure all contributions are properly licensed. Thanks for your understanding!`;
             }
 
-            if ('${{ steps.check-deleted.outcome }}' === 'failure') {
+            if (process.env.DELETED_OUTCOME === 'failure') {
               message = `Hi @${author}! 👋
 
               Your PR is attempting to delete one or more contributor agreement files. This is not allowed.

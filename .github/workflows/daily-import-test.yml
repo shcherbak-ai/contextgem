@@ -16,11 +16,14 @@ jobs:
     timeout-minutes: 10
 
     steps:
+      # Without the token in .git/config, where checkout leaves it for the later
+      # steps, which push nothing
       - name: Check out .python-version
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
         with:
           sparse-checkout: .python-version
           sparse-checkout-cone-mode: false
+          persist-credentials: false
 
       - name: Set up Python from .python-version
         uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97  # v7.0.0

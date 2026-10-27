@@ -191,6 +191,7 @@ contextgem/
     - **omerta**: no value of your `.env` file, e.g. an API key with which you record cassettes, is in a file that git tracks, as written or encoded in a URL, JSON or base64: in the staged files, and in all the tracked files with `--all-files`. It reports the variable and the line, never the value. `uv run omerta history` searches every commit too ([omerta](https://github.com/shcherbak-ai/omerta))
     - **Interrogate**: docstring coverage, which must stay at 100%: every module, class and function has a docstring
     - **Deptry**: the declared dependencies against the imported ones (unused, missing, transitive)
+    - **zizmor**: the security of the GitHub workflows, offline, when one changes ([zizmor](https://docs.zizmor.sh/))
     - **markdownlint-cli2**: Markdown style, with the version of `package-lock.json` (`npm ci` installs it)
     - **add-file-headers**: adds the license header (two SPDX lines) to a Python file that has none, except a usage example
     - **docs-page-description**: each page of the documentation starts with a meta description (see [Documentation Structure](#-documentation-structure))

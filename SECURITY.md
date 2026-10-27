@@ -20,7 +20,7 @@ Report a vulnerability in a dependency, e.g. LiteLLM, to that project. If the ve
 
 - **Code:** [CodeQL](https://codeql.github.com/) analyses the code on each push and pull request to `main` and `dev`, and once a week. [Bandit](https://github.com/PyCQA/bandit) checks it in a pre-commit hook, which CI also runs on each push and pull request.
 - **Dependencies:** a new release of a dependency enters the lockfile only once it is 7 days old, by when a compromised release has usually been found and removed. At each commit, each locked version, Python and npm, and the version of uv that locks them, is checked against the advisories of [osv.dev](https://osv.dev). A report of a malicious package stops the commit, as does a known vulnerability, unless it is accepted with its reason, e.g. when no version that the ranges allow fixes it yet.
-- **Workflows:** each GitHub Action is pinned to the SHA of a commit, and each workflow has read-only permissions, but for the jobs that need more.
+- **Workflows:** each GitHub Action is pinned to the SHA of a commit, and each workflow has read-only permissions, but for the jobs that need more. No checkout leaves its token to the later steps, and the builds that are published, of the release and of the documentation site, restore no cache, which a job of another workflow could have written.
 - **Releases:** each release is built and published on GitHub Actions, through PyPI's trusted publishing, with an attestation of the workflow that built each file, which PyPI shows on the page of the file. Before the upload, the wheel is installed in a fresh environment with the locked versions of its dependencies, checked by their hashes.
 
 ## Dependencies
