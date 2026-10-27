@@ -250,3 +250,58 @@ The runs of `stability_2026-10-20_text` (`openai/gpt-6-luna` and `openai/gpt-5.6
 - What else the decision models add or leave out on the text are table rows, which they cannot tell apart without the caption and the header of their table, and rows of results within the specification: these stay as they are.
 
 The judge agrees with 75 of the 76 checks (`judge --checks`): of the 14 checks of this case, it judges correct the wrong justification that 6.2 applies because the intermediate samples of V20-2604 showed a significant change (a probability of 0.55), where 6.2 requires that they show none.
+
+## complex_multilingual (2026-10-27)
+
+### How the case was made
+
+An AI agent wrote the document and its reference answers together, on 2026-10-27, to measure whether the LLMs write their output in the language that `DocumentLLM.output_language` asks for when the document is in several languages, and whether the extraction holds against `"en"`. The document is a fictional exclusive distribution agreement between a German pump manufacturer and a French distributor; the parties, the places (Lindenfurt, Bellerive-sur-Erdre) and the figures are made up, and the registration number of the distributor fails the check digit of French company numbers.
+
+| Part | Language | Paragraphs |
+|------|----------|------------|
+| The agreement (Vertriebsvertrag), §§ 1 to 9 and the signatures | German | 0 to 48 (49) |
+| Annex 1: the Contract Products, their technical data and list prices in two tables, the payment and delivery terms | English | 49 to 68 (20) |
+| Amendment No. 1 (Avenant n° 1) | French | 69 to 79 (11) |
+
+German is 61 % of the paragraphs, 60 % of the characters and 55 % of the words. No paragraph is in Japanese, Chinese or Portuguese, so every target language but English needs translation. The gold file gives the first and the last paragraph of each language (`paragraph_languages` in its `custom_data`).
+
+The answers depend on how the languages interact, and 9 of the 16 need two of them:
+
+- **The French amendment changes German clauses**: it adds Belgium to the exclusive territory and allows active sales in Luxembourg without exclusivity (2.1 to 2.3), cuts the minimum purchase quantity of 2028 by 25 % (3.1), and moves the deliveries from 1 March 2028 from FCA Lindenfurt to DAP at the warehouse of the distributor, with the passing of risk (5.1, 5.2 and point 3.1 of Annex 1).
+- **The English annex states three terms otherwise than the German text**, and 9.3 decides between them: the German text prevails, except for technical data and list prices, for which Annex 1 prevails, even though Annex 1 claims precedence for itself. So the payment term is the 30 days of 4.6, not the 45 days of Annex 1; the list price of HP-350 is the EUR 7,250 of Table 1.1, not the EUR 7,150 of 4.2; and the guaranteed efficiency of HP-500 is the 76 % of Table 1.1, not the 78 % of 6.4.
+- **Defined terms cross the languages**: Vertragsprodukte, Contract Products and Produits Contractuels; Vertragsgebiet, Territory and Territoire; Verschleißteile and Wear Parts, whose warranty period 6.3 sets and which Annex 1 lists.
+- **Distractors**: the HP-700 series, which Annex 1 lists with a price for information only and which the amendment only plans to add by a separate amendment; Luxembourg, open to the distributor without exclusivity.
+
+The 16 concepts: 9 typed ones (dates, numbers, a Boolean, labels), whose values do not depend on the output language; 6 string concepts with short reference values in English, each with one accepted wording; and one JSON object concept with one text field (`description`), whose objects are identified by `series` (`object_key`). Every concept and every aspect asks for justifications, which are written in the output language, and every concept for references.
+
+### Computed answers
+
+Recomputed by the script that wrote the reference answers (not kept); each is also in the `custom_data` of its concept:
+
+- **Net value of the initial stocking order**: 10 × 4,850 + 6 × 7,250 + 2 × 11,400 = EUR 114,800, less the introductory discount of 8 % (4.3): EUR 105,616. With the EUR 7,150 of 4.2 it would be EUR 105,064, and without the discount EUR 114,800.
+- **Payment due date of its invoice**: invoiced on Monday 15 March 2027 (Annex 1, 2.1), a day that 4.6 does not count; 30 days end on Wednesday 14 April 2027. The 45 days of Annex 1 would end on 29 April 2027.
+- **Minimum purchase quantity for 2028**: 120 × 0.75 = 90 pumps.
+- **Effective date of Amendment No. 1**: the date of the last signature (Article 7), 19 November 2027, after that of the distributor on 12 November 2027.
+- **Incoterm of a delivery on Wednesday 12 April 2028**: a delivery from 1 March 2028, so DAP.
+
+### Paragraphs not scored
+
+The 17 headings, the captions of the two tables among them. The header row of Table 1.1 is linked to the aspects of the prices and of the warranty, whose rows it labels. The borderline and linked paragraphs of each aspect are listed with their reasons in `complex_multilingual.neutral.json`, e.g. the HP-700 series (1.3 of Annex 1 and Table 1.2), which is not a Contract Product, for the prices and the warranty, and the clause of the agreement by which an amendment prevails (9.4), for the territory and the delivery.
+
+### Points for the review
+
+- **The guaranteed efficiency of HP-500**: 6.4 states 78 % as the value of Annex 1, which gives 76 % as a guaranteed minimum, and 9.3 makes Annex 1 prevail for technical data. A reader could take the 78 % as a separate, stricter guarantee of 6.4, which a minimum of 76 % does not contradict.
+- **The payment term**: the exception of 9.3 covers technical data and list prices only, so the 30 days of the German text prevail; a reader who counts payment terms as prices would take the 45 days of Annex 1.
+- **Two string answers are longer than the others**: the passing of the transport risk, before and after 1 March 2028, and the changes made by Amendment No. 1, three changes in one sentence.
+
+### Blind review
+
+On 2026-10-27, a separate agent that saw only the numbered text and the definitions of the aspects and concepts derived every answer, selected the paragraphs of every aspect, and checked the dates, the weekdays and the arithmetic.
+
+- **Concepts: all 16 agree.** The 10 typed answers and the objects of the JSON object concept are those of the reference answers, with the same clauses deciding: 9.3 for the price of HP-350, the efficiency of HP-500 and the payment term, and Article 7 of the amendment for its effective date. Its 5 string answers state the same as the reference values, some with a detail more, e.g. that the amendment is subject to the same law and court. It read the two points for the review as the reference answers do: 76 %, as 6.4 derives its figure from Annex 1 ("Danach"), and 30 days, as a payment term is neither technical data nor a list price.
+- **No error in the document.** The conflicts that it lists are those written into the case (4.2 and Table 1.1, 6.4 and Table 1.1, 4.6 and point 2.2 of Annex 1, Annex 1 claiming precedence against 9.3), each resolved by 9.3 as the reference answers do. It also noted that the early payment discount of 4.6 does not contradict "no further discounts" of 4.3, a discount for early payment not being a price reduction, and that 7.2 keeps a termination for good cause, which a shortfall alone does not give (3.3). The weekdays and the cross-references all check out.
+- **Aspects**: its paragraphs are those of the reference answers, with these differences, ruled against the text:
+  - Territory: it adds 11 (2.4, the non-compete), already borderline.
+  - Prices and Warranty: it adds 56, the header row of Table 1.1, already linked; and to the warranty, 34 (6.7, liability) as leaning to include, already borderline.
+  - Delivery: it leans to include 64 (the handover of the initial stocking order at the Lindenfurt plant on 15 March 2027) and 68 (spare parts in stock dispatched within 5 working days, a lead time). Both are now borderline for the aspect: 64 gives the place and the day of one delivery under the FCA terms of 5.1 rather than a delivery term, and the second sentence of 68 is a lead time of spare parts in a clause on their supply, while 3.1 of Annex 1 gives the lead times of the pumps.
+- **Descriptions it found open**: whether the efficiency "as it applies under the agreement" is that of 6.4 or of Annex 1, and whether the effective date of the amendment is its entry into force or the dates its articles apply from (1 January and 1 March 2028); it chose as the reference answers do (76 %, the entry into force). The descriptions are kept: 9.3 and Article 7 decide them.

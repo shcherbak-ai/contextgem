@@ -1,0 +1,901 @@
+{
+  "judge": {
+    "model": "typesafe/jev-latest",
+    "questions": "a08ad6e4d950",
+    "language_questions": "eecc73a02005",
+    "litellm": "1.105.2"
+  },
+  "threshold": 0.5,
+  "reference": "3b96d8318303",
+  "summary": {
+    "n_strings": 6,
+    "n_strings_correct": 6,
+    "n_justifications": 17,
+    "n_justifications_correct": 15,
+    "n_fields": 6,
+    "n_fields_correct": 6,
+    "n_language_strings": 6,
+    "n_language_strings_correct": 6,
+    "n_language_justifications": 17,
+    "n_language_justifications_correct": 17,
+    "n_language_aspect_justifications": 38,
+    "n_language_aspect_justifications_correct": 38,
+    "n_language_all": 61,
+    "n_language_all_correct": 61,
+    "n_variant_required": 61,
+    "n_variant_other": 0,
+    "n_variant_mixed": 0,
+    "n_variant_none": 0
+  },
+  "usage": {
+    "requests": 87,
+    "input_tokens": 40138,
+    "output_tokens": 1740,
+    "cost_total": "0.00169"
+  },
+  "concepts": [
+    {
+      "context": "document",
+      "name": "Amendment No. 1 effective date",
+      "type": "DateConcept",
+      "justifications": [
+        {
+          "item": 0,
+          "probability": 0.97,
+          "verdict": true,
+          "decided_by": "judge"
+        }
+      ]
+    },
+    {
+      "context": "document",
+      "name": "Changes made by Amendment No. 1",
+      "type": "StringConcept",
+      "value": {
+        "probability": 0.72,
+        "verdict": true,
+        "decided_by": "judge"
+      },
+      "justifications": [
+        {
+          "item": 0,
+          "probability": 0.8,
+          "verdict": true,
+          "decided_by": "judge"
+        }
+      ]
+    },
+    {
+      "context": "document",
+      "name": "Governing law and jurisdiction",
+      "type": "StringConcept",
+      "value": {
+        "probability": 0.99,
+        "verdict": true,
+        "decided_by": "judge"
+      },
+      "justifications": [
+        {
+          "item": 0,
+          "probability": 0.99,
+          "verdict": true,
+          "decided_by": "judge"
+        }
+      ]
+    },
+    {
+      "context": "document",
+      "name": "Prevailing text between the agreement and Annex 1",
+      "type": "StringConcept",
+      "value": {
+        "probability": 0.97,
+        "verdict": true,
+        "decided_by": "judge"
+      },
+      "justifications": [
+        {
+          "item": 0,
+          "probability": 0.9,
+          "verdict": true,
+          "decided_by": "judge"
+        }
+      ]
+    },
+    {
+      "context": "document",
+      "name": "HP-700 is a Contract Product",
+      "type": "BooleanConcept",
+      "justifications": [
+        {
+          "item": 0,
+          "probability": 0.89,
+          "verdict": true,
+          "decided_by": "judge"
+        }
+      ]
+    },
+    {
+      "context": "document",
+      "name": "Contract Products and their list prices",
+      "type": "JsonObjectConcept",
+      "justifications": [
+        {
+          "item": 0,
+          "probability": 0.73,
+          "verdict": true,
+          "decided_by": "judge"
+        },
+        {
+          "item": 1,
+          "probability": 0.92,
+          "verdict": true,
+          "decided_by": "judge"
+        },
+        {
+          "item": 2,
+          "probability": 0.68,
+          "verdict": true,
+          "decided_by": "judge"
+        }
+      ],
+      "fields": [
+        {
+          "object": "HP-200",
+          "field": "description",
+          "probability": 0.95,
+          "verdict": true,
+          "decided_by": "judge"
+        },
+        {
+          "object": "HP-200",
+          "field": "list_price_eur",
+          "verdict": true,
+          "decided_by": "exact"
+        },
+        {
+          "object": "HP-350",
+          "field": "description",
+          "probability": 0.86,
+          "verdict": true,
+          "decided_by": "judge"
+        },
+        {
+          "object": "HP-350",
+          "field": "list_price_eur",
+          "verdict": true,
+          "decided_by": "exact"
+        },
+        {
+          "object": "HP-500",
+          "field": "description",
+          "probability": 0.81,
+          "verdict": true,
+          "decided_by": "judge"
+        },
+        {
+          "object": "HP-500",
+          "field": "list_price_eur",
+          "verdict": true,
+          "decided_by": "exact"
+        }
+      ]
+    },
+    {
+      "context": "aspect: Territory and minimum purchases",
+      "name": "Countries of the exclusive territory in 2028",
+      "type": "LabelConcept",
+      "justifications": [
+        {
+          "item": 0,
+          "probability": 0.92,
+          "verdict": true,
+          "decided_by": "judge"
+        }
+      ]
+    },
+    {
+      "context": "aspect: Territory and minimum purchases",
+      "name": "Minimum purchase quantity for 2028 in pumps",
+      "type": "NumericalConcept",
+      "justifications": [
+        {
+          "item": 0,
+          "probability": 0.98,
+          "verdict": true,
+          "decided_by": "judge"
+        }
+      ]
+    },
+    {
+      "context": "aspect: Territory and minimum purchases",
+      "name": "Consequence of a minimum purchase shortfall",
+      "type": "StringConcept",
+      "value": {
+        "probability": 0.96,
+        "verdict": true,
+        "decided_by": "judge"
+      },
+      "justifications": [
+        {
+          "item": 0,
+          "probability": 0.97,
+          "verdict": true,
+          "decided_by": "judge"
+        }
+      ]
+    },
+    {
+      "context": "aspect: Delivery and transport risk",
+      "name": "Incoterm of a delivery on 12 April 2028",
+      "type": "LabelConcept",
+      "justifications": [
+        {
+          "item": 0,
+          "probability": 0.95,
+          "verdict": true,
+          "decided_by": "judge"
+        }
+      ]
+    },
+    {
+      "context": "aspect: Delivery and transport risk",
+      "name": "Passing of the transport risk",
+      "type": "StringConcept",
+      "value": {
+        "probability": 0.75,
+        "verdict": true,
+        "decided_by": "judge"
+      },
+      "justifications": [
+        {
+          "item": 0,
+          "probability": 0.66,
+          "verdict": true,
+          "decided_by": "judge"
+        }
+      ]
+    },
+    {
+      "context": "aspect: Prices and payment",
+      "name": "Net value of the initial stocking order in EUR",
+      "type": "NumericalConcept",
+      "justifications": []
+    },
+    {
+      "context": "aspect: Prices and payment",
+      "name": "Payment due date of the initial stocking order invoice",
+      "type": "DateConcept",
+      "justifications": [
+        {
+          "item": 0,
+          "probability": 0.01,
+          "verdict": false,
+          "decided_by": "judge"
+        }
+      ]
+    },
+    {
+      "context": "aspect: Warranty and product performance",
+      "name": "Guaranteed minimum efficiency of HP-500 at BEP in %",
+      "type": "NumericalConcept",
+      "justifications": [
+        {
+          "item": 0,
+          "probability": 0.02,
+          "verdict": false,
+          "decided_by": "judge"
+        }
+      ]
+    },
+    {
+      "context": "aspect: Warranty and product performance",
+      "name": "Warranty period of a mechanical seal in months",
+      "type": "NumericalConcept",
+      "justifications": [
+        {
+          "item": 0,
+          "probability": 0.81,
+          "verdict": true,
+          "decided_by": "judge"
+        }
+      ]
+    },
+    {
+      "context": "aspect: Warranty and product performance",
+      "name": "Spare parts supply period",
+      "type": "StringConcept",
+      "value": {
+        "probability": 0.98,
+        "verdict": true,
+        "decided_by": "judge"
+      },
+      "justifications": [
+        {
+          "item": 0,
+          "probability": 0.95,
+          "verdict": true,
+          "decided_by": "judge"
+        }
+      ]
+    }
+  ],
+  "language": {
+    "output_language": "zh-Hant",
+    "required": "Chinese (Traditional) [zh-Hant]",
+    "variant": "Hant",
+    "texts": [
+      {
+        "part": "justifications",
+        "context": "document",
+        "name": "Amendment No. 1 effective date",
+        "item": 0,
+        "variant_markers": "required",
+        "probability": 0.98,
+        "verdict": true,
+        "decided_by": "judge"
+      },
+      {
+        "part": "strings",
+        "context": "document",
+        "name": "Changes made by Amendment No. 1",
+        "item": 0,
+        "variant_markers": "required",
+        "probability": 0.97,
+        "verdict": true,
+        "decided_by": "judge"
+      },
+      {
+        "part": "justifications",
+        "context": "document",
+        "name": "Changes made by Amendment No. 1",
+        "item": 0,
+        "variant_markers": "required",
+        "probability": 0.96,
+        "verdict": true,
+        "decided_by": "judge"
+      },
+      {
+        "part": "strings",
+        "context": "document",
+        "name": "Governing law and jurisdiction",
+        "item": 0,
+        "variant_markers": "required",
+        "probability": 0.93,
+        "verdict": true,
+        "decided_by": "judge"
+      },
+      {
+        "part": "justifications",
+        "context": "document",
+        "name": "Governing law and jurisdiction",
+        "item": 0,
+        "variant_markers": "required",
+        "probability": 0.91,
+        "verdict": true,
+        "decided_by": "judge"
+      },
+      {
+        "part": "strings",
+        "context": "document",
+        "name": "Prevailing text between the agreement and Annex 1",
+        "item": 0,
+        "variant_markers": "required",
+        "probability": 0.92,
+        "verdict": true,
+        "decided_by": "judge"
+      },
+      {
+        "part": "justifications",
+        "context": "document",
+        "name": "Prevailing text between the agreement and Annex 1",
+        "item": 0,
+        "variant_markers": "required",
+        "probability": 0.92,
+        "verdict": true,
+        "decided_by": "judge"
+      },
+      {
+        "part": "justifications",
+        "context": "document",
+        "name": "HP-700 is a Contract Product",
+        "item": 0,
+        "variant_markers": "required",
+        "probability": 0.96,
+        "verdict": true,
+        "decided_by": "judge"
+      },
+      {
+        "part": "justifications",
+        "context": "document",
+        "name": "Contract Products and their list prices",
+        "item": 0,
+        "variant_markers": "required",
+        "probability": 0.9,
+        "verdict": true,
+        "decided_by": "judge"
+      },
+      {
+        "part": "justifications",
+        "context": "document",
+        "name": "Contract Products and their list prices",
+        "item": 1,
+        "variant_markers": "required",
+        "probability": 0.89,
+        "verdict": true,
+        "decided_by": "judge"
+      },
+      {
+        "part": "justifications",
+        "context": "document",
+        "name": "Contract Products and their list prices",
+        "item": 2,
+        "variant_markers": "required",
+        "probability": 0.89,
+        "verdict": true,
+        "decided_by": "judge"
+      },
+      {
+        "part": "justifications",
+        "context": "aspect: Territory and minimum purchases",
+        "name": "Countries of the exclusive territory in 2028",
+        "item": 0,
+        "variant_markers": "required",
+        "probability": 0.93,
+        "verdict": true,
+        "decided_by": "judge"
+      },
+      {
+        "part": "justifications",
+        "context": "aspect: Territory and minimum purchases",
+        "name": "Minimum purchase quantity for 2028 in pumps",
+        "item": 0,
+        "variant_markers": "required",
+        "probability": 0.93,
+        "verdict": true,
+        "decided_by": "judge"
+      },
+      {
+        "part": "strings",
+        "context": "aspect: Territory and minimum purchases",
+        "name": "Consequence of a minimum purchase shortfall",
+        "item": 0,
+        "variant_markers": "required",
+        "probability": 0.96,
+        "verdict": true,
+        "decided_by": "judge"
+      },
+      {
+        "part": "justifications",
+        "context": "aspect: Territory and minimum purchases",
+        "name": "Consequence of a minimum purchase shortfall",
+        "item": 0,
+        "variant_markers": "required",
+        "probability": 0.98,
+        "verdict": true,
+        "decided_by": "judge"
+      },
+      {
+        "part": "justifications",
+        "context": "aspect: Delivery and transport risk",
+        "name": "Incoterm of a delivery on 12 April 2028",
+        "item": 0,
+        "variant_markers": "required",
+        "probability": 0.92,
+        "verdict": true,
+        "decided_by": "judge"
+      },
+      {
+        "part": "strings",
+        "context": "aspect: Delivery and transport risk",
+        "name": "Passing of the transport risk",
+        "item": 0,
+        "variant_markers": "required",
+        "probability": 0.95,
+        "verdict": true,
+        "decided_by": "judge"
+      },
+      {
+        "part": "justifications",
+        "context": "aspect: Delivery and transport risk",
+        "name": "Passing of the transport risk",
+        "item": 0,
+        "variant_markers": "required",
+        "probability": 0.96,
+        "verdict": true,
+        "decided_by": "judge"
+      },
+      {
+        "part": "justifications",
+        "context": "aspect: Prices and payment",
+        "name": "Payment due date of the initial stocking order invoice",
+        "item": 0,
+        "variant_markers": "required",
+        "probability": 0.99,
+        "verdict": true,
+        "decided_by": "judge"
+      },
+      {
+        "part": "justifications",
+        "context": "aspect: Warranty and product performance",
+        "name": "Guaranteed minimum efficiency of HP-500 at BEP in %",
+        "item": 0,
+        "variant_markers": "required",
+        "probability": 0.91,
+        "verdict": true,
+        "decided_by": "judge"
+      },
+      {
+        "part": "justifications",
+        "context": "aspect: Warranty and product performance",
+        "name": "Warranty period of a mechanical seal in months",
+        "item": 0,
+        "variant_markers": "required",
+        "probability": 0.96,
+        "verdict": true,
+        "decided_by": "judge"
+      },
+      {
+        "part": "strings",
+        "context": "aspect: Warranty and product performance",
+        "name": "Spare parts supply period",
+        "item": 0,
+        "variant_markers": "required",
+        "probability": 0.95,
+        "verdict": true,
+        "decided_by": "judge"
+      },
+      {
+        "part": "justifications",
+        "context": "aspect: Warranty and product performance",
+        "name": "Spare parts supply period",
+        "item": 0,
+        "variant_markers": "required",
+        "probability": 0.96,
+        "verdict": true,
+        "decided_by": "judge"
+      },
+      {
+        "part": "aspect_justifications",
+        "name": "Territory and minimum purchases",
+        "item": 0,
+        "variant_markers": "required",
+        "probability": 0.92,
+        "verdict": true,
+        "decided_by": "judge"
+      },
+      {
+        "part": "aspect_justifications",
+        "name": "Territory and minimum purchases",
+        "item": 1,
+        "variant_markers": "required",
+        "probability": 0.97,
+        "verdict": true,
+        "decided_by": "judge"
+      },
+      {
+        "part": "aspect_justifications",
+        "name": "Territory and minimum purchases",
+        "item": 2,
+        "variant_markers": "required",
+        "probability": 0.98,
+        "verdict": true,
+        "decided_by": "judge"
+      },
+      {
+        "part": "aspect_justifications",
+        "name": "Territory and minimum purchases",
+        "item": 3,
+        "variant_markers": "required",
+        "probability": 0.97,
+        "verdict": true,
+        "decided_by": "judge"
+      },
+      {
+        "part": "aspect_justifications",
+        "name": "Territory and minimum purchases",
+        "item": 4,
+        "variant_markers": "required",
+        "probability": 0.96,
+        "verdict": true,
+        "decided_by": "judge"
+      },
+      {
+        "part": "aspect_justifications",
+        "name": "Territory and minimum purchases",
+        "item": 5,
+        "variant_markers": "required",
+        "probability": 0.95,
+        "verdict": true,
+        "decided_by": "judge"
+      },
+      {
+        "part": "aspect_justifications",
+        "name": "Territory and minimum purchases",
+        "item": 6,
+        "variant_markers": "required",
+        "probability": 0.9,
+        "verdict": true,
+        "decided_by": "judge"
+      },
+      {
+        "part": "aspect_justifications",
+        "name": "Territory and minimum purchases",
+        "item": 7,
+        "variant_markers": "required",
+        "probability": 0.94,
+        "verdict": true,
+        "decided_by": "judge"
+      },
+      {
+        "part": "aspect_justifications",
+        "name": "Delivery and transport risk",
+        "item": 0,
+        "variant_markers": "required",
+        "probability": 0.91,
+        "verdict": true,
+        "decided_by": "judge"
+      },
+      {
+        "part": "aspect_justifications",
+        "name": "Delivery and transport risk",
+        "item": 1,
+        "variant_markers": "required",
+        "probability": 0.93,
+        "verdict": true,
+        "decided_by": "judge"
+      },
+      {
+        "part": "aspect_justifications",
+        "name": "Delivery and transport risk",
+        "item": 2,
+        "variant_markers": "required",
+        "probability": 0.93,
+        "verdict": true,
+        "decided_by": "judge"
+      },
+      {
+        "part": "aspect_justifications",
+        "name": "Delivery and transport risk",
+        "item": 3,
+        "variant_markers": "required",
+        "probability": 0.95,
+        "verdict": true,
+        "decided_by": "judge"
+      },
+      {
+        "part": "aspect_justifications",
+        "name": "Delivery and transport risk",
+        "item": 4,
+        "variant_markers": "required",
+        "probability": 0.87,
+        "verdict": true,
+        "decided_by": "judge"
+      },
+      {
+        "part": "aspect_justifications",
+        "name": "Delivery and transport risk",
+        "item": 5,
+        "variant_markers": "required",
+        "probability": 0.94,
+        "verdict": true,
+        "decided_by": "judge"
+      },
+      {
+        "part": "aspect_justifications",
+        "name": "Prices and payment",
+        "item": 0,
+        "variant_markers": "required",
+        "probability": 0.93,
+        "verdict": true,
+        "decided_by": "judge"
+      },
+      {
+        "part": "aspect_justifications",
+        "name": "Prices and payment",
+        "item": 1,
+        "variant_markers": "required",
+        "probability": 0.89,
+        "verdict": true,
+        "decided_by": "judge"
+      },
+      {
+        "part": "aspect_justifications",
+        "name": "Prices and payment",
+        "item": 2,
+        "variant_markers": "required",
+        "probability": 0.95,
+        "verdict": true,
+        "decided_by": "judge"
+      },
+      {
+        "part": "aspect_justifications",
+        "name": "Prices and payment",
+        "item": 3,
+        "variant_markers": "required",
+        "probability": 0.96,
+        "verdict": true,
+        "decided_by": "judge"
+      },
+      {
+        "part": "aspect_justifications",
+        "name": "Prices and payment",
+        "item": 4,
+        "variant_markers": "required",
+        "probability": 0.92,
+        "verdict": true,
+        "decided_by": "judge"
+      },
+      {
+        "part": "aspect_justifications",
+        "name": "Prices and payment",
+        "item": 5,
+        "variant_markers": "required",
+        "probability": 0.89,
+        "verdict": true,
+        "decided_by": "judge"
+      },
+      {
+        "part": "aspect_justifications",
+        "name": "Prices and payment",
+        "item": 6,
+        "variant_markers": "required",
+        "probability": 0.93,
+        "verdict": true,
+        "decided_by": "judge"
+      },
+      {
+        "part": "aspect_justifications",
+        "name": "Prices and payment",
+        "item": 7,
+        "variant_markers": "required",
+        "probability": 0.95,
+        "verdict": true,
+        "decided_by": "judge"
+      },
+      {
+        "part": "aspect_justifications",
+        "name": "Prices and payment",
+        "item": 8,
+        "variant_markers": "required",
+        "probability": 0.95,
+        "verdict": true,
+        "decided_by": "judge"
+      },
+      {
+        "part": "aspect_justifications",
+        "name": "Prices and payment",
+        "item": 9,
+        "variant_markers": "required",
+        "probability": 0.87,
+        "verdict": true,
+        "decided_by": "judge"
+      },
+      {
+        "part": "aspect_justifications",
+        "name": "Prices and payment",
+        "item": 10,
+        "variant_markers": "required",
+        "probability": 0.96,
+        "verdict": true,
+        "decided_by": "judge"
+      },
+      {
+        "part": "aspect_justifications",
+        "name": "Prices and payment",
+        "item": 11,
+        "variant_markers": "required",
+        "probability": 0.92,
+        "verdict": true,
+        "decided_by": "judge"
+      },
+      {
+        "part": "aspect_justifications",
+        "name": "Prices and payment",
+        "item": 12,
+        "variant_markers": "required",
+        "probability": 0.91,
+        "verdict": true,
+        "decided_by": "judge"
+      },
+      {
+        "part": "aspect_justifications",
+        "name": "Warranty and product performance",
+        "item": 0,
+        "variant_markers": "required",
+        "probability": 0.95,
+        "verdict": true,
+        "decided_by": "judge"
+      },
+      {
+        "part": "aspect_justifications",
+        "name": "Warranty and product performance",
+        "item": 1,
+        "variant_markers": "required",
+        "probability": 0.93,
+        "verdict": true,
+        "decided_by": "judge"
+      },
+      {
+        "part": "aspect_justifications",
+        "name": "Warranty and product performance",
+        "item": 2,
+        "variant_markers": "required",
+        "probability": 0.95,
+        "verdict": true,
+        "decided_by": "judge"
+      },
+      {
+        "part": "aspect_justifications",
+        "name": "Warranty and product performance",
+        "item": 3,
+        "variant_markers": "required",
+        "probability": 0.94,
+        "verdict": true,
+        "decided_by": "judge"
+      },
+      {
+        "part": "aspect_justifications",
+        "name": "Warranty and product performance",
+        "item": 4,
+        "variant_markers": "required",
+        "probability": 0.92,
+        "verdict": true,
+        "decided_by": "judge"
+      },
+      {
+        "part": "aspect_justifications",
+        "name": "Warranty and product performance",
+        "item": 5,
+        "variant_markers": "required",
+        "probability": 0.97,
+        "verdict": true,
+        "decided_by": "judge"
+      },
+      {
+        "part": "aspect_justifications",
+        "name": "Warranty and product performance",
+        "item": 6,
+        "variant_markers": "required",
+        "probability": 0.94,
+        "verdict": true,
+        "decided_by": "judge"
+      },
+      {
+        "part": "aspect_justifications",
+        "name": "Warranty and product performance",
+        "item": 7,
+        "variant_markers": "required",
+        "probability": 0.94,
+        "verdict": true,
+        "decided_by": "judge"
+      },
+      {
+        "part": "aspect_justifications",
+        "name": "Warranty and product performance",
+        "item": 8,
+        "variant_markers": "required",
+        "probability": 0.93,
+        "verdict": true,
+        "decided_by": "judge"
+      },
+      {
+        "part": "aspect_justifications",
+        "name": "Warranty and product performance",
+        "item": 9,
+        "variant_markers": "required",
+        "probability": 0.92,
+        "verdict": true,
+        "decided_by": "judge"
+      },
+      {
+        "part": "aspect_justifications",
+        "name": "Warranty and product performance",
+        "item": 10,
+        "variant_markers": "required",
+        "probability": 0.94,
+        "verdict": true,
+        "decided_by": "judge"
+      }
+    ]
+  }
+}

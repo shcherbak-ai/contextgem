@@ -30,6 +30,15 @@ The verdicts of a run are written to ``results/<label>/judgments/`` under the na
 of the file of the run, and those of the checks to ``results/<label>/judge_checks.json``.
 A run whose verdicts were given by the same judge, with the same questions and
 against the same reference answers, is skipped.
+
+A run that records an output language (``run_eval --output-language``) is judged
+for its language too: each string value and each justification of a concept or
+of an aspect is asked whether it is written in the required language, i.e.
+the output language, or for "adapt" the language of the document of the case.
+The questions on its values and justifications tell the judge the language of
+the candidate, as the reference answers are in English. The question on
+the language has a fingerprint of its own, so that the verdicts of the runs
+without an output language keep theirs.
 """
 
 from __future__ import annotations
@@ -43,6 +52,7 @@ from dataclasses import dataclass, field
 from importlib import metadata
 from typing import Any, Literal
 
+import langcodes
 import litellm
 
 from dev.evals.harness import (
@@ -52,6 +62,11 @@ from dev.evals.harness import (
     load_case,
     scrub,
     write_json,
+)
+from dev.evals.language_markers import (
+    MARKERS_VERSION,
+    get_variant,
+    get_variant_markers,
 )
 from dev.evals.scoring import _normalize_value
 
@@ -76,7 +91,7 @@ _TRANSIENT_ERRORS = (
 )
 
 # What is judged
-JudgedKind = Literal["value", "justification", "field"]
+JudgedKind = Literal["value", "justification", "field", "language"]
 
 # The question to the judge on each kind of what is judged. The text that it is
 # asked on is built by the functions of this module.
@@ -108,8 +123,30 @@ JUDGE_INSTRUCTIONS: dict[str, str] = {
 # the texts of another version are told apart
 _TEXT_FORMAT_VERSION = 2
 
+# The question on the language of a text that an LLM wrote, asked on the runs that
+# record an output language (see `dev.evals.run_eval`). It is kept apart from
+# the other questions, so that the verdicts of the runs without an output language
+# keep their fingerprint.
+LANGUAGE_INSTRUCTION = (
+    "Decide whether the text is written in the required language. It is if its "
+    "sentences are in that language and in a script that the language is written "
+    "in, and, where the required language names a script or a region, in that "
+    "script, or with the spelling and the words of that region. Names, codes, "
+    "figures and words quoted from a document in another language do not count."
+)
 
-def get_judge_fingerprint(model: str) -> dict[str, str]:
+# The version of the texts of the questions on the language, and of the line that
+# the other questions get on a candidate in another language than the reference
+# answers: raise it when they change
+_LANGUAGE_TEXT_FORMAT_VERSION = 1
+
+# The language of the document of each case, which an LLM writes in with
+# the output language "adapt", where it is not English: in a document of several
+# languages, the one that appears most often
+_DOCUMENT_LANGUAGES: dict[str, str] = {"complex_multilingual": "de"}
+
+
+def get_judge_fingerprint(model: str, language: bool = False) -> dict[str, str]:
     """
     Returns what tells the verdicts of one judge apart from those of another:
     the model, and a short hash of the questions of this module and of the version
@@ -117,19 +154,84 @@ def get_judge_fingerprint(model: str) -> dict[str, str]:
 
     :param model: The model identifier of the judge.
     :type model: str
+    :param language: Whether the verdicts include those on the language of
+        the texts, i.e. of a run that records an output language, or of checks
+        of the language. Defaults to False.
+    :type language: bool
     :return: The model, the first 12 characters of the SHA-256 hash of
-        the questions and the version of their texts, and the version of
-        ``litellm``.
+        the questions and the version of their texts, the same of the question
+        on the language if it is asked, and the version of ``litellm``.
     :rtype: dict[str, str]
     """
     questions = json.dumps(
         [JUDGE_INSTRUCTIONS, _TEXT_FORMAT_VERSION], sort_keys=True
     ).encode("utf-8")
-    return {
+    fingerprint = {
         "model": model,
         "questions": hashlib.sha256(questions).hexdigest()[:12],
-        "litellm": metadata.version("litellm"),
     }
+    if language:
+        language_questions = json.dumps(
+            [LANGUAGE_INSTRUCTION, _LANGUAGE_TEXT_FORMAT_VERSION, MARKERS_VERSION]
+        ).encode("utf-8")
+        fingerprint["language_questions"] = hashlib.sha256(
+            language_questions
+        ).hexdigest()[:12]
+    return {**fingerprint, "litellm": metadata.version("litellm")}
+
+
+def describe_language(tag: str) -> str:
+    """
+    Describes the language of a BCP 47 language tag as the library does in its
+    prompts: its name in English, followed by the tag.
+
+    :param tag: The language tag, in its standard form.
+    :type tag: str
+    :return: E.g. "Japanese [ja]" or "Chinese (Traditional) [zh-Hant]".
+    :rtype: str
+    """
+    return f"{langcodes.Language.get(tag).display_name()} [{tag}]"
+
+
+def get_required_language(case: str, output_language: str) -> str:
+    """
+    Returns the tag of the language that an LLM is to write in, with an output
+    language, on the document of a case.
+
+    :param case: The name of the case.
+    :type case: str
+    :param output_language: The output language of the run: a tag or "adapt".
+    :type output_language: str
+    :return: The tag: the output language, or for "adapt" the language of
+        the document of the case.
+    :rtype: str
+    """
+    if output_language == "adapt":
+        return _DOCUMENT_LANGUAGES.get(case, "en")
+    return output_language
+
+
+def _get_candidate_language_line(candidate_language: str | None) -> str:
+    """
+    Returns the line that tells the judge that a candidate is written in another
+    language than the reference answers, which are in English.
+
+    :param candidate_language: The tag of the language that the candidate is to be
+        written in, or None if it is not known (the runs without an output language).
+    :type candidate_language: str | None
+    :return: The line, or an empty string for English or an unknown language.
+    :rtype: str
+    """
+    if (
+        candidate_language is None
+        or langcodes.Language.get(candidate_language).language == "en"
+    ):
+        return ""
+    return (
+        f"The candidate is written in {describe_language(candidate_language)}, and "
+        "the reference in English: judge what the candidate states, not its "
+        "language.\n"
+    )
 
 
 def _get_reference_fingerprint(case: str) -> str:
@@ -151,8 +253,9 @@ class _Question:
     """
     One question to the judge.
 
-    :ivar kind: What is judged: "value", "justification" or "field".
-    :vartype kind: Literal["value", "justification", "field"]
+    :ivar kind: What is judged: "value", "justification", "field", or "language"
+        (the language that a text is written in).
+    :vartype kind: Literal["value", "justification", "field", "language"]
     :ivar text: The text that the question is asked on.
     :vartype text: str
     :ivar where: Where the verdict is written, e.g. the position of the item.
@@ -210,7 +313,11 @@ def _get_question_line(gold_concept: dict[str, Any]) -> str:
     return f"Question: {gold_concept['name']}. {gold_concept['description']}"
 
 
-def build_value_text(gold_concept: dict[str, Any], values: list[Any]) -> str:
+def build_value_text(
+    gold_concept: dict[str, Any],
+    values: list[Any],
+    candidate_language: str | None = None,
+) -> str:
     """
     Builds the text of the question on the values of a string concept.
 
@@ -218,6 +325,10 @@ def build_value_text(gold_concept: dict[str, Any], values: list[Any]) -> str:
     :type gold_concept: dict[str, Any]
     :param values: The values of the candidate items.
     :type values: list[Any]
+    :param candidate_language: The tag of the language that the candidate is
+        written in, if the run records one (see `_get_candidate_language_line`).
+        Defaults to None.
+    :type candidate_language: str | None
     :return: The question, the reference answer with the other wordings that
         the reference answers accept, and the candidate answer.
     :rtype: str
@@ -234,12 +345,16 @@ def build_value_text(gold_concept: dict[str, Any], values: list[Any]) -> str:
         f"{_get_question_line(gold_concept)}\n"
         f"Reference answer: {_format_values(gold_values)}\n"
         f"{accepted_lines}"
+        f"{_get_candidate_language_line(candidate_language)}"
         f"Candidate answer: {_format_values(values)}"
     )
 
 
 def build_justification_text(
-    gold_concept: dict[str, Any], value: Any, justification: str
+    gold_concept: dict[str, Any],
+    value: Any,
+    justification: str,
+    candidate_language: str | None = None,
 ) -> str:
     """
     Builds the text of the question on the justification of an item.
@@ -250,6 +365,10 @@ def build_justification_text(
     :type value: Any
     :param justification: The justification of the candidate item.
     :type justification: str
+    :param candidate_language: The tag of the language that the candidate is
+        written in, if the run records one (see `_get_candidate_language_line`).
+        Defaults to None.
+    :type candidate_language: str | None
     :return: The question, the reference answer with its reasoning, and
         the candidate value with its reasoning.
     :rtype: str
@@ -267,9 +386,25 @@ def build_justification_text(
         )
     return (
         f"{_get_question_line(gold_concept)}\n{reference}\n"
+        f"{_get_candidate_language_line(candidate_language)}"
         f"Candidate value: {_format_value(value)}\n"
         f"Candidate reasoning: {justification}"
     )
+
+
+def build_language_text(required_language: str, text: str) -> str:
+    """
+    Builds the text of the question on the language of a text that an LLM wrote.
+
+    :param required_language: The tag of the language that the text is to be
+        written in.
+    :type required_language: str
+    :param text: The text.
+    :type text: str
+    :return: The required language, described with its name, and the text.
+    :rtype: str
+    """
+    return f"Required language: {describe_language(required_language)}\nText: {text}"
 
 
 def build_field_text(
@@ -279,6 +414,7 @@ def build_field_text(
     field_name: str,
     gold_value: Any,
     value: Any,
+    candidate_language: str | None = None,
 ) -> str:
     """
     Builds the text of the question on a field of an object of a JSON object
@@ -296,6 +432,10 @@ def build_field_text(
     :type gold_value: Any
     :param value: The candidate value of the field.
     :type value: Any
+    :param candidate_language: The tag of the language that the candidate is
+        written in, if the run records one (see `_get_candidate_language_line`).
+        Defaults to None.
+    :type candidate_language: str | None
     :return: The question, the object, the field, and the reference and
         the candidate values.
     :rtype: str
@@ -305,6 +445,7 @@ def build_field_text(
         f"Object: the one whose {object_key} is {_format_value(key_value)}\n"
         f"Field: {field_name}\n"
         f"Reference value: {_format_value(gold_value)}\n"
+        f"{_get_candidate_language_line(candidate_language)}"
         f"Candidate value: {_format_value(value)}"
     )
 
@@ -327,7 +468,9 @@ def _is_same(value: Any, gold_values: list[Any]) -> bool:
 
 
 def _plan_concept(
-    concept: dict[str, Any], gold_concept: dict[str, Any]
+    concept: dict[str, Any],
+    gold_concept: dict[str, Any],
+    candidate_language: str | None = None,
 ) -> tuple[dict[str, Any], list[_Question]]:
     """
     Plans the judgment of the extracted items of a concept: the verdicts that
@@ -338,6 +481,9 @@ def _plan_concept(
     :type concept: dict[str, Any]
     :param gold_concept: The reference answers of the concept.
     :type gold_concept: dict[str, Any]
+    :param candidate_language: The tag of the language that the items are written
+        in, if the run records an output language. Defaults to None.
+    :type candidate_language: str | None
     :return: The judgment of the concept with the verdicts that need no request,
         and the questions for the others, each with where its verdict goes.
     :rtype: tuple[dict[str, Any], list[_Question]]
@@ -362,7 +508,7 @@ def _plan_concept(
             questions.append(
                 _Question(
                     kind="value",
-                    text=build_value_text(gold_concept, values),
+                    text=build_value_text(gold_concept, values, candidate_language),
                     where={"part": "value"},
                 )
             )
@@ -380,7 +526,9 @@ def _plan_concept(
             questions.append(
                 _Question(
                     kind="justification",
-                    text=build_justification_text(gold_concept, value, justification),
+                    text=build_justification_text(
+                        gold_concept, value, justification, candidate_language
+                    ),
                     where={"part": "justifications", "position": position},
                 )
             )
@@ -424,6 +572,7 @@ def _plan_concept(
                                 field_name,
                                 gold_value,
                                 value,
+                                candidate_language,
                             ),
                             where={
                                 "part": "fields",
@@ -500,7 +649,11 @@ class _Judge:
         request_question = {
             "type": "predicate",
             "name": "J",
-            "instructions": JUDGE_INSTRUCTIONS[question.kind],
+            "instructions": (
+                LANGUAGE_INSTRUCTION
+                if question.kind == "language"
+                else JUDGE_INSTRUCTIONS[question.kind]
+            ),
         }
         async with self._semaphore:
             for attempt in range(_MAX_RETRIES + 1):
@@ -585,16 +738,120 @@ def _summarize_judgments(concepts: list[dict[str, Any]]) -> dict[str, Any]:
     return summary
 
 
+def _summarize_language_judgments(texts: list[dict[str, Any]]) -> dict[str, int]:
+    """
+    Counts the verdicts on the language of the texts of a run.
+
+    :param texts: The verdict on each text, with what the text is (``part``).
+    :type texts: list[dict[str, Any]]
+    :return: For the string values, the justifications of concepts and those of
+        aspects, and for all of them: the number of verdicts (refusals left out)
+        and of the texts in the required language.
+    :rtype: dict[str, int]
+    """
+    summary: dict[str, int] = {}
+    for part in ("strings", "justifications", "aspect_justifications", "all"):
+        verdicts = [
+            entry["verdict"]
+            for entry in texts
+            if part in ("all", entry["part"]) and entry["verdict"] is not None
+        ]
+        summary[f"n_language_{part}"] = len(verdicts)
+        summary[f"n_language_{part}_correct"] = sum(verdicts)
+    # The markers of the variant, for a required language with one (see
+    # `dev.evals.language_markers`), which the judge does not tell apart
+    if any("variant_markers" in entry for entry in texts):
+        for markers in ("required", "other", "mixed", "none"):
+            summary[f"n_variant_{markers}"] = sum(
+                entry.get("variant_markers") == markers for entry in texts
+            )
+    return summary
+
+
+def _plan_language(
+    run: dict[str, Any], required_language: str
+) -> tuple[list[dict[str, Any]], list[_Question]]:
+    """
+    Plans the questions on the language of the texts that the LLM wrote in a run:
+    the string values of string concepts, and the justifications of the items of
+    concepts and of aspects. The text fields of the objects of JSON object
+    concepts are left out, as they can be names or codes.
+
+    :param run: The record of the run, with an output language.
+    :type run: dict[str, Any]
+    :param required_language: The tag of the language that the texts are to be
+        written in.
+    :type required_language: str
+    :return: An entry for each text, which its verdict is written to, and
+        the question on each, in the same order.
+    :rtype: tuple[list[dict[str, Any]], list[_Question]]
+    """
+    texts: list[tuple[dict[str, Any], str]] = []
+    for concept in run["scores"]["concepts"]:
+        if concept["type"] == "StringConcept":
+            texts += [
+                (
+                    {
+                        "part": "strings",
+                        "context": concept["context"],
+                        "name": concept["name"],
+                        "item": position,
+                    },
+                    value,
+                )
+                for position, value in enumerate(concept["values"])
+                if isinstance(value, str) and value.strip()
+            ]
+        texts += [
+            (
+                {
+                    "part": "justifications",
+                    "context": concept["context"],
+                    "name": concept["name"],
+                    "item": position,
+                },
+                justification,
+            )
+            for position, justification in enumerate(concept["justifications"])
+            if justification
+        ]
+    for aspect in run["scores"]["aspects"]:
+        texts += [
+            (
+                {
+                    "part": "aspect_justifications",
+                    "name": aspect["name"],
+                    "item": position,
+                },
+                justification,
+            )
+            for position, justification in enumerate(aspect.get("justifications", []))
+            if justification
+        ]
+    # The markers of the variant of each text, where the required language has
+    # a variant that the markers tell
+    variant = get_variant(required_language)
+    if variant is not None:
+        for entry, text in texts:
+            entry["variant_markers"] = get_variant_markers(text, variant)
+    return [entry for entry, _ in texts], [
+        _Question(kind="language", text=build_language_text(required_language, text))
+        for _, text in texts
+    ]
+
+
 async def judge_run(judge: _Judge, run: dict[str, Any]) -> dict[str, Any]:
     """
-    Judges what the scorer cannot compare exactly in a run.
+    Judges what the scorer cannot compare exactly in a run, and, for a run that
+    records an output language, the language of the texts that the LLM wrote.
 
     :param judge: The judge.
     :type judge: _Judge
     :param run: The record of the run (see ``dev.evals.run_eval``).
     :type run: dict[str, Any]
     :return: The judgment of the run: the judge, the reference answers, the verdicts
-        on each concept, their counts, and the requests sent to the judge.
+        on each concept, and on the language of each text if the run records
+        an output language, their counts, and the requests sent to the judge.
     :rtype: dict[str, Any]
     :raises ValueError: If the run does not keep the values and the justifications
         of its items, which runs recorded before the judge was added do not.
@@ -605,6 +862,12 @@ async def judge_run(judge: _Judge, run: dict[str, Any]) -> dict[str, Any]:
         for a in gold["aspects"]
         for c in a["concepts"]
     }
+    output_language = run.get("output_language")
+    required_language = (
+        None
+        if output_language is None
+        else get_required_language(run["case"], output_language)
+    )
     concepts: list[dict[str, Any]] = []
     planned: list[tuple[dict[str, Any], _Question]] = []
     for concept in run["scores"]["concepts"]:
@@ -614,24 +877,51 @@ async def judge_run(judge: _Judge, run: dict[str, Any]) -> dict[str, Any]:
                 "items: record it again."
             )
         judgment, questions = _plan_concept(
-            concept, gold_concepts[(concept["context"], concept["name"])]
+            concept,
+            gold_concepts[(concept["context"], concept["name"])],
+            required_language,
         )
         concepts.append(judgment)
         planned += [(judgment, question) for question in questions]
+    texts, language_questions = (
+        ([], [])
+        if required_language is None
+        else _plan_language(run, required_language)
+    )
 
     usage = _Usage()
-    verdicts = await judge.ask_all([question for _, question in planned], usage)
-    for (judgment, question), verdict in zip(planned, verdicts, strict=True):
+    verdicts = await judge.ask_all(
+        [question for _, question in planned] + language_questions, usage
+    )
+    for (judgment, question), verdict in zip(
+        planned, verdicts[: len(planned)], strict=True
+    ):
         part = question.where["part"]
         if part == "value":
             judgment["value"] = verdict
         else:
             judgment[part][question.where["position"]].update(verdict)
+    for entry, verdict in zip(texts, verdicts[len(planned) :], strict=True):
+        entry.update(verdict)
+    summary = _summarize_judgments(concepts)
+    language: dict[str, Any] = {}
+    if required_language is not None:
+        summary |= _summarize_language_judgments(texts)
+        language = {
+            "language": {
+                "output_language": output_language,
+                "required": describe_language(required_language),
+                "variant": get_variant(required_language),
+                "texts": texts,
+            }
+        }
     return {
-        "judge": get_judge_fingerprint(judge.model),
+        "judge": get_judge_fingerprint(
+            judge.model, language=required_language is not None
+        ),
         "threshold": JUDGE_THRESHOLD,
         "reference": _get_reference_fingerprint(run["case"]),
-        "summary": _summarize_judgments(concepts),
+        "summary": summary,
         "usage": {
             "requests": usage.requests,
             "input_tokens": usage.input_tokens,
@@ -639,6 +929,7 @@ async def judge_run(judge: _Judge, run: dict[str, Any]) -> dict[str, Any]:
             "cost_total": f"{judge.get_cost(usage):.5f}",
         },
         "concepts": concepts,
+        **language,
     }
 
 
@@ -670,18 +961,30 @@ def build_check_question(check: dict[str, Any]) -> _Question:
     """
     Builds the question to the judge of a check of known verdict.
 
-    :param check: The check (see ``cases/judge_checks.json``).
+    :param check: The check (see ``cases/judge_checks.json``). A check of
+        the language has the required language (``required``, a tag) and the text;
+        a check of another kind can give the language that its candidate is written
+        in (``candidate_language``), as a run with an output language does.
     :type check: dict[str, Any]
     :return: The question, as the judge is asked it on a run.
     :rtype: _Question
     """
+    if check["kind"] == "language":
+        return _Question(
+            kind="language",
+            text=build_language_text(check["required"], check["text"]),
+        )
     gold_concept = _get_gold_concept(check)
     candidate = check["candidate"]
+    candidate_language = check.get("candidate_language")
     if check["kind"] == "value":
-        text = build_value_text(gold_concept, candidate["values"])
+        text = build_value_text(gold_concept, candidate["values"], candidate_language)
     elif check["kind"] == "justification":
         text = build_justification_text(
-            gold_concept, candidate["value"], candidate["justification"]
+            gold_concept,
+            candidate["value"],
+            candidate["justification"],
+            candidate_language,
         )
     else:
         object_key = gold_concept.get("custom_data", {}).get("object_key", "name")
@@ -697,6 +1000,7 @@ def build_check_question(check: dict[str, Any]) -> _Question:
             candidate["field"],
             gold_object[candidate["field"]],
             candidate["value"],
+            candidate_language,
         )
     return _Question(kind=check["kind"], text=text)
 
@@ -725,8 +1029,16 @@ async def run_checks(judge: _Judge) -> dict[str, Any]:
         }
         for check, verdict in zip(checks, verdicts, strict=True)
     ]
+    # The markers of the variant of the texts of the checks of the language, which
+    # the judge does not tell apart (see `dev.evals.language_markers`)
+    for check, result in zip(checks, results, strict=True):
+        variant = (
+            get_variant(check["required"]) if check["kind"] == "language" else None
+        )
+        if variant is not None:
+            result["variant_markers"] = get_variant_markers(check["text"], variant)
     agreement: dict[str, Any] = {}
-    for kind in ("value", "justification", "field", "all"):
+    for kind in ("value", "justification", "field", "language", "all"):
         of_kind = [r for r in results if kind in ("all", r["kind"])]
         agreement[kind] = {
             "checks": len(of_kind),
@@ -740,7 +1052,13 @@ async def run_checks(judge: _Judge) -> dict[str, Any]:
             "refused": sum(r["verdict"] is None for r in of_kind),
         }
     return {
-        "judge": get_judge_fingerprint(judge.model),
+        "judge": get_judge_fingerprint(
+            judge.model,
+            language=any(
+                check["kind"] == "language" or "candidate_language" in check
+                for check in checks
+            ),
+        ),
         "threshold": JUDGE_THRESHOLD,
         "agreement": agreement,
         "usage": {
@@ -770,13 +1088,15 @@ async def judge_label(judge: _Judge, label: str) -> None:
     paths = sorted((RESULTS_DIR / label / "runs").glob("*.json"))
     if not paths:
         raise ValueError(f"No runs are recorded for the label `{label}`.")
-    fingerprint = get_judge_fingerprint(judge.model)
     for path in paths:
         run = json.loads(path.read_text(encoding="utf-8"))
         if run["kind"] == "decision":
             # A decision model extracts no string concepts, no JSON object concepts
             # and no justifications
             continue
+        fingerprint = get_judge_fingerprint(
+            judge.model, language="output_language" in run
+        )
         judgment_path = RESULTS_DIR / label / "judgments" / path.name
         if judgment_path.exists():
             recorded = json.loads(judgment_path.read_text(encoding="utf-8"))
@@ -788,12 +1108,18 @@ async def judge_label(judge: _Judge, label: str) -> None:
         judgment = await judge_run(judge, run)
         write_json(judgment_path, judgment)
         summary = judgment["summary"]
+        language = (
+            f"in the language {summary['n_language_all_correct']}/"
+            f"{summary['n_language_all']}, "
+            if "n_language_all" in summary
+            else ""
+        )
         print(
             f"{path.name}: strings {summary['n_strings_correct']}/"
             f"{summary['n_strings']}, justifications "
             f"{summary['n_justifications_correct']}/{summary['n_justifications']}, "
             f"fields {summary['n_fields_correct']}/{summary['n_fields']}, "
-            f"{judgment['usage']['requests']} requests, "
+            f"{language}{judgment['usage']['requests']} requests, "
             f"USD {judgment['usage']['cost_total']}",
             flush=True,
         )

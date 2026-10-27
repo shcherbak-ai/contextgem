@@ -175,6 +175,85 @@ def _get_judged_lines(
             f"{sum(j['usage']['requests'] for j in group)} | "
             f"{sum(float(j['usage']['cost_total']) for j in group):.4f} |"
         )
+    return lines + _get_language_lines(groups, judgments)
+
+
+def _get_language_lines(
+    groups: dict[tuple[str, str, str], list[dict[str, Any]]],
+    judgments: dict[tuple[str, str, str], list[dict[str, Any]]],
+) -> list[str]:
+    """
+    Returns the section of the summary on the language of the texts that
+    the LLMs wrote, for the runs that record an output language: for each case,
+    model and mode, the string values, the justifications of concepts and those
+    of aspects that the judge found in the required language.
+
+    :param groups: The runs by case, model and mode.
+    :type groups: dict[tuple[str, str, str], list[dict[str, Any]]]
+    :param judgments: The judgments of the runs by case, model and mode.
+    :type judgments: dict[tuple[str, str, str], list[dict[str, Any]]]
+    :return: The lines of the section, or none if no judgment judged the language.
+    :rtype: list[str]
+    """
+    if not any(
+        "language" in judgment for group in judgments.values() for judgment in group
+    ):
+        return []
+    lines = [
+        "",
+        "## Output language",
+        "",
+        (
+            "The texts that the LLMs wrote in the required language, judged one by "
+            "one: the output language of the run, or for `adapt` the language of "
+            "the document. The judge tells languages apart, but not the scripts of "
+            "Chinese or the variants of Portuguese: the last column counts the texts "
+            "by the markers of their variant (`dev.evals.language_markers`), those "
+            "of the required variant / of the other one / of both / of none."
+        ),
+        "",
+        (
+            "| Case | Model | Mode | Output language | Required | Strings | "
+            "Justifications | Aspect justifications | All | Variant markers |"
+        ),
+        "|---|---|---|---|---|---|---|---|---|---|",
+    ]
+    for key in sorted(groups):
+        group = [j for j in judgments.get(key, []) if "language" in j]
+        if not group:
+            continue
+        counts = {
+            name: sum(j["summary"].get(name, 0) for j in group)
+            for name in group[0]["summary"]
+            if name.startswith(("n_language_", "n_variant_"))
+        }
+        variant_markers = (
+            " / ".join(
+                str(counts[f"n_variant_{markers}"])
+                for markers in ("required", "other", "mixed", "none")
+            )
+            if "n_variant_required" in counts
+            else "n/a"
+        )
+        case, model, mode = key
+        output_languages = sorted({j["language"]["output_language"] for j in group})
+        required = sorted({j["language"]["required"] for j in group})
+        lines.append(
+            f"| {case} | {model} | {mode} | {', '.join(output_languages)} | "
+            f"{', '.join(required)} | "
+            + " | ".join(
+                _format_share(
+                    counts[f"n_language_{part}_correct"], counts[f"n_language_{part}"]
+                )
+                for part in (
+                    "strings",
+                    "justifications",
+                    "aspect_justifications",
+                    "all",
+                )
+            )
+            + f" | {variant_markers} |"
+        )
     return lines
 
 

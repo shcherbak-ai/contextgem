@@ -1,0 +1,720 @@
+{
+  "case": "complex_multilingual",
+  "model": "anthropic/claude-haiku-5-5",
+  "kind": "llm",
+  "mode": "default",
+  "input": "text",
+  "output_language": "adapt",
+  "label": "language_2026-10-27_adapt",
+  "run": 2,
+  "error": null,
+  "seconds": 57.8,
+  "usage": {
+    "requests": 6,
+    "requests_without_response": 0,
+    "input_tokens": 66455,
+    "output_tokens": 13380,
+    "cache_read_tokens": 0,
+    "cache_write_tokens": 0,
+    "cost_total": "0.01334"
+  },
+  "retries_for_invalid_data": 0,
+  "responses_not_valid_json": 0,
+  "extraction_warnings": [],
+  "refusal_warnings": [],
+  "provenance": {
+    "litellm": "1.105.2",
+    "prompts": {
+      "decision_question_aspect.j2": "7b069363576f",
+      "decision_question_concept.j2": "603962caf35d",
+      "default_system_message.j2": "7caf01ad2258",
+      "extract_aspect_items.j2": "608a42da2686",
+      "extract_concept_items.j2": "9157ee48d75f"
+    }
+  },
+  "scores": {
+    "summary": {
+      "aspect_f1": 0.9315384615384615,
+      "aspect_precision": 0.9791666666666666,
+      "aspect_recall": 0.8928571428571428,
+      "concept_accuracy": 0.7,
+      "n_concepts_scored": 10,
+      "n_concepts_correct": 7,
+      "string_exact": 0.0,
+      "n_strings": 6,
+      "reference_f1": 0.7872023809523809,
+      "n_concepts_without_items": 1
+    },
+    "aspects": [
+      {
+        "name": "Territory and minimum purchases",
+        "n_predicted": 8,
+        "n_gold": 8,
+        "n_neutral_predicted": 0,
+        "predicted_paragraphs": [
+          8,
+          9,
+          10,
+          13,
+          14,
+          15,
+          73,
+          74
+        ],
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0,
+        "justifications": [
+          "Definiert das Vertragsgebiet (Frankreich und Monaco), auf das sich die Territorialregelung bezieht.",
+          "Regelt die Ausschließlichkeit des Händlers im Vertragsgebiet und den Ausschluss weiterer Händler sowie eigener Direktlieferungen der Herstellerin.",
+          "Begrenzt den aktiven Vertrieb des Händlers außerhalb des Vertragsgebiets, erlaubt aber unaufgeforderte Bestellungen.",
+          "Legt die jährliche Mindestabnahmemenge von 120 Pumpen fest und schließt Ersatzteile von der Anrechnung aus.",
+          "Bestimmt, dass die Erstausstattung auf die Mindestabnahmemenge des Jahres 2027 angerechnet wird.",
+          "Regelt die Folgen einer Unterschreitung der Mindestabnahmemenge, nämlich den Widerruf der Ausschließlichkeit mit dreimonatiger Frist.",
+          "Der Änderungsnachtrag erweitert das Vertragsgebiet um Belgien ab 2028 und gestattet aktiven Vertrieb in Luxemburg außerhalb des Gebiets.",
+          "Der Änderungsnachtrag reduziert die Mindestabnahmemenge für 2028 um 25 % und lässt belgische und luxemburgische Produkte darauf anrechnen."
+        ]
+      },
+      {
+        "name": "Delivery and transport risk",
+        "n_predicted": 6,
+        "n_gold": 6,
+        "n_neutral_predicted": 1,
+        "predicted_paragraphs": [
+          24,
+          25,
+          26,
+          64,
+          67,
+          75,
+          76
+        ],
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0,
+        "justifications": [
+          "Bestimmt die Lieferklausel FCA Werk Lindenfurt (Incoterms 2020) und die Tragung der Transportkosten ab Werk durch den Händler.",
+          "Regelt den Übergang der Gefahr des zufälligen Untergangs und der Verschlechterung auf den Händler mit Übergabe an den Frachtführer.",
+          "Legt den Beginn der Lieferfristen, die Zulässigkeit von Teillieferungen und den Rücktritt bei Lieferverzug fest.",
+          "Bestimmt Übergabe und Abrechnung der Erstausstattung beim Frachtführer im Werk Lindenfurt am 15. März 2027.",
+          "Nennt die Lieferbedingung FCA Lindenfurt und die Lieferzeiten von sechs bzw. zehn Wochen ab Auftragsbestätigung.",
+          "Der Änderungsnachtrag ersetzt ab März 2028 die FCA-Lieferklausel durch DAP-Lieferung an den Lager des Händlers, wobei die Transportkosten der Herstellerin tragen.",
+          "Der Änderungsnachtrag verlagert den Gefahrübergang auf den Zeitpunkt der Bereitstellung im Lager des Händlers auf dem ankommenden Transportmittel."
+        ]
+      },
+      {
+        "name": "Prices and payment",
+        "n_predicted": 12,
+        "n_gold": 14,
+        "n_neutral_predicted": 0,
+        "predicted_paragraphs": [
+          17,
+          18,
+          19,
+          20,
+          21,
+          22,
+          45,
+          50,
+          52,
+          64,
+          65,
+          75
+        ],
+        "precision": 0.9166666666666666,
+        "recall": 0.7857142857142857,
+        "f1": 0.8461538461538461,
+        "justifications": [
+          "Legt fest, dass die Vertragsprodukte zu den Listenpreisen der Anlage 1 netto zuzüglich Umsatzsteuer geliefert werden.",
+          "Nennt den Listenpreis von EUR 7.150 netto für eine Pumpe der Baureihe HP-350.",
+          "Gewährt auf die Erstausstattung einen einmaligen Einführungsrabatt von 8 % und schließt weitere Rabatte aus.",
+          "Regelt die Anpassung der Listenpreise ab 2028, die einmal jährlich mit Höchstgrenze von 4 % und dreimonatiger Ankündigung möglich ist.",
+          "Bestimmt die Rechnungsstellung am Tag des Gefahrübergangs und die elektronische Übermittlung der Rechnungen.",
+          "Regelt die Zahlungsfrist von 30 Tagen und den Skonto von 2 % bei Zahlung innerhalb von 10 Tagen.",
+          "Bestimmt, dass für technische Daten und Listenpreise Anlage 1 gegenüber dem deutschen Vertragstext maßgeblich ist.",
+          "Regelt, dass bei Widersprüchen zwischen Anlage 1 und dem Vertrag die Anlage vorgeht.",
+          "Verweist für Vertragsprodukte, technische Daten und Listenpreise auf Tabelle 1.1 der Anlage.",
+          "Legt die Erstausstattung mit Stückzahlen je Baureihe sowie die Rechnungsstellung am Übergabetag fest.",
+          "Nennt die Zahlungsbedingungen von 45 Tagen netto und 2 % Skonto bei Zahlung innerhalb von 10 Tagen.",
+          "Der Änderungsnachtrag bestimmt, dass die Preise der Anlage 1 durch die neue Lieferklausel unverändert bleiben."
+        ]
+      },
+      {
+        "name": "Warranty and product performance",
+        "n_predicted": 11,
+        "n_gold": 14,
+        "n_neutral_predicted": 0,
+        "predicted_paragraphs": [
+          28,
+          29,
+          30,
+          31,
+          32,
+          33,
+          45,
+          50,
+          52,
+          53,
+          68
+        ],
+        "precision": 1.0,
+        "recall": 0.7857142857142857,
+        "f1": 0.88,
+        "justifications": [
+          "Regelt die Untersuchungspflicht des Händlers sowie die Fristen von acht Werktagen für die schriftliche Mängelanzeige.",
+          "Legt die Gewährleistungsfrist von 24 Monaten ab Gefahrübergang für die Vertragsprodukte fest.",
+          "Bestimmt für Verschleißteile eine abweichende Gewährleistungsfrist von zwölf Monaten und verweist auf Anlage 1 zur Bestimmung dieser Teile.",
+          "Garantiert die technischen Daten der Pumpen bei Gefahrübergang und nennt den garantierten Wirkungsgrad der Baureihe HP-500 von mindestens 78 %.",
+          "Regelt die Nacherfüllung, das Rücktritts- und Minderungsrecht nach zweimaligem Fehlschlagen sowie die Kostentragung durch die Herstellerin.",
+          "Verpflichtet die Herstellerin zur Vorhaltung von Ersatzteilen im in Anlage 1 bestimmten Umfang und Zeitraum.",
+          "Bestimmt, dass für technische Daten Anlage 1 maßgeblich ist, auch wenn sie etwas anderes regelt als der deutsche Vertragstext.",
+          "Regelt, dass die Anlage bei Widersprüchen zum Vertrag vorgeht.",
+          "Enthält die garantierten Mindestwerte des Wirkungsgrads am Bestpunkt, verifiziert durch Werksabnahmeprüfung nach ISO 9906.",
+          "Definiert die Verschleißteile (Gleitringdichtungen, O-Ringe, Verschleißringe und Lagerbuchsen) und schließt Laufräder, Wellen und Gehäuse aus.",
+          "Verpflichtet die Herstellerin zur Ersatzteillieferung für zehn Jahre nach Ende der Serienfertigung und nennt die Versandfrist von fünf Werktagen."
+        ]
+      }
+    ],
+    "concepts": [
+      {
+        "context": "document",
+        "name": "Amendment No. 1 effective date",
+        "type": "DateConcept",
+        "n_items": 1,
+        "n_gold_items": 1,
+        "predicted": [
+          "2027-11-19"
+        ],
+        "gold": [
+          "2027-11-19"
+        ],
+        "scoring": "exact",
+        "correct": true,
+        "predicted_references": [
+          78,
+          79
+        ],
+        "references": {
+          "precision": 1.0,
+          "recall": 1.0,
+          "f1": 1.0
+        },
+        "values": [
+          "2027-11-19"
+        ],
+        "justifications": [
+          "Der Nachtrag tritt am Tag der Unterzeichnung durch die letzte Partei in Kraft, also am 19. November 2027 in Lindenfurt."
+        ]
+      },
+      {
+        "context": "document",
+        "name": "Changes made by Amendment No. 1",
+        "type": "StringConcept",
+        "n_items": 1,
+        "n_gold_items": 1,
+        "predicted": [
+          "der nachtrag erweitert das vertragsgebiet ab 1. januar 2028 um belgien, erlaubt aktiven verkauf in luxemburg (nicht exklusiv), reduziert die mindestabnahmemenge 2028 um 25 % und regelt ab 1. märz 2028 dap-lieferung an das lager in bellerive-sur-erdre mit gefahrübergang dort."
+        ],
+        "gold": [
+          "from 1 january 2028 it adds belgium to the exclusive territory and allows non-exclusive sales in luxembourg, it reduces the 2028 minimum purchase quantity by 25 %, and for deliveries from 1 march 2028 it replaces fca lindenfurt with dap delivery to the distributor's bellerive-sur-erdre warehouse, where the risk then passes."
+        ],
+        "scoring": "exact_or_accepted",
+        "correct": false,
+        "predicted_references": [
+          73,
+          74,
+          75,
+          76
+        ],
+        "references": {
+          "precision": 1.0,
+          "recall": 1.0,
+          "f1": 1.0
+        },
+        "values": [
+          "Der Nachtrag erweitert das Vertragsgebiet ab 1. Januar 2028 um Belgien, erlaubt aktiven Verkauf in Luxemburg (nicht exklusiv), reduziert die Mindestabnahmemenge 2028 um 25 % und regelt ab 1. März 2028 DAP-Lieferung an das Lager in Bellerive-sur-Erdre mit Gefahrübergang dort."
+        ],
+        "justifications": [
+          "Der Nachtrag ändert Territorium, Mindestabnahme sowie Lieferbedingungen und Gefahrübergang gegenüber dem Hauptvertrag."
+        ]
+      },
+      {
+        "context": "document",
+        "name": "Governing law and jurisdiction",
+        "type": "StringConcept",
+        "n_items": 1,
+        "n_gold_items": 1,
+        "predicted": [
+          "deutsches recht unter ausschluss des cisg; ausschliesslicher gerichtsstand ist lindenfurt."
+        ],
+        "gold": [
+          "german law, excluding the cisg; the courts of lindenfurt have exclusive jurisdiction."
+        ],
+        "scoring": "exact_or_accepted",
+        "correct": false,
+        "predicted_references": [
+          40,
+          41
+        ],
+        "references": {
+          "precision": 1.0,
+          "recall": 1.0,
+          "f1": 1.0
+        },
+        "values": [
+          "Deutsches Recht unter Ausschluss des CISG; ausschließlicher Gerichtsstand ist Lindenfurt."
+        ],
+        "justifications": [
+          "Der Vertrag unterliegt dem Recht der Bundesrepublik Deutschland unter Ausschluss des CISG, und für alle Streitigkeiten ist Lindenfurt ausschließlich zuständig."
+        ]
+      },
+      {
+        "context": "document",
+        "name": "Prevailing text between the agreement and Annex 1",
+        "type": "StringConcept",
+        "n_items": 1,
+        "n_gold_items": 1,
+        "predicted": [
+          "der deutsche vertragstext geht vor; für technische daten und listenpreise ist jedoch anlage 1 massgeblich."
+        ],
+        "gold": [
+          "the german agreement prevails, except for technical data and list prices, for which annex 1 prevails."
+        ],
+        "scoring": "exact_or_accepted",
+        "correct": false,
+        "predicted_references": [
+          45
+        ],
+        "references": {
+          "precision": 1.0,
+          "recall": 0.5,
+          "f1": 0.6666666666666666
+        },
+        "values": [
+          "Der deutsche Vertragstext geht vor; für technische Daten und Listenpreise ist jedoch Anlage 1 maßgeblich."
+        ],
+        "justifications": [
+          "§ 9.3 bestimmt den Vorrang des deutschen Textes bei Widersprüchen, mit Ausnahme technischer Daten und Listenpreise."
+        ]
+      },
+      {
+        "context": "document",
+        "name": "HP-700 is a Contract Product",
+        "type": "BooleanConcept",
+        "n_items": 1,
+        "n_gold_items": 1,
+        "predicted": [
+          false
+        ],
+        "gold": [
+          false
+        ],
+        "scoring": "exact",
+        "correct": true,
+        "predicted_references": [
+          54,
+          77
+        ],
+        "references": {
+          "precision": 1.0,
+          "recall": 0.6666666666666666,
+          "f1": 0.8
+        },
+        "values": [
+          false
+        ],
+        "justifications": [
+          "Die HP-700-Reihe ist nur für Information aufgeführt und keine Vertragsprodukte, solange sie nicht durch schriftlichen Nachtrag aufgenommen wird; der Nachtrag Nr. 1 nimmt sie nicht auf."
+        ]
+      },
+      {
+        "context": "document",
+        "name": "Contract Products and their list prices",
+        "type": "JsonObjectConcept",
+        "n_items": 3,
+        "n_gold_items": 3,
+        "predicted": [
+          {
+            "description": "single-stage end-suction centrifugal pump for clean water",
+            "list_price_eur": 4850.0,
+            "series": "hp-200"
+          },
+          {
+            "description": "single-stage split-case pump for water and glycol mixtures",
+            "list_price_eur": 7250.0,
+            "series": "hp-350"
+          },
+          {
+            "description": "two-stage high-pressure pump for boiler feed and process water",
+            "list_price_eur": 11400.0,
+            "series": "hp-500"
+          }
+        ],
+        "gold": [
+          {
+            "description": "single-stage end-suction centrifugal pump for clean water",
+            "list_price_eur": 4850.0,
+            "series": "hp-200"
+          },
+          {
+            "description": "single-stage split-case pump for water and glycol mixtures",
+            "list_price_eur": 7250.0,
+            "series": "hp-350"
+          },
+          {
+            "description": "two-stage high-pressure pump for boiler feed and process water",
+            "list_price_eur": 11400.0,
+            "series": "hp-500"
+          }
+        ],
+        "scoring": "keys_of_objects",
+        "correct": true,
+        "field_match_rate": 1.0,
+        "predicted_references": [
+          4,
+          18,
+          45,
+          57,
+          58,
+          59
+        ],
+        "references": {
+          "precision": 1.0,
+          "recall": 1.0,
+          "f1": 1.0
+        },
+        "values": [
+          {
+            "series": "HP-200",
+            "description": "Single-stage end-suction centrifugal pump for clean water",
+            "list_price_eur": 4850
+          },
+          {
+            "series": "HP-350",
+            "description": "Single-stage split-case pump for water and glycol mixtures",
+            "list_price_eur": 7250
+          },
+          {
+            "series": "HP-500",
+            "description": "Two-stage high-pressure pump for boiler feed and process water",
+            "list_price_eur": 11400
+          }
+        ],
+        "justifications": [
+          "Die Baureihe HP-200 ist in Tabelle 1.1 der Anlage 1 als Vertragsprodukt mit einem Listenpreis von 4.850 EUR netto je Stück aufgeführt.",
+          "Die Baureihe HP-350 ist in Tabelle 1.1 der Anlage 1 mit einem Listenpreis von 7.250 EUR netto je Stück aufgeführt; dieser Anlagenwert geht dem abweichenden Wert in § 4.2 vor.",
+          "Die Baureihe HP-500 ist in Tabelle 1.1 der Anlage 1 als Vertragsprodukt mit einem Listenpreis von 11.400 EUR netto je Stück aufgeführt."
+        ]
+      },
+      {
+        "context": "aspect: Territory and minimum purchases",
+        "name": "Countries of the exclusive territory in 2028",
+        "type": "LabelConcept",
+        "n_items": 1,
+        "n_gold_items": 1,
+        "predicted": [
+          [
+            "belgium",
+            "france",
+            "monaco"
+          ]
+        ],
+        "gold": [
+          [
+            "belgium",
+            "france",
+            "monaco"
+          ]
+        ],
+        "scoring": "exact",
+        "correct": true,
+        "predicted_references": [
+          8,
+          9,
+          73
+        ],
+        "references": {
+          "precision": 1.0,
+          "recall": 1.0,
+          "f1": 1.0
+        },
+        "values": [
+          [
+            "France",
+            "Monaco",
+            "Belgium"
+          ]
+        ],
+        "justifications": [
+          "Ab 1. Januar 2028 besteht die Exklusivität im Vertragsgebiet Frankreich und Monaco sowie in Belgien. Luxemburg ist nur nicht exklusiv und gehört nicht zum Territorium."
+        ]
+      },
+      {
+        "context": "aspect: Territory and minimum purchases",
+        "name": "Minimum purchase quantity for 2028 in pumps",
+        "type": "NumericalConcept",
+        "n_items": 1,
+        "n_gold_items": 1,
+        "predicted": [
+          90.0
+        ],
+        "gold": [
+          90.0
+        ],
+        "scoring": "exact",
+        "correct": true,
+        "predicted_references": [
+          13,
+          74
+        ],
+        "references": {
+          "precision": 1.0,
+          "recall": 1.0,
+          "f1": 1.0
+        },
+        "values": [
+          90
+        ],
+        "justifications": [
+          "Die Mindestabnahmemenge für 2028 wird um 25 % von ursprünglich 120 Pumpen auf 90 Pumpen reduziert."
+        ]
+      },
+      {
+        "context": "aspect: Territory and minimum purchases",
+        "name": "Consequence of a minimum purchase shortfall",
+        "type": "StringConcept",
+        "n_items": 1,
+        "n_gold_items": 1,
+        "predicted": [
+          "die herstellerin kann die ausschliesslichkeit durch schriftliche erklärung mit einer frist von drei monaten widerrufen, woraufhin der vertrag als nicht ausschliesslicher vertriebsvertrag fortgeführt wird; weitere rechte wie schadensersatz oder kündigung stehen ihr nicht zu."
+        ],
+        "gold": [
+          "the manufacturer may revoke the distributor's exclusivity by written notice with three months' notice, the agreement continuing as a non-exclusive one; it has no other rights or claims for the shortfall, such as damages or termination."
+        ],
+        "scoring": "exact_or_accepted",
+        "correct": false,
+        "predicted_references": [
+          15
+        ],
+        "references": {
+          "precision": 1.0,
+          "recall": 1.0,
+          "f1": 1.0
+        },
+        "values": [
+          "Die Herstellerin kann die Ausschließlichkeit durch schriftliche Erklärung mit einer Frist von drei Monaten widerrufen, woraufhin der Vertrag als nicht ausschließlicher Vertriebsvertrag fortgeführt wird; weitere Rechte wie Schadensersatz oder Kündigung stehen ihr nicht zu."
+        ],
+        "justifications": [
+          "Bei Unterschreitung der Mindestabnahmemenge regelt die Klausel den Widerruf der Ausschließlichkeit und schließt weitere Ansprüche ausdrücklich aus."
+        ]
+      },
+      {
+        "context": "aspect: Delivery and transport risk",
+        "name": "Incoterm of a delivery on 12 April 2028",
+        "type": "LabelConcept",
+        "n_items": 1,
+        "n_gold_items": 1,
+        "predicted": [
+          [
+            "dap"
+          ]
+        ],
+        "gold": [
+          [
+            "dap"
+          ]
+        ],
+        "scoring": "exact",
+        "correct": true,
+        "predicted_references": [
+          75
+        ],
+        "references": {
+          "precision": 1.0,
+          "recall": 0.3333333333333333,
+          "f1": 0.5
+        },
+        "values": [
+          [
+            "DAP"
+          ]
+        ],
+        "justifications": [
+          "Artikel 4 legt fest, dass für alle Lieferungen ab dem 1. März 2028 DAP gilt. Der Liefertermin 12. April 2028 fällt in diesen Zeitraum."
+        ]
+      },
+      {
+        "context": "aspect: Delivery and transport risk",
+        "name": "Passing of the transport risk",
+        "type": "StringConcept",
+        "n_items": 1,
+        "n_gold_items": 1,
+        "predicted": [
+          "vor dem wechsel der lieferbedingungen (fca) geht die gefahr des zufälligen untergangs und der verschlechterung mit der übergabe an den vom händler benannten frachtführer im werk lindenfurt auf den händler über. für lieferungen ab dem 1. märz 2028 (dap) geht die gefahr auf den händler über, sobald die ware in seinem lager in bellerive-sur-erdre auf dem ankommenden transportmittel zum entladen bereitgestellt ist."
+        ],
+        "gold": [
+          "for deliveries before 1 march 2028 the risk passes to the distributor when the goods are handed to its carrier at the lindenfurt plant (fca); for deliveries from 1 march 2028 the manufacturer bears it until the goods are made available, ready for unloading, at the distributor's warehouse in bellerive-sur-erdre (dap)."
+        ],
+        "scoring": "exact_or_accepted",
+        "correct": false,
+        "predicted_references": [
+          25,
+          75,
+          76
+        ],
+        "references": {
+          "precision": 1.0,
+          "recall": 0.75,
+          "f1": 0.8571428571428571
+        },
+        "values": [
+          "Vor dem Wechsel der Lieferbedingungen (FCA) geht die Gefahr des zufälligen Untergangs und der Verschlechterung mit der Übergabe an den vom Händler benannten Frachtführer im Werk Lindenfurt auf den Händler über. Für Lieferungen ab dem 1. März 2028 (DAP) geht die Gefahr auf den Händler über, sobald die Ware in seinem Lager in Bellerive-sur-Erdre auf dem ankommenden Transportmittel zum Entladen bereitgestellt ist."
+        ],
+        "justifications": [
+          "Artikel 5 ersetzt für Lieferungen ab dem 1. März 2028 die Regelung in Abschnitt 5.2 des Vertrags. Bis dahin gilt die Übergabe an den Frachtführer im Werk Lindenfurt als maßgeblicher Zeitpunkt."
+        ]
+      },
+      {
+        "context": "aspect: Prices and payment",
+        "name": "Net value of the initial stocking order in EUR",
+        "type": "NumericalConcept",
+        "n_items": 0,
+        "n_gold_items": 1,
+        "predicted": [],
+        "gold": [
+          105616.0
+        ],
+        "scoring": "exact",
+        "correct": false,
+        "predicted_references": [],
+        "references": {
+          "precision": 0.0,
+          "recall": 0.0,
+          "f1": 0.0
+        },
+        "values": [],
+        "justifications": []
+      },
+      {
+        "context": "aspect: Prices and payment",
+        "name": "Payment due date of the initial stocking order invoice",
+        "type": "DateConcept",
+        "n_items": 1,
+        "n_gold_items": 1,
+        "predicted": [
+          "2027-04-29"
+        ],
+        "gold": [
+          "2027-04-14"
+        ],
+        "scoring": "exact",
+        "correct": false,
+        "predicted_references": [
+          50,
+          64,
+          65
+        ],
+        "references": {
+          "precision": 0.6666666666666666,
+          "recall": 0.5,
+          "f1": 0.5714285714285715
+        },
+        "values": [
+          "2027-04-29"
+        ],
+        "justifications": [
+          "Die Erstausstattung wird am 15. März 2027 berechnet, und laut Anlage gilt ein Zahlungsziel von 45 Tagen netto ab Rechnungsdatum; Anlage 1 hat bei Widersprüchen Vorrang. Der Rechnungstag wird nicht mitgerechnet, sodass die Zahlung spätestens am 29. April 2027 fällig ist."
+        ]
+      },
+      {
+        "context": "aspect: Warranty and product performance",
+        "name": "Guaranteed minimum efficiency of HP-500 at BEP in %",
+        "type": "NumericalConcept",
+        "n_items": 1,
+        "n_gold_items": 1,
+        "predicted": [
+          78.0
+        ],
+        "gold": [
+          76.0
+        ],
+        "scoring": "exact",
+        "correct": false,
+        "predicted_references": [
+          31
+        ],
+        "references": {
+          "precision": 1.0,
+          "recall": 0.25,
+          "f1": 0.4
+        },
+        "values": [
+          78
+        ],
+        "justifications": [
+          "Die Herstellerin garantiert für die Baureihe HP-500 im Bestpunkt einen Wirkungsgrad von mindestens 78 %. Dies gilt ab Gefahrübergang."
+        ]
+      },
+      {
+        "context": "aspect: Warranty and product performance",
+        "name": "Warranty period of a mechanical seal in months",
+        "type": "NumericalConcept",
+        "n_items": 1,
+        "n_gold_items": 1,
+        "predicted": [
+          12.0
+        ],
+        "gold": [
+          12.0
+        ],
+        "scoring": "exact",
+        "correct": true,
+        "predicted_references": [
+          30,
+          53
+        ],
+        "references": {
+          "precision": 1.0,
+          "recall": 0.6666666666666666,
+          "f1": 0.8
+        },
+        "values": [
+          12
+        ],
+        "justifications": [
+          "Gleitringdichtungen (Mechanical Seals) gehören zu den Verschleißteilen, für die eine Gewährleistungsfrist von zwölf Monaten ab Gefahrübergang gilt."
+        ]
+      },
+      {
+        "context": "aspect: Warranty and product performance",
+        "name": "Spare parts supply period",
+        "type": "StringConcept",
+        "n_items": 1,
+        "n_gold_items": 1,
+        "predicted": [
+          "10 years after the end of its series production"
+        ],
+        "gold": [
+          "for 10 years after the end of the series production of each contract product series."
+        ],
+        "scoring": "exact_or_accepted",
+        "correct": false,
+        "predicted_references": [
+          33,
+          68
+        ],
+        "references": {
+          "precision": 1.0,
+          "recall": 1.0,
+          "f1": 1.0
+        },
+        "values": [
+          "10 years after the end of its series production"
+        ],
+        "justifications": [
+          "Die Herstellerin muss Ersatzteile für jede Vertragsproduktserie zehn Jahre nach Ende der Serienproduktion liefern. Die Ersatzteilvorhaltung richtet sich nach Anlage 1."
+        ]
+      }
+    ]
+  }
+}

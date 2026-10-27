@@ -1,0 +1,716 @@
+{
+  "case": "complex_multilingual",
+  "model": "anthropic/claude-haiku-5-5",
+  "kind": "llm",
+  "mode": "default",
+  "input": "text",
+  "output_language": "zh-Hant",
+  "label": "language_2026-10-27_zh-Hant",
+  "run": 3,
+  "error": null,
+  "seconds": 52.4,
+  "usage": {
+    "requests": 6,
+    "requests_without_response": 0,
+    "input_tokens": 66354,
+    "output_tokens": 10873,
+    "cache_read_tokens": 0,
+    "cache_write_tokens": 0,
+    "cost_total": "0.01208"
+  },
+  "retries_for_invalid_data": 0,
+  "responses_not_valid_json": 0,
+  "extraction_warnings": [],
+  "refusal_warnings": [],
+  "provenance": {
+    "litellm": "1.105.2",
+    "prompts": {
+      "decision_question_aspect.j2": "7b069363576f",
+      "decision_question_concept.j2": "603962caf35d",
+      "default_system_message.j2": "7caf01ad2258",
+      "extract_aspect_items.j2": "608a42da2686",
+      "extract_concept_items.j2": "9157ee48d75f"
+    }
+  },
+  "scores": {
+    "summary": {
+      "aspect_f1": 0.9315384615384615,
+      "aspect_precision": 0.9791666666666666,
+      "aspect_recall": 0.8928571428571428,
+      "concept_accuracy": 0.7,
+      "n_concepts_scored": 10,
+      "n_concepts_correct": 7,
+      "string_exact": 0.0,
+      "n_strings": 6,
+      "reference_f1": 0.7598214285714285,
+      "n_concepts_without_items": 1
+    },
+    "aspects": [
+      {
+        "name": "Territory and minimum purchases",
+        "n_predicted": 8,
+        "n_gold": 8,
+        "n_neutral_predicted": 0,
+        "predicted_paragraphs": [
+          8,
+          9,
+          10,
+          13,
+          14,
+          15,
+          73,
+          74
+        ],
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0,
+        "justifications": [
+          "界定合約區域為法國本土（含科西嘉）及摩納哥公國，是區域範圍的基礎規定。",
+          "規定經銷商在合約區域內享有獨家經銷權，且製造商不得在區域內另設經銷商或直接供貨。",
+          "限制經銷商在合約區域以外的主動銷售行為，允許僅接受區域外客戶的主動訂單。",
+          "規定每個日曆年的最低採購數量為120台泵浦，並說明計算方式。",
+          "規定首批設備訂購量計入2027年的最低採購數量。",
+          "規定採購量未達標時，製造商可撤銷獨家權的後果，並排除其他救濟權利。",
+          "修訂附約將合約區域擴展至比利時，並允許經銷商在盧森堡積極銷售，但盧森堡不屬於合約區域。",
+          "修訂附約將2028年的最低採購數量減少25%，並將比利時及盧森堡的產品計入。"
+        ]
+      },
+      {
+        "name": "Delivery and transport risk",
+        "n_predicted": 6,
+        "n_gold": 6,
+        "n_neutral_predicted": 1,
+        "predicted_paragraphs": [
+          24,
+          25,
+          26,
+          64,
+          67,
+          75,
+          76
+        ],
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0,
+        "justifications": [
+          "約定交貨條件為FCA Lindenfurt工廠（Incoterms® 2020），由經銷商指定承運人並承擔工廠交貨後的運輸費用。",
+          "規定貨物的意外滅失及毀損風險於交付給經銷商指定承運人時移轉至經銷商。",
+          "規定交貨期限依附件1確定，自訂單確認送達起算，並規定部分交貨及遲延交貨時的解除權。",
+          "規定首批設備於2027年3月15日交予經銷商承運人並於同日開票，涉及交付及風險轉移時點。",
+          "附件1列明交貨條件為FCA Lindenfurt，並規定自訂單確認起算的交貨期限（HP-200、HP-350為6週，HP-500為10週）。",
+          "修訂自2028年3月1日起的交貨條件為DAP經銷商倉庫，運輸費用由製造商承擔。",
+          "修訂風險轉移時點為貨物在經銷商倉庫內備妥卸貨的時候，卸貨費用及風險由經銷商承擔。"
+        ]
+      },
+      {
+        "name": "Prices and payment",
+        "n_predicted": 12,
+        "n_gold": 14,
+        "n_neutral_predicted": 0,
+        "predicted_paragraphs": [
+          17,
+          18,
+          19,
+          20,
+          21,
+          22,
+          45,
+          50,
+          52,
+          64,
+          65,
+          75
+        ],
+        "precision": 0.9166666666666666,
+        "recall": 0.7857142857142857,
+        "f1": 0.8461538461538461,
+        "justifications": [
+          "規定製造商以附件1的列表價格供貨，價格為不含增值稅的淨價並包含標準包裝。",
+          "載明依簽約時價目表，HP-350泵浦的列表價格為每台7,150歐元淨價。",
+          "規定首批設備可享受一次性8%的導入折扣，且不再給予其他折扣。",
+          "規定列表價格調整的時間、頻率、事先通知期限及每次調整的上限為4%。",
+          "規定每批交貨於風險移轉日開立發票，並以電子方式寄送至指定開票地址。",
+          "規定付款期限為開票後30天，10天內付款可獲2%現金折扣，並以款項進入製造商帳戶為準。",
+          "規定德文合約與附件1有衝突時，技術數據與列表價格以附件1為準，且此順位適用於附件1另有規定的情形。",
+          "規定附件與合約不一致時，以附件為準。",
+          "說明合約產品、技術數據及列表價格載於表1.1。",
+          "列明首批設備（Erstausstattung）的數量組合及其開票日期，屬於初始訂購及開票安排。",
+          "附件1規定付款條件為開票後45天淨付，10天內付款享2%折扣。",
+          "修訂交貨條件後明確附件1的價格維持不變。"
+        ]
+      },
+      {
+        "name": "Warranty and product performance",
+        "n_predicted": 11,
+        "n_gold": 14,
+        "n_neutral_predicted": 0,
+        "predicted_paragraphs": [
+          28,
+          29,
+          30,
+          31,
+          32,
+          33,
+          45,
+          50,
+          52,
+          53,
+          68
+        ],
+        "precision": 1.0,
+        "recall": 0.7857142857142857,
+        "f1": 0.88,
+        "justifications": [
+          "規定經銷商應立即檢驗貨物，明顯瑕疵須於8個工作日內書面通知，隱藏瑕疵於發現後8個工作日內通知，否則視為同意。",
+          "規定合約產品的保固期為自風險移轉起24個月。",
+          "規定耗材（Verschleißteile）的保固期為12個月，並由附件1界定哪些零件屬於耗材。",
+          "規定製造商保證泵浦在風險移轉時符合附件1的技術數據，並載明HP-500的最低效率保證值。",
+          "規定瑕疵救濟方式為製造商選擇修補或更換，兩次修補失敗可解除合約或減價，並由製造商承擔相關費用。",
+          "規定製造商須依附件1的範圍及期限保有合約產品的備用零件。",
+          "規定德文合約與附件1有衝突時，技術數據以附件1為準，且此順位適用於附件1另有規定的情形。",
+          "規定附件與合約不一致時，以附件為準。",
+          "規定表1.1所列效率值為最佳效率點的保證最低值，並依ISO 9906逐台驗證。",
+          "界定耗材範圍為機械密封、O形環、磨損環及軸承襯套，葉輪、軸及泵殼不屬耗材。",
+          "規定備用零件的供應年限為停產後10年，庫存備件於訂單確認後5個工作日內發出。"
+        ]
+      }
+    ],
+    "concepts": [
+      {
+        "context": "document",
+        "name": "Amendment No. 1 effective date",
+        "type": "DateConcept",
+        "n_items": 1,
+        "n_gold_items": 1,
+        "predicted": [
+          "2027-11-19"
+        ],
+        "gold": [
+          "2027-11-19"
+        ],
+        "scoring": "exact",
+        "correct": true,
+        "predicted_references": [
+          78,
+          79
+        ],
+        "references": {
+          "precision": 1.0,
+          "recall": 1.0,
+          "f1": 1.0
+        },
+        "values": [
+          "2027-11-19"
+        ],
+        "justifications": [
+          "修正案第7條規定自雙方最後一方簽署之日起生效，而最後簽署方Halvering Pumpentechnik GmbH的簽署日期為2027年11月19日。"
+        ]
+      },
+      {
+        "context": "document",
+        "name": "Changes made by Amendment No. 1",
+        "type": "StringConcept",
+        "n_items": 1,
+        "n_gold_items": 1,
+        "predicted": [
+          "修正案將比利時納入領土並自2028年1月1日起適用同等專屬權、允許在盧森堡主動銷售，將2028年最低採購量減少25%，並將交貨改為dap買方倉庫且運費由製造商負擔、風險移轉時點改為貨物到達買方倉庫時。"
+        ],
+        "gold": [
+          "from 1 january 2028 it adds belgium to the exclusive territory and allows non-exclusive sales in luxembourg, it reduces the 2028 minimum purchase quantity by 25 %, and for deliveries from 1 march 2028 it replaces fca lindenfurt with dap delivery to the distributor's bellerive-sur-erdre warehouse, where the risk then passes."
+        ],
+        "scoring": "exact_or_accepted",
+        "correct": false,
+        "predicted_references": [
+          73,
+          74,
+          75,
+          76
+        ],
+        "references": {
+          "precision": 1.0,
+          "recall": 1.0,
+          "f1": 1.0
+        },
+        "values": [
+          "修正案將比利時納入領土並自2028年1月1日起適用同等專屬權、允許在盧森堡主動銷售，將2028年最低採購量減少25%，並將交貨改為DAP買方倉庫且運費由製造商負擔、風險移轉時點改為貨物到達買方倉庫時。"
+        ],
+        "justifications": [
+          "修正案第2至5條分別調整領土範圍、最低採購量、交貨條件與風險移轉，屬於對原契約的具體變更。"
+        ]
+      },
+      {
+        "context": "document",
+        "name": "Governing law and jurisdiction",
+        "type": "StringConcept",
+        "n_items": 1,
+        "n_gold_items": 1,
+        "predicted": [
+          "契約適用德國法律（排除聯合國國際貨物銷售公約cisg）；對所有爭議之專屬管轄法院為lindenfurt法院。"
+        ],
+        "gold": [
+          "german law, excluding the cisg; the courts of lindenfurt have exclusive jurisdiction."
+        ],
+        "scoring": "exact_or_accepted",
+        "correct": false,
+        "predicted_references": [
+          40,
+          41
+        ],
+        "references": {
+          "precision": 1.0,
+          "recall": 1.0,
+          "f1": 1.0
+        },
+        "values": [
+          "契約適用德國法律（排除聯合國國際貨物銷售公約CISG）；對所有爭議之專屬管轄法院為Lindenfurt法院。"
+        ],
+        "justifications": [
+          "契約第8.1條明定適用德意志聯邦共和國法律並排除CISG，第8.2條規定以Lindenfurt為專屬管轄地。"
+        ]
+      },
+      {
+        "context": "document",
+        "name": "Prevailing text between the agreement and Annex 1",
+        "type": "StringConcept",
+        "n_items": 1,
+        "n_gold_items": 1,
+        "predicted": [
+          "一般情況下以德文契約文本為準；但技術數據與列表價格以附件1為準，且此順位即使附件1另有規定亦適用。"
+        ],
+        "gold": [
+          "the german agreement prevails, except for technical data and list prices, for which annex 1 prevails."
+        ],
+        "scoring": "exact_or_accepted",
+        "correct": false,
+        "predicted_references": [
+          45
+        ],
+        "references": {
+          "precision": 1.0,
+          "recall": 0.5,
+          "f1": 0.6666666666666666
+        },
+        "values": [
+          "一般情況下以德文契約文本為準；但技術數據與列表價格以附件1為準，且此順位即使附件1另有規定亦適用。"
+        ],
+        "justifications": [
+          "契約第9.3條明確規定德文文本在雙方衝突時優先，惟技術數據與列表價格以附件1為準。"
+        ]
+      },
+      {
+        "context": "document",
+        "name": "HP-700 is a Contract Product",
+        "type": "BooleanConcept",
+        "n_items": 1,
+        "n_gold_items": 1,
+        "predicted": [
+          false
+        ],
+        "gold": [
+          false
+        ],
+        "scoring": "exact",
+        "correct": true,
+        "predicted_references": [
+          54,
+          77
+        ],
+        "references": {
+          "precision": 1.0,
+          "recall": 0.6666666666666666,
+          "f1": 0.8
+        },
+        "values": [
+          false
+        ],
+        "justifications": [
+          "附件1明確表示HP-700系列不是契約產品，除非以書面修正案加入；修正案並未加入該系列，僅約定於2028年另行審議。"
+        ]
+      },
+      {
+        "context": "document",
+        "name": "Contract Products and their list prices",
+        "type": "JsonObjectConcept",
+        "n_items": 3,
+        "n_gold_items": 3,
+        "predicted": [
+          {
+            "description": "單級端吸式離心泵，用於清水",
+            "list_price_eur": 4850.0,
+            "series": "hp-200"
+          },
+          {
+            "description": "單級分殼式泵，用於水及乙二醇混合液",
+            "list_price_eur": 7250.0,
+            "series": "hp-350"
+          },
+          {
+            "description": "兩級高壓泵，用於鍋爐給水及製程水",
+            "list_price_eur": 11400.0,
+            "series": "hp-500"
+          }
+        ],
+        "gold": [
+          {
+            "description": "single-stage end-suction centrifugal pump for clean water",
+            "list_price_eur": 4850.0,
+            "series": "hp-200"
+          },
+          {
+            "description": "single-stage split-case pump for water and glycol mixtures",
+            "list_price_eur": 7250.0,
+            "series": "hp-350"
+          },
+          {
+            "description": "two-stage high-pressure pump for boiler feed and process water",
+            "list_price_eur": 11400.0,
+            "series": "hp-500"
+          }
+        ],
+        "scoring": "keys_of_objects",
+        "correct": true,
+        "field_match_rate": 0.6666666666666666,
+        "predicted_references": [
+          45,
+          57,
+          58,
+          59
+        ],
+        "references": {
+          "precision": 1.0,
+          "recall": 0.6666666666666666,
+          "f1": 0.8
+        },
+        "values": [
+          {
+            "series": "HP-200",
+            "description": "單級端吸式離心泵，用於清水",
+            "list_price_eur": 4850
+          },
+          {
+            "series": "HP-350",
+            "description": "單級分殼式泵，用於水及乙二醇混合液",
+            "list_price_eur": 7250
+          },
+          {
+            "series": "HP-500",
+            "description": "兩級高壓泵，用於鍋爐給水及製程水",
+            "list_price_eur": 11400
+          }
+        ],
+        "justifications": [
+          "附件1表1.1列出HP-200為契約產品，其列表價格為每台4,850歐元（淨價）。",
+          "附件1表1.1列出HP-350為契約產品，列表價格為每台7,250歐元（淨價）；依契約第9.3條，列表價格以附件1為準，故採用此數字而非正文第4.2條的7,150歐元。",
+          "附件1表1.1列出HP-500為契約產品，其列表價格為每台11,400歐元（淨價）。"
+        ]
+      },
+      {
+        "context": "aspect: Territory and minimum purchases",
+        "name": "Countries of the exclusive territory in 2028",
+        "type": "LabelConcept",
+        "n_items": 1,
+        "n_gold_items": 1,
+        "predicted": [
+          [
+            "belgium",
+            "france",
+            "monaco"
+          ]
+        ],
+        "gold": [
+          [
+            "belgium",
+            "france",
+            "monaco"
+          ]
+        ],
+        "scoring": "exact",
+        "correct": true,
+        "predicted_references": [
+          8,
+          9,
+          73
+        ],
+        "references": {
+          "precision": 1.0,
+          "recall": 1.0,
+          "f1": 1.0
+        },
+        "values": [
+          [
+            "France",
+            "Monaco",
+            "Belgium"
+          ]
+        ],
+        "justifications": [
+          "依原合約，法國與摩納哥為獨家經銷區域；修訂條款自2028年1月1日起將比利時納入，且Distributor在比利時享有與法國相同的獨家權。盧森堡僅為非獨家銷售，故排除。"
+        ]
+      },
+      {
+        "context": "aspect: Territory and minimum purchases",
+        "name": "Minimum purchase quantity for 2028 in pumps",
+        "type": "NumericalConcept",
+        "n_items": 1,
+        "n_gold_items": 1,
+        "predicted": [
+          90.0
+        ],
+        "gold": [
+          90.0
+        ],
+        "scoring": "exact",
+        "correct": true,
+        "predicted_references": [
+          13,
+          74
+        ],
+        "references": {
+          "precision": 1.0,
+          "recall": 1.0,
+          "f1": 1.0
+        },
+        "values": [
+          90
+        ],
+        "justifications": [
+          "原合約規定每年最低採購120台泵浦；修訂條款將2028年的最低採購量減少25%，即120減30，為90台。"
+        ]
+      },
+      {
+        "context": "aspect: Territory and minimum purchases",
+        "name": "Consequence of a minimum purchase shortfall",
+        "type": "StringConcept",
+        "n_items": 1,
+        "n_gold_items": 1,
+        "predicted": [
+          "製造商得以書面聲明、提前三個月通知撤銷獨家權，合約續行為非獨家經銷合約；但不得因此主張其他權利或請求，包括損害賠償或終止契約。"
+        ],
+        "gold": [
+          "the manufacturer may revoke the distributor's exclusivity by written notice with three months' notice, the agreement continuing as a non-exclusive one; it has no other rights or claims for the shortfall, such as damages or termination."
+        ],
+        "scoring": "exact_or_accepted",
+        "correct": false,
+        "predicted_references": [
+          15
+        ],
+        "references": {
+          "precision": 1.0,
+          "recall": 1.0,
+          "f1": 1.0
+        },
+        "values": [
+          "製造商得以書面聲明、提前三個月通知撤銷獨家權，合約續行為非獨家經銷合約；但不得因此主張其他權利或請求，包括損害賠償或終止契約。"
+        ],
+        "justifications": [
+          "合約條款明確規定未達最低採購量時的救濟方式僅限於撤銷獨家權，並排除損害賠償及終止契約等其他權利。"
+        ]
+      },
+      {
+        "context": "aspect: Delivery and transport risk",
+        "name": "Incoterm of a delivery on 12 April 2028",
+        "type": "LabelConcept",
+        "n_items": 1,
+        "n_gold_items": 1,
+        "predicted": [
+          [
+            "dap"
+          ]
+        ],
+        "gold": [
+          [
+            "dap"
+          ]
+        ],
+        "scoring": "exact",
+        "correct": true,
+        "predicted_references": [
+          75
+        ],
+        "references": {
+          "precision": 1.0,
+          "recall": 0.3333333333333333,
+          "f1": 0.5
+        },
+        "values": [
+          [
+            "DAP"
+          ]
+        ],
+        "justifications": [
+          "第5條規定自2028年3月1日起的所有交貨均採DAP條件，因此2028年4月12日的交貨適用DAP。"
+        ]
+      },
+      {
+        "context": "aspect: Delivery and transport risk",
+        "name": "Passing of the transport risk",
+        "type": "StringConcept",
+        "n_items": 1,
+        "n_gold_items": 1,
+        "predicted": [
+          "變更前的fca交貨中，貨物一經交付予經銷商指定的運送人，毀損滅失風險即移轉予經銷商；變更後的dap交貨中，貨物於經銷商位於bellerive-sur-erdre的倉庫內，置於抵達的運輸工具上且準備卸貨時，風險移轉予經銷商，卸貨之費用與風險由經銷商承擔。"
+        ],
+        "gold": [
+          "for deliveries before 1 march 2028 the risk passes to the distributor when the goods are handed to its carrier at the lindenfurt plant (fca); for deliveries from 1 march 2028 the manufacturer bears it until the goods are made available, ready for unloading, at the distributor's warehouse in bellerive-sur-erdre (dap)."
+        ],
+        "scoring": "exact_or_accepted",
+        "correct": false,
+        "predicted_references": [
+          25,
+          75,
+          76
+        ],
+        "references": {
+          "precision": 1.0,
+          "recall": 0.75,
+          "f1": 0.8571428571428571
+        },
+        "values": [
+          "變更前的FCA交貨中，貨物一經交付予經銷商指定的運送人，毀損滅失風險即移轉予經銷商；變更後的DAP交貨中，貨物於經銷商位於Bellerive-sur-Erdre的倉庫內，置於抵達的運輸工具上且準備卸貨時，風險移轉予經銷商，卸貨之費用與風險由經銷商承擔。"
+        ],
+        "justifications": [
+          "變更前以交付運送人為風險移轉點，變更後則以貨物備妥於經銷商倉庫並準備卸貨時為移轉點。"
+        ]
+      },
+      {
+        "context": "aspect: Prices and payment",
+        "name": "Net value of the initial stocking order in EUR",
+        "type": "NumericalConcept",
+        "n_items": 0,
+        "n_gold_items": 1,
+        "predicted": [],
+        "gold": [
+          105616.0
+        ],
+        "scoring": "exact",
+        "correct": false,
+        "predicted_references": [],
+        "references": {
+          "precision": 0.0,
+          "recall": 0.0,
+          "f1": 0.0
+        },
+        "values": [],
+        "justifications": []
+      },
+      {
+        "context": "aspect: Prices and payment",
+        "name": "Payment due date of the initial stocking order invoice",
+        "type": "DateConcept",
+        "n_items": 1,
+        "n_gold_items": 1,
+        "predicted": [
+          "2027-04-29"
+        ],
+        "gold": [
+          "2027-04-14"
+        ],
+        "scoring": "exact",
+        "correct": false,
+        "predicted_references": [
+          64,
+          65
+        ],
+        "references": {
+          "precision": 1.0,
+          "recall": 0.5,
+          "f1": 0.6666666666666666
+        },
+        "values": [
+          "2027-04-29"
+        ],
+        "justifications": [
+          "首批備貨訂單於2027年3月15日開立發票，付款條件為開票日後45天淨額付款，依附件優先條款採用此期限。"
+        ]
+      },
+      {
+        "context": "aspect: Warranty and product performance",
+        "name": "Guaranteed minimum efficiency of HP-500 at BEP in %",
+        "type": "NumericalConcept",
+        "n_items": 1,
+        "n_gold_items": 1,
+        "predicted": [
+          78.0
+        ],
+        "gold": [
+          76.0
+        ],
+        "scoring": "exact",
+        "correct": false,
+        "predicted_references": [
+          31
+        ],
+        "references": {
+          "precision": 1.0,
+          "recall": 0.25,
+          "f1": 0.4
+        },
+        "values": [
+          78
+        ],
+        "justifications": [
+          "契約明定 HP-500 系列在最佳效率點（Bestpunkt）的保證效率至少為 78%。"
+        ]
+      },
+      {
+        "context": "aspect: Warranty and product performance",
+        "name": "Warranty period of a mechanical seal in months",
+        "type": "NumericalConcept",
+        "n_items": 1,
+        "n_gold_items": 1,
+        "predicted": [
+          12.0
+        ],
+        "gold": [
+          12.0
+        ],
+        "scoring": "exact",
+        "correct": true,
+        "predicted_references": [
+          30,
+          53
+        ],
+        "references": {
+          "precision": 1.0,
+          "recall": 0.6666666666666666,
+          "f1": 0.8
+        },
+        "values": [
+          12
+        ],
+        "justifications": [
+          "機械密封屬於磨損件，磨損件的保固期自危險移轉起為十二個月，優先於一般產品二十四個月的規定。"
+        ]
+      },
+      {
+        "context": "aspect: Warranty and product performance",
+        "name": "Spare parts supply period",
+        "type": "StringConcept",
+        "n_items": 1,
+        "n_gold_items": 1,
+        "predicted": [
+          "製造商須自契約產品系列停止量產後起算十年內供應備件。"
+        ],
+        "gold": [
+          "for 10 years after the end of the series production of each contract product series."
+        ],
+        "scoring": "exact_or_accepted",
+        "correct": false,
+        "predicted_references": [
+          68
+        ],
+        "references": {
+          "precision": 1.0,
+          "recall": 0.5,
+          "f1": 0.6666666666666666
+        },
+        "values": [
+          "製造商須自契約產品系列停止量產後起算十年內供應備件。"
+        ],
+        "justifications": [
+          "附件明定備件供應期間為該產品系列停止生產後十年。"
+        ]
+      }
+    ]
+  }
+}

@@ -23,6 +23,9 @@ skipped. The library prints its logs as usual, at the level set with
 ``--input docling`` creates the document of the case from its Docling document,
 with ``Document.from_docling()``, instead of from its text (see
 ``dev/evals/docling_cases.py``). Record such runs under a label of their own.
+
+``--output-language`` sets the output language of an LLM, e.g. ``ja``, ``zh-Hant``
+or ``adapt``. Record the runs of each output language under a label of their own.
 """
 
 from __future__ import annotations
@@ -35,6 +38,7 @@ from collections.abc import Generator
 from contextlib import contextmanager
 from typing import Any, get_args
 
+from contextgem import DocumentLLM
 from dev.evals.harness import (
     CASE_NAMES,
     RESULTS_DIR,
@@ -141,6 +145,7 @@ def run_once(
     label: str,
     run: int,
     case_input: CaseInput = "text",
+    output_language: str | None = None,
 ) -> dict[str, Any]:
     """
     Extracts everything of a case with a model, once, and scores the result.
@@ -153,6 +158,11 @@ def run_once(
     :param case_input: What the document of the case is created from (see
         :func:`~dev.evals.harness.load_case`). Defaults to "text".
     :type case_input: CaseInput
+    :param output_language: The output language of an LLM: a BCP 47 language tag
+        or "adapt". Defaults to None, for the default of the library ("en"). A run
+        that sets it records it, and its judgment judges the language of the text
+        that the LLM writes (see ``dev.evals.judge``).
+    :type output_language: str | None
     :param model: The model identifier.
     :type model: str
     :param kind: The kind of the model: "llm" or "decision".
@@ -173,6 +183,10 @@ def run_once(
         case, for_decision_model=kind == "decision", case_input=case_input
     )
     extractor, private_texts = create_model(model, kind, api_base)
+    if output_language is not None:
+        if not isinstance(extractor, DocumentLLM):
+            raise ValueError("Only an LLM has an output language.")
+        extractor.output_language = output_language
 
     error = None
     started = time.time()
@@ -201,6 +215,12 @@ def run_once(
         "kind": kind,
         "mode": get_mode(kind, use_concurrency),
         "input": case_input,
+        # As the LLM stores it; recorded only where it is set
+        **(
+            {"output_language": extractor.output_language}
+            if isinstance(extractor, DocumentLLM) and output_language is not None
+            else {}
+        ),
         "label": label,
         "run": run,
         "error": error,
@@ -267,7 +287,16 @@ def main() -> None:
         "its Docling document, with or without the additional context, or the "
         "Docling document of the case printed as a PDF file",
     )
+    parser.add_argument(
+        "--output-language",
+        default=None,
+        help="the output language of an LLM, a BCP 47 language tag (e.g. ja, "
+        "zh-Hant, pt-BR) or adapt; recorded in the run, whose judgment then judges "
+        "the language of what the LLM writes. Defaults to that of the library (en)",
+    )
     args = parser.parse_args()
+    if args.output_language is not None and args.kind != "llm":
+        parser.error("--output-language is for an LLM")
 
     runs_dir = RESULTS_DIR / args.label / "runs"
     file_name_start = (
@@ -288,6 +317,7 @@ def main() -> None:
             label=args.label,
             run=run,
             case_input=args.input,
+            output_language=args.output_language,
         )
         write_json(path, record)
         summary = record["scores"]["summary"]

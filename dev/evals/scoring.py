@@ -389,13 +389,18 @@ def score_document(document: Document, gold: dict[str, Any]) -> dict[str, Any]:
             }
         )
     for aspect, gold_aspect in zip(document.aspects, gold["aspects"], strict=True):
-        aspects.append(
-            score_aspect_paragraphs(
-                aspect.name,
-                get_positions(document, aspect.reference_paragraphs, paragraph_map),
-                gold_aspect,
-            )
+        aspect_scores = score_aspect_paragraphs(
+            aspect.name,
+            get_positions(document, aspect.reference_paragraphs, paragraph_map),
+            gold_aspect,
         )
+        if aspect.add_justifications:
+            # Kept for the judge (see dev.evals.judge), which judges the language
+            # they are written in: the justification of each item extracted
+            aspect_scores["justifications"] = [
+                item.justification for item in aspect.extracted_items
+            ]
+        aspects.append(aspect_scores)
         for concept, gold_concept in zip(
             aspect.concepts, gold_aspect["concepts"], strict=True
         ):
@@ -446,9 +451,17 @@ def rescore(scores: dict[str, Any], gold: dict[str, Any]) -> dict[str, Any]:
             "record it again."
         )
     aspects = [
-        score_aspect_paragraphs(
-            aspect["name"], set(aspect["predicted_paragraphs"]), gold_aspect
-        )
+        {
+            **score_aspect_paragraphs(
+                aspect["name"], set(aspect["predicted_paragraphs"]), gold_aspect
+            ),
+            # What the run keeps for the judge, which the scores do not depend on
+            **(
+                {"justifications": aspect["justifications"]}
+                if "justifications" in aspect
+                else {}
+            ),
+        }
         for aspect, gold_aspect in zip(scores["aspects"], gold["aspects"], strict=True)
     ]
     concepts = [

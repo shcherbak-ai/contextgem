@@ -1,0 +1,210 @@
+[
+  {
+    "case": "complex_multilingual",
+    "model": "anthropic/claude-haiku-5-5",
+    "mode": "default",
+    "runs": 3,
+    "aspect_f1": [
+      0.9423076923076923,
+      0.9521428571428572,
+      0.9083333333333333
+    ],
+    "aspect_precision": [
+      0.9791666666666666,
+      0.9821428571428572,
+      0.9772727272727273
+    ],
+    "aspect_recall": [
+      0.9107142857142857,
+      0.9285714285714286,
+      0.8571428571428572
+    ],
+    "concepts_correct": [
+      7,
+      8,
+      8
+    ],
+    "n_concepts_scored": 10,
+    "closed_concepts_correct": [
+      3,
+      3,
+      3
+    ],
+    "n_closed_concepts": 3,
+    "reference_f1": [
+      0.7496565934065934,
+      0.8481414418914419,
+      0.7757936507936508
+    ],
+    "requests": [
+      7,
+      6,
+      6
+    ],
+    "input_tokens": [
+      83666,
+      66446,
+      65776
+    ],
+    "cache_read_tokens": [
+      0,
+      0,
+      0
+    ],
+    "output_tokens": [
+      15194,
+      15417,
+      11426
+    ],
+    "cost_total": [
+      "0.01597",
+      "0.01435",
+      "0.01229"
+    ],
+    "seconds": [
+      67.3,
+      69.4,
+      56.8
+    ],
+    "retries": [
+      1,
+      0,
+      0
+    ],
+    "errors": [],
+    "warnings": 0,
+    "judged": [
+      {
+        "n_strings": 6,
+        "n_strings_correct": 6,
+        "n_justifications": 17,
+        "n_justifications_correct": 15,
+        "n_fields": 6,
+        "n_fields_correct": 6,
+        "n_language_strings": 6,
+        "n_language_strings_correct": 6,
+        "n_language_justifications": 17,
+        "n_language_justifications_correct": 17,
+        "n_language_aspect_justifications": 38,
+        "n_language_aspect_justifications_correct": 35,
+        "n_language_all": 61,
+        "n_language_all_correct": 58,
+        "n_variant_required": 0,
+        "n_variant_other": 0,
+        "n_variant_mixed": 0,
+        "n_variant_none": 61
+      },
+      {
+        "n_strings": 6,
+        "n_strings_correct": 6,
+        "n_justifications": 18,
+        "n_justifications_correct": 15,
+        "n_fields": 6,
+        "n_fields_correct": 5,
+        "n_language_strings": 6,
+        "n_language_strings_correct": 6,
+        "n_language_justifications": 18,
+        "n_language_justifications_correct": 17,
+        "n_language_aspect_justifications": 40,
+        "n_language_aspect_justifications_correct": 40,
+        "n_language_all": 64,
+        "n_language_all_correct": 63,
+        "n_variant_required": 1,
+        "n_variant_other": 0,
+        "n_variant_mixed": 0,
+        "n_variant_none": 63
+      },
+      {
+        "n_strings": 6,
+        "n_strings_correct": 5,
+        "n_justifications": 17,
+        "n_justifications_correct": 15,
+        "n_fields": 6,
+        "n_fields_correct": 6,
+        "n_language_strings": 6,
+        "n_language_strings_correct": 6,
+        "n_language_justifications": 17,
+        "n_language_justifications_correct": 17,
+        "n_language_aspect_justifications": 35,
+        "n_language_aspect_justifications_correct": 35,
+        "n_language_all": 58,
+        "n_language_all_correct": 58,
+        "n_variant_required": 1,
+        "n_variant_other": 0,
+        "n_variant_mixed": 0,
+        "n_variant_none": 57
+      }
+    ]
+  },
+  {
+    "case": "complex_multilingual",
+    "model": "anthropic/claude-sonnet-5-5",
+    "mode": "default",
+    "runs": 1,
+    "aspect_f1": [
+      0.9766734279918864
+    ],
+    "aspect_precision": [
+      0.9555555555555555
+    ],
+    "aspect_recall": [
+      1.0
+    ],
+    "concepts_correct": [
+      10
+    ],
+    "n_concepts_scored": 10,
+    "closed_concepts_correct": [
+      3
+    ],
+    "n_closed_concepts": 3,
+    "reference_f1": [
+      0.9161248473748473
+    ],
+    "requests": [
+      6
+    ],
+    "input_tokens": [
+      67438
+    ],
+    "cache_read_tokens": [
+      0
+    ],
+    "output_tokens": [
+      7507
+    ],
+    "cost_total": [
+      "0.20995"
+    ],
+    "seconds": [
+      50.3
+    ],
+    "retries": [
+      0
+    ],
+    "errors": [],
+    "warnings": 0,
+    "judged": [
+      {
+        "n_strings": 6,
+        "n_strings_correct": 6,
+        "n_justifications": 18,
+        "n_justifications_correct": 17,
+        "n_fields": 6,
+        "n_fields_correct": 5,
+        "n_language_strings": 6,
+        "n_language_strings_correct": 6,
+        "n_language_justifications": 18,
+        "n_language_justifications_correct": 17,
+        "n_language_aspect_justifications": 48,
+        "n_language_aspect_justifications_correct": 48,
+        "n_language_all": 72,
+        "n_language_all_correct": 71,
+        "n_variant_required": 8,
+        "n_variant_other": 0,
+        "n_variant_mixed": 0,
+        "n_variant_none": 64
+      }
+    ]
+  }
+]

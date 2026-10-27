@@ -1,0 +1,716 @@
+{
+  "case": "complex_multilingual",
+  "model": "anthropic/claude-haiku-5-5",
+  "kind": "llm",
+  "mode": "default",
+  "input": "text",
+  "output_language": "ja",
+  "label": "language_2026-10-27_ja",
+  "run": 2,
+  "error": null,
+  "seconds": 64.6,
+  "usage": {
+    "requests": 6,
+    "requests_without_response": 0,
+    "input_tokens": 66046,
+    "output_tokens": 12202,
+    "cache_read_tokens": 0,
+    "cache_write_tokens": 0,
+    "cost_total": "0.01270"
+  },
+  "retries_for_invalid_data": 0,
+  "responses_not_valid_json": 0,
+  "extraction_warnings": [],
+  "refusal_warnings": [],
+  "provenance": {
+    "litellm": "1.105.2",
+    "prompts": {
+      "decision_question_aspect.j2": "7b069363576f",
+      "decision_question_concept.j2": "603962caf35d",
+      "default_system_message.j2": "7caf01ad2258",
+      "extract_aspect_items.j2": "608a42da2686",
+      "extract_concept_items.j2": "9157ee48d75f"
+    }
+  },
+  "scores": {
+    "summary": {
+      "aspect_f1": 0.9315384615384615,
+      "aspect_precision": 0.9791666666666666,
+      "aspect_recall": 0.8928571428571428,
+      "concept_accuracy": 0.7,
+      "n_concepts_scored": 10,
+      "n_concepts_correct": 7,
+      "string_exact": 0.0,
+      "n_strings": 6,
+      "reference_f1": 0.7556089743589743,
+      "n_concepts_without_items": 1
+    },
+    "aspects": [
+      {
+        "name": "Territory and minimum purchases",
+        "n_predicted": 8,
+        "n_gold": 8,
+        "n_neutral_predicted": 0,
+        "predicted_paragraphs": [
+          8,
+          9,
+          10,
+          13,
+          14,
+          15,
+          73,
+          74
+        ],
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0,
+        "justifications": [
+          "契約領域をフランス本土、コルシカ、モナコと定義している。",
+          "販売店に独占的な販売権を付与し、領域内で他の販売店や直接販売を行わないことを定めている。",
+          "領域外での能動的な販売、広告、拠点設置を禁止し、外部からの注文の受付のみを認めている。",
+          "各暦年の最低購入数量を120台と定め、部品は算入しないとしている。",
+          "初期在庫の発注分を2027年の最低購入数量に算入すると定めている。",
+          "最低購入数量未達の場合に独占権を撤回し、非独占契約として継続するという効果を定めている。",
+          "2028年1月1日からベルギーを契約領域に加え、ルクセンブルクへの非独占的な能動的販売を認める修正を定めている。",
+          "修正により2028年の最低購入数量を25%削減し、ベルギー・ルクセンブルク向け製品を算入すると定めている。"
+        ]
+      },
+      {
+        "name": "Delivery and transport risk",
+        "n_predicted": 6,
+        "n_gold": 6,
+        "n_neutral_predicted": 0,
+        "predicted_paragraphs": [
+          24,
+          25,
+          26,
+          67,
+          75,
+          76
+        ],
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0,
+        "justifications": [
+          "FCA工場渡し（Incoterms 2020）を定め、販売店が運送人を指定して工場からの運送費を負担するとしている。",
+          "物の滅失・毀損の危険が、工場での販売店指定運送人への引渡し時に販売店へ移転するとしている。",
+          "納期の起算点、部分納入の可否、納入遅延時の解除条件を定めている。",
+          "附属書で納入条件（FCA工場）と注文確認からのリードタイム（HP-200・HP-350は6週、HP-500は10週）を定めている。",
+          "2028年3月1日以降はDAP販売店倉庫への納入に変更し、運送費を製造者負担とする修正を定めている。",
+          "修正により、危険の移転時点を販売店倉庫での到着・荷降ろし準備時点に変更し、荷降ろしの費用と危険は販売店が負担するとしている。"
+        ]
+      },
+      {
+        "name": "Prices and payment",
+        "n_predicted": 12,
+        "n_gold": 14,
+        "n_neutral_predicted": 0,
+        "predicted_paragraphs": [
+          17,
+          18,
+          19,
+          20,
+          21,
+          22,
+          45,
+          50,
+          52,
+          64,
+          65,
+          75
+        ],
+        "precision": 0.9166666666666666,
+        "recall": 0.7857142857142857,
+        "f1": 0.8461538461538461,
+        "justifications": [
+          "列価格は税抜で、標準梱包を含むと定めている。",
+          "契約締結時点のHP-350の列価格を1台あたり7,150ユーロ（税抜）と定めている。",
+          "初期在庫発注に限り8%の導入割引を認め、その他の割引は認めないとしている。",
+          "2028年1月1日以降の列価格改定の時期、回数、上限（4%）と事前通知期間を定めている。",
+          "各引渡しの日に請求し、請求書は指定の請求先へ電子的に送付すると定めている。",
+          "請求書の支払期限を30日とし、10日以内の支払いには2%の早期支払割引を認めると定めている。",
+          "契約本文と附属書の矛盾時の優先関係を定め、技術データと列価格については附属書が優先するとしている。",
+          "附属書は契約との不一致がある場合に附属書が優先すると明記している。",
+          "契約製品の列価格は附属書の表1.1に記載すると定めている。",
+          "初期在庫発注の機種別台数と、2027年3月15日の引渡しおよび請求日を定めている。",
+          "附属書で支払条件を請求日から45日のネット払いと、10日以内の2%割引と定めている。",
+          "修正により納入条件は変わるが、附属書の価格は変更しないとしている。"
+        ]
+      },
+      {
+        "name": "Warranty and product performance",
+        "n_predicted": 11,
+        "n_gold": 14,
+        "n_neutral_predicted": 0,
+        "predicted_paragraphs": [
+          28,
+          29,
+          30,
+          31,
+          32,
+          33,
+          45,
+          50,
+          52,
+          53,
+          68
+        ],
+        "precision": 1.0,
+        "recall": 0.7857142857142857,
+        "f1": 0.88,
+        "justifications": [
+          "販売店による検査義務と、外観上の瑕疵および隠れた瑕疵について8営業日以内の書面通知を義務付け、期限後は承認されたとみなすことを定めている。",
+          "契約製品の保証期間を引渡しから24か月と定めている。",
+          "摩耗部品の保証期間を引渡しから12か月と定め、摩耗部品は附属書で定めるとしている。",
+          "引渡し時に附属書の技術データを保証し、HP-500の最高効率点における効率を78%以上と定めている。",
+          "瑕疵時の追完（修理または交換）、2回失敗時の解除または減額、追完費用の負担者を定めている。",
+          "契約製品の予備部品を附属書で定める範囲と期間にわたり供給すると定めている。",
+          "契約本文と附属書の矛盾時の優先関係を定め、技術データについては附属書が優先するとしている。",
+          "附属書は契約との不一致がある場合に附属書が優先すると明記している。",
+          "附属書の効率値は最高効率点での最低保証値であり、ISO 9906に基づく工場試験で個別に検証すると定めている。",
+          "摩耗部品としてメカニカルシール、Oリング、摩耗リング、軸受ブッシュを定め、羽根車、軸、ポンプケーシングは除外している。",
+          "予備部品を各系列の生産終了後10年間供給し、在庫品は注文確認後5営業日以内に発送すると定めている。"
+        ]
+      }
+    ],
+    "concepts": [
+      {
+        "context": "document",
+        "name": "Amendment No. 1 effective date",
+        "type": "DateConcept",
+        "n_items": 1,
+        "n_gold_items": 1,
+        "predicted": [
+          "2027-11-19"
+        ],
+        "gold": [
+          "2027-11-19"
+        ],
+        "scoring": "exact",
+        "correct": true,
+        "predicted_references": [
+          78,
+          79
+        ],
+        "references": {
+          "precision": 1.0,
+          "recall": 1.0,
+          "f1": 1.0
+        },
+        "values": [
+          "2027-11-19"
+        ],
+        "justifications": [
+          "補足条項によれば、本アヴェナンは署名日のうち最後の署名日に発効します。ドイツ側の署名日が2027年11月19日であり、これが最後の署名となります。"
+        ]
+      },
+      {
+        "context": "document",
+        "name": "Changes made by Amendment No. 1",
+        "type": "StringConcept",
+        "n_items": 1,
+        "n_gold_items": 1,
+        "predicted": [
+          "2028年1月1日からベルギーを販売地域に加え、ルクセンブルクでの非独占的な積極販売を認め、2028年の最低購入数量を25%減らし、2028年3月1日以降の納入条件をbellerive-sur-erdreの販売店倉庫へのdap渡しに変更する。"
+        ],
+        "gold": [
+          "from 1 january 2028 it adds belgium to the exclusive territory and allows non-exclusive sales in luxembourg, it reduces the 2028 minimum purchase quantity by 25 %, and for deliveries from 1 march 2028 it replaces fca lindenfurt with dap delivery to the distributor's bellerive-sur-erdre warehouse, where the risk then passes."
+        ],
+        "scoring": "exact_or_accepted",
+        "correct": false,
+        "predicted_references": [
+          73,
+          74,
+          75,
+          76
+        ],
+        "references": {
+          "precision": 1.0,
+          "recall": 1.0,
+          "f1": 1.0
+        },
+        "values": [
+          "2028年1月1日からベルギーを販売地域に加え、ルクセンブルクでの非独占的な積極販売を認め、2028年の最低購入数量を25%減らし、2028年3月1日以降の納入条件をBellerive-sur-Erdreの販売店倉庫へのDAP渡しに変更する。"
+        ],
+        "justifications": [
+          "補足条項は販売地域の拡大、最低購入数量の一時的減額、納入条件の変更を定めています。いずれも原契約の該当条項を修正する内容です。"
+        ]
+      },
+      {
+        "context": "document",
+        "name": "Governing law and jurisdiction",
+        "type": "StringConcept",
+        "n_items": 1,
+        "n_gold_items": 1,
+        "predicted": [
+          "準拠法はドイツ連邦共和国法（国連動産売買条約（cisg）は適用除外）、専属的裁判管轄はlindenfurt（リンデンフルト）の裁判所。"
+        ],
+        "gold": [
+          "german law, excluding the cisg; the courts of lindenfurt have exclusive jurisdiction."
+        ],
+        "scoring": "exact_or_accepted",
+        "correct": false,
+        "predicted_references": [
+          40,
+          41
+        ],
+        "references": {
+          "precision": 1.0,
+          "recall": 1.0,
+          "f1": 1.0
+        },
+        "values": [
+          "準拠法はドイツ連邦共和国法（国連動産売買条約（CISG）は適用除外）、専属的裁判管轄はLindenfurt（リンデンフルト）の裁判所。"
+        ],
+        "justifications": [
+          "本契約は、ドイツ法（CISG除外）に従うことと、リンデンフルトを専属的管轄地とすることを定めています。補足条項もこれらを変更していません。"
+        ]
+      },
+      {
+        "context": "document",
+        "name": "Prevailing text between the agreement and Annex 1",
+        "type": "StringConcept",
+        "n_items": 1,
+        "n_gold_items": 1,
+        "predicted": [
+          "原則としてドイツ語の契約本文が優先する。ただし技術データと列出価格については附属書1が優先する。"
+        ],
+        "gold": [
+          "the german agreement prevails, except for technical data and list prices, for which annex 1 prevails."
+        ],
+        "scoring": "exact_or_accepted",
+        "correct": false,
+        "predicted_references": [
+          45
+        ],
+        "references": {
+          "precision": 1.0,
+          "recall": 0.5,
+          "f1": 0.6666666666666666
+        },
+        "values": [
+          "原則としてドイツ語の契約本文が優先する。ただし技術データと列出価格については附属書1が優先する。"
+        ],
+        "justifications": [
+          "本契約9.3条は、矛盾が生じた場合のドイツ語本文の優先を定めつつ、技術データと列出価格には附属書1を優先させています。この順位は附属書が別段の定めをしても適用されます。"
+        ]
+      },
+      {
+        "context": "document",
+        "name": "HP-700 is a Contract Product",
+        "type": "BooleanConcept",
+        "n_items": 1,
+        "n_gold_items": 1,
+        "predicted": [
+          false
+        ],
+        "gold": [
+          false
+        ],
+        "scoring": "exact",
+        "correct": true,
+        "predicted_references": [
+          54,
+          77
+        ],
+        "references": {
+          "precision": 1.0,
+          "recall": 0.6666666666666666,
+          "f1": 0.8
+        },
+        "values": [
+          false
+        ],
+        "justifications": [
+          "HP-700は参考情報としてのみ掲載されており、書面による補足条項で契約に追加されない限り契約製品ではないと明記されています。補足条項では追加されておらず、追加の検討は将来の別個の補足条項に委ねられています。"
+        ]
+      },
+      {
+        "context": "document",
+        "name": "Contract Products and their list prices",
+        "type": "JsonObjectConcept",
+        "n_items": 3,
+        "n_gold_items": 3,
+        "predicted": [
+          {
+            "description": "single-stage end-suction centrifugal pump for clean water",
+            "list_price_eur": 4850.0,
+            "series": "hp-200"
+          },
+          {
+            "description": "single-stage split-case pump for water and glycol mixtures",
+            "list_price_eur": 7250.0,
+            "series": "hp-350"
+          },
+          {
+            "description": "two-stage high-pressure pump for boiler feed and process water",
+            "list_price_eur": 11400.0,
+            "series": "hp-500"
+          }
+        ],
+        "gold": [
+          {
+            "description": "single-stage end-suction centrifugal pump for clean water",
+            "list_price_eur": 4850.0,
+            "series": "hp-200"
+          },
+          {
+            "description": "single-stage split-case pump for water and glycol mixtures",
+            "list_price_eur": 7250.0,
+            "series": "hp-350"
+          },
+          {
+            "description": "two-stage high-pressure pump for boiler feed and process water",
+            "list_price_eur": 11400.0,
+            "series": "hp-500"
+          }
+        ],
+        "scoring": "keys_of_objects",
+        "correct": true,
+        "field_match_rate": 1.0,
+        "predicted_references": [
+          4,
+          18,
+          45,
+          57,
+          58,
+          59,
+          77
+        ],
+        "references": {
+          "precision": 0.8571428571428571,
+          "recall": 1.0,
+          "f1": 0.923076923076923
+        },
+        "values": [
+          {
+            "series": "HP-200",
+            "description": "Single-stage end-suction centrifugal pump for clean water",
+            "list_price_eur": 4850
+          },
+          {
+            "series": "HP-350",
+            "description": "Single-stage split-case pump for water and glycol mixtures",
+            "list_price_eur": 7250
+          },
+          {
+            "series": "HP-500",
+            "description": "Two-stage high-pressure pump for boiler feed and process water",
+            "list_price_eur": 11400
+          }
+        ],
+        "justifications": [
+          "附属書1の表1.1で契約製品とされ、列出価格は1台あたりEUR 4,850（税抜）です。補足条項で価格は変更されていません。",
+          "附属書1の表1.1で契約製品とされ、列出価格は1台あたりEUR 7,250（税抜）です。本文4.2条の7,150ではなく、技術データと列出価格は附属書1が優先するため7,250を採用しています。",
+          "附属書1の表1.1で契約製品とされ、列出価格は1台あたりEUR 11,400（税抜）です。補足条項で価格は変更されていません。"
+        ]
+      },
+      {
+        "context": "aspect: Territory and minimum purchases",
+        "name": "Countries of the exclusive territory in 2028",
+        "type": "LabelConcept",
+        "n_items": 1,
+        "n_gold_items": 1,
+        "predicted": [
+          [
+            "belgium",
+            "france",
+            "monaco"
+          ]
+        ],
+        "gold": [
+          [
+            "belgium",
+            "france",
+            "monaco"
+          ]
+        ],
+        "scoring": "exact",
+        "correct": true,
+        "predicted_references": [
+          8,
+          9,
+          73
+        ],
+        "references": {
+          "precision": 1.0,
+          "recall": 1.0,
+          "f1": 1.0
+        },
+        "values": [
+          [
+            "France",
+            "Monaco",
+            "Belgium"
+          ]
+        ],
+        "justifications": [
+          "当初の独占的販売地域はフランスとモナコで、2028年1月1日からベルギーにも同等の独占権が与えられます。ルクセンブルクは非独占での能動的販売のみが認められているため除外されます。"
+        ]
+      },
+      {
+        "context": "aspect: Territory and minimum purchases",
+        "name": "Minimum purchase quantity for 2028 in pumps",
+        "type": "NumericalConcept",
+        "n_items": 1,
+        "n_gold_items": 1,
+        "predicted": [
+          90.0
+        ],
+        "gold": [
+          90.0
+        ],
+        "scoring": "exact",
+        "correct": true,
+        "predicted_references": [
+          13,
+          74
+        ],
+        "references": {
+          "precision": 1.0,
+          "recall": 1.0,
+          "f1": 1.0
+        },
+        "values": [
+          90
+        ],
+        "justifications": [
+          "当初の最低購入数量120台から2028年は25%減額されるため、120台の75%にあたる90台となります。"
+        ]
+      },
+      {
+        "context": "aspect: Territory and minimum purchases",
+        "name": "Consequence of a minimum purchase shortfall",
+        "type": "StringConcept",
+        "n_items": 1,
+        "n_gold_items": 1,
+        "predicted": [
+          "最低購入数量を下回った場合、製造者は書面による3か月前の通知で独占性を撤回し、契約を非独占的販売契約として継続できるが、損害賠償や解約など他の権利は行使できない。"
+        ],
+        "gold": [
+          "the manufacturer may revoke the distributor's exclusivity by written notice with three months' notice, the agreement continuing as a non-exclusive one; it has no other rights or claims for the shortfall, such as damages or termination."
+        ],
+        "scoring": "exact_or_accepted",
+        "correct": false,
+        "predicted_references": [
+          15
+        ],
+        "references": {
+          "precision": 1.0,
+          "recall": 1.0,
+          "f1": 1.0
+        },
+        "values": [
+          "最低購入数量を下回った場合、製造者は書面による3か月前の通知で独占性を撤回し、契約を非独占的販売契約として継続できるが、損害賠償や解約など他の権利は行使できない。"
+        ],
+        "justifications": [
+          "製造者は独占性の撤回のみが認められ、損害賠償や解約などの追加の権利は明示的に排除されています。"
+        ]
+      },
+      {
+        "context": "aspect: Delivery and transport risk",
+        "name": "Incoterm of a delivery on 12 April 2028",
+        "type": "LabelConcept",
+        "n_items": 1,
+        "n_gold_items": 1,
+        "predicted": [
+          [
+            "dap"
+          ]
+        ],
+        "gold": [
+          [
+            "dap"
+          ]
+        ],
+        "scoring": "exact",
+        "correct": true,
+        "predicted_references": [
+          75
+        ],
+        "references": {
+          "precision": 1.0,
+          "recall": 0.3333333333333333,
+          "f1": 0.5
+        },
+        "values": [
+          [
+            "DAP"
+          ]
+        ],
+        "justifications": [
+          "2028年3月1日以降のすべての納品はDAP（Incoterms® 2020）と定められており、2028年4月12日の納品もこれに該当します。"
+        ]
+      },
+      {
+        "context": "aspect: Delivery and transport risk",
+        "name": "Passing of the transport risk",
+        "type": "StringConcept",
+        "n_items": 1,
+        "n_gold_items": 1,
+        "predicted": [
+          "変更前のfca納品では、物品を販売店が指定した運送人へ引き渡した時点（lindenfurt工場）で危険が販売店に移転します。変更後のdap納品では、bellerive-sur-erdreの倉庫に到着した運送手段上で荷下ろしの準備が整った時点で危険が移転し、荷下ろしは販売店の費用とリスクで行われます。"
+        ],
+        "gold": [
+          "for deliveries before 1 march 2028 the risk passes to the distributor when the goods are handed to its carrier at the lindenfurt plant (fca); for deliveries from 1 march 2028 the manufacturer bears it until the goods are made available, ready for unloading, at the distributor's warehouse in bellerive-sur-erdre (dap)."
+        ],
+        "scoring": "exact_or_accepted",
+        "correct": false,
+        "predicted_references": [
+          25,
+          76
+        ],
+        "references": {
+          "precision": 1.0,
+          "recall": 0.5,
+          "f1": 0.6666666666666666
+        },
+        "values": [
+          "変更前のFCA納品では、物品を販売店が指定した運送人へ引き渡した時点（Lindenfurt工場）で危険が販売店に移転します。変更後のDAP納品では、Bellerive-sur-Erdreの倉庫に到着した運送手段上で荷下ろしの準備が整った時点で危険が移転し、荷下ろしは販売店の費用とリスクで行われます。"
+        ],
+        "justifications": [
+          "変更前後の納品について、危険移転の基準時点がそれぞれ明記されています。変更後は原則の例外として定められています。"
+        ]
+      },
+      {
+        "context": "aspect: Prices and payment",
+        "name": "Net value of the initial stocking order in EUR",
+        "type": "NumericalConcept",
+        "n_items": 0,
+        "n_gold_items": 1,
+        "predicted": [],
+        "gold": [
+          105616.0
+        ],
+        "scoring": "exact",
+        "correct": false,
+        "predicted_references": [],
+        "references": {
+          "precision": 0.0,
+          "recall": 0.0,
+          "f1": 0.0
+        },
+        "values": [],
+        "justifications": []
+      },
+      {
+        "context": "aspect: Prices and payment",
+        "name": "Payment due date of the initial stocking order invoice",
+        "type": "DateConcept",
+        "n_items": 1,
+        "n_gold_items": 1,
+        "predicted": [
+          "2027-04-29"
+        ],
+        "gold": [
+          "2027-04-14"
+        ],
+        "scoring": "exact",
+        "correct": false,
+        "predicted_references": [
+          64,
+          65
+        ],
+        "references": {
+          "precision": 1.0,
+          "recall": 0.5,
+          "f1": 0.6666666666666666
+        },
+        "values": [
+          "2027-04-29"
+        ],
+        "justifications": [
+          "初期発注の請求日は2027年3月15日で、支払期限は請求日から45日（請求日を含まない）の正味払いです。"
+        ]
+      },
+      {
+        "context": "aspect: Warranty and product performance",
+        "name": "Guaranteed minimum efficiency of HP-500 at BEP in %",
+        "type": "NumericalConcept",
+        "n_items": 1,
+        "n_gold_items": 1,
+        "predicted": [
+          78.0
+        ],
+        "gold": [
+          76.0
+        ],
+        "scoring": "exact",
+        "correct": false,
+        "predicted_references": [
+          31
+        ],
+        "references": {
+          "precision": 1.0,
+          "recall": 0.25,
+          "f1": 0.4
+        },
+        "values": [
+          78
+        ],
+        "justifications": [
+          "契約書本文で、HP-500シリーズの保証効率がベストポイントで最低78%と明記されています。"
+        ]
+      },
+      {
+        "context": "aspect: Warranty and product performance",
+        "name": "Warranty period of a mechanical seal in months",
+        "type": "NumericalConcept",
+        "n_items": 1,
+        "n_gold_items": 1,
+        "predicted": [
+          12.0
+        ],
+        "gold": [
+          12.0
+        ],
+        "scoring": "exact",
+        "correct": true,
+        "predicted_references": [
+          30,
+          53
+        ],
+        "references": {
+          "precision": 1.0,
+          "recall": 0.6666666666666666,
+          "f1": 0.8
+        },
+        "values": [
+          12
+        ],
+        "justifications": [
+          "メカニカルシールは附属書で摩耗部品に分類されており、摩耗部品の保証期間はリスク移転から12か月と定められています。"
+        ]
+      },
+      {
+        "context": "aspect: Warranty and product performance",
+        "name": "Spare parts supply period",
+        "type": "StringConcept",
+        "n_items": 1,
+        "n_gold_items": 1,
+        "predicted": [
+          "各契約製品シリーズの生産終了後10年間、スペアパーツを供給する。"
+        ],
+        "gold": [
+          "for 10 years after the end of the series production of each contract product series."
+        ],
+        "scoring": "exact_or_accepted",
+        "correct": false,
+        "predicted_references": [
+          68
+        ],
+        "references": {
+          "precision": 1.0,
+          "recall": 0.5,
+          "f1": 0.6666666666666666
+        },
+        "values": [
+          "各契約製品シリーズの生産終了後10年間、スペアパーツを供給する。"
+        ],
+        "justifications": [
+          "製造者は各契約製品シリーズについて、量産終了後10年間スペアパーツを供給する義務があると定められています。"
+        ]
+      }
+    ]
+  }
+}

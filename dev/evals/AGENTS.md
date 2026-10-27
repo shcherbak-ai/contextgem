@@ -26,7 +26,8 @@ Measures the quality and the cost of extraction on evaluation cases with referen
 | `rescore.py` | Scores the recorded runs of a label again, after a change in the reference answers (offline) |
 | `decision_probabilities.py` | Probabilities of a decision model for the aspects of a case (**live requests**) |
 | `threshold_sweep.py` | Decision threshold sweep over the recorded probabilities (offline) |
-| `judge.py` | Judges the string values, justifications and text fields of objects of the runs of a label, and checks the judge (**live requests**) |
+| `judge.py` | Judges the string values, justifications and text fields of objects of the runs of a label, and the language of what an LLM wrote where the run records an output language, and checks the judge (**live requests**) |
+| `language_markers.py` | Tells the script of Chinese and the variant of Portuguese of a text from its characters and words, which the judge does not tell apart (offline) |
 | `check_scorer.py` | Self-check of the scorer on each case (offline) |
 | `results/<label>/` | Results of one experiment: `runs/`, `decision_probabilities/`, `judgments/` and `judge_checks.json`, and the generated `summary.*` and `thresholds.*` |
 
@@ -38,10 +39,13 @@ Measures the quality and the cost of extraction on evaluation cases with referen
 | `complex_dpa` | A data processing agreement with two amendments and operational records | 153 | 6 | 24 |
 | `complex_mcu` | The technical documentation of a microcontroller: datasheet, errata sheet, change notification with an amendment, application note, and the design review and purchasing records of a customer | 268 | 7 | 27 |
 | `complex_stability` | The stability study report of a tablet: three batches in three container closure systems, a release and a shelf-life specification, and the results of each batch at each storage condition | 125 | 4 | 18 |
+| `complex_multilingual` | An exclusive distribution agreement in German, its annex of products, prices and terms in English, and an amendment in French | 80 | 4 | 16 |
 
 `complex_mcu` is a technical document with dense terminology (voltage-scaling ranges, PLL dividers, wait states, thermal resistances, errata conditions). It has many values in tables, one row per paragraph, and later documents that change values of earlier ones. Many of its answers are computed: junction temperatures from currents and thermal resistances, clock frequencies from divider settings, calendar dates and ISO weeks. Its document concepts ask for references, as its aspect concepts do.
 
 `complex_stability` has most of its answers in tables that look alike: two specifications with the same tests, and a table of results for each batch and condition with the same tests and, for the long-term and accelerated conditions, the same number of columns. A row tells its batch, its condition and its time points only through the caption and the header of its table, and the concepts of its aspects are extracted from the paragraphs of the aspect only, where a row can come without them. It was made to measure the structure of a document (see Extraction from Docling Documents), and its narrative contradicts its tables, which record the results: two of its five results outside the specification are only in the tables.
+
+`complex_multilingual` measures the output language of LLMs (`output_language`) on a document in three languages: the agreement in German (49 of its 80 paragraphs), its Annex 1 in English (20) and Amendment No. 1 in French (11), none in a language of the output but English. 9 of its 16 answers need two languages: the French amendment changes German clauses, and where the English annex states a term otherwise than the German text, a German clause decides which prevails, though the annex claims precedence for itself. Every aspect and concept asks for justifications, which are written in the output language, and 6 concepts are string concepts, whose values are translated. Its reference answers are in English, as those of the other cases. Its runs are recorded with `--output-language` (see What Is Measured), under a label for each output language.
 
 ## Rules
 
@@ -53,7 +57,7 @@ Measures the quality and the cost of extraction on evaluation cases with referen
 
 ## The Reference Answers
 
-The `.gold.json` files of `complex_nda` and `complex_dpa` were produced by an AI agent, and reviewed on 2026-10-11 by AI agents: a second, blind annotation of each case, and a ruling on every disagreement against the text. `complex_mcu` was written with its reference answers by an AI agent on 2026-10-15, with the computed answers recomputed by a script, and reviewed in the same way (see `cases/reference_review.md`). No person has verified them, whatever the `reviewed` flags in the files say. So a score is the agreement with these answers, not a proof of correctness:
+The `.gold.json` files of `complex_nda` and `complex_dpa` were produced by an AI agent, and reviewed on 2026-10-11 by AI agents: a second, blind annotation of each case, and a ruling on every disagreement against the text. `complex_mcu` was written with its reference answers by an AI agent on 2026-10-15, with the computed answers recomputed by a script, and reviewed in the same way (see `cases/reference_review.md`), as was `complex_multilingual` on 2026-10-27. No person has verified them, whatever the `reviewed` flags in the files say. So a score is the agreement with these answers, not a proof of correctness:
 
 - **Use the scores to compare**: one prompt, model or setting with another, on the same reference.
 - **Do not read a score as accuracy.** An extraction that differs from the reference is not necessarily wrong, and one that agrees with it is not necessarily right.
@@ -106,6 +110,8 @@ uv run python -m dev.evals.docling_pdf_cases
 uv run python -m dev.evals.docling_pdf_cases --report
 ```
 
+`--output-language` sets the output language of an LLM, a BCP 47 language tag or `adapt`, e.g. `--output-language zh-Hant`; the run records it, and its judgment then judges the language of what the LLM wrote. Record each output language under a label of its own.
+
 `--concurrency` runs the extraction with `use_concurrency=True`. One line is printed per run, which starts with the name of its file. The library prints its logs as usual: set `CONTEXTGEM_LOGGER_LEVEL=WARNING` for a quiet run.
 
 A run records the calls that failed without an exception (`extraction_warnings`) and the aspects that a decision model refused to answer about on some paragraphs (`refusal_warnings`) from the messages that the library logs at the `WARNING` level. The runs recorded from 2026-10-15 to 2026-10-23, before `baseline_2026-10-23`, have both lists empty: they were read from Python warnings, which the library stopped issuing for these events on 2026-10-15. In those runs, a failed call shows only in the scores, e.g. an aspect F1 of 0.
@@ -120,7 +126,9 @@ A run records the calls that failed without an exception (`extraction_warnings`)
   - the text fields of the objects of JSON object concepts, against the reference object with the same name or ID (the other fields are compared exactly).
 
   The judge is asked one yes/no question at a time, with the questions of `judge.py`, not with the prompts of the library, so that a change of the library does not change the judge. A verdict is "correct" at a probability of 0.5 or more; the probability is kept. The judgment of a run records the judge, a hash of its questions and of the reference answers it judged against, and its cost. Decision models give no strings, objects or justifications, so their runs are not judged.
-- **The judge is checked before it is used**: `cases/judge_checks.json` has candidate answers of the three cases whose verdict is known, right ones in other words and wrong ones with the mistakes a capable model makes. `judge --checks` records how often the judge agrees, for each kind, in `results/<label>/judge_checks.json`. Read a judged score with that agreement in mind.
+- **The language of what an LLM wrote**, for a run that records an output language: each string value and each justification of a concept or an aspect is asked whether it is written in the required language, i.e. the output language, or for `adapt` the language of the document (German for `complex_multilingual`, English for the other cases). The questions on the values and the justifications of such a run say which language the candidate is written in, as the reference answers are in English. The question on the language has a fingerprint of its own (`language_questions`), so the verdicts of the runs without an output language keep theirs.
+- **The judge does not tell the scripts of Chinese or the variants of Portuguese apart**: in the checks of 2026-10-27, `typesafe/jev-latest` judged Traditional Chinese to be Simplified Chinese and the reverse (probabilities 0.68 to 0.95), European Portuguese to be Brazilian Portuguese and the reverse (0.61 and 0.91), and a sentence in Japanese to be Traditional Chinese (0.79), while it told every language apart from another (Japanese from Chinese and Korean, German from Dutch and French, Portuguese from Spanish). So each text of a run with such an output language also gets the markers of its variant, without a model (`language_markers.py`): characters that only Simplified or only Traditional Chinese has, kana (Japanese, among texts that are to be Chinese), and words that Brazilian and European Portuguese write differently (ônus and ónus, registro and registo, contato and contacto). The markers tell the variant of a text in the required language, not the language: the Spanish "adenda" is a marker of European Portuguese. A text without any marker, e.g. "Lei alemã", is written alike in both variants.
+- **The judge is checked before it is used**: `cases/judge_checks.json` has candidate answers of the cases whose verdict is known, right ones in other words and wrong ones with the mistakes a capable model makes, among them answers of `complex_multilingual` in Japanese, Chinese, Portuguese and German against its reference answers in English (`candidate_language`), and texts whose language is known, in the right language and in near ones (`kind` `language`). `judge --checks` records how often the judge agrees, for each kind, in `results/<label>/judge_checks.json`, with the markers of the variant of the texts of the checks of the language. Read a judged score with that agreement in mind.
 - **References of concepts**: F1 of the referenced paragraphs.
 - **Cost**: requests, input, cached and output tokens, seconds, retries for invalid data, and the cost in USD, which each run, judgment, check of the judge and pass of `decision_probabilities` records (the passes recorded before 2026-10-15 have none). The summary of a label adds them up (Cost), and `costs` does so for every label; `uv run fab costs` prints it with what the requests recorded for the tests cost.
 - **Decision models** extract all the aspects, and of the concepts only the Boolean, label and rating ones (the closed concepts), without justifications and references. Their concept counts are not comparable with those of the LLMs: compare the two kinds of model on the aspects and on the column "Closed concepts correct" of the summary, which counts the closed concepts only, for every model. The judged columns are of LLMs only, and no score adds them up with the others, so a decision model loses nothing for what it does not extract.
@@ -386,6 +394,43 @@ The prompts of LLMs that list paragraphs (those of aspects, and of concepts with
 **From the Docling documents** (`--input docling`, every paragraph with its additional context): `markup_2026-10-23_docling_control` and `markup_2026-10-23_docling_lean`, 3 runs of `complex_mcu` and `complex_stability` with both LLMs, recorded at the same time, judged (75 and 76 of the 76 checks). The input tokens drop by 15% to 27% a run (`complex_mcu` with `openai/gpt-6-luna`: 140,060 to 118,797), the retries from 9 to 5, and `openai/gpt-6-luna` scores the same or higher on both cases. `anthropic/claude-haiku-5-5` on `complex_mcu` has an aspect F1 of 0.723 against 0.758, 0.005 beyond the rule's floor with three runs, and one concept fewer (20.7 against 21.7), again by single runs among the concepts of DR-114; on `complex_stability` it scores higher (reference F1 0.873 against 0.722). Cost: USD 0.48 for the two labels.
 
 Not measured: sentence-level references, which no case asks for, and other models. Adopting the listing changed the requests of the recorded tests, whose cassettes were recorded again, and `baseline_2026-10-23` is recorded with it.
+
+## The Output Language
+
+`output_language` takes a BCP 47 language tag, e.g. `ja`, `zh-Hant` or `pt-PT`, besides `en` and `adapt`: string values are translated into its language and justifications are written in it. `complex_multilingual` measures it (see The Cases).
+
+### Measured on 2026-10-27
+
+Seven labels recorded at the same time, `language_2026-10-27_<output language>` for `en`, `adapt`, `ja`, `zh-Hans`, `zh-Hant`, `pt-BR` and `pt-PT`, on `complex_multilingual`, with `litellm` 1.105.2, from commit `943cab2` with the output languages of BCP 47 (not committed then). Anthropic's models only, by decision of the maintainer: `anthropic/claude-haiku-5-5` (3 runs) and `anthropic/claude-sonnet-5-5` (1 run) in each label. The judge, `typesafe/jev-latest`, agreed with 105 of the 112 checks for each label (106 for `pt-BR`): all 12 checks of answers in Japanese, Chinese, Portuguese and German against the reference answers in English, and none of the 6 checks of the variants, which the markers count instead (see What Is Measured). Cost: USD 1.71 for the runs, USD 0.06 for the judge.
+
+| Output language | Model | Aspect F1 | Concepts correct (of 10) | Reference F1 | Strings correct | Justifications correct | In the language | Variant markers (required / other / mixed / none) | Output tokens a run |
+|---|---|---|---|---|---|---|---|---|---|
+| `en` | Haiku 5.5 | 0.901 | 7.7 | 0.788 | 18/18 | 47/51 | 172/172 | | 8,760 |
+| `en` | Sonnet 5.5 | 0.982 | 10 | 0.924 | 6/6 | 18/18 | 67/67 | | 6,900 |
+| `adapt` | Haiku 5.5 | 0.928 | 7.0 | 0.784 | 18/18 | 44/51 | 178/181 | | 13,124 |
+| `adapt` | Sonnet 5.5 | 0.991 | 10 | 0.945 | 5/6 | 18/18 | 49/67 | | 8,769 |
+| `ja` | Haiku 5.5 | 0.923 | 7.3 | 0.739 | 16/18 | 46/50 | 177/178 | | 11,954 |
+| `ja` | Sonnet 5.5 | 0.991 | 10 | 0.914 | 6/6 | 18/18 | 67/69 | | 6,961 |
+| `zh-Hans` | Haiku 5.5 | 0.934 | 7.0 | 0.753 | 17/18 | 44/50 | 180/181 | 181 / 0 / 0 / 0 | 9,640 |
+| `zh-Hans` | Sonnet 5.5 | 0.977 | 10 | 0.895 | 6/6 | 18/18 | 71/71 | 71 / 0 / 0 / 0 | 6,894 |
+| `zh-Hant` | Haiku 5.5 | 0.942 | 7.3 | 0.783 | 18/18 | 45/52 | 187/187 | 187 / 0 / 0 / 0 | 11,355 |
+| `zh-Hant` | Sonnet 5.5 | 0.982 | 10 | 0.916 | 6/6 | 17/18 | 68/68 | 68 / 0 / 0 / 0 | 6,371 |
+| `pt-BR` | Haiku 5.5 | 0.951 | 7.7 | 0.799 | 17/18 | 45/53 | 188/188 | 10 / 0 / 0 / 178 | 13,631 |
+| `pt-BR` | Sonnet 5.5 | 0.991 | 10 | 0.926 | 5/6 | 18/18 | 68/68 | 0 / 0 / 0 / 68 | 7,414 |
+| `pt-PT` | Haiku 5.5 | 0.934 | 7.7 | 0.791 | 17/18 | 45/52 | 179/183 | 2 / 0 / 0 / 181 | 14,012 |
+| `pt-PT` | Sonnet 5.5 | 0.977 | 10 | 0.916 | 6/6 | 17/18 | 71/72 | 8 / 0 / 0 / 64 | 7,507 |
+
+Means of the runs for the scores and the tokens; the judged columns over all the runs of the label.
+
+- **With a tag, the models write in its language**: 99 % to 100 % of the texts of each model and label. The texts judged otherwise: a Russian and an English word in a Japanese justification of Haiku ("販売территорияの範囲を specifies する") and a French word in a Chinese one ("également"); the two justifications of computed answers that Sonnet wrote in German with `ja`; and texts in European Portuguese that keep defined terms of the German agreement (Herstellerin, Erstausstattung, Nacherfüllung), which the question on the language says not to count, so the judge is strict there.
+- **They keep the script of Chinese**: every text with `zh-Hans` has characters of Simplified Chinese only (252), and every text with `zh-Hant` those of Traditional Chinese only (255).
+- **They keep the variant of Portuguese where it shows**: most texts are written alike in both variants (246 of 256 with `pt-BR`, 245 of 255 with `pt-PT`), and the 20 that have markers have those of the required variant only.
+- **`en` writes everything in English** on this document in three languages (239 texts), with the instruction it has had since before the tags (string values translated "if the original language of the document is not English").
+- **`adapt` does not keep to one language** on it: the prompt asks for the language that appears most often (German), but the models answered some concepts in the language of the part of the document that they rest on. Haiku wrote the supply period of spare parts, from the English annex, in English in its 3 runs (178 of 181 texts in German); Sonnet wrote its answers on the French amendment and on the document as a whole in French (49 of 67 texts in German). A tag gives one language whatever the document.
+- **The quality of the extraction does not depend on the output language**: Sonnet got all 10 typed concepts in every label, and Haiku 7.0 to 7.7, within the spread of its runs, as were its aspect F1 (0.90 to 0.95) and reference F1 (0.74 to 0.80). Haiku missed the same three concepts in every label, `en` included, all three decided by 9.3 between the German agreement and the English annex: the guaranteed efficiency of HP-500 in all 21 runs (the 78 % of 6.4, not the 76 % of Annex 1), the payment due date in 17 (the 45 days of Annex 1) and the net value of the initial stocking order in 17.
+- **Another language than English adds output tokens**: Haiku wrote 8,760 a run with `en` and 9,640 to 14,012 with the others, Sonnet 6,900 and 6,371 to 8,769, at the same input (64,000 to 75,000 tokens, the higher with retries). 4 retries for invalid data in all, of Haiku, for keys of the answer format (e.g. `reference_paragraphs_ids`), not the language.
+
+The limits: one case, a contract; Anthropic's models only, one run of Sonnet a label; markers for the scripts of Chinese and the variants of Portuguese only; the judge does not tell the variants apart.
 
 ## Adding a Case
 

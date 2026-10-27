@@ -49,6 +49,7 @@ from contextgem import (
 )
 from dev.evals.cases.complex_dpa import build_complex_dpa_pipeline
 from dev.evals.cases.complex_mcu import build_complex_mcu_pipeline
+from dev.evals.cases.complex_multilingual import build_complex_multilingual_pipeline
 from dev.evals.cases.complex_nda import build_complex_nda_pipeline
 from dev.evals.cases.complex_stability import build_complex_stability_pipeline
 from dev.evals.docling_pdf_cases import PDF_CASES
@@ -76,6 +77,7 @@ _PIPELINE_BUILDERS: dict[str, Callable[[], ExtractionPipeline]] = {
     "complex_dpa": build_complex_dpa_pipeline,
     "complex_mcu": build_complex_mcu_pipeline,
     "complex_stability": build_complex_stability_pipeline,
+    "complex_multilingual": build_complex_multilingual_pipeline,
 }
 CASE_NAMES = tuple(_PIPELINE_BUILDERS)
 

@@ -1,0 +1,194 @@
+[
+  {
+    "case": "complex_multilingual",
+    "model": "anthropic/claude-haiku-5-5",
+    "mode": "default",
+    "runs": 3,
+    "aspect_f1": [
+      0.9342857142857143,
+      0.9315384615384615,
+      0.9039855072463768
+    ],
+    "aspect_precision": [
+      0.9642857142857143,
+      0.9791666666666666,
+      1.0
+    ],
+    "aspect_recall": [
+      0.9107142857142857,
+      0.8928571428571428,
+      0.8392857142857143
+    ],
+    "concepts_correct": [
+      7,
+      7,
+      8
+    ],
+    "n_concepts_scored": 10,
+    "closed_concepts_correct": [
+      3,
+      3,
+      3
+    ],
+    "n_closed_concepts": 3,
+    "reference_f1": [
+      0.7008928571428571,
+      0.7556089743589743,
+      0.7618055555555555
+    ],
+    "requests": [
+      6,
+      6,
+      7
+    ],
+    "input_tokens": [
+      66374,
+      66046,
+      82660
+    ],
+    "cache_read_tokens": [
+      0,
+      0,
+      0
+    ],
+    "output_tokens": [
+      9820,
+      12202,
+      13839
+    ],
+    "cost_total": [
+      "0.01155",
+      "0.01270",
+      "0.01519"
+    ],
+    "seconds": [
+      50.2,
+      64.6,
+      74.9
+    ],
+    "retries": [
+      0,
+      0,
+      1
+    ],
+    "errors": [],
+    "warnings": 0,
+    "judged": [
+      {
+        "n_strings": 6,
+        "n_strings_correct": 5,
+        "n_justifications": 16,
+        "n_justifications_correct": 15,
+        "n_fields": 6,
+        "n_fields_correct": 6,
+        "n_language_strings": 6,
+        "n_language_strings_correct": 6,
+        "n_language_justifications": 16,
+        "n_language_justifications_correct": 16,
+        "n_language_aspect_justifications": 40,
+        "n_language_aspect_justifications_correct": 39,
+        "n_language_all": 62,
+        "n_language_all_correct": 61
+      },
+      {
+        "n_strings": 6,
+        "n_strings_correct": 6,
+        "n_justifications": 17,
+        "n_justifications_correct": 15,
+        "n_fields": 6,
+        "n_fields_correct": 6,
+        "n_language_strings": 6,
+        "n_language_strings_correct": 6,
+        "n_language_justifications": 17,
+        "n_language_justifications_correct": 17,
+        "n_language_aspect_justifications": 37,
+        "n_language_aspect_justifications_correct": 37,
+        "n_language_all": 60,
+        "n_language_all_correct": 60
+      },
+      {
+        "n_strings": 6,
+        "n_strings_correct": 5,
+        "n_justifications": 17,
+        "n_justifications_correct": 16,
+        "n_fields": 6,
+        "n_fields_correct": 6,
+        "n_language_strings": 6,
+        "n_language_strings_correct": 6,
+        "n_language_justifications": 17,
+        "n_language_justifications_correct": 17,
+        "n_language_aspect_justifications": 33,
+        "n_language_aspect_justifications_correct": 33,
+        "n_language_all": 56,
+        "n_language_all_correct": 56
+      }
+    ]
+  },
+  {
+    "case": "complex_multilingual",
+    "model": "anthropic/claude-sonnet-5-5",
+    "mode": "default",
+    "runs": 1,
+    "aspect_f1": [
+      0.9913793103448276
+    ],
+    "aspect_precision": [
+      0.9833333333333334
+    ],
+    "aspect_recall": [
+      1.0
+    ],
+    "concepts_correct": [
+      10
+    ],
+    "n_concepts_scored": 10,
+    "closed_concepts_correct": [
+      3
+    ],
+    "n_closed_concepts": 3,
+    "reference_f1": [
+      0.9139880952380952
+    ],
+    "requests": [
+      6
+    ],
+    "input_tokens": [
+      66681
+    ],
+    "cache_read_tokens": [
+      0
+    ],
+    "output_tokens": [
+      6961
+    ],
+    "cost_total": [
+      "0.20297"
+    ],
+    "seconds": [
+      50.2
+    ],
+    "retries": [
+      0
+    ],
+    "errors": [],
+    "warnings": 0,
+    "judged": [
+      {
+        "n_strings": 6,
+        "n_strings_correct": 6,
+        "n_justifications": 18,
+        "n_justifications_correct": 18,
+        "n_fields": 6,
+        "n_fields_correct": 6,
+        "n_language_strings": 6,
+        "n_language_strings_correct": 6,
+        "n_language_justifications": 18,
+        "n_language_justifications_correct": 16,
+        "n_language_aspect_justifications": 45,
+        "n_language_aspect_justifications_correct": 45,
+        "n_language_all": 69,
+        "n_language_all_correct": 67
+      }
+    ]
+  }
+]

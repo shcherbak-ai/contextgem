@@ -1,0 +1,736 @@
+{
+  "case": "complex_multilingual",
+  "model": "anthropic/claude-haiku-5-5",
+  "kind": "llm",
+  "mode": "default",
+  "input": "text",
+  "output_language": "pt-PT",
+  "label": "language_2026-10-27_pt-PT",
+  "run": 2,
+  "error": null,
+  "seconds": 69.4,
+  "usage": {
+    "requests": 6,
+    "requests_without_response": 0,
+    "input_tokens": 66446,
+    "output_tokens": 15417,
+    "cache_read_tokens": 0,
+    "cache_write_tokens": 0,
+    "cost_total": "0.01435"
+  },
+  "retries_for_invalid_data": 0,
+  "responses_not_valid_json": 0,
+  "extraction_warnings": [],
+  "refusal_warnings": [],
+  "provenance": {
+    "litellm": "1.105.2",
+    "prompts": {
+      "decision_question_aspect.j2": "7b069363576f",
+      "decision_question_concept.j2": "603962caf35d",
+      "default_system_message.j2": "7caf01ad2258",
+      "extract_aspect_items.j2": "608a42da2686",
+      "extract_concept_items.j2": "9157ee48d75f"
+    }
+  },
+  "scores": {
+    "summary": {
+      "aspect_f1": 0.9521428571428572,
+      "aspect_precision": 0.9821428571428572,
+      "aspect_recall": 0.9285714285714286,
+      "concept_accuracy": 0.8,
+      "n_concepts_scored": 10,
+      "n_concepts_correct": 8,
+      "string_exact": 0.0,
+      "n_strings": 6,
+      "reference_f1": 0.8481414418914419,
+      "n_concepts_without_items": 0
+    },
+    "aspects": [
+      {
+        "name": "Territory and minimum purchases",
+        "n_predicted": 8,
+        "n_gold": 8,
+        "n_neutral_predicted": 0,
+        "predicted_paragraphs": [
+          8,
+          9,
+          10,
+          13,
+          14,
+          15,
+          73,
+          74
+        ],
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0,
+        "justifications": [
+          "Define o Território contratual como o território francês continental e a Córsega, excluindo os departamentos e territórios ultramarinos, e o Principado do Mónaco. Esta delimitação fixa a área de exclusividade.",
+          "Estabelece a exclusividade do Distribuidor no Território, proibindo a Fabricante de nomear outros distribuidores ou de fornecer diretamente clientes aí situados.",
+          "Restringe a atividade ativa do Distribuidor fora do Território, proibindo publicidade direcionada e filiais, mas permitindo encomendas não solicitadas.",
+          "Fixa a quantidade mínima de compra de 120 bombas por ano civil, excluindo as peças sobresselentes do cálculo.",
+          "Determina que o fornecimento inicial (Erstausstattung) é imputado à quantidade mínima de 2027.",
+          "Prevê como consequência da falta de compra a revogação da exclusividade com aviso de três meses, excluindo outros direitos da Fabricante, como indemnização ou resolução.",
+          "Altera o Território a partir de 1 de janeiro de 2028 para incluir a Bélgica com exclusividade, e autoriza a venda ativa não exclusiva no Luxemburgo, que fica fora do Território.",
+          "Altera a quantidade mínima de 2028 para uma redução de 25 %, contando as vendas destinadas à Bélgica e ao Luxemburgo; os anos seguintes mantêm o mínimo original."
+        ]
+      },
+      {
+        "name": "Delivery and transport risk",
+        "n_predicted": 6,
+        "n_gold": 6,
+        "n_neutral_predicted": 1,
+        "predicted_paragraphs": [
+          24,
+          25,
+          26,
+          64,
+          67,
+          75,
+          76
+        ],
+        "precision": 1.0,
+        "recall": 1.0,
+        "f1": 1.0,
+        "justifications": [
+          "Define a entrega FCA Werk Lindenfurt (Incoterms 2020), cabendo ao Distribuidor designar o transportador e suportar os custos de transporte desde a fábrica.",
+          "Estabelece a transferência do risco de perda ou deterioração das mercadorias para o Distribuidor com a entrega ao transportador designado em Lindenfurt.",
+          "Remete os prazos de entrega para o Anexo 1, admite entregas parciais quando razoáveis e prevê a resolução por atraso após nachfrist sem cumprimento.",
+          "Indica que o fornecimento inicial é entregue ao transportador do Distribuidor na fábrica de Lindenfurt em 15 de março de 2027.",
+          "Especifica o regime FCA Lindenfurt e os prazos de entrega de seis semanas para HP-200 e HP-350 e de dez semanas para HP-500, contados da confirmação da encomenda.",
+          "Altera, a partir de 1 de março de 2028, o regime de entrega para DAP no armazém do Distribuidor em Bellerive-sur-Erdre, com os custos de transporte a cargo da Fabricante.",
+          "Transfere o risco para o Distribuidor no momento em que as mercadorias são colocadas à sua disposição no armazém, prontas para descarga, ficando a descarga por sua conta e risco."
+        ]
+      },
+      {
+        "name": "Prices and payment",
+        "n_predicted": 14,
+        "n_gold": 14,
+        "n_neutral_predicted": 0,
+        "predicted_paragraphs": [
+          17,
+          18,
+          19,
+          20,
+          21,
+          22,
+          45,
+          50,
+          57,
+          58,
+          59,
+          64,
+          65,
+          75
+        ],
+        "precision": 0.9285714285714286,
+        "recall": 0.9285714285714286,
+        "f1": 0.9285714285714286,
+        "justifications": [
+          "Prevê o fornecimento aos preços de lista do Anexo 1, líquidos de IVA e incluindo embalagem standard.",
+          "Indica o preço de lista de 7.150 EUR líquidos por unidade da série HP-350, segundo a tabela de preços vigente à data do contrato.",
+          "Concede um desconto de introdução único de 8 % sobre o fornecimento inicial, sem outros descontos.",
+          "Permite à Fabricante ajustar os preços de lista a partir de 1 de janeiro de 2028, no máximo uma vez por ano e até 4 %, com aviso prévio de três meses.",
+          "Prevê a faturação de cada entrega na data do Gefahrübergang, transmitida eletronicamente para a morada indicada pelo Distribuidor.",
+          "Fixa o pagamento sem dedução em 30 dias a contar da data da fatura, com 2 % de desconto por pagamento em 10 dias.",
+          "Regra de precedência: o texto alemão prevalece em caso de conflito, exceto para dados técnicos e preços de lista, que seguem o Anexo 1 mesmo quando este dispõe de outro modo.",
+          "Regra de precedência: o Anexo prevalece sobre o Contrato em caso de inconsistência, o que colide com a regra de precedência do texto alemão.",
+          "Indica o preço de lista de 4.850 EUR líquidos por unidade da série HP-200 no Anexo 1.",
+          "Indica o preço de lista de 7.250 EUR líquidos por unidade da série HP-350 no Anexo 1.",
+          "Indica o preço de lista de 11.400 EUR líquidos por unidade da série HP-500 no Anexo 1.",
+          "Define o fornecimento inicial de 10 unidades HP-200, 6 HP-350 e 2 HP-500, faturado em 15 de março de 2027.",
+          "Estabelece o pagamento a 45 dias líquidos da data da fatura, com 2 % de desconto para pagamento em 10 dias.",
+          "Confirma que os preços do Anexo 1 permanecem inalterados nas entregas DAP alteradas."
+        ]
+      },
+      {
+        "name": "Warranty and product performance",
+        "n_predicted": 11,
+        "n_gold": 14,
+        "n_neutral_predicted": 0,
+        "predicted_paragraphs": [
+          28,
+          29,
+          30,
+          31,
+          32,
+          33,
+          45,
+          50,
+          52,
+          53,
+          68
+        ],
+        "precision": 1.0,
+        "recall": 0.7857142857142857,
+        "f1": 0.88,
+        "justifications": [
+          "Impõe ao Distribuidor a inspeção imediata da mercadoria e a notificação escrita de defeitos aparentes e ocultos no prazo de oito dias úteis, sob pena de aprovação da mercadoria.",
+          "Fixa o período de garantia de 24 meses para os Produtos Contratuais, a contar da transferência do risco.",
+          "Estabelece um período de garantia de 12 meses para as peças de desgaste, cuja lista consta do Anexo 1.",
+          "Garante que as bombas cumprem os dados técnicos do Anexo 1 na transferência do risco, incluindo um rendimento mínimo de 78 % no ponto ótimo da série HP-500.",
+          "Regula os remédios por defeitos: reparação ou substituição à escolha da Fabricante e resolução ou redução do preço após duas falhas, suportando a Fabricante os custos.",
+          "Prevê a manutenção de peças sobresselentes para os Produtos Contratuais, no âmbito e pelo período definidos no Anexo 1.",
+          "Regra de precedência: o texto alemão prevalece em caso de conflito, exceto para dados técnicos e preços de lista, que seguem o Anexo 1 mesmo quando este dispõe de outro modo.",
+          "Regra de precedência: o Anexo prevalece sobre o Contrato em caso de inconsistência, o que colide com a regra de precedência do texto alemão.",
+          "Define os valores de rendimento garantidos no ponto ótimo, verificados por ensaio de receção de cada bomba segundo a norma ISO 9906.",
+          "Define as peças de desgaste como vedantes mecânicos, anéis O, anéis de desgaste e casquilhos, excluindo impulsores, eixos e carcaças.",
+          "Fixa o fornecimento de peças sobresselentes durante 10 anos após o fim da produção em série, com expedição das peças em stock em 5 dias úteis."
+        ]
+      }
+    ],
+    "concepts": [
+      {
+        "context": "document",
+        "name": "Amendment No. 1 effective date",
+        "type": "DateConcept",
+        "n_items": 1,
+        "n_gold_items": 1,
+        "predicted": [
+          "2027-11-19"
+        ],
+        "gold": [
+          "2027-11-19"
+        ],
+        "scoring": "exact",
+        "correct": true,
+        "predicted_references": [
+          78,
+          79
+        ],
+        "references": {
+          "precision": 1.0,
+          "recall": 1.0,
+          "f1": 1.0
+        },
+        "values": [
+          "2027-11-19"
+        ],
+        "justifications": [
+          "O Avenant entra em vigor na data da sua assinatura pela última das Partes, que foi Lindenfurt a 19 de novembro de 2027. Bellerive-sur-Erdre assinou a 12 de novembro de 2027."
+        ]
+      },
+      {
+        "context": "document",
+        "name": "Changes made by Amendment No. 1",
+        "type": "StringConcept",
+        "n_items": 1,
+        "n_gold_items": 1,
+        "predicted": [
+          "alarga o território à bélgica a partir de 1 de janeiro de 2028, autoriza a comercialização ativa e não exclusiva no luxemburgo, reduz em 25 % a quantidade mínima de compra de 2028, altera a entrega para dap armazém do distribuidor em bellerive-sur-erdre e transfere os riscos nesse local."
+        ],
+        "gold": [
+          "from 1 january 2028 it adds belgium to the exclusive territory and allows non-exclusive sales in luxembourg, it reduces the 2028 minimum purchase quantity by 25 %, and for deliveries from 1 march 2028 it replaces fca lindenfurt with dap delivery to the distributor's bellerive-sur-erdre warehouse, where the risk then passes."
+        ],
+        "scoring": "exact_or_accepted",
+        "correct": false,
+        "predicted_references": [
+          73,
+          74,
+          75,
+          76
+        ],
+        "references": {
+          "precision": 1.0,
+          "recall": 1.0,
+          "f1": 1.0
+        },
+        "values": [
+          "Alarga o Território à Bélgica a partir de 1 de janeiro de 2028, autoriza a comercialização ativa e não exclusiva no Luxemburgo, reduz em 25 % a quantidade mínima de compra de 2028, altera a entrega para DAP armazém do Distribuidor em Bellerive-sur-Erdre e transfere os riscos nesse local."
+        ],
+        "justifications": [
+          "O avenant altera o âmbito territorial, a quantidade mínima de 2028, as condições de entrega e a transferência de riscos previstas no Contrato. Estas alterações resultam dos artigos 2.º a 5.º do avenant."
+        ]
+      },
+      {
+        "context": "document",
+        "name": "Governing law and jurisdiction",
+        "type": "StringConcept",
+        "n_items": 1,
+        "n_gold_items": 1,
+        "predicted": [
+          "direito da república federal da alemanha, com exclusão da cisg; tribunal competente exclusivo em lindenfurt."
+        ],
+        "gold": [
+          "german law, excluding the cisg; the courts of lindenfurt have exclusive jurisdiction."
+        ],
+        "scoring": "exact_or_accepted",
+        "correct": false,
+        "predicted_references": [
+          40,
+          41
+        ],
+        "references": {
+          "precision": 1.0,
+          "recall": 1.0,
+          "f1": 1.0
+        },
+        "values": [
+          "Direito da República Federal da Alemanha, com exclusão da CISG; tribunal competente exclusivo em Lindenfurt."
+        ],
+        "justifications": [
+          "O contrato é regido pelo direito alemão, excluindo a Convenção de Viena sobre a compra e venda internacional de mercadorias. O foro exclusivo para litígios é Lindenfurt."
+        ]
+      },
+      {
+        "context": "document",
+        "name": "Prevailing text between the agreement and Annex 1",
+        "type": "StringConcept",
+        "n_items": 1,
+        "n_gold_items": 1,
+        "predicted": [
+          "prevalece o texto alemão do contrato, exceto para os dados técnicos e os preços de tabela, em que prevalece o anexo 1."
+        ],
+        "gold": [
+          "the german agreement prevails, except for technical data and list prices, for which annex 1 prevails."
+        ],
+        "scoring": "exact_or_accepted",
+        "correct": false,
+        "predicted_references": [
+          45,
+          50
+        ],
+        "references": {
+          "precision": 1.0,
+          "recall": 1.0,
+          "f1": 1.0
+        },
+        "values": [
+          "Prevalece o texto alemão do contrato, exceto para os dados técnicos e os preços de tabela, em que prevalece o Anexo 1."
+        ],
+        "justifications": [
+          "A cláusula 9.3 do contrato estabelece a prevalência do texto alemão em caso de divergência, mas dá prioridade ao Anexo 1 nos dados técnicos e nos preços de tabela. Esta regra prevalece sobre o que o Anexo 1 disponha em contrário."
+        ]
+      },
+      {
+        "context": "document",
+        "name": "HP-700 is a Contract Product",
+        "type": "BooleanConcept",
+        "n_items": 1,
+        "n_gold_items": 1,
+        "predicted": [
+          false
+        ],
+        "gold": [
+          false
+        ],
+        "scoring": "exact",
+        "correct": true,
+        "predicted_references": [
+          54,
+          77
+        ],
+        "references": {
+          "precision": 1.0,
+          "recall": 0.6666666666666666,
+          "f1": 0.8
+        },
+        "values": [
+          false
+        ],
+        "justifications": [
+          "O Anexo 1 indica que a série HP-700 não é Produto Contratual, salvo por aditamento escrito. O avenant não a inclui, prevendo apenas que as Partes examinarão a sua inclusão num aditamento separado."
+        ]
+      },
+      {
+        "context": "document",
+        "name": "Contract Products and their list prices",
+        "type": "JsonObjectConcept",
+        "n_items": 3,
+        "n_gold_items": 3,
+        "predicted": [
+          {
+            "description": "bomba centrífuga monobloco de aspiração frontal para água limpa",
+            "list_price_eur": 4850.0,
+            "series": "hp-200"
+          },
+          {
+            "description": "bomba multicelular de carcaça partida para misturas de água e glicol",
+            "list_price_eur": 7250.0,
+            "series": "hp-350"
+          },
+          {
+            "description": "bomba de alta pressão de dois estágios para alimentação de caldeiras e água de processo",
+            "list_price_eur": 11400.0,
+            "series": "hp-500"
+          }
+        ],
+        "gold": [
+          {
+            "description": "single-stage end-suction centrifugal pump for clean water",
+            "list_price_eur": 4850.0,
+            "series": "hp-200"
+          },
+          {
+            "description": "single-stage split-case pump for water and glycol mixtures",
+            "list_price_eur": 7250.0,
+            "series": "hp-350"
+          },
+          {
+            "description": "two-stage high-pressure pump for boiler feed and process water",
+            "list_price_eur": 11400.0,
+            "series": "hp-500"
+          }
+        ],
+        "scoring": "keys_of_objects",
+        "correct": true,
+        "field_match_rate": 0.6666666666666666,
+        "predicted_references": [
+          18,
+          45,
+          57,
+          58,
+          59
+        ],
+        "references": {
+          "precision": 1.0,
+          "recall": 0.8333333333333334,
+          "f1": 0.9090909090909091
+        },
+        "values": [
+          {
+            "series": "HP-200",
+            "description": "Bomba centrífuga monobloco de aspiração frontal para água limpa",
+            "list_price_eur": 4850
+          },
+          {
+            "series": "HP-350",
+            "description": "Bomba multicelular de carcaça partida para misturas de água e glicol",
+            "list_price_eur": 7250
+          },
+          {
+            "series": "HP-500",
+            "description": "Bomba de alta pressão de dois estágios para alimentação de caldeiras e água de processo",
+            "list_price_eur": 11400
+          }
+        ],
+        "justifications": [
+          "A série HP-200 é Produto Contratual no Anexo 1, com preço de tabela de 4.850 EUR líquidos por unidade. O avenant não altera os preços do Anexo 1.",
+          "A série HP-350 é Produto Contratual no Anexo 1, com preço de tabela de 7.250 EUR líquidos por unidade. O preço de 7.150 EUR indicado no § 4.2 é afastado, pois para preços de tabela prevalece o Anexo 1.",
+          "A série HP-500 é Produto Contratual no Anexo 1, com preço de tabela de 11.400 EUR líquidos por unidade. O avenant não altera os preços do Anexo 1."
+        ]
+      },
+      {
+        "context": "aspect: Territory and minimum purchases",
+        "name": "Countries of the exclusive territory in 2028",
+        "type": "LabelConcept",
+        "n_items": 1,
+        "n_gold_items": 1,
+        "predicted": [
+          [
+            "belgium",
+            "france",
+            "monaco"
+          ]
+        ],
+        "gold": [
+          [
+            "belgium",
+            "france",
+            "monaco"
+          ]
+        ],
+        "scoring": "exact",
+        "correct": true,
+        "predicted_references": [
+          8,
+          9,
+          73
+        ],
+        "references": {
+          "precision": 1.0,
+          "recall": 1.0,
+          "f1": 1.0
+        },
+        "values": [
+          [
+            "France",
+            "Monaco",
+            "Belgium"
+          ]
+        ],
+        "justifications": [
+          "A exclusividade do distribuidor abrange a França e o Mónaco no território contratual original. Com a alteração, a partir de 1 de janeiro de 2028, a Bélgica passa a integrar o território com a mesma exclusividade, enquanto o Luxemburgo fica excluído por ser apenas de venda não exclusiva."
+        ]
+      },
+      {
+        "context": "aspect: Territory and minimum purchases",
+        "name": "Minimum purchase quantity for 2028 in pumps",
+        "type": "NumericalConcept",
+        "n_items": 1,
+        "n_gold_items": 1,
+        "predicted": [
+          90.0
+        ],
+        "gold": [
+          90.0
+        ],
+        "scoring": "exact",
+        "correct": true,
+        "predicted_references": [
+          13,
+          74
+        ],
+        "references": {
+          "precision": 1.0,
+          "recall": 1.0,
+          "f1": 1.0
+        },
+        "values": [
+          90
+        ],
+        "justifications": [
+          "O contrato prevê 120 bombas por ano, e a alteração reduz em 25 % a quantidade mínima de compra de 2028, o que corresponde a 90 bombas."
+        ]
+      },
+      {
+        "context": "aspect: Territory and minimum purchases",
+        "name": "Consequence of a minimum purchase shortfall",
+        "type": "StringConcept",
+        "n_items": 1,
+        "n_gold_items": 1,
+        "predicted": [
+          "o fabricante pode revogar a exclusividade mediante declaração escrita com três meses de antecedência, passando o contrato a ser não exclusivo, mas não pode exigir indemnização nem rescindir o contrato por esse motivo."
+        ],
+        "gold": [
+          "the manufacturer may revoke the distributor's exclusivity by written notice with three months' notice, the agreement continuing as a non-exclusive one; it has no other rights or claims for the shortfall, such as damages or termination."
+        ],
+        "scoring": "exact_or_accepted",
+        "correct": false,
+        "predicted_references": [
+          15
+        ],
+        "references": {
+          "precision": 1.0,
+          "recall": 1.0,
+          "f1": 1.0
+        },
+        "values": [
+          "O fabricante pode revogar a exclusividade mediante declaração escrita com três meses de antecedência, passando o contrato a ser não exclusivo, mas não pode exigir indemnização nem rescindir o contrato por esse motivo."
+        ],
+        "justifications": [
+          "O contrato estabelece que a revogação da exclusividade é a única consequência de uma falta de cumprimento da quantidade mínima, excluindo expressamente outros direitos como indemnização ou rescisão."
+        ]
+      },
+      {
+        "context": "aspect: Delivery and transport risk",
+        "name": "Incoterm of a delivery on 12 April 2028",
+        "type": "LabelConcept",
+        "n_items": 1,
+        "n_gold_items": 1,
+        "predicted": [
+          [
+            "dap"
+          ]
+        ],
+        "gold": [
+          [
+            "dap"
+          ]
+        ],
+        "scoring": "exact",
+        "correct": true,
+        "predicted_references": [
+          75
+        ],
+        "references": {
+          "precision": 1.0,
+          "recall": 0.3333333333333333,
+          "f1": 0.5
+        },
+        "values": [
+          [
+            "DAP"
+          ]
+        ],
+        "justifications": [
+          "Para entregas a partir de 1 de março de 2028, o artigo 4 substitui o regime FCA pelo DAP no armazém do Distribuidor em Bellerive-sur-Erdre, aplicável à entrega de 12 de abril de 2028."
+        ]
+      },
+      {
+        "context": "aspect: Delivery and transport risk",
+        "name": "Passing of the transport risk",
+        "type": "StringConcept",
+        "n_items": 1,
+        "n_gold_items": 1,
+        "predicted": [
+          "antes da alteração, o risco de perda ou deterioração das mercadorias transfere-se para o distribuidor com a entrega ao transportador por ele designado na fábrica de lindenfurt. para entregas a partir de 1 de março de 2028, o risco transfere-se quando as mercadorias são postas à disposição do distribuidor no seu armazém de bellerive-sur-erdre, no meio de transporte de chegada e prontas para descarga."
+        ],
+        "gold": [
+          "for deliveries before 1 march 2028 the risk passes to the distributor when the goods are handed to its carrier at the lindenfurt plant (fca); for deliveries from 1 march 2028 the manufacturer bears it until the goods are made available, ready for unloading, at the distributor's warehouse in bellerive-sur-erdre (dap)."
+        ],
+        "scoring": "exact_or_accepted",
+        "correct": false,
+        "predicted_references": [
+          25,
+          76
+        ],
+        "references": {
+          "precision": 1.0,
+          "recall": 0.5,
+          "f1": 0.6666666666666666
+        },
+        "values": [
+          "Antes da alteração, o risco de perda ou deterioração das mercadorias transfere-se para o Distribuidor com a entrega ao transportador por ele designado na fábrica de Lindenfurt. Para entregas a partir de 1 de março de 2028, o risco transfere-se quando as mercadorias são postas à disposição do Distribuidor no seu armazém de Bellerive-sur-Erdre, no meio de transporte de chegada e prontas para descarga."
+        ],
+        "justifications": [
+          "A transferência do risco ocorre na entrega ao transportador em Lindenfurt (FCA) antes da alteração e, após a alteração, na disponibilização no armazém do Distribuidor (DAP)."
+        ]
+      },
+      {
+        "context": "aspect: Prices and payment",
+        "name": "Net value of the initial stocking order in EUR",
+        "type": "NumericalConcept",
+        "n_items": 1,
+        "n_gold_items": 1,
+        "predicted": [
+          105616.0
+        ],
+        "gold": [
+          105616.0
+        ],
+        "scoring": "exact",
+        "correct": true,
+        "predicted_references": [
+          19,
+          45,
+          57,
+          58,
+          59,
+          64
+        ],
+        "references": {
+          "precision": 1.0,
+          "recall": 0.8571428571428571,
+          "f1": 0.923076923076923
+        },
+        "values": [
+          105616
+        ],
+        "justifications": [
+          "Erstausstattung de 10 unidades HP-200 (4.850 EUR), 6 unidades HP-350 (7.250 EUR) e 2 unidades HP-500 (11.400 EUR), totalizando 114.800 EUR, com desconto de introdução de 8 %, dá 105.616 EUR líquidos. Prevalecem os preços do Anexo 1."
+        ]
+      },
+      {
+        "context": "aspect: Prices and payment",
+        "name": "Payment due date of the initial stocking order invoice",
+        "type": "DateConcept",
+        "n_items": 1,
+        "n_gold_items": 1,
+        "predicted": [
+          "2027-04-29"
+        ],
+        "gold": [
+          "2027-04-14"
+        ],
+        "scoring": "exact",
+        "correct": false,
+        "predicted_references": [
+          50,
+          64,
+          65
+        ],
+        "references": {
+          "precision": 0.6666666666666666,
+          "recall": 0.5,
+          "f1": 0.5714285714285715
+        },
+        "values": [
+          "2027-04-29"
+        ],
+        "justifications": [
+          "A fatura da Erstausstattung é emitida em 15 de março de 2027, com prazo de pagamento de 45 dias líquidos a contar da data da fatura, excluindo esse dia. O Anexo prevalece sobre o Contrato, pelo que o último dia de pagamento é 29 de abril de 2027."
+        ]
+      },
+      {
+        "context": "aspect: Warranty and product performance",
+        "name": "Guaranteed minimum efficiency of HP-500 at BEP in %",
+        "type": "NumericalConcept",
+        "n_items": 1,
+        "n_gold_items": 1,
+        "predicted": [
+          78.0
+        ],
+        "gold": [
+          76.0
+        ],
+        "scoring": "exact",
+        "correct": false,
+        "predicted_references": [
+          31
+        ],
+        "references": {
+          "precision": 1.0,
+          "recall": 0.25,
+          "f1": 0.4
+        },
+        "values": [
+          78
+        ],
+        "justifications": [
+          "A cláusula garante que a eficiência mínima da série HP-500 no ponto de melhor rendimento é de 78 %, a partir da transferência de risco."
+        ]
+      },
+      {
+        "context": "aspect: Warranty and product performance",
+        "name": "Warranty period of a mechanical seal in months",
+        "type": "NumericalConcept",
+        "n_items": 1,
+        "n_gold_items": 1,
+        "predicted": [
+          12.0
+        ],
+        "gold": [
+          12.0
+        ],
+        "scoring": "exact",
+        "correct": true,
+        "predicted_references": [
+          30,
+          53
+        ],
+        "references": {
+          "precision": 1.0,
+          "recall": 0.6666666666666666,
+          "f1": 0.8
+        },
+        "values": [
+          12
+        ],
+        "justifications": [
+          "As vedações mecânicas são Verschleißteile, e para estas o prazo de garantia é de doze meses a partir da transferência de risco, em derrogação do prazo geral de 24 meses."
+        ]
+      },
+      {
+        "context": "aspect: Warranty and product performance",
+        "name": "Spare parts supply period",
+        "type": "StringConcept",
+        "n_items": 1,
+        "n_gold_items": 1,
+        "predicted": [
+          "a fabricante deve fornecer peças sobresselentes para cada série de produtos contratuais durante 10 anos após o fim da respetiva produção em série."
+        ],
+        "gold": [
+          "for 10 years after the end of the series production of each contract product series."
+        ],
+        "scoring": "exact_or_accepted",
+        "correct": false,
+        "predicted_references": [
+          33,
+          68
+        ],
+        "references": {
+          "precision": 1.0,
+          "recall": 1.0,
+          "f1": 1.0
+        },
+        "values": [
+          "A Fabricante deve fornecer peças sobresselentes para cada série de Produtos Contratuais durante 10 anos após o fim da respetiva produção em série."
+        ],
+        "justifications": [
+          "O anexo define um período de fornecimento de peças sobresselentes de 10 anos após o fim da produção em série de cada série de produtos. A cláusula 6.6 remete para este anexo para a duração do stock de peças."
+        ]
+      }
+    ]
+  }
+}
