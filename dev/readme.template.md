@@ -320,14 +320,16 @@ Apache 2.0 License - see the [LICENSE](LICENSE) and [NOTICE](NOTICE) files for d
 <!-- markdownlint-disable MD033 -->
 <table>
   <tr>
-    <td width="50%" align="center" valign="top">
-      <a href="https://github.com/shcherbak-ai/licenseal"><img src="assets/licenseal-wordmark.svg" alt="licenseal" width="336"></a><br>
-      License compatibility checks for dependency trees, fast enough for CI.
-    </td>
-    <td width="50%" align="center" valign="top">
-      <a href="https://github.com/shcherbak-ai/tethered"><img src="assets/tethered-wordmark.svg" alt="tethered" width="336"></a><br>
-      Network egress control for CLI tools and agent workflows.
-    </td>
+    <td width="36%" align="center"><a href="https://github.com/shcherbak-ai/licenseal"><img src="assets/licenseal-wordmark.svg" alt="licenseal" width="252"></a></td>
+    <td>License compatibility checks for dependency trees, fast enough for CI.</td>
+  </tr>
+  <tr>
+    <td width="36%" align="center"><a href="https://github.com/shcherbak-ai/tethered"><img src="assets/tethered-wordmark.svg" alt="tethered" width="252"></a></td>
+    <td>Runtime network egress control for Python.</td>
+  </tr>
+  <tr>
+    <td width="36%" align="center"><a href="https://github.com/shcherbak-ai/omerta"><img src="assets/omerta-wordmark.svg" alt="omerta" width="252"></a></td>
+    <td>Catches .env secrets leaking into git: your own values, not lookalikes.</td>
   </tr>
 </table>
 <!-- markdownlint-enable MD033 -->
