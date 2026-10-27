@@ -15,7 +15,7 @@ where the two differ, the docstrings apply. The classes and functions to use
 are those that this module exports (``contextgem.__all__``).
 """
 
-__version__ = "1.4.1"
+__version__ = "1.5.0"
 __author__ = "Shcherbak AI AS"
 
 from contextgem.public import (

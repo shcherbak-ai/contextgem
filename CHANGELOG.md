@@ -6,7 +6,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 - **Refactor**: Code reorganization that doesn't change functionality but improves structure or maintainability
 
-## [Unreleased]
+## [1.5.0] - 2026-10-28
 
 ### Added
 
@@ -735,7 +735,7 @@ See the [migration guide](https://contextgem.shcherbak.ai/migration_v1/) for upd
 
 - Added DocxConverter for converting DOCX files into ContextGem Document objects
 
-[Unreleased]: https://github.com/shcherbak-ai/contextgem/compare/v1.4.1...HEAD
+[1.5.0]: https://github.com/shcherbak-ai/contextgem/compare/v1.4.1...v1.5.0
 [1.4.1]: https://github.com/shcherbak-ai/contextgem/compare/v1.4.0...v1.4.1
 [1.4.0]: https://github.com/shcherbak-ai/contextgem/compare/v1.3.0...v1.4.0
 [1.3.0]: https://github.com/shcherbak-ai/contextgem/compare/v1.2.1...v1.3.0
