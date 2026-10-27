@@ -6,6 +6,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 - **Refactor**: Code reorganization that doesn't change functionality but improves structure or maintainability
 
+## [Unreleased]
+
+### Added
+
+- `output_language` of `DocumentLLM` and `DocumentModelGroup` now takes a BCP 47 language tag of any language, with its script or region where they matter, e.g. `"ja"`, `"zh-Hant"` or `"pt-BR"`, besides `"en"` and `"adapt"`: string values are translated into that language and justifications are written in it, whatever the languages of the document, and the default system message tells the LLM to answer in it. It took `"en"` or `"adapt"` only, so the output of a document in several languages could be in English or in the language that appears most often in it. The tag is stored in its standard form, e.g. `"zh-TW"` for `"zh_tw"` and `"en-GB"` for `"en-uk"`, and a value that is not a tag of a language raises `ValueError`, with the tag that a language name or a region code likely stands for, e.g. `"ja"` for `"Japanese"` or `"jp"`. The prompts of `"en"` and `"adapt"` are unchanged. See [Choosing the output language](https://contextgem.shcherbak.ai/llms/llm_config/#choosing-the-output-language).
+- New dependency: `langcodes`, with its `data` extra (`language-data` and `marisa-trie`), which validates the tags and gives the names of their languages in the prompts.
+
 ## [1.4.1] - 2026-10-26
 
 ### Fixed
@@ -728,6 +735,7 @@ See the [migration guide](https://contextgem.shcherbak.ai/migration_v1/) for upd
 
 - Added DocxConverter for converting DOCX files into ContextGem Document objects
 
+[Unreleased]: https://github.com/shcherbak-ai/contextgem/compare/v1.4.1...HEAD
 [1.4.1]: https://github.com/shcherbak-ai/contextgem/compare/v1.4.0...v1.4.1
 [1.4.0]: https://github.com/shcherbak-ai/contextgem/compare/v1.3.0...v1.4.0
 [1.3.0]: https://github.com/shcherbak-ai/contextgem/compare/v1.2.1...v1.3.0

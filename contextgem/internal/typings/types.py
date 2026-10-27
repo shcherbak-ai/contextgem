@@ -31,6 +31,7 @@ from pydantic import (
 from contextgem.internal.typings.validators import (
     _validate_is_json_dict,
     _validate_model_role,
+    _validate_output_language,
 )
 
 
@@ -78,7 +79,9 @@ StandardSaTModelId = Literal[
 SaTModelId = StandardSaTModelId | str | Path
 
 
-LanguageRequirement = Literal["en", "adapt"]
+# The output language of an LLM: "adapt" (the language of the document), or
+# a BCP 47 language tag, e.g. "en", "ja", "zh-Hant" or "pt-BR", in its standard form
+LanguageRequirement = Annotated[StrictStr, AfterValidator(_validate_output_language)]
 
 JustificationDepth = Literal["brief", "balanced", "comprehensive"]
 

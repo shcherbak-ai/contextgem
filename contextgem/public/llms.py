@@ -151,11 +151,17 @@ class DocumentLLM(_DocumentLLM):
         the current LLM or of its provider is passed on to the fallbacks as well.
         Defaults to an empty list.
     :vartype fallback_models: list[DocumentLLM | DocumentDecisionModel]
-    :ivar output_language: Language for produced output text (justifications, explanations).
-        Can be "en" (English) or "adapt" (adapts to document/image language). Defaults to "en".
+    :ivar output_language: Language for produced output text (string values, justifications,
+        explanations): a BCP 47 language tag of any language, with its script or region
+        if needed, e.g. "en", "ja", "zh-Hant" or "pt-BR", or "adapt" (the language of the
+        document/image). Defaults to "en". String values are translated into the language
+        of the tag, and justifications are written in it. The tag is stored in its standard
+        form, e.g. "zh-TW" for "zh_tw" and "en-GB" for "en-uk", and a value that is not
+        a tag of a language raises ``ValueError``, with the tag that a language name or
+        a region code likely stands for, e.g. "ja" for "Japanese" or "jp".
         Applies to the extraction prompts, and to the default system message: with a custom
         system message, it applies to the extraction prompts only.
-    :vartype output_language: LanguageRequirement
+    :vartype output_language: str
     :ivar async_limiter: Controls frequency of async LLM API requests for concurrent tasks.
         Defaults to allowing 10 acquisitions per 10-second period to prevent rate limit issues.
         The rate applies to all the requests to the LLM that are sent concurrently, i.e.

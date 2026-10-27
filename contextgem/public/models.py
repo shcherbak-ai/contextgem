@@ -34,13 +34,14 @@ class DocumentModelGroup(_DocumentModelGroup):
         and an aspect/concept without ``model_role`` is extracted by the model without ``role``.
         Only one model in the group can have no role. At least 2 instances are required.
     :vartype models: list[DocumentLLM | DocumentDecisionModel]
-    :ivar output_language: Language for produced output text (justifications, explanations).
-        Values: "en" (always English) or "adapt" (matches document/image language).
+    :ivar output_language: Language for produced output text (string values, justifications,
+        explanations): a BCP 47 language tag, e.g. "en", "ja", "zh-Hant" or "pt-BR",
+        or "adapt" (matches document/image language), as for ``DocumentLLM``.
         It must be the ``output_language`` of each LLM in the group, else ``ValueError``
         is raised: ``group_update_output_language()`` sets it for the group and its
         LLMs. Defaults to "en".
         Does not apply to the decision models in the group, which produce no text.
-    :vartype output_language: LanguageRequirement
+    :vartype output_language: str
     :ivar is_group: Whether the object is a model group: always True for a model group.
         Read-only.
     :vartype is_group: bool

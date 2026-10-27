@@ -125,6 +125,8 @@ Your task is to:
                     ----- Justification should be in English.
         {% elif output_language == "adapt" %}
                     ----- Justification should be in the original language of the document.
+        {% else %}
+                    ----- Justification should be in {{ _describe_output_language(output_language) }}.
         {% endif %}
     {% else %}
             --- justification: A justification of why the paragraph is relevant to the aspect. Ensure the justification is specific and directly ties the content of the paragraph to the aspect's defining features. Never reference any of the structural IDs provided in this prompt (such as aspect IDs like "A0", or paragraph IDs like "P0") in the justification.
@@ -140,6 +142,8 @@ Your task is to:
                 ---- Justification should be in English.
         {% elif output_language == "adapt" %}
                 ---- Justification should be in the original language of the document.
+        {% else %}
+                ---- Justification should be in {{ _describe_output_language(output_language) }}.
         {% endif %}
     {% endif %}
         -- If an aspect has no related paragraphs, still include it with an empty paragraphs array ([]).

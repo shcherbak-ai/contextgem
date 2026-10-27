@@ -67,6 +67,7 @@ _EXAMPLES_WITH_REQUESTS = [
     "docs.decision_models.decision_model_usage_and_cost",
     "docs.llm_config.chat_with_tools",
     "docs.llm_config.chat_with_tools_simple",
+    "docs.llm_config.output_language",
     "docs.llms.llm_extraction_methods.extract_all",
     "docs.llms.llm_extraction_methods.extract_aspects_from_document",
     "docs.llms.llm_extraction_methods.extract_concepts_from_aspect",

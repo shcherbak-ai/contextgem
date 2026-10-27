@@ -217,6 +217,12 @@ Follow these additional rules:
         {% elif data_type == "image" %}
         --- When extracting string values from the image(s) that contain text, retain such values in the original language of the image(s) without translating them.
         {% endif %}
+    {% else %}
+        {% if data_type == "text" %}
+        --- When extracting string values, translate them into {{ _describe_output_language(output_language) }} if they are in another language in the document.
+        {% elif data_type == "image" %}
+        --- When extracting string values from the image(s) that contain text, translate them into {{ _describe_output_language(output_language) }} if they are in another language in the image(s).
+        {% endif %}
     {% endif %}
     {% if add_justifications %}
     -- justification: Mandatory field holding a justification of why the item was extracted for the concept. Ensure the justification is specific and directly ties the extracted item to the concept's defining features. Never reference the concept's ID or any of the structural IDs provided in this prompt (such as paragraph IDs like "P0", or sentence IDs like "P0-S0") in the justification.
@@ -236,6 +242,8 @@ Follow these additional rules:
             {% elif data_type == "image" %}
         --- If the image(s) contain text, justification should be in the original language of the image(s).
             {% endif %}
+        {% else %}
+        --- Justification should be in {{ _describe_output_language(output_language) }}.
         {% endif %}
     {% endif %}
     {% if add_references %}
@@ -268,6 +276,12 @@ Follow these additional rules:
     -- When extracting string values, retain them in the original language of the document without translating them.
         {% elif data_type == "image" %}
     -- When extracting string values from the image(s) that contain text, retain such values in the original language of the image(s) without translating them.
+        {% endif %}
+    {% else %}
+        {% if data_type == "text" %}
+    -- When extracting string values, translate them into {{ _describe_output_language(output_language) }} if they are in another language in the document.
+        {% elif data_type == "image" %}
+    -- When extracting string values from the image(s) that contain text, translate them into {{ _describe_output_language(output_language) }} if they are in another language in the image(s).
         {% endif %}
     {% endif %}
 </extracted_item_structure>

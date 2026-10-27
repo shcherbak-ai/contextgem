@@ -105,6 +105,7 @@ dependencies = [
     "fastjsonschema (>=2.21.2,<3.0.0)",
     "genai-prices==0.1.13", # pin version due to frequent API changes
     "jinja2 (>=3.1.5,<4.0.0)",
+    "langcodes[data] (>=3.5.1,<4.0.0)", # validates the BCP 47 tags of output_language and names their languages
     "litellm==1.105.2", # pin version due to occasional instability between patches and minor versions
     "openai==2.54.0", # pinned to the version tested with litellm (openai 1.100.0 once broke importing litellm 1.75.8)
     "pillow (>=11.3.0,<14.0.0)",

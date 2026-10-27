@@ -26,6 +26,7 @@ from importlib import resources
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, Literal, TypeVar, get_args
 
+import langcodes
 import pydantic
 from jinja2 import Environment, Template, nodes
 
@@ -250,8 +251,25 @@ def _setup_jinja2_template(template_text: str) -> Template:
     # Set up global functions
     template.globals["enumerate"] = enumerate
     template.globals["_clean_text_for_llm_prompt"] = _clean_text_for_llm_prompt
+    template.globals["_describe_output_language"] = _describe_output_language
 
     return template
+
+
+@cache
+def _describe_output_language(tag: str) -> str:
+    """
+    Describes the language of a BCP 47 language tag for a prompt: its name in
+    English, followed by the tag, e.g. "Japanese [ja]" or "Chinese (Traditional,
+    Taiwan) [zh-Hant-TW]". The tag tells what the name leaves out, e.g. the
+    spelling of "de-CH-1996", which is named "German (Switzerland)".
+
+    :param tag: The language tag, as the output language of an LLM stores it.
+    :type tag: str
+    :return: The name of the language, followed by the tag in brackets.
+    :rtype: str
+    """
+    return f"{langcodes.Language.get(tag).display_name()} [{tag}]"
 
 
 def _contains_jinja2_tags(text: str) -> bool:

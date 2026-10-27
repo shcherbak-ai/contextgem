@@ -42,10 +42,11 @@
 |  └─ [jsonref (1.1.0)](https://pypi.org/project/jsonref/) (also: docling-core)|python|prod||[MIT](https://spdx.org/licenses/MIT.html)|permissive|✓|
 |  └─ [jsonschema (4.26.0)](https://pypi.org/project/jsonschema/) (also: docling-core, litellm)|python|prod||[MIT](https://spdx.org/licenses/MIT.html)|permissive|✓|
 |  └─ [jsonschema-specifications (2025.9.1)](https://pypi.org/project/jsonschema-specifications/) (also: docling-core, litellm)|python|prod||[MIT](https://spdx.org/licenses/MIT.html)|permissive|✓|
-|  └─ [langcodes (3.5.1)](https://pypi.org/project/langcodes/)|python|prod||[MIT](https://spdx.org/licenses/MIT.html)|permissive|✓|
+|  └─ [language-data (1.4.0)](https://pypi.org/project/language-data/) (also: langcodes)|python|prod||[MIT](https://spdx.org/licenses/MIT.html)|permissive|✓|
 |  └─ [latex2mathml (3.81.1)](https://pypi.org/project/latex2mathml/) (also: docling-core)|python|prod||[MIT](https://spdx.org/licenses/MIT.html)|permissive|✓|
 |  └─ [lxml (6.1.3)](https://pypi.org/project/lxml/) (also: docling-core)|python|prod||[BSD-3-Clause](https://spdx.org/licenses/BSD-3-Clause.html)|permissive|✓|
 |  └─ [mail-parser (4.8.0)](https://pypi.org/project/mail-parser/)|python|prod||[Apache-2.0](https://spdx.org/licenses/Apache-2.0.html)|permissive|✓|
+|  └─ [marisa-trie (1.4.1)](https://pypi.org/project/marisa-trie/) (also: langcodes)|python|prod||(BSD-2-Clause OR LGPL-2.1-or-later) AND [MIT](https://spdx.org/licenses/MIT.html)|permissive|✓|
 |  └─ [markdown-it-py (4.2.0)](https://pypi.org/project/markdown-it-py/) (also: docling-core)|python|prod||[MIT](https://spdx.org/licenses/MIT.html)|permissive|✓|
 |  └─ [marko (2.2.4)](https://pypi.org/project/marko/)|python|prod||[MIT](https://spdx.org/licenses/MIT.html)|permissive|✓|
 |  └─ [markupsafe (3.0.4)](https://pypi.org/project/markupsafe/) (also: docling-core, jinja2 +1 more)|python|prod||[BSD-3-Clause](https://spdx.org/licenses/BSD-3-Clause.html)|permissive|✓|
@@ -140,6 +141,7 @@
 |  └─ [httpx2-jsfetch (1.0.0)](https://pypi.org/project/httpx2-jsfetch/)|python|prod||[BSD-3-Clause](https://spdx.org/licenses/BSD-3-Clause.html)|permissive|✓|
 |  └─ [truststore (0.10.5)](https://pypi.org/project/truststore/)|python|prod||[MIT](https://spdx.org/licenses/MIT.html)|permissive|✓|
 |[jinja2 (3.1.6)](https://pypi.org/project/jinja2/)|python|prod|[pyproject.toml](pyproject.toml)|[BSD-3-Clause](https://spdx.org/licenses/BSD-3-Clause.html)|permissive|✓|
+|[langcodes (3.5.1)](https://pypi.org/project/langcodes/)|python|prod|[pyproject.toml](pyproject.toml)|[MIT](https://spdx.org/licenses/MIT.html)|permissive|✓|
 |[litellm (1.105.2)](https://pypi.org/project/litellm/)|python|prod|[pyproject.toml](pyproject.toml)|[MIT](https://spdx.org/licenses/MIT.html)|permissive|✓|
 |  └─ [aiohappyeyeballs (2.7.1)](https://pypi.org/project/aiohappyeyeballs/)|python|prod||[PSF-2.0](https://spdx.org/licenses/PSF-2.0.html)|permissive|✓|
 |  └─ [aiohttp (3.14.5)](https://pypi.org/project/aiohttp/)|python|prod||[Apache-2.0](https://spdx.org/licenses/Apache-2.0.html) AND [MIT](https://spdx.org/licenses/MIT.html)|permissive|✓|
@@ -170,7 +172,7 @@
 |[tenacity (9.2.1)](https://pypi.org/project/tenacity/)|python|prod|[pyproject.toml](pyproject.toml)|[Apache-2.0](https://spdx.org/licenses/Apache-2.0.html)|permissive|✓|
 |[wtpsplit-lite (0.2.0)](https://pypi.org/project/wtpsplit-lite/)|python|prod|[pyproject.toml](pyproject.toml)|[MIT](https://spdx.org/licenses/MIT.html)|permissive|✓|
 
-**Summary:** 0 violations, 2 warnings, 16 unknown, 147 ok (of which 20 reviewed)
+**Summary:** 0 violations, 2 warnings, 16 unknown, 149 ok (of which 20 reviewed)
 
 ## Details
 

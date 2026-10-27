@@ -576,6 +576,105 @@ class TestLLMs(BaseTest):
         self.check_cost(llm)
 
     @pytest.mark.vcr
+    def test_anthropic_llm_output_language_tag(self):
+        """
+        Tests for extraction with Claude Haiku from a contract in German with an
+        amendment in French, with a BCP 47 tag as the output language: the string
+        values and the justifications are in Japanese, the references are
+        the paragraphs of the document as they are, and the values of the other
+        concept types are not translated.
+        """
+        llm = DocumentLLM(**self._llm_extractor_kwargs_anthropic, output_language="ja")
+        self.config_llm_async_limiter_for_mock_responses(llm)
+
+        document = Document(
+            raw_text=(
+                "Liefervertrag\n\n"
+                "§ 1 Die Nordwerk GmbH liefert der Lumière SARL Pumpen des Typs HX-200.\n\n"
+                "§ 2 Der Vertrag gilt für drei (3) Jahre ab Unterzeichnung.\n\n"
+                "§ 3 Es gilt deutsches Recht. Gerichtsstand ist München.\n\n"
+                "Avenant n° 1\n\n"
+                "Par dérogation au § 2, le contrat est conclu pour une durée de "
+                "cinq (5) ans à compter de sa signature."
+            )
+        )
+        document.add_aspects(
+            [
+                Aspect(
+                    name="Term of the agreement",
+                    description="Clauses on how long the agreement lasts",
+                    add_justifications=True,
+                )
+            ]
+        )
+        document.add_concepts(
+            [
+                StringConcept(
+                    name="Term as amended",
+                    description="How long the agreement lasts, as amended",
+                    add_justifications=True,
+                    add_references=True,
+                ),
+                StringConcept(
+                    name="Governing law",
+                    description="The law that governs the agreement, and the court",
+                    add_justifications=True,
+                ),
+                NumericalConcept(
+                    name="Term in years",
+                    description="How many years the agreement lasts, as amended",
+                    numeric_type="int",
+                ),
+            ]
+        )
+        llm.extract_all(document)
+
+        def has_japanese(text: str | None, kana_only: bool = False) -> bool:
+            """
+            Returns whether there is a text with Japanese characters: kana, or kana
+            or kanji.
+            """
+            pattern = (
+                r"[\u3040-\u30ff]" if kana_only else r"[\u3040-\u30ff\u4e00-\u9fff]"
+            )
+            return text is not None and re.search(pattern, text) is not None
+
+        # The paragraphs of the aspect are those of the document, with justifications
+        # in Japanese: sentences of Japanese have kana
+        term_aspect = document.get_aspect_by_name("Term of the agreement")
+        assert term_aspect.extracted_items
+        for item in term_aspect.extracted_items:
+            assert item.value in [
+                paragraph.raw_text for paragraph in document.paragraphs
+            ]
+            assert has_japanese(item.justification, kana_only=True)
+
+        # The string values and their justifications are in Japanese
+        for name in ("Term as amended", "Governing law"):
+            concept = document.get_concept_by_name(name)
+            self.log_extracted_items_for_instance(concept)
+            assert concept.extracted_items, f"No items extracted for `{name}`"
+            for item in concept.extracted_items:
+                assert has_japanese(item.value)
+                assert has_japanese(item.justification, kana_only=True)
+        # The references are the paragraphs of the document, the amendment in French
+        term_as_amended = document.get_concept_by_name("Term as amended")
+        assert any(
+            "cinq (5) ans" in paragraph.raw_text
+            for item in term_as_amended.extracted_items
+            for paragraph in item.reference_paragraphs
+        )
+        # A numerical value is not translated
+        assert [
+            i.value
+            for i in document.get_concept_by_name("Term in years").extracted_items
+        ] == [5]
+
+        self.check_usage(llm)
+        self.check_cost(llm)
+        self._check_deserialized_llm_config_eq(llm)
+
+    @pytest.mark.vcr
     def test_local_llms_text(self):
         """
         Tests for initialization of and getting a response from local LLMs,
@@ -1628,6 +1727,215 @@ class TestLLMs(BaseTest):
         assert all(
             model.system_message == self.default_system_message_non_en
             for model in model_group.models
+        )
+
+    def test_output_language_tags(self):
+        """
+        Tests the output language as a BCP 47 language tag: a tag is stored in its
+        standard form, and "adapt" whatever its case; a value that is not the tag
+        of a language is rejected, with a hint at the tag that a language name or
+        a region code likely stands for; and LLMs, their fallback LLMs and model
+        groups compare their output languages as stored, also after serialization.
+        """
+
+        def create_llm(
+            output_language: str, model: str = "openai/gpt-6-luna", **kwargs: Any
+        ) -> DocumentLLM:
+            """
+            Creates an LLM with the output language.
+            """
+            return DocumentLLM(
+                model=model,
+                api_key=os.getenv("CONTEXTGEM_OPENAI_API_KEY"),
+                output_language=output_language,
+                **kwargs,
+            )
+
+        # Stored in the standard form of the tag
+        for value, stored in [
+            ("ja", "ja"),
+            ("JA", "ja"),
+            (" pt-BR ", "pt-BR"),
+            ("zh_tw", "zh-TW"),
+            ("zh-hant", "zh-Hant"),
+            ("sr-latn", "sr-Latn"),
+            ("es-419", "es-419"),
+            ("en-uk", "en-GB"),  # deprecated region code
+            ("iw", "he"),  # deprecated language code
+            ("zh-yue", "yue"),  # extended language subtag
+            ("eng", "en"),  # code of ISO 639-2
+            ("Adapt", "adapt"),
+        ]:
+            assert create_llm(value).output_language == stored
+
+        # Rejected, with a hint at the tag that a language name or a region code
+        # likely stands for
+        for value, hint in [
+            ("Japanese", "'Japanese' is the name of a language, whose tag is 'ja'"),
+            ("Brazilian Portuguese", "whose tag is 'pt-BR'"),
+            ("jp", "'jp' is the code of a region, Japan, whose main language is"),
+            ("cz", "Czechia, whose main language is Czech, with the tag 'cs'"),
+            ("", None),
+            ("e", None),
+            ("und", None),  # undetermined
+            ("mul", None),  # multiple languages
+            ("qaa", None),  # private use
+            ("x-klingon", None),  # private use
+            ("en-x-legal", None),  # private use subtag
+            ("zh-Qaaa", None),  # script for private use
+            ("en-ZZ", None),  # unknown region
+            ("de-u-co-phonebk", None),  # extension
+        ]:
+            with pytest.raises(ValueError, match="BCP 47 language tag") as exc_info:
+                create_llm(value)
+            if hint is not None:
+                assert hint in str(exc_info.value)
+        with pytest.raises(ValueError, match="valid string"):
+            create_llm(5)  # ty: ignore[invalid-argument-type]
+
+        # An output language that is assigned is stored in its standard form, with
+        # the default system message for it; a rejected one leaves both as they were
+        llm = create_llm("en")
+        llm.output_language = "JA"
+        assert llm.output_language == "ja"
+        assert "Use Japanese [ja] for all textual output" in llm.system_message
+        system_message = llm.system_message
+        with pytest.raises(ValueError, match="'jp' is the code of a region"):
+            llm.output_language = "jp"
+        assert llm.output_language == "ja"
+        assert llm.system_message == system_message
+        llm.output_language = "EN"
+        assert llm.output_language == "en"
+        assert llm.system_message == self.default_system_message_en
+
+        # A fallback LLM must have the same output language as stored: a tag that
+        # stands for the same language in another form is another output language
+        primary_llm = create_llm(
+            "zh-TW",
+            fallback_models=[
+                create_llm("zh_tw", model="openai/gpt-5.6-luna", is_fallback=True)
+            ],
+        )
+        with pytest.raises(ValueError, match="same output language"):
+            create_llm(
+                "zh-Hant-TW",
+                fallback_models=[
+                    create_llm("zh-TW", model="openai/gpt-5.6-luna", is_fallback=True)
+                ],
+            )
+
+        # The LLMs of a model group, and the group
+        model_group = DocumentModelGroup(
+            models=[
+                create_llm("pt_br"),
+                create_llm("PT-BR", model="openai/gpt-6.1-sol", role="reasoner"),
+            ],
+            output_language="pt-br",
+        )
+        assert model_group.output_language == "pt-BR"
+        with pytest.raises(ValueError, match="same value of `output_language`"):
+            DocumentModelGroup(
+                models=[
+                    create_llm("pt-BR"),
+                    create_llm("pt-PT", model="openai/gpt-6.1-sol", role="reasoner"),
+                ],
+                output_language="pt-BR",
+            )
+        model_group.group_update_output_language("zh_hant")
+        assert model_group.output_language == "zh-Hant"
+        assert all(
+            model.output_language == "zh-Hant"
+            and "Use Chinese (Traditional) [zh-Hant]" in model.system_message
+            for model in model_group.models
+        )
+
+        # Serialized as stored
+        assert DocumentLLM.from_json(primary_llm.to_json()).output_language == "zh-TW"
+        self._check_deserialized_llm_config_eq(primary_llm)
+        self._check_deserialized_llm_config_eq(model_group)
+
+    def test_output_language_in_prompts(self):
+        """
+        Tests what the requests of an extraction say on the output language: with
+        a BCP 47 tag, the system message and the prompts ask for the string values
+        and the justifications in the language that the tag names, given with
+        the tag, while with "en" and "adapt" they have none of these instructions.
+
+        LLM API calls are stubbed, i.e. no cassette is required.
+        """
+        litellm = llms_module.litellm
+        requests: list[list[dict[str, Any]]] = []
+
+        async def acompletion_stub(**kwargs: Any) -> Any:
+            """
+            Simulates the LLM API: records the messages of each request, and answers
+            with data that cannot be used, so that the extraction stops there.
+            """
+            requests.append(kwargs["messages"])
+            return litellm.mock_completion(**kwargs, mock_response="Not JSON.")
+
+        def extraction_requests(output_language: str) -> list[str]:
+            """
+            Extracts an aspect and a concept with the output language, and returns
+            the text of each request: its system message and prompt.
+            """
+            requests.clear()
+            llm = DocumentLLM(
+                model="openai/gpt-6-luna",
+                api_key="test_api_key",
+                output_language=output_language,
+                max_retries_invalid_data=0,
+            )
+            document = Document(
+                raw_text=(
+                    "Der Vertrag gilt drei Jahre.\n\n"
+                    "Le contrat est régi par le droit français."
+                )
+            )
+            document.add_aspects(
+                [
+                    Aspect(
+                        name="Term",
+                        description="Clauses on the term",
+                        add_justifications=True,
+                    )
+                ]
+            )
+            document.add_concepts(
+                [
+                    StringConcept(
+                        name="Governing law",
+                        description="The law that governs the contract",
+                        add_justifications=True,
+                    )
+                ]
+            )
+            with patch.object(litellm, "acompletion", new=acompletion_stub):
+                llm.extract_all(document, raise_exception_on_extraction_error=False)
+            return [
+                "\n".join(message["content"] for message in messages)
+                for messages in requests
+            ]
+
+        # The aspect, then the concept
+        aspect_request, concept_request = extraction_requests("zh-Hant-TW")
+        language = "Chinese (Traditional, Taiwan) [zh-Hant-TW]"
+        for request in (aspect_request, concept_request):
+            assert f"Use {language} for all textual output" in request
+            assert f"Justification should be in {language}." in request
+        assert (
+            f"When extracting string values, translate them into {language} "
+            "if they are in another language in the document." in concept_request
+        )
+
+        # None of these instructions with "en" and "adapt", whose prompts are
+        # those of the recorded tests
+        for output_language in ("en", "adapt"):
+            for request in extraction_requests(output_language):
+                assert "translate them into" not in request
+                assert "[" + output_language + "]" not in request
+        assert not any(
+            "LANGUAGE GUIDELINES" in request for request in extraction_requests("en")
         )
 
     def test_model_api_request_retries(self):

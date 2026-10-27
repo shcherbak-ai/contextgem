@@ -115,7 +115,7 @@ The :class:`~contextgem.public.llms.DocumentLLM` class accepts the following par
    * - ``output_language``
      - ``str``
      - ``"en"``
-     - Language for output text. Values: ``"en"`` or ``"adapt"`` (adapts to document language). Setting value to ``"adapt"`` ensures that the text output (e.g. justifications, conclusions, explanations) is in the same language as the document. This is particularly useful when working with non-English documents. For example, if you're extracting anomalies from a contract in Spanish, setting ``output_language="adapt"`` ensures that anomaly justifications are also in Spanish, making them immediately understandable by local end users reviewing the document. The parameter applies to the extraction prompts, and to the default system message. With a custom system message, it applies to the extraction prompts only, i.e. it has no effect in a chat, and a warning says so.
+     - Language for output text (string values, justifications, explanations): a BCP 47 language tag of any language, e.g. ``"en"``, ``"ja"``, ``"zh-Hant"`` or ``"pt-BR"``, or ``"adapt"`` for the language of the document. For example, if you're extracting anomalies from a contract in Spanish, setting ``output_language="adapt"`` ensures that anomaly justifications are also in Spanish, making them immediately understandable by local end users reviewing the document, and ``output_language="ja"`` writes them in Japanese for reviewers in Japan. See :ref:`llm-output-language-label`. The parameter applies to the extraction prompts, and to the default system message. With a custom system message, it applies to the extraction prompts only, i.e. it has no effect in a chat, and a warning says so.
    * - ``temperature``
      - ``float | None``
      - ``None``
@@ -339,6 +339,32 @@ For reasoning (CoT-capable) models (such as OpenAI's GPT-5 and GPT-6 models), yo
 .. literalinclude:: ../../../dev/usage_examples/docs/llm_config/reasoning_params.py
    :language: python
    :caption: Setting the reasoning effort
+
+
+.. _llm-output-language-label:
+
+🌐 Choosing the Output Language
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+``output_language`` sets the language that an LLM writes its output in: the string values of concepts, including the string fields of JSON objects, the justifications, and, with the default system message, the answers of a chat. It takes:
+
+- ``"en"``, the default: string values are translated into English, and justifications are written in English.
+- ``"adapt"``: the output is in the language of the document. For a document in several languages, the prompt asks for the language that appears most often, or the first one where that is unclear, but a model can answer in the language of the part of the document that an answer rests on, e.g. on an amendment in French to a contract in German. For one language whatever the languages of the document, give its tag.
+- A BCP 47 language tag of any other language, e.g. ``"ja"``, ``"de"`` or ``"yue"`` (Cantonese), with its script or region where they matter: ``"zh-Hans"`` and ``"zh-Hant"`` for Simplified and Traditional Chinese, ``"pt-BR"`` and ``"pt-PT"`` for Brazilian and European Portuguese, ``"es-419"`` for Latin American Spanish. String values are translated into that language, and justifications are written in it, whatever the languages of the document.
+
+.. literalinclude:: ../../../dev/usage_examples/docs/llm_config/output_language.py
+   :language: python
+   :caption: Output in Japanese from a contract in German and French
+
+The prompts name the language in English, followed by its tag, e.g. "Japanese [ja]" or "Chinese (Traditional, Taiwan) [zh-Hant-TW]". Give the script where it matters, with the region if you need its usage: ``"zh-Hant-TW"`` for Chinese as written in Taiwan, rather than ``"zh-TW"``, which is named "Chinese (Taiwan)" and leaves the script to the model.
+
+The output language does not change what is taken from the document as it is: the paragraphs and sentences of aspects and of references stay in the language of the document. Nor does it change the values of label, date, numerical, Boolean and rating concepts, which are not text: a label is one of the labels that you defined, in the words you defined it in. The same goes for a field of a JSON object whose values are fixed (``Literal``): its values are checked against them.
+
+An extraction has one output language. For the output of a document in several languages, e.g. for reviewers in several countries, extract a copy of the document (``document.clone()``) with an LLM of each output language: each is an extraction of its own, with its own requests and costs, and its answers can differ from those of the others, e.g. in the number of items, as each is a separate answer of the model.
+
+The tag is checked against the IANA Language Subtag Registry, and stored in its standard form: ``"zh_tw"`` becomes ``"zh-TW"``, ``"EN"`` becomes ``"en"``, and the deprecated ``"en-uk"`` becomes ``"en-GB"``. The fallback LLMs of an LLM, and the LLMs of a group, must have the same output language as stored, so ``"zh-TW"`` and ``"zh-Hant-TW"`` are not the same output language. A value that is not a tag of a language raises ``ValueError``, with the tag that a language name or a region code likely stands for, e.g. ``"ja"`` for ``"Japanese"`` and for ``"jp"``, the code of Japan. Some region codes are also the tags of other languages, which no check can tell apart: ``"se"`` is Northern Sami (Swedish is ``"sv"``), ``"uk"`` is Ukrainian (British English is ``"en-GB"``), ``"kr"`` is Kanuri (Korean is ``"ko"``), ``"tw"`` is Twi (Chinese as written in Taiwan is ``"zh-Hant-TW"``), and ``"in"``, the former tag of Indonesian, is stored as ``"id"`` (Hindi is ``"hi"``, English as used in India ``"en-IN"``).
+
+How well an LLM writes a language, and keeps a script or a regional variant apart, depends on the model: test it on the languages and variants that you need.
 
 
 .. _llm-capabilities-label:

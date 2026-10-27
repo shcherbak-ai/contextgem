@@ -389,7 +389,8 @@ class _GenericModelProcessor(_AbstractGenericModelProcessor):
         :param document: The document to analyze.
         :type document: _Document
         :param overwrite_existing: Whether to overwrite already processed aspects and concepts with
-            newly extracted information. Defaults to False.
+            newly extracted information. With False, instances that were already
+            processed raise ValueError. Defaults to False.
         :type overwrite_existing: bool, optional
         :param max_items_per_call: Maximum number of items with the same extraction params to process
             in each call. Defaults to 0 (all items in one call). If concurrency is enabled, defaults to 1.
@@ -413,10 +414,11 @@ class _GenericModelProcessor(_AbstractGenericModelProcessor):
             concepts.
         :type max_images_to_analyze_per_call: int, optional
         :param raise_exception_on_extraction_error: Whether to raise an exception if the extraction fails
-            due to invalid data returned by a model or an error in the model API. If False, a warning will
-            be issued instead, and no extracted items will be returned. The concepts of
-            an aspect that could not be extracted are then not extracted either, with
-            a warning, and the other concepts are. Defaults to True.
+            due to invalid data returned by a model or an error in the model API. If False, a warning is
+            logged instead: the aspects or concepts of the call that failed get no items,
+            and the others are extracted. The concepts of an aspect that could not be
+            extracted are then not extracted either, with a warning, and the other
+            concepts are. Defaults to True.
         :type raise_exception_on_extraction_error: bool, optional
         :return: The document with extracted aspects and concepts.
         :rtype: _Document
@@ -455,7 +457,8 @@ class _GenericModelProcessor(_AbstractGenericModelProcessor):
         :param document: The document to analyze.
         :type document: _Document
         :param overwrite_existing: Whether to overwrite already processed aspects and concepts with
-            newly extracted information. Defaults to False.
+            newly extracted information. With False, instances that were already
+            processed raise ValueError. Defaults to False.
         :type overwrite_existing: bool, optional
         :param max_items_per_call: Maximum number of items with the same extraction params to process
             in each call. Defaults to 0 (all items in one call). If concurrency is enabled,
@@ -480,10 +483,11 @@ class _GenericModelProcessor(_AbstractGenericModelProcessor):
             concepts.
         :type max_images_to_analyze_per_call: int, optional
         :param raise_exception_on_extraction_error: Whether to raise an exception if the extraction fails
-            due to invalid data returned by a model or an error in the model API. If False, a warning will
-            be issued instead, and no extracted items will be returned. The concepts of
-            an aspect that could not be extracted are then not extracted either, with
-            a warning, and the other concepts are. Defaults to True.
+            due to invalid data returned by a model or an error in the model API. If False, a warning is
+            logged instead: the aspects or concepts of the call that failed get no items,
+            and the others are extracted. The concepts of an aspect that could not be
+            extracted are then not extracted either, with a warning, and the other
+            concepts are. Defaults to True.
         :type raise_exception_on_extraction_error: bool, optional
         :return: The document with extracted aspects and concepts.
         :rtype: _Document
@@ -594,7 +598,8 @@ class _GenericModelProcessor(_AbstractGenericModelProcessor):
             document's aspects. An aspect that is given more than once is extracted once.
         :type from_aspects: list[_Aspect] | None
         :param overwrite_existing: Whether to overwrite already processed aspects with newly extracted information.
-            Defaults to False.
+            With False, instances that were already
+            processed raise ValueError. Defaults to False.
         :type overwrite_existing: bool
         :param max_items_per_call: Maximum items with the same extraction params to process per call.
             Defaults to 0 (all items in single call). For complex tasks, you should not set a value, to avoid
@@ -610,8 +615,9 @@ class _GenericModelProcessor(_AbstractGenericModelProcessor):
             a request of its own. Defaults to 0 (all paragraphs). Cannot be negative.
         :type max_paragraphs_to_analyze_per_call: int
         :param raise_exception_on_extraction_error: Whether to raise an exception if the extraction fails
-            due to invalid data returned by a model or an error in the model API. If False, a warning will
-            be issued instead, and no extracted items will be returned. Defaults to True.
+            due to invalid data returned by a model or an error in the model API. If False, a warning is
+            logged instead: the instances of the call that failed get no items, and the
+            others are extracted. Defaults to True.
         :type raise_exception_on_extraction_error: bool, optional
         :return: List of processed _Aspect objects with extracted items.
         :rtype: list[_Aspect]
@@ -655,7 +661,8 @@ class _GenericModelProcessor(_AbstractGenericModelProcessor):
             document's aspects. An aspect that is given more than once is extracted once.
         :type from_aspects: list[_Aspect] | None
         :param overwrite_existing: Whether to overwrite already processed aspects with newly extracted information.
-            Defaults to False.
+            With False, instances that were already
+            processed raise ValueError. Defaults to False.
         :type overwrite_existing: bool
         :param max_items_per_call: Maximum number of items with the same extraction params to process
             per call. Defaults to 0 (all items in one call). If concurrency is enabled,
@@ -672,8 +679,9 @@ class _GenericModelProcessor(_AbstractGenericModelProcessor):
             a request of its own. Defaults to 0 (all paragraphs). Cannot be negative.
         :type max_paragraphs_to_analyze_per_call: int
         :param raise_exception_on_extraction_error: Whether to raise an exception if the extraction fails
-            due to invalid data returned by a model or an error in the model API. If False, a warning will
-            be issued instead, and no extracted items will be returned. Defaults to True.
+            due to invalid data returned by a model or an error in the model API. If False, a warning is
+            logged instead: the instances of the call that failed get no items, and the
+            others are extracted. Defaults to True.
         :type raise_exception_on_extraction_error: bool, optional
         :return: List of processed _Aspect objects with extracted items.
         :rtype: list[_Aspect]
@@ -832,7 +840,8 @@ class _GenericModelProcessor(_AbstractGenericModelProcessor):
             A concept that is given more than once is extracted once.
         :type from_concepts: list[_Concept] | None
         :param overwrite_existing: Whether to overwrite already processed concepts with newly
-            extracted information. Defaults to False.
+            extracted information. With False, instances that were already
+            processed raise ValueError. Defaults to False.
         :type overwrite_existing: bool
         :param max_items_per_call: Maximum number of items with the same extraction params to process
             in each call. Defaults to 0 (all items in one call). If concurrency is enabled,
@@ -852,8 +861,9 @@ class _GenericModelProcessor(_AbstractGenericModelProcessor):
             Defaults to 0 (all paragraphs). Cannot be negative.
         :type max_paragraphs_to_analyze_per_call: int
         :param raise_exception_on_extraction_error: Whether to raise an exception if the extraction fails
-            due to invalid data returned by a model or an error in the model API. If False, a warning will
-            be issued instead, and no extracted items will be returned. Defaults to True.
+            due to invalid data returned by a model or an error in the model API. If False, a warning is
+            logged instead: the instances of the call that failed get no items, and the
+            others are extracted. Defaults to True.
         :type raise_exception_on_extraction_error: bool, optional
         :return: List of processed concept objects.
         :rtype: list[_Concept]
@@ -899,7 +909,8 @@ class _GenericModelProcessor(_AbstractGenericModelProcessor):
             A concept that is given more than once is extracted once.
         :type from_concepts: list[_Concept] | None
         :param overwrite_existing: Whether to overwrite already processed concepts with newly
-            extracted information. Defaults to False.
+            extracted information. With False, instances that were already
+            processed raise ValueError. Defaults to False.
         :type overwrite_existing: bool
         :param max_items_per_call: Maximum number of items with the same extraction params to process
             in each call. Defaults to 0 (all items in one call). If concurrency is enabled,
@@ -919,8 +930,9 @@ class _GenericModelProcessor(_AbstractGenericModelProcessor):
             Defaults to 0 (all paragraphs). Cannot be negative.
         :type max_paragraphs_to_analyze_per_call: int
         :param raise_exception_on_extraction_error: Whether to raise an exception if the extraction fails
-            due to invalid data returned by a model or an error in the model API. If False, a warning will
-            be issued instead, and no extracted items will be returned. Defaults to True.
+            due to invalid data returned by a model or an error in the model API. If False, a warning is
+            logged instead: the instances of the call that failed get no items, and the
+            others are extracted. Defaults to True.
         :type raise_exception_on_extraction_error: bool, optional
         :return: List of processed concept objects.
         :rtype: list[_Concept]
@@ -1087,7 +1099,8 @@ class _GenericModelProcessor(_AbstractGenericModelProcessor):
             document's concepts. A concept that is given more than once is extracted once.
         :type from_concepts: list[_Concept] | None
         :param overwrite_existing: Whether to overwrite already processed concepts with
-            newly extracted information. Defaults to False.
+            newly extracted information. With False, instances that were already
+            processed raise ValueError. Defaults to False.
         :type overwrite_existing: bool
         :param max_items_per_call: Maximum items with the same extraction params to process per call.
             Defaults to 0 (all items in single call). For complex tasks, you should not set a value, to avoid
@@ -1109,8 +1122,9 @@ class _GenericModelProcessor(_AbstractGenericModelProcessor):
             Defaults to 0 (all images). Cannot be negative.
         :type max_images_to_analyze_per_call: int, optional
         :param raise_exception_on_extraction_error: Whether to raise an exception if the extraction fails
-            due to invalid data returned by a model or an error in the model API. If False, a warning will
-            be issued instead, and no extracted items will be returned. Defaults to True.
+            due to invalid data returned by a model or an error in the model API. If False, a warning is
+            logged instead: the instances of the call that failed get no items, and the
+            others are extracted. Defaults to True.
         :type raise_exception_on_extraction_error: bool, optional
         :return: List of processed Concept objects with extracted items.
         :rtype: list[_Concept]
@@ -1153,7 +1167,8 @@ class _GenericModelProcessor(_AbstractGenericModelProcessor):
             document's concepts. A concept that is given more than once is extracted once.
         :type from_concepts: list[_Concept] | None
         :param overwrite_existing: Whether to overwrite already processed concepts with
-            newly extracted information. Defaults to False.
+            newly extracted information. With False, instances that were already
+            processed raise ValueError. Defaults to False.
         :type overwrite_existing: bool
         :param max_items_per_call: Maximum number of items with the same extraction params to process
             per call. Defaults to 0 (all items in one call). If concurrency is enabled,
@@ -1176,8 +1191,9 @@ class _GenericModelProcessor(_AbstractGenericModelProcessor):
             Defaults to 0 (all images). Cannot be negative.
         :type max_images_to_analyze_per_call: int, optional
         :param raise_exception_on_extraction_error: Whether to raise an exception if the extraction fails
-            due to invalid data returned by a model or an error in the model API. If False, a warning will
-            be issued instead, and no extracted items will be returned. Defaults to True.
+            due to invalid data returned by a model or an error in the model API. If False, a warning is
+            logged instead: the instances of the call that failed get no items, and the
+            others are extracted. Defaults to True.
         :type raise_exception_on_extraction_error: bool, optional
         :return: List of processed Concept objects with extracted items.
         :rtype: list[_Concept]
@@ -2173,8 +2189,9 @@ class _GenericModelProcessor(_AbstractGenericModelProcessor):
             such requests will be sent synchronously.
         :type async_limiter: AsyncLimiter | None
         :param raise_exception_on_extraction_error: Whether to raise an exception if the extraction fails
-            due to invalid data returned by a model or an error in the model API. If False, a warning will
-            be issued instead, and no extracted items will be returned. Defaults to True.
+            due to invalid data returned by a model or an error in the model API. If False, a warning is
+            logged instead: the instances of the call that failed get no items, and the
+            others are extracted. Defaults to True.
         :type raise_exception_on_extraction_error: bool, optional
         :param has_fallback_pending: Whether a fallback model will be tried if the call to the
             specified model fails. If True, a model API error is logged without being raised or
@@ -3211,8 +3228,9 @@ class _GenericModelProcessor(_AbstractGenericModelProcessor):
             LLM call (prompt). Defaults to 0, in which case all the images are analyzed.
         :type max_images_to_analyze_per_call: int
         :param raise_exception_on_extraction_error: Whether to raise an exception if the extraction fails
-            due to invalid data returned by a model or an error in the model API. If False, a warning will
-            be issued instead, and no extracted items will be returned. Defaults to True.
+            due to invalid data returned by a model or an error in the model API. If False, a warning is
+            logged instead: the instances of the call that failed get no items, and the
+            others are extracted. Defaults to True.
         :type raise_exception_on_extraction_error: bool, optional
         :return: None
         """
@@ -5162,8 +5180,10 @@ class _DocumentModelGroup(_GenericModelProcessor):
     output_language: LanguageRequirement = Field(
         default="en",
         description=(
-            "Language for generated textual output (justifications, explanations). "
-            "'en' forces English; 'adapt' matches document/image language. "
+            "Language for generated textual output (string values, justifications, "
+            "explanations): a BCP 47 language tag, e.g. 'en', 'ja', 'zh-Hant' or "
+            "'pt-BR', stored in its standard form, or 'adapt' for the language of "
+            "the document/image. "
             "Must be consistent across all LLMs in the group. "
             "Applies to the extraction prompts of the LLMs, and to their default "
             "system messages."
@@ -5221,7 +5241,8 @@ class _DocumentModelGroup(_GenericModelProcessor):
         """
         Updates the output language for all LLMs in the group.
 
-        :param output_language: The new output language to set for all LLMs
+        :param output_language: The new output language to set for all LLMs:
+            a BCP 47 language tag, e.g. "ja" or "zh-Hant", or "adapt"
         :type output_language: LanguageRequirement
         :return: None
         :rtype: None
@@ -5230,7 +5251,7 @@ class _DocumentModelGroup(_GenericModelProcessor):
             llm.output_language = output_language
         self.output_language = output_language
         logger.info(
-            f"Updated output language for all LLMs in the group to `{output_language}`"
+            f"Updated output language for all LLMs in the group to `{self.output_language}`"
         )
 
     def _eq_deserialized_llm_config(

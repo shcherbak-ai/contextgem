@@ -37,7 +37,11 @@ class _InstanceBase(_AbstractInstanceBase):
 
     def clone(self) -> Self:
         """
-        Creates and returns a deep copy of the current instance.
+        Creates and returns a deep copy of the current instance: an object of its own
+        with all the data of the instance, e.g. its unique ID, its custom data and
+        its extracted items, and for a document its paragraphs and sentences with
+        theirs. Changing one does not change the other, e.g. an extraction from
+        the copy of a document leaves the document as it is.
 
         :return: A deep copy of the current instance.
         """

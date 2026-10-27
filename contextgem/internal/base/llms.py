@@ -35,6 +35,7 @@ from pydantic import (
     StrictBool,
     StrictFloat,
     StrictInt,
+    TypeAdapter,
     field_validator,
 )
 
@@ -122,6 +123,10 @@ _OFFLINE_ENCODINGS_DOCS_URL = (
     "https://contextgem.shcherbak.ai/testing/#no-api-keys-in-tests"
 )
 
+# Validates an output language that is assigned to an LLM as the field does, so
+# that it is compared and rendered in the default system message as it is stored
+_OUTPUT_LANGUAGE_ADAPTER: TypeAdapter[str] = TypeAdapter(LanguageRequirement)
+
 # The advice on a model that litellm does not know, for the messages on the token
 # limits of its requests that could not be checked
 _REGISTER_MODEL_ADVICE = (
@@ -189,8 +194,10 @@ class _DocumentLLM(_DocumentModel):
     output_language: LanguageRequirement = Field(
         default="en",
         description=(
-            "Language for generated textual output (justifications, explanations). "
-            "'en' forces English; 'adapt' matches document/image language. "
+            "Language for generated textual output (string values, justifications, "
+            "explanations): a BCP 47 language tag, e.g. 'en', 'ja', 'zh-Hant' or "
+            "'pt-BR', stored in its standard form, or 'adapt' for the language of "
+            "the document/image. "
             "Applies to the extraction prompts, and to the default system message: "
             "with a custom system message, to the extraction prompts only."
         ),
@@ -498,23 +505,29 @@ class _DocumentLLM(_DocumentModel):
 
         if name == "system_message" and value is None:
             value = self._get_default_system_message()
-        elif (
-            name == "output_language"
-            and value != self.output_language
-            and self.system_message == self._get_default_system_message()
-        ):
-            # Both params are changed in one assignment, so that the checks that
-            # involve both, e.g. the comparison with the fallback LLMs, see them
-            # in line, and both are restored if the new output language is rejected
-            fields_snapshot = self._get_fields_snapshot()
-            # Validated together with the output language, by the assignment below
-            self.__dict__["system_message"] = self._get_default_system_message(value)
-            try:
-                super().__setattr__(name, value)
-            except Exception:
-                self._restore_fields(fields_snapshot)
-                raise
-            return
+        elif name == "output_language":
+            # In the form in which it is stored, e.g. "en" for "EN", or rejected
+            # if it is not valid
+            value = _OUTPUT_LANGUAGE_ADAPTER.validate_python(value)
+            if (
+                value != self.output_language
+                and self.system_message == self._get_default_system_message()
+            ):
+                # Both params are changed in one assignment, so that the checks that
+                # involve both, e.g. the comparison with the fallback LLMs, see them
+                # in line, and both are restored if the new output language is
+                # rejected
+                fields_snapshot = self._get_fields_snapshot()
+                # Validated together with the output language, by the assignment below
+                self.__dict__["system_message"] = self._get_default_system_message(
+                    value
+                )
+                try:
+                    super().__setattr__(name, value)
+                except Exception:
+                    self._restore_fields(fields_snapshot)
+                    raise
+                return
 
         super().__setattr__(name, value)
 

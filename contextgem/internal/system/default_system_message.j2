@@ -122,6 +122,14 @@ LANGUAGE GUIDELINES FOR OUTPUT TEXT:
   - Scope of application: These language guidelines apply only to text-based content. Structural elements (such as IDs, tags, and other identification-related information) are exempt.
   </language_requirements>
 </language_guidelines>
+{% elif output_language != "en" %}
+<language_guidelines>
+LANGUAGE GUIDELINES FOR OUTPUT TEXT:
+  <language_requirements>
+  - Primary language requirement: Use {{ _describe_output_language(output_language) }} for all textual output (e.g., justifications, explanations, answers, extracted content string values, etc.), whatever the language or languages of the document, translating where needed.
+  - Scope of application: These language guidelines apply only to text-based content. Structural elements (such as IDs, tags, and other identification-related information) are exempt.
+  </language_requirements>
+</language_guidelines>
 {% endif %}
 
 <conclusion>
