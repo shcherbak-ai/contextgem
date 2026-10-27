@@ -52,7 +52,8 @@ class Aspect(_Aspect):
         Inherited from base class. Defaults to False.
     :vartype add_justifications: bool
     :ivar justification_depth: The level of detail for justifications.
-        Inherited from base class. Defaults to "brief".
+        Inherited from base class. Defaults to "brief". Aspects with different
+        values are extracted in separate calls.
     :vartype justification_depth: JustificationDepth
     :ivar justification_max_sents: Maximum number of sentences in a justification.
         Inherited from base class. Defaults to 2.

@@ -66,7 +66,7 @@ When creating a :class:`~contextgem.public.concepts.StringConcept`, you can spec
    * - ``justification_depth``
      - ``str``
      - ``"brief"``
-     - Justification detail level. Available values: ``"brief"``, ``"balanced"``, ``"comprehensive"``.
+     - Justification detail level. Available values: ``"brief"``, ``"balanced"``, ``"comprehensive"``. Concepts that differ in it, or in another of the extraction parameters, e.g. ``add_references``, are extracted in separate calls, each a request of its own (see :ref:`the extraction methods <llm-extraction-params-label>`).
    * - ``justification_max_sents``
      - ``int``
      - ``2``

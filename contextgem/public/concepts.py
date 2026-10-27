@@ -56,6 +56,7 @@ class StringConcept(_StringConcept):
     :ivar add_justifications: Whether to include justifications for extracted items.
     :vartype add_justifications: bool
     :ivar justification_depth: Justification detail level. Defaults to "brief".
+        Concepts with different values are extracted in separate calls.
     :vartype justification_depth: JustificationDepth
     :ivar justification_max_sents: Maximum sentences in justification. Defaults to 2.
     :vartype justification_max_sents: int
@@ -124,6 +125,7 @@ class BooleanConcept(_BooleanConcept):
     :ivar add_justifications: Whether to include justifications for extracted items.
     :vartype add_justifications: bool
     :ivar justification_depth: Justification detail level. Defaults to "brief".
+        Concepts with different values are extracted in separate calls.
     :vartype justification_depth: JustificationDepth
     :ivar justification_max_sents: Maximum sentences in justification. Defaults to 2.
     :vartype justification_max_sents: int
@@ -205,6 +207,7 @@ class NumericalConcept(_NumericalConcept):
     :ivar add_justifications: Whether to include justifications for extracted items.
     :vartype add_justifications: bool
     :ivar justification_depth: Justification detail level. Defaults to "brief".
+        Concepts with different values are extracted in separate calls.
     :vartype justification_depth: JustificationDepth
     :ivar justification_max_sents: Maximum sentences in justification. Defaults to 2.
     :vartype justification_max_sents: int
@@ -276,6 +279,7 @@ class RatingConcept(_RatingConcept):
     :ivar add_justifications: Whether to include justifications for extracted items.
     :vartype add_justifications: bool
     :ivar justification_depth: Justification detail level. Defaults to "brief".
+        Concepts with different values are extracted in separate calls.
     :vartype justification_depth: JustificationDepth
     :ivar justification_max_sents: Maximum sentences in justification. Defaults to 2.
     :vartype justification_max_sents: int
@@ -385,6 +389,7 @@ class JsonObjectConcept(_JsonObjectConcept):
     :ivar add_justifications: Whether to include justifications for extracted items.
     :vartype add_justifications: bool
     :ivar justification_depth: Justification detail level. Defaults to "brief".
+        Concepts with different values are extracted in separate calls.
     :vartype justification_depth: JustificationDepth
     :ivar justification_max_sents: Maximum sentences in justification. Defaults to 2.
     :vartype justification_max_sents: int
@@ -453,6 +458,7 @@ class DateConcept(_DateConcept):
     :ivar add_justifications: Whether to include justifications for extracted items.
     :vartype add_justifications: bool
     :ivar justification_depth: Justification detail level. Defaults to "brief".
+        Concepts with different values are extracted in separate calls.
     :vartype justification_depth: JustificationDepth
     :ivar justification_max_sents: Maximum sentences in justification. Defaults to 2.
     :vartype justification_max_sents: int
@@ -537,6 +543,7 @@ class LabelConcept(_LabelConcept):
     :ivar add_justifications: Whether to include justifications for extracted items.
     :vartype add_justifications: bool
     :ivar justification_depth: Justification detail level. Defaults to "brief".
+        Concepts with different values are extracted in separate calls.
     :vartype justification_depth: JustificationDepth
     :ivar justification_max_sents: Maximum sentences in justification. Defaults to 2.
     :vartype justification_max_sents: int

@@ -103,7 +103,7 @@ When creating an :class:`~contextgem.public.aspects.Aspect`, you can configure t
    * - ``justification_depth``
      - ``str``
      - ``"brief"``
-     - The level of detail for justifications. Available values: ``"brief"``, ``"balanced"``, ``"comprehensive"``.
+     - The level of detail for justifications. Available values: ``"brief"``, ``"balanced"``, ``"comprehensive"``. Aspects that differ in it, or in another of the extraction parameters, e.g. ``add_references``, are extracted in separate calls, each a request of its own (see :ref:`the extraction methods <llm-extraction-params-label>`).
    * - ``justification_max_sents``
      - ``int``
      - ``2``
