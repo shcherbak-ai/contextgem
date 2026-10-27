@@ -314,7 +314,7 @@ Tests are split across the feature/integration test modules, two files for pure 
 
   All these test classes inherit from `BaseTest` in **`tests/base.py`**, which creates the test objects (documents, LLMs, images, etc.) once and shares them across the test classes. A test must leave the shared objects unchanged: a test that changes a document works on its copy (`document = self.document.clone()`). The usage and cost recorded by the shared LLMs are reset before each test. The tests do not depend on the order in which they are run, or on the worker process that runs them (see [Running Tests](#-running-tests)).
 - **`tests/test_properties.py`** and **`tests/test_units.py`** — property-based and example-based tests of pure utility helpers (see [below](#-tests-for-pure-helpers-property-based-and-example-based)).
-- **`tests/test_changelog.py`** — checks that each version in `CHANGELOG.md` has its compare link, and that `CITATION.cff` gives the version of the package and the release date of that version in the changelog.
+- **`tests/test_changelog.py`** — checks that each version in `CHANGELOG.md` has its compare link, that `CITATION.cff` gives the version of the package and the release date of that version in the changelog, and that each released version gives the notes of its GitHub release (`dev/release_notes.py`), which the publish workflow creates from the section of the version when it publishes the release.
 - **`tests/test_check_links.py`** — tests the link check (see [Checking the Links](#-checking-the-links)) on a small build and working tree of their own, and with stand-ins for the other sites, so they need neither a build of the documentation nor the network.
 
 ### 📚 Tests of the Usage Examples

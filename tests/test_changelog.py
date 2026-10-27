@@ -15,6 +15,8 @@ import pytest
 
 import contextgem
 from dev.date_release import date_release
+from dev.release_notes import main as release_notes_main
+from dev.release_notes import release_notes
 
 
 _ROOT = Path(__file__).resolve().parent.parent
@@ -184,3 +186,48 @@ class TestChangelog:
                 "2026-10-18",
                 released="1.1.0",
             )
+
+    def test_each_release_has_the_notes_of_its_github_release(self):
+        """
+        Tests that each released version of the changelog gives the notes of its
+        GitHub release: the text of its section, without the heading, the next
+        section or the compare links. The publish workflow takes them before it
+        uploads anything, so that a version without notes stops its release; at
+        a bump, this test stops it earlier.
+        """
+        versions = re.findall(
+            r"^## \[(.+?)\] - \d{4}-\d{2}-\d{2}$", _CHANGELOG, re.MULTILINE
+        )
+        assert versions
+        for version in versions:
+            notes = release_notes(_CHANGELOG, version)
+            assert notes in _CHANGELOG
+            assert notes == notes.strip() + "\n"
+            assert not re.search(r"^## \[|^\[[^\]]+\]: ", notes, re.MULTILINE)
+
+    def test_release_notes_are_the_section_of_the_version(self):
+        """
+        Tests that the notes of a version are its section: up to the next section,
+        or to the compare links for the oldest one, with the mentions of
+        a section in the text of an entry kept; and that the notes of an undated,
+        missing or empty section are refused, as is a call without one version.
+        """
+        changelog = (
+            "# Changelog\n\n"
+            "## [Unreleased]\n\n- C\n\n"
+            "## [1.1.0] - 2026-10-17\n\n### Fixed\n\n- B, not in [1.0.0]\n\n"
+            "## [1.0.0] - 2026-10-02\n\n### Added\n\n- A\n\n"
+            f"[Unreleased]: {_COMPARE}v1.1.0...HEAD\n"
+            f"[1.1.0]: {_COMPARE}v1.0.0...v1.1.0\n"
+            f"[1.0.0]: {_COMPARE}v0.9.0...v1.0.0\n"
+        )
+        assert release_notes(changelog, "1.1.0") == "### Fixed\n\n- B, not in [1.0.0]\n"
+        assert release_notes(changelog, "1.0.0") == "### Added\n\n- A\n"
+        for version in ("Unreleased", "1.2.0"):
+            with pytest.raises(ValueError, match="no dated section"):
+                release_notes(changelog, version)
+        with pytest.raises(ValueError, match="is empty"):
+            release_notes("## [1.1.0] - 2026-10-17\n\n### Fixed\n\n", "1.1.0")
+        assert release_notes_main([]) == 1
+        assert release_notes_main(["1.0.0", "1.1.0"]) == 1
+        assert release_notes_main(["0.0.0"]) == 1

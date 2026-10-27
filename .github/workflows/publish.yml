@@ -38,6 +38,7 @@ jobs:
     timeout-minutes: 10
     outputs:
       should_publish: ${{ steps.check.outputs.should_publish }}
+      tag: ${{ steps.check.outputs.tag }}
     steps:
       # Without the token in .git/config, where checkout leaves it for the later
       # steps, which push nothing
@@ -68,6 +69,7 @@ jobs:
 
           echo "Publishing $TAG ($SHA)"
           echo "should_publish=true" >> "$GITHUB_OUTPUT"
+          echo "tag=$TAG" >> "$GITHUB_OUTPUT"
 
   build:
     needs: [publish-gate]
@@ -94,6 +96,16 @@ jobs:
       - name: Set up Python from .python-version
         run: uv python install
 
+      # The notes of the GitHub release: the section of the version in
+      # the changelog. Taken here, before anything is published, so that
+      # a version without one stops the release before it reaches PyPI; and
+      # written outside the checkout, so that the build sees the tagged commit
+      # only. The script uses the standard library only (--no-project).
+      - name: Write the release notes
+        env:
+          TAG: ${{ needs.publish-gate.outputs.tag }}
+        run: uv run --no-project python dev/release_notes.py "${TAG#v}" > "$RUNNER_TEMP/release-notes.md"
+
       - name: Build sdist and wheel
         run: uv build
 
@@ -104,6 +116,12 @@ jobs:
         with:
           name: dist
           path: dist/*
+
+      - name: Upload the release notes
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9  # v7.0.2
+        with:
+          name: release-notes
+          path: ${{ runner.temp }}/release-notes.md
 
       # Install the built wheel into a fresh environment and use it there:
       # catches what the source tree hides, e.g. a prompt template missing
@@ -135,11 +153,12 @@ jobs:
       id-token: write
 
     steps:
-      - name: Download all artifacts
+      # The built files only: the release notes are not for PyPI
+      - name: Download the built files
         uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333  # v8.0.2
         with:
+          name: dist
           path: dist
-          merge-multiple: true
 
       - name: Publish to PyPI
         uses: pypa/gh-action-pypi-publish@7245906fb61fa33a13554f9d5fb856fe61758086  # v1.14.3
@@ -148,3 +167,34 @@ jobs:
           # publish runs: the second upload of the same version is then a
           # no-op instead of a failure.
           skip-existing: true
+
+  # The GitHub release of the tag, named after it, with the notes that the
+  # build job wrote. This job holds the only token of the workflow that can
+  # write the repository, so it runs no code of the project or of its
+  # dependencies, and checks nothing out: gh is the runner's own, and
+  # --verify-tag keeps it from creating a tag. A release that exists, e.g. from
+  # a re-run, is left as it is.
+  release:
+    needs: [publish-gate, publish]
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: write  # to create the GitHub release
+
+    steps:
+      - name: Download the release notes
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333  # v8.0.2
+        with:
+          name: release-notes
+
+      - name: Create the GitHub release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          TAG: ${{ needs.publish-gate.outputs.tag }}
+        run: |
+          if gh release view "$TAG" > /dev/null 2>&1; then
+            echo "::notice::The release $TAG exists — skipping."
+            exit 0
+          fi
+          gh release create "$TAG" --title "$TAG" --notes-file release-notes.md --verify-tag
