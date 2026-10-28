@@ -186,10 +186,8 @@ include = ["/contextgem"]
 
 [tool.uv]
 # A release enters uv.lock only a week after its upload, when a compromised one
-# has been found and removed (litellm 1.107.0, 2026-10-21: in two hours). Until
-# every version of uv.lock is a week old, a fixed date: the upload of its newest
-# file. From 2026-10-28, "7 days" (the latest-versions hook says when)
-exclude-newer = "2026-10-21T00:06:00Z"
+# has been found and removed (litellm 1.107.0, 2026-10-21: in two hours)
+exclude-newer = "7 days"
 
 # Releases taken before the cooldown admits them, by decision of the maintainer:
 # security fixes, and the maintainer's own releases whose wheel matches their
@@ -200,7 +198,6 @@ exclude-newer = "2026-10-21T00:06:00Z"
 [tool.uv.exclude-newer-package]
 docling = "2026-10-22T14:32:00Z"
 docling-core = "2026-10-22T14:03:00Z"
-docling-ibm-models = "2026-10-21T11:35:00Z"
 docling-parse = "2026-10-22T14:54:00Z"
 docling-slim = "2026-10-22T14:30:00Z"
 omerta = "2026-10-25T08:26:00Z"

@@ -98,25 +98,10 @@ EXCEPTIONS: dict[str, str] = {
 # `[tool.uv] exclude-newer` of pyproject.toml and `min-release-age` of .npmrc
 COOLDOWN_DAYS = 7
 
-_MARKDOWNLINT_CLI2_0_24 = (
-    "markdown-it and smol-toml, which markdownlint-cli2 0.23.3 pins: fixed in "
-    "markdownlint-cli2 0.24.0, uploaded on 2026-10-21, which the cooldown keeps out "
-    "until 2026-10-28; at worst a slow lint of a Markdown file"
-)
-
 # The advisories of locked versions that the check accepts, by their IDs at
 # osv.dev, with the reasons: a vulnerability that no version that the ranges
 # admit fixes. A report of a malicious package (MAL-) is never accepted
 ACCEPTED_ADVISORIES: dict[str, str] = {
-    **{
-        advisory: _MARKDOWNLINT_CLI2_0_24
-        for advisory in (
-            "GHSA-gfr2-rv44-r23c",
-            "GHSA-r4xh-jqrq-34v2",
-            "GHSA-r7fv-28h4-cvq7",
-            "GHSA-vfgh-jcmw-g37q",
-        )
-    },
     "GHSA-238p-pmpm-9mq7": (
         "katex 0.16, which markdownlint's math parser allows (^0.16): fixed in 0.18 "
         "only; markdownlint parses math and renders none"
@@ -135,7 +120,7 @@ ACCEPTED_ADVISORIES: dict[str, str] = {
         "where the file system has no file locking, and a lock is only held up"
     ),
     "GHSA-cx6f-vjhg-g3cc": (
-        "virtualenv 21.14.11, of pre-commit (dev only): fixed in 21.14.13, uploaded "
+        "virtualenv 21.14.12, of pre-commit (dev only): fixed in 21.14.13, uploaded "
         "on 2026-10-22, which the cooldown keeps out until 2026-10-29; it is in "
         "the Bash activator's prompt, which pre-commit does not use"
     ),

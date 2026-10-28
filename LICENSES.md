@@ -80,7 +80,7 @@
 |  └─ [packaging (26.3.0)](https://pypi.org/project/packaging/) (also: docling-core, litellm +2 more)|python|prod||[Apache-2.0](https://spdx.org/licenses/Apache-2.0.html) OR [BSD-2-Clause](https://spdx.org/licenses/BSD-2-Clause.html)|permissive|✓|
 |  └─ [pandas (3.0.6)](https://pypi.org/project/pandas/) (also: docling-core)|python|prod||[BSD-3-Clause](https://spdx.org/licenses/BSD-3-Clause.html)|permissive|✓|
 |  └─ [pluggy (1.7.0)](https://pypi.org/project/pluggy/)|python|prod||[MIT](https://spdx.org/licenses/MIT.html)|permissive|✓|
-|  └─ [polyfactory (3.4.0)](https://pypi.org/project/polyfactory/)|python|prod||[MIT](https://spdx.org/licenses/MIT.html)|permissive|✓|
+|  └─ [polyfactory (3.5.0)](https://pypi.org/project/polyfactory/)|python|prod||[MIT](https://spdx.org/licenses/MIT.html)|permissive|✓|
 |  └─ [psutil (7.2.2)](https://pypi.org/project/psutil/)|python|prod||[BSD-3-Clause](https://spdx.org/licenses/BSD-3-Clause.html)|permissive|✓|
 |  └─ [pyclipper (1.4.0)](https://pypi.org/project/pyclipper/)|python|prod||[MIT](https://spdx.org/licenses/MIT.html)|permissive|✓|
 |  └─ [pydantic-core (2.50.1)](https://pypi.org/project/pydantic-core/) (also: docling-core, genai-prices +3 more)|python|prod||[MIT](https://spdx.org/licenses/MIT.html)|permissive|✓|
@@ -136,8 +136,8 @@
 |[docstring-parser (0.18.0)](https://pypi.org/project/docstring-parser/)|python|prod|[pyproject.toml](pyproject.toml)|[MIT](https://spdx.org/licenses/MIT.html)|permissive|✓|
 |[fastjsonschema (2.22.2)](https://pypi.org/project/fastjsonschema/)|python|prod|[pyproject.toml](pyproject.toml)|[BSD-3-Clause](https://spdx.org/licenses/BSD-3-Clause.html)|permissive|✓|
 |[genai-prices (0.1.13)](https://pypi.org/project/genai-prices/)|python|prod|[pyproject.toml](pyproject.toml)|[MIT](https://spdx.org/licenses/MIT.html)|permissive|✓|
-|  └─ [httpcore2 (2.15.1)](https://pypi.org/project/httpcore2/)|python|prod||[BSD-3-Clause](https://spdx.org/licenses/BSD-3-Clause.html)|permissive|✓|
-|  └─ [httpx2 (2.15.1)](https://pypi.org/project/httpx2/)|python|prod||[BSD-3-Clause](https://spdx.org/licenses/BSD-3-Clause.html)|permissive|✓|
+|  └─ [httpcore2 (2.16.0)](https://pypi.org/project/httpcore2/)|python|prod||[BSD-3-Clause](https://spdx.org/licenses/BSD-3-Clause.html)|permissive|✓|
+|  └─ [httpx2 (2.16.0)](https://pypi.org/project/httpx2/)|python|prod||[BSD-3-Clause](https://spdx.org/licenses/BSD-3-Clause.html)|permissive|✓|
 |  └─ [httpx2-jsfetch (1.0.0)](https://pypi.org/project/httpx2-jsfetch/)|python|prod||[BSD-3-Clause](https://spdx.org/licenses/BSD-3-Clause.html)|permissive|✓|
 |  └─ [truststore (0.10.5)](https://pypi.org/project/truststore/)|python|prod||[MIT](https://spdx.org/licenses/MIT.html)|permissive|✓|
 |[jinja2 (3.1.6)](https://pypi.org/project/jinja2/)|python|prod|[pyproject.toml](pyproject.toml)|[BSD-3-Clause](https://spdx.org/licenses/BSD-3-Clause.html)|permissive|✓|
@@ -146,8 +146,8 @@
 |  └─ [aiohappyeyeballs (2.7.1)](https://pypi.org/project/aiohappyeyeballs/)|python|prod||[PSF-2.0](https://spdx.org/licenses/PSF-2.0.html)|permissive|✓|
 |  └─ [aiohttp (3.14.5)](https://pypi.org/project/aiohttp/)|python|prod||[Apache-2.0](https://spdx.org/licenses/Apache-2.0.html) AND [MIT](https://spdx.org/licenses/MIT.html)|permissive|✓|
 |  └─ [aiosignal (1.4.0)](https://pypi.org/project/aiosignal/)|python|prod||[Apache-2.0](https://spdx.org/licenses/Apache-2.0.html)|permissive|✓|
-|  └─ [boto3 (1.43.116)](https://pypi.org/project/boto3/)|python|prod||[Apache-2.0](https://spdx.org/licenses/Apache-2.0.html)|permissive|✓|
-|  └─ [botocore (1.43.116)](https://pypi.org/project/botocore/)|python|prod||[Apache-2.0](https://spdx.org/licenses/Apache-2.0.html)|permissive|✓|
+|  └─ [boto3 (1.43.117)](https://pypi.org/project/boto3/)|python|prod||[Apache-2.0](https://spdx.org/licenses/Apache-2.0.html)|permissive|✓|
+|  └─ [botocore (1.43.117)](https://pypi.org/project/botocore/)|python|prod||[Apache-2.0](https://spdx.org/licenses/Apache-2.0.html)|permissive|✓|
 |  └─ [distro (1.9.0)](https://pypi.org/project/distro/) (also: openai)|python|prod||[Apache-2.0](https://spdx.org/licenses/Apache-2.0.html)|permissive|✓|
 |  └─ [fastuuid (0.14.0)](https://pypi.org/project/fastuuid/)|python|prod||[BSD-3-Clause](https://spdx.org/licenses/BSD-3-Clause.html)|permissive|✓|
 |  └─ [frozenlist (1.8.0)](https://pypi.org/project/frozenlist/)|python|prod||[Apache-2.0](https://spdx.org/licenses/Apache-2.0.html)|permissive|✓|
@@ -160,7 +160,7 @@
 |  └─ [sniffio (1.3.1)](https://pypi.org/project/sniffio/) (also: openai)|python|prod||[Apache-2.0](https://spdx.org/licenses/Apache-2.0.html) OR [MIT](https://spdx.org/licenses/MIT.html)|permissive|✓|
 |  └─ [tiktoken (0.14.0)](https://pypi.org/project/tiktoken/)|python|prod||[MIT](https://spdx.org/licenses/MIT.html)|permissive|✓|
 |  └─ [yarl (1.25.1)](https://pypi.org/project/yarl/)|python|prod||[Apache-2.0](https://spdx.org/licenses/Apache-2.0.html)|permissive|✓|
-|  └─ [zipp (4.1.1)](https://pypi.org/project/zipp/)|python|prod||[MIT](https://spdx.org/licenses/MIT.html)|permissive|✓|
+|  └─ [zipp (4.1.2)](https://pypi.org/project/zipp/)|python|prod||[MIT](https://spdx.org/licenses/MIT.html)|permissive|✓|
 |[onnxruntime (1.31.0)](https://pypi.org/project/onnxruntime/)|python|prod|[pyproject.toml](pyproject.toml)|[MIT](https://spdx.org/licenses/MIT.html)|permissive|✓|
 |  └─ [flatbuffers (25.12.19)](https://pypi.org/project/flatbuffers/) (also: wtpsplit-lite)|python|prod||[Apache-2.0](https://spdx.org/licenses/Apache-2.0.html)|permissive|✓|
 |  └─ [protobuf (7.36.2)](https://pypi.org/project/protobuf/) (also: wtpsplit-lite)|python|prod||[BSD-3-Clause](https://spdx.org/licenses/BSD-3-Clause.html)|permissive|✓|
