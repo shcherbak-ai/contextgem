@@ -12,7 +12,7 @@
 <p align="center">
   <a href="https://pypi.org/project/contextgem/"><img src="https://img.shields.io/pypi/v/contextgem?style=flat-square&labelColor=18181b&color=0e74bc" alt="PyPI version"></a>
   <a href="https://pypi.org/project/contextgem/"><img src="https://img.shields.io/pypi/pyversions/contextgem?style=flat-square&labelColor=18181b&color=0e74bc" alt="Python versions"></a>
-  <a href="https://pypi.org/project/contextgem/"><img src="https://img.shields.io/pypi/dm/contextgem?style=flat-square&labelColor=18181b&color=0e74bc&label=downloads" alt="Downloads per month"></a><br>
+  <a href="https://pepy.tech/projects/contextgem"><img src="https://img.shields.io/pepy/dt/contextgem?style=flat-square&labelColor=18181b&color=0e74bc&label=downloads" alt="Total downloads"></a><br>
   <a href="https://github.com/shcherbak-ai/contextgem/actions/workflows/ci-tests.yml"><img src="https://img.shields.io/github/actions/workflow/status/shcherbak-ai/contextgem/ci-tests.yml?branch=main&style=flat-square&labelColor=18181b&label=CI" alt="CI"></a>
   <a href="https://github.com/shcherbak-ai/contextgem/actions/workflows/ci-tests.yml"><img src="https://img.shields.io/endpoint?url=https://gist.githubusercontent.com/SergiiShcherbak/daaee00e1dfff7a29ca10a922ec3becd/raw/coverage.json&style=flat-square&labelColor=18181b&color=0e74bc" alt="Coverage"></a>
   <a href="https://www.bestpractices.dev/projects/10489"><img src="https://img.shields.io/cii/level/10489?style=flat-square&labelColor=18181b&color=0e74bc&label=OpenSSF%20best%20practices" alt="OpenSSF Best Practices"></a>
