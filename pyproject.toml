@@ -103,10 +103,10 @@ dependencies = [
     "colorlog (>=6.9.0,<7.0.0)",
     "docstring-parser (>=0.17.0,<1.0.0)",
     "fastjsonschema (>=2.21.2,<3.0.0)",
-    "genai-prices==0.1.13", # pin version due to frequent API changes
+    "genai-prices==0.2.1", # pin version due to frequent API changes
     "jinja2 (>=3.1.5,<4.0.0)",
     "langcodes[data] (>=3.5.1,<4.0.0)", # validates the BCP 47 tags of output_language and names their languages
-    "litellm==1.105.2", # pin version due to occasional instability between patches and minor versions
+    "litellm==1.105.7", # pin version due to occasional instability between patches and minor versions
     "openai==2.54.0", # pinned to the version tested with litellm (openai 1.100.0 once broke importing litellm 1.75.8)
     "pillow (>=11.3.0,<14.0.0)",
     "pydantic (>=2.10.6,<3.0.0)",
@@ -118,7 +118,7 @@ dependencies = [
 
 [project.optional-dependencies]
 docling = [
-    "docling (>=2.141.0,<3.0.0)", # converts files into the Docling documents of Document.from_docling()
+    "docling (>=2.144.0,<3.0.0)", # converts files into the Docling documents of Document.from_docling()
     "docling-core (>=2.103.0,<3.0.0)", # the Docling document model, which Document.from_docling() maps
 ]
 
@@ -139,7 +139,7 @@ dev = [
     "coverage (>=7.6.12,<8.0.0)",
     "deptry (>=0.23.0,<1.0.0)",
     "docling-core (>=2.103.0,<3.0.0)", # the docling extra, for its tests and docs: same range
-    "docling-slim[convert-core,format-office,format-web] (>=2.141.0,<3.0.0)", # Docling without torch: converts the fixtures in the tests whose formats need no models, e.g. DOCX, PPTX, XLSX, HTML and Markdown (the lower bound of Docling in the docling extra)
+    "docling-slim[convert-core,format-office,format-web] (>=2.144.0,<3.0.0)", # Docling without torch: converts the fixtures in the tests whose formats need no models, e.g. DOCX, PPTX, XLSX, HTML and Markdown (the lower bound of Docling in the docling extra)
     "fabric (>=3.2.0,<4.0.0)",
     "hypothesis (>=6.122.0,<7.0.0)",
     "interrogate (>=1.7.0,<2.0.0)",
@@ -188,19 +188,11 @@ include = ["/contextgem"]
 # A release enters uv.lock only a week after its upload, when a compromised one
 # has been found and removed (litellm 1.107.0, 2026-10-21: in two hours)
 exclude-newer = "7 days"
-
-# Releases taken before the cooldown admits them, by decision of the maintainer:
-# security fixes, and the maintainer's own releases whose wheel matches their
-# tag. Each is dated at its upload: the latest-versions hook fails once the
-# cooldown admits it, to remove the entry. The releases of Docling that allow
-# Pillow 13, which fixes the advisories of Pillow 12 (2026-10-22), and omerta
-# 0.1.0 (2026-10-25)
-[tool.uv.exclude-newer-package]
-docling = "2026-10-22T14:32:00Z"
-docling-core = "2026-10-22T14:03:00Z"
-docling-parse = "2026-10-22T14:54:00Z"
-docling-slim = "2026-10-22T14:30:00Z"
-omerta = "2026-10-25T08:26:00Z"
+# A release taken before the cooldown admits it, by decision of the maintainer
+# (a security fix, or a release of the maintainer's own whose wheel matches its
+# tag), goes in [tool.uv.exclude-newer-package], dated after the upload of the
+# last file of the release: the latest-versions hook fails once the cooldown
+# admits it, to remove the entry
 
 [tool.ruff]
 line-length = 88

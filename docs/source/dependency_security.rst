@@ -38,7 +38,7 @@ A malicious release is usually found and removed within days of its upload, so a
 🩹 Take a Security Fix Early
 -------------------------------
 
-A security fix is often younger than a week. To take it before the cutoff admits it, give its package a cutoff of its own in ``pyproject.toml``, the time of the fix's upload (see `exclude-newer-package <https://docs.astral.sh/uv/reference/settings/#exclude-newer-package>`_):
+A security fix is often younger than a week. To take it before the cutoff admits it, give its package a cutoff of its own in ``pyproject.toml``, a time after the upload of the last file of the fix (see `exclude-newer-package <https://docs.astral.sh/uv/reference/settings/#exclude-newer-package>`_). The files of a release, e.g. its wheels for each platform, are uploaded one after another, and uv leaves out each file uploaded after the cutoff, also the one for your platform:
 
 .. code-block:: toml
 

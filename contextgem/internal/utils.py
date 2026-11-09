@@ -993,7 +993,7 @@ def _is_rejected_by_sdk_before_sending(error: BaseException) -> bool:
 
     litellm raises such an error as a server error (500), e.g. ``InternalServerError``
     for a missing key of an OpenAI model and ``APIError`` for one of an Azure OpenAI
-    model (litellm 1.105.2, openai 2.54.0), as it no longer recognizes the message of
+    model (litellm 1.105.7, openai 2.54.0), as it no longer recognizes the message of
     the SDK, while the request would fail again in the same way. The error of the SDK
     is found among the errors that the error of litellm was raised from.
 

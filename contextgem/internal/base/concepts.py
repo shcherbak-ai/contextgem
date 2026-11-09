@@ -9,7 +9,7 @@ from __future__ import annotations
 
 from abc import abstractmethod
 from datetime import date, datetime
-from types import UnionType
+from types import GenericAlias, UnionType
 from typing import Any, List, Literal, Self, Union, get_args, get_origin  # noqa: UP035
 
 from pydantic import (
@@ -758,8 +758,9 @@ class _JsonObjectConcept(_Concept):
                         }
                         return [processed_fields]
                 else:
-                    # For basic types, ensure we're using built-in list
-                    return list[arg_type]
+                    # For basic types, ensure we're using built-in list: the
+                    # list[arg_type] of a type known only at runtime
+                    return GenericAlias(list, (arg_type,))
 
         # Handle Optional type hints and ensure they only contain primitive types
         elif (

@@ -6,6 +6,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 - **Refactor**: Code reorganization that doesn't change functionality but improves structure or maintainability
 
+## [Unreleased]
+
+### Changed
+
+- Upgraded pinned dependency versions: `litellm==1.105.7`, `genai-prices==0.2.1`. `openai` remains pinned to `2.54.0`, the latest version supported by `litellm`. With the prices of more models in `genai-prices`, `auto_pricing=True` now calculates the costs of e.g. `typesafe/jev-1.14.0` and `perplexity/pplx-decider-v1.2`, which stayed at zero with a warning.
+- The `docling` extra now requires Docling 2.144.0 or later, which reads HTML blocks in Markdown files correctly again: `Document.from_docling()` gives their text, e.g. a paragraph for each row of an HTML table, instead of one paragraph of HTML markup (see "Known issues" of 1.2.1).
+
 ## [1.5.0] - 2026-10-28
 
 ### Added
@@ -735,6 +742,7 @@ See the [migration guide](https://contextgem.shcherbak.ai/migration_v1/) for upd
 
 - Added DocxConverter for converting DOCX files into ContextGem Document objects
 
+[Unreleased]: https://github.com/shcherbak-ai/contextgem/compare/v1.5.0...HEAD
 [1.5.0]: https://github.com/shcherbak-ai/contextgem/compare/v1.4.1...v1.5.0
 [1.4.1]: https://github.com/shcherbak-ai/contextgem/compare/v1.4.0...v1.4.1
 [1.4.0]: https://github.com/shcherbak-ai/contextgem/compare/v1.3.0...v1.4.0

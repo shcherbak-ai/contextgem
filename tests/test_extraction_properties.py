@@ -1458,7 +1458,7 @@ def _field_types(draw: st.DrawFn, depth: int = 0, of_field: bool = True) -> Any:
         inner = draw(st.sampled_from(_PRIMITIVE_TYPES) | _literal_types())
         return draw(
             st.sampled_from(
-                [inner | None, Optional[inner], Union[inner, None]]  # noqa: UP007, UP045
+                [inner | None, Optional[inner], Union[inner, None]]  # noqa: UP007, UP045  # ty: ignore[invalid-type-form]  # the spellings that users write, of a type drawn at runtime
             )
         )
     if kind == "union":
@@ -1483,11 +1483,11 @@ def _field_types(draw: st.DrawFn, depth: int = 0, of_field: bool = True) -> Any:
         form = draw(st.sampled_from(forms))
         if form == "shorthand":
             return [item]
-        return list[item] if form == "list" else List[item]  # noqa: UP006
+        return list[item] if form == "list" else List[item]  # noqa: UP006  # ty: ignore[invalid-type-form]  # the spellings that users write, of a type drawn at runtime
     if kind == "dict":
         key = draw(st.sampled_from([str, str, Literal["a", "b"]]))
         value = draw(_field_types(depth + 1, of_field=False))
-        return dict[key, value] if draw(st.booleans()) else Dict[key, value]  # noqa: UP006
+        return dict[key, value] if draw(st.booleans()) else Dict[key, value]  # noqa: UP006  # ty: ignore[invalid-type-form]  # the spellings that users write, of a type drawn at runtime
     nested = draw(_structures(depth + 1))
     return nested if kind == "structure" else [nested]
 

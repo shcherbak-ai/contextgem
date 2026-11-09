@@ -12,7 +12,7 @@ serialization requirements, and ensuring type consistency across the application
 
 from __future__ import annotations
 
-from types import UnionType
+from types import GenericAlias, UnionType
 from typing import Annotated, Any, Literal, Union, get_args, get_origin
 
 from pydantic import BaseModel, BeforeValidator, ConfigDict, Field, create_model
@@ -149,15 +149,16 @@ def _match_literals_exactly(type_hint: Any) -> Any:
         return Annotated[type_hint, BeforeValidator(check_value)]
     if origin is Union or isinstance(type_hint, UnionType):
         return Union[tuple(_match_literals_exactly(arg) for arg in get_args(type_hint))]  # noqa: UP007
+    # The list[...] and dict[...] of the types built at runtime
     if origin is list:
         (item_type,) = get_args(type_hint)
         exact_item_type = _match_literals_exactly(item_type)
-        return list[exact_item_type]
+        return GenericAlias(list, (exact_item_type,))
     if origin is dict:
         key_type, value_type = get_args(type_hint)
         exact_key_type = _match_literals_exactly(key_type)
         exact_value_type = _match_literals_exactly(value_type)
-        return dict[exact_key_type, exact_value_type]
+        return GenericAlias(dict, (exact_key_type, exact_value_type))
     return type_hint
 
 
@@ -230,7 +231,8 @@ def _dynamic_pydantic_model(
             _check_mapping_keys(item_type, field_name)
             exact_item_type = _match_literals_exactly(item_type)
             fields[model_field_name] = (
-                list[exact_item_type],
+                # list[exact_item_type], of a type known only at runtime
+                GenericAlias(list, (exact_item_type,)),
                 Field(..., alias=field_name),
             )
             continue

@@ -13,6 +13,7 @@ conversion between type annotations and their string representations.
 from __future__ import annotations
 
 from functools import reduce
+from types import GenericAlias
 from typing import Any, Literal, Union
 
 from contextgem.internal.typings.types_to_strings import PRIMITIVE_TYPES_STRING_MAP
@@ -112,7 +113,8 @@ def _parse_type_hint(s: str, i: int = 0) -> tuple[Any, int]:
         i += 1  # skip ']'
 
         if ident.lower() == "list":
-            return list[inner_type], i
+            # list[inner_type], of a type parsed at runtime
+            return GenericAlias(list, (inner_type,)), i
         else:  # list_instance
             return [inner_type], i  # Return as list instance format
 
@@ -132,7 +134,8 @@ def _parse_type_hint(s: str, i: int = 0) -> tuple[Any, int]:
                 f"Expected ']' after dict value type at position {i} in {s!r}"
             )
         i += 1  # skip ']'
-        return dict[key_type, value_type], i
+        # dict[key_type, value_type], of types parsed at runtime
+        return GenericAlias(dict, (key_type, value_type)), i
 
     elif ident.lower() == "union":
         # union[<type1>, <type2>, ...]
