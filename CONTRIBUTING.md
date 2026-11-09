@@ -648,6 +648,7 @@ The tests run with the ContextGem logger at the `DEBUG` level, which is set in `
 - Update the docstrings and the pages in `docs/source/` that describe the functionality you change or add, in the same pull request. Use clear, concise language.
 - The code shown on a page or in a docstring lives in `dev/usage_examples/` and is included with `literalinclude`, so that the tests run it (see [Tests of the Usage Examples](#-tests-of-the-usage-examples)). Add or change the example there, not in the page.
 - Update `dev/readme.template.md` and `PYPI.md` where the change affects them (see [Updating README.md](#-updating-readmemd)).
+- Add each change that users notice to `CHANGELOG.md`, under `## [Unreleased]`, written for them: what changed and what they have to do, in a few sentences. The tests, CI, the development tools and how a change was checked stay out, and a change to them alone gets no entry.
 
 ### 🏗️ Building the Documentation
 
