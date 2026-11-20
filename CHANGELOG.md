@@ -14,11 +14,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 - Decision models of Azure OpenAI (`azure/<deployment_name>`), Fireworks AI, Databricks, Bespoke and Laya are supported, which this `litellm` serves through its Decisions API (see "Supported Providers and Models" of the decision models page).
 - In a stand-in for `litellm.acompletion` in your tests, mock the refusal of an OpenAI model with `refusal` on the message, instead of `provider_specific_fields={"refusal": ...}`: this `litellm` keeps the refusal field of OpenAI there, where ContextGem now reads it.
 - The `docling` extra now requires Docling 2.147.0 or later and docling-core 2.106.0 or later, whose formatted text keeps the whitespace between its parts.
+- `Document.from_docling()` gives the state of a checkbox as Markdown does, with a box before its text: `[x] Express delivery`, `I agree to the terms: [x]` and `Options: [x] Tea [ ] Coffee`, instead of `checked` and `unchecked` after it. The additional context of the paragraph of a checkbox is `Checkbox`, without its state. A checkbox in a line of formatted text, which lost its state, now has its box too.
 
 ### Fixed
 
 - `Document.from_docling()` joins the parts of formatted text as Docling gives them, with their own whitespace, e.g. a word with a subscript or a superscript in it, which got a space inside it: `H2O` and `x2` instead of `H 2 O` and `x 2`. A Docling document saved with Docling before 2.147.0 has a space between all the parts of its formatted text, also before punctuation, e.g. `Ltd .`: convert the file again with a current Docling. Formatted text of Docling's VLM pipeline, from DocTags, has no whitespace between its parts, so the words around a formatted part run together (see "What the Document Is Made Of" of the Docling page).
-- `Document.from_docling()` keeps all the text of a form field, as a DocLang file can have it: a key or a value with formatted text, e.g. a word in bold or a link, the state of a checkbox in it, and a form field inside the value of another one, which becomes a paragraph of its own after it. Such text was left out, e.g. `I agree to the terms` instead of `I agree to the terms: checked`, and a field whose key and value were both formatted had no paragraph.
+- `Document.from_docling()` keeps all the text of a form field, as a DocLang file can have it: a key or a value with formatted text, e.g. a word in bold or a link, the state of a checkbox in it, and a form field inside the value of another one, which becomes a paragraph of its own after it. Such text was left out, e.g. `I agree to the terms` instead of `I agree to the terms: [x]`, and a field whose key and value were both formatted had no paragraph.
 
 ## [1.5.1] - 2026-11-09
 

@@ -115,8 +115,8 @@ _TEXT_KINDS = {
     DocItemLabel.CODE: "Code",
     DocItemLabel.FORMULA: "Formula",
     DocItemLabel.CAPTION: "Caption",
-    DocItemLabel.CHECKBOX_SELECTED: "Checkbox, checked",
-    DocItemLabel.CHECKBOX_UNSELECTED: "Checkbox, unchecked",
+    DocItemLabel.CHECKBOX_SELECTED: "Checkbox",
+    DocItemLabel.CHECKBOX_UNSELECTED: "Checkbox",
 }
 # The labels of the items whose paragraphs are not running text, each of which is
 # one sentence, its whole text: headings, table headers and rows, key-value pairs
@@ -138,10 +138,10 @@ _ONE_SENTENCE_LABELS = frozenset(
         DocItemLabel.FIELD_HEADING,
     )
 )
-# The states of checkboxes, as the text of a table cell gives them
-_CHECKBOX_STATES = {
-    DocItemLabel.CHECKBOX_SELECTED: "checked",
-    DocItemLabel.CHECKBOX_UNSELECTED: "unchecked",
+# The boxes of checkboxes, which the text of a checkbox follows, as in Markdown
+_CHECKBOX_BOXES = {
+    DocItemLabel.CHECKBOX_SELECTED: "[x]",
+    DocItemLabel.CHECKBOX_UNSELECTED: "[ ]",
 }
 
 # The start and the end time of the track of a text from a track, in seconds
@@ -2128,8 +2128,9 @@ class _Expected:
         :return: None
         :rtype: None
         """
+        box = _CHECKBOX_BOXES.get(text.label)
         self._paragraph(
-            text.content,
+            f"{box} {text.content}" if box else text.content,
             _TEXT_KINDS.get(text.label),
             text.self_ref,
             text.label.value,
@@ -2275,7 +2276,7 @@ class _Expected:
             if isinstance(entry, _Text):
                 self.structures.add(
                     "checkbox in a list"
-                    if entry.label in _CHECKBOX_STATES
+                    if entry.label in _CHECKBOX_BOXES
                     else "text in a list"
                 )
                 self._item(entry, list_level + 1)
@@ -2676,10 +2677,10 @@ class _Expected:
         if isinstance(block, _Text):
             if block.layer != _BODY:
                 return []
-            state = _CHECKBOX_STATES.get(block.label)
-            if state:
+            box = _CHECKBOX_BOXES.get(block.label)
+            if box:
                 self.structures.add("checkbox in a rich cell")
-            text = f"{block.content} ({state})" if state else block.content
+            text = f"{box} {block.content}" if box else block.content
             return [text, *self._cell_items(block.children, floating)]
         if isinstance(block, _Inline):
             text = _inline_text(_inline_words(block))
@@ -2881,12 +2882,12 @@ class _Expected:
         if checkbox:
             if field_text.checkbox_formatted:
                 self.structures.add("checkbox in formatted text of a form field")
-            state = "checked" if checkbox.checked else "unchecked"
+            box = "[x]" if checkbox.checked else "[ ]"
             if checkbox.text:
-                words.append(f"{checkbox.text.content} ({state})")
+                words.append(f"{box} {checkbox.text.content}")
                 parts.append(checkbox.text)
             else:
-                words.append(state)
+                words.append(box)
         return " ".join(word for word in words if word)
 
 

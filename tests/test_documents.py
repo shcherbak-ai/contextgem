@@ -2918,10 +2918,7 @@ class TestDocuments(BaseTest):
         assert _texts_and_contexts(document) == [
             ("Service; Options", "Table header"),
             (
-                (
-                    "Service: Breakfast; Options: Choose any: Tea (checked) "
-                    "Coffee (unchecked)"
-                ),
+                ("Service: Breakfast; Options: Choose any: [x] Tea [ ] Coffee"),
                 "Table row",
             ),
             (
@@ -3365,18 +3362,18 @@ class TestDocuments(BaseTest):
 
         assert _texts_and_contexts(Document.from_docling(docling_document)) == [
             ("Full name: Ada Lovelace", "Form field"),
-            ("I agree to the terms: checked", "Form field"),
-            ("Subscribe to the newsletter: unchecked", "Form field"),
+            ("I agree to the terms: [x]", "Form field"),
+            ("Subscribe to the newsletter: [ ]", "Form field"),
             ("Payment terms: Net 30 days", "Form field"),
             ("Coolant: H2O", "Form field"),
-            ("Marketing emails: checked", "Form field"),
-            ("Plan: Premium (checked)", "Form field"),
+            ("Marketing emails: [x]", "Form field"),
+            ("Plan: [x] Premium", "Form field"),
             ("Website address: example.com", "Form field"),
             ("Address: Registered office", "Form field"),
             ("City: Oslo", "Form field"),
             ("Invoice no.: INV-2026-042", "Key-value pair"),
             ("Paid", "Key-value pair"),
-            ("Express delivery", "Checkbox, checked"),
+            ("[x] Express delivery", "Checkbox"),
         ]
 
         # Where the cells have no provenance, only their region, e.g. from DocTags,
@@ -3576,8 +3573,8 @@ class TestDocuments(BaseTest):
     def test_from_docling_doclang_form_fields(self):
         """
         Tests the form fields of a DocLang file, as docling-core reads them: a key
-        and a value with formatted text, checkboxes, whose state follows their
-        label, also where formatted text goes on with it, a key with
+        and a value with formatted text, checkboxes, with their box before their
+        text, also where formatted text goes on with it, a key with
         a link, and a form field inside the value of another one, also in its
         formatted text or in a line of text, keep all their text.
         """
@@ -3611,10 +3608,10 @@ class TestDocuments(BaseTest):
         docling_document = DocLangDocDeserializer().deserialize_str(doclang)
         assert _texts_and_contexts(Document.from_docling(docling_document)) == [
             ("Payment terms: Net 30 days", "Form field"),
-            ("I agree to the terms: checked", "Form field"),
-            ("Plan: Premium (unchecked)", "Form field"),
-            ("Method: Bank transfer (checked)", "Form field"),
-            ("Renewal: Yes (checked) No (unchecked)", "Form field"),
+            ("I agree to the terms: [x]", "Form field"),
+            ("Plan: [ ] Premium", "Form field"),
+            ("Method: [x] Bank transfer", "Form field"),
+            ("Renewal: [x] Yes [ ] No", "Form field"),
             ("Website address: example.com", "Form field"),
             ("Contact: Head office and branches", "Form field"),
             ("City: Oslo", "Form field"),

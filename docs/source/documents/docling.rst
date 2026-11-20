@@ -77,13 +77,16 @@ Each piece of text in the body of the file becomes a paragraph, in reading order
      - The text, after the number of a numbered item, e.g. ``1. Invoices are payable within 30 days.``, or after its position in its list where the file gives no number, e.g. in HTML
      - ``List item``, ``List item, level 2``
    * - Table
-     - A paragraph with the headers of the columns, if the table has them, then a paragraph for each row, with each value after the header of its column, e.g. ``Service: Hosting; Monthly fee: 1,200 EUR``. A cell with paragraphs, a list or checkboxes in it, e.g. in DOCX, HTML or OpenDocument, gives their text, a numbered item after its number and a checkbox with its state, e.g. ``Options: Tea (checked) Coffee (unchecked)``. A table or a picture in a cell is converted after the table, and the cell gives its caption
+     - A paragraph with the headers of the columns, if the table has them, then a paragraph for each row, with each value after the header of its column, e.g. ``Service: Hosting; Monthly fee: 1,200 EUR``. A cell with paragraphs, a list or checkboxes in it, e.g. in DOCX, HTML or OpenDocument, gives their text, a numbered item after its number and a checkbox after its box, e.g. ``Options: [x] Tea [ ] Coffee``. A table or a picture in a cell is converted after the table, and the cell gives its caption
      - ``Table header``, ``Table row``, with the caption of the table
-   * - Caption, footnote, code, formula, checkbox
+   * - Caption, footnote, code, formula
      - The text
-     - e.g. ``Table caption``, ``Picture caption``, ``Footnote``, ``Code``, ``Checkbox, checked``
+     - e.g. ``Table caption``, ``Picture caption``, ``Footnote``, ``Code``
+   * - Checkbox
+     - The text after its box, as Markdown gives the state of a checkbox: ``[x] Express delivery`` or ``[ ] Express delivery``. A checkbox in a form field, a table cell or a line of formatted text is given the same way, e.g. ``I agree to the terms: [x]``
+     - ``Checkbox``
    * - Form field, key-value pair
-     - The key and the value, e.g. ``Full name: Ada Lovelace`` or ``I agree to the terms: checked``. A form field inside the value of another one is a paragraph of its own, after that of the outer field
+     - The key and the value, e.g. ``Full name: Ada Lovelace`` or ``I agree to the terms: [x]``. A form field inside the value of another one is a paragraph of its own, after that of the outer field
      - ``Form field``, ``Key-value pair``
    * - Cue of a subtitle file, segment of the transcript of an audio or a video file
      - The text, with its start and end times in its custom data (``source``, see :ref:`docling-pages-label`)

@@ -133,8 +133,8 @@ _BODY_TEXT_LABELS = frozenset({DocItemLabel.TEXT, DocItemLabel.PARAGRAPH})
 # What the additional context of a paragraph calls a text, by its Docling label.
 # A text with another label is named after the label, e.g. "Footnote" or "Code".
 _TEXT_KINDS = {
-    DocItemLabel.CHECKBOX_SELECTED: "Checkbox, checked",
-    DocItemLabel.CHECKBOX_UNSELECTED: "Checkbox, unchecked",
+    DocItemLabel.CHECKBOX_SELECTED: "Checkbox",
+    DocItemLabel.CHECKBOX_UNSELECTED: "Checkbox",
 }
 
 # The Docling labels of the texts that are not running text, each of which is
@@ -151,11 +151,11 @@ _ONE_SENTENCE_LABELS = frozenset(
     }
 )
 
-# The states of checkboxes, by their Docling label, as the text of a form field or
-# of a table cell gives them
-_CHECKBOX_VALUES = {
-    DocItemLabel.CHECKBOX_SELECTED: "checked",
-    DocItemLabel.CHECKBOX_UNSELECTED: "unchecked",
+# The boxes of checkboxes, by their Docling label, as Markdown gives the state of
+# a checkbox, before its text
+_CHECKBOX_BOXES = {
+    DocItemLabel.CHECKBOX_SELECTED: "[x]",
+    DocItemLabel.CHECKBOX_UNSELECTED: "[ ]",
 }
 
 # Why the pictures that are not attached as images are not, by where their image
@@ -256,44 +256,21 @@ def _labelled(label: str, value: str) -> str:
 
 def _checkbox_text(label: DocItemLabel, text: str) -> str:
     """
-    Returns the text of a checkbox with its state, or the text of another item as
-    it is.
+    Returns the text of a checkbox after its box, as Markdown gives its state, or
+    the text of another item as it is.
 
     :param label: The Docling label of the item, e.g. that of a checked checkbox.
     :type label: DocItemLabel
     :param text: The text of the item.
     :type text: str
-    :return: e.g. "Tea (unchecked)" for a checkbox, or its state alone if it has no
-        text, e.g. "checked".
+    :return: e.g. "[x] Tea" or "[ ] Tea" for a checkbox, or its box alone if it has
+        no text, e.g. "[x]".
     :rtype: str
     """
-    state = _CHECKBOX_VALUES.get(label)
-    if state is None:
+    box = _CHECKBOX_BOXES.get(label)
+    if box is None:
         return text
-    return f"{text} ({state})" if text else state
-
-
-def _with_checkbox_state(text: str, start: int, state: str) -> str:
-    """
-    Returns a text with the state of a checkbox after its label, the end of the
-    text from a position, e.g. "Plan: Premium (checked)", or the state alone for
-    a checkbox without a label, e.g. "Plan: checked".
-
-    :param text: The text, which ends with the label of the checkbox.
-    :type text: str
-    :param start: Where the label of the checkbox starts in the text.
-    :type start: int
-    :param state: The state of the checkbox, e.g. "checked", or an empty string
-        for a text without a checkbox, which is returned as it is.
-    :type state: str
-    :return: The text, with a space after the state, for the text that follows.
-    :rtype: str
-    """
-    if not state:
-        return text
-    if text[start:].strip():
-        return f"{text.rstrip()} ({state}) "
-    return f"{text.rstrip()} {state} "
+    return f"{box} {text}" if text else box
 
 
 def _join_inline(parts: Iterable[str]) -> str:
@@ -883,9 +860,9 @@ class _DoclingConverter:
         elif isinstance(item, FieldItem):
             self._convert_field(item, list_level)
         elif isinstance(item, InlineGroup):
-            texts = self._inline_texts(item)
+            text, texts = self._inline_text(item)
             self._add_paragraph(
-                _join_inline(text.text for text in texts),
+                text,
                 None,
                 item,
                 _provenance_of_items(texts),
@@ -1012,7 +989,7 @@ class _DoclingConverter:
         """
         text, sources, children = self._text_of(item)
         self._add_paragraph(
-            text,
+            _checkbox_text(item.label, text),
             kind,
             item,
             _provenance_of_items(sources),
@@ -1043,8 +1020,7 @@ class _DoclingConverter:
         if not text and children:
             first = children[0]
             if isinstance(first, InlineGroup):
-                texts = self._inline_texts(first)
-                text = _join_inline(text_item.text for text_item in texts)
+                text, texts = self._inline_text(first)
                 sources.extend(texts)
                 children = [*self._inline_items(first), *children[1:]]
             elif isinstance(first, TextItem) and first.label in _BODY_TEXT_LABELS:
@@ -1141,30 +1117,48 @@ class _DoclingConverter:
         for child in children:
             self._convert_item(child, list_level)
 
-    def _inline_texts(
-        self, group: NodeItem, checkboxes: bool = False
-    ) -> list[TextItem]:
+    def _inline_texts(self, group: NodeItem) -> list[TextItem]:
         """
         Returns the text items of an inline group, in order.
 
         :param group: The inline group.
         :type group: NodeItem
-        :param checkboxes: Whether to return the checkboxes without text too, whose
-            state is their text, e.g. in a form field. Defaults to False.
-        :type checkboxes: bool
-        :return: The text items with text, including those of the groups in it, and
-            those with whitespace only, which separates the words of the others.
+        :return: The text items with text, including those of the groups in it,
+            those with whitespace only, which separates the words of the others,
+            and the checkboxes, whose box is their text if they have none.
         :rtype: list[TextItem]
         """
         texts: list[TextItem] = []
         for child in self._children(group):
             if isinstance(child, TextItem) and (
-                child.text or (checkboxes and child.label in _CHECKBOX_VALUES)
+                child.text or child.label in _CHECKBOX_BOXES
             ):
                 texts.append(child)
             elif isinstance(child, GroupItem):
-                texts.extend(self._inline_texts(child, checkboxes))
+                texts.extend(self._inline_texts(child))
         return texts
+
+    def _inline_text(self, group: NodeItem) -> tuple[str, list[TextItem]]:
+        """
+        Returns the text of an inline group, its parts joined as they are (see
+        `_join_inline()`), with the box of each checkbox in it before the text of
+        the checkbox, as in Markdown, e.g. "Options: [x] Tea [ ] Coffee".
+
+        :param group: The inline group.
+        :type group: NodeItem
+        :return: The text, on a single line, and the text items it is made from.
+        :rtype: tuple[str, list[TextItem]]
+        """
+        texts = self._inline_texts(group)
+        return (
+            _join_inline(
+                f" {_CHECKBOX_BOXES[item.label]} {item.text}"
+                if item.label in _CHECKBOX_BOXES
+                else item.text
+                for item in texts
+            ),
+            texts,
+        )
 
     def _convert_list_item(self, item: ListItem, list_level: int) -> None:
         """
@@ -1393,8 +1387,7 @@ class _DoclingConverter:
         if isinstance(item, TableItem | PictureItem):
             return [self._caption_text(item)]
         if isinstance(item, InlineGroup):
-            texts = self._inline_texts(item)
-            parts = [_join_inline(text.text for text in texts)]
+            parts = [self._inline_text(item)[0]]
             children = self._inline_items(item)
         elif isinstance(item, ListItem):
             text, _, children = self._list_item_text(item)
@@ -1514,7 +1507,7 @@ class _DoclingConverter:
     def _convert_field(self, field: FieldItem, list_level: int) -> None:
         """
         Adds a paragraph for a form field, with its key and its value, e.g.
-        "Full name: Ada Lovelace" or "I agree to the terms: checked", and converts
+        "Full name: Ada Lovelace" or "I agree to the terms: [x]", and converts
         the other items under it after it, e.g. a form field inside its value.
 
         :param field: The form field.
@@ -1571,7 +1564,7 @@ class _DoclingConverter:
             the item that are not text are added to, e.g. a form field inside
             the value, or a picture in its formatted text.
         :type others: list[NodeItem]
-        :return: The text, e.g. "Full name", "Ada Lovelace" or "checked".
+        :return: The text, e.g. "Full name", "Ada Lovelace" or "[x]".
         :rtype: str
         """
         sources.append(item)
@@ -1580,43 +1573,15 @@ class _DoclingConverter:
             if isinstance(child, TextItem):
                 parts.append(self._field_text(child, sources, others))
             elif isinstance(child, InlineGroup):
-                parts.append(self._field_inline_text(child, sources))
+                text, texts = self._inline_text(child)
+                parts.append(text)
+                sources.extend(texts)
                 # The other items in the text, e.g. a form field in a line of
                 # DocLang
                 others.extend(self._inline_items(child))
             else:
                 others.append(child)
         return " ".join(part for part in parts if part)
-
-    def _field_inline_text(self, group: InlineGroup, sources: list[NodeItem]) -> str:
-        """
-        Returns the formatted text of the key or the value of a form field, its
-        parts joined as they are (see `_join_inline()`), with the state of each
-        checkbox in it after its label: the text from the checkbox to the next
-        checkbox or the end, which can go on in the parts after the checkbox, e.g.
-        "Bank transfer (checked)" for a checkbox with "Bank" and a part
-        " transfer", or the state alone for a checkbox without a label, e.g.
-        "checked".
-
-        :param group: The inline group of the text.
-        :type group: InlineGroup
-        :param sources: The items that the paragraph of the field is made from,
-            which the text items of the group are added to.
-        :type sources: list[NodeItem]
-        :return: The text, on a single line.
-        :rtype: str
-        """
-        text = ""
-        # The state of the last checkbox, and where its label starts in the text
-        state, start = "", 0
-        for item in self._inline_texts(group, checkboxes=True):
-            sources.append(item)
-            checkbox_state = _CHECKBOX_VALUES.get(item.label)
-            if checkbox_state is not None:
-                text = _with_checkbox_state(text, start, state)
-                state, start = checkbox_state, len(text)
-            text += item.text
-        return _clean(_with_checkbox_state(text, start, state))
 
     def _convert_graph(self, item: KeyValueItem | FormItem) -> None:
         """
