@@ -27,9 +27,13 @@ XBRL report with the folder of its taxonomy (``taxonomy_path()``).
 This script converts each file with full Docling, the version in ``uv.lock`` by
 default, and the support of OpenDocument, Apple iWork and XBRL of docling-slim,
 which full Docling does not install, in a throwaway environment with the CPU-only
-build of PyTorch. It needs LibreOffice, for the legacy Office and RTF files: on
-the ``PATH``, in its default folder on Windows or macOS, or named by
-``DOCLING_LIBREOFFICE_CMD``, as Docling finds it:
+build of PyTorch. It needs LibreOffice, for the legacy Office and RTF files, and
+ffmpeg, for the audio and video files. On Windows, it converts the files in
+a Linux container whose image has them (``DOCKERFILE``, built with the version of
+uv of the workflows), with the checkout mounted, so that the host needs only
+Docker; elsewhere on this machine, where LibreOffice is found on the ``PATH``, in
+its default folder on Windows or macOS, or named by ``DOCLING_LIBREOFFICE_CMD``,
+as Docling finds it. ``--docker`` and ``--local`` choose the other way:
 
 - By default, it checks that ContextGem makes the same paragraphs and images from
   the new Docling documents as from the committed ones: the text, additional
@@ -44,9 +48,10 @@ Docling documents, in the environment of the project, without Docling: after
 a change of the converter.
 
 The models of Docling are downloaded from Hugging Face on the first run, about
-0.5 GB, and cached there. Sends no LLM request. On Windows, a known crash of
-docling-parse stops the conversions now and then: they run again, up to
-``WINDOWS_ATTEMPTS`` times. The workflow
+0.5 GB, and cached there (in Docker, in the volume ``DOCKER_CACHE_VOLUME``).
+Sends no LLM request. On Windows with ``--local``, a known crash of docling-parse
+stops the conversions now and then: they run again, up to ``WINDOWS_ATTEMPTS``
+times. The workflow
 ``.github/workflows/docling-fixtures.yml`` runs the check when ``uv.lock`` or the
 converter changes, and weekly with the latest Docling, the newest from before the
 cooldown of ``pyproject.toml`` (``[tool.uv] exclude-newer``), which applies to
@@ -66,8 +71,9 @@ import contextlib
 import difflib
 import json
 import os
+import re
 import shutil
-import subprocess  # nosec B404 - runs uv and Python with arguments of its own, no shell
+import subprocess  # nosec B404 - runs uv, Python and Docker with arguments of its own, no shell
 import sys
 import tempfile
 import tomllib
@@ -121,6 +127,14 @@ WINDOWS_LIBREOFFICE = Path(r"C:\Program Files\LibreOffice\program\soffice.exe")
 # on the first PDF it converted, some 8 seconds in; the others converted every
 # file. Linux and macOS are not affected: there, a crash fails the check at once.
 WINDOWS_ATTEMPTS = 10
+# The image of the environment in which `--docker` converts the fixtures, built from
+# its Dockerfile, and the volume that keeps its caches between runs: uv's cache and
+# Pythons, the environment of the project and the models of Docling and Whisper
+DOCKERFILE = ROOT / "dev" / "docling_fixtures.Dockerfile"
+DOCKER_IMAGE = "contextgem-docling-fixtures"
+DOCKER_CACHE_VOLUME = "contextgem-docling-fixtures-cache"
+# The workflow whose version of uv (`UV_VERSION`) the image installs
+FIXTURES_WORKFLOW = ROOT / ".github" / "workflows" / "docling-fixtures.yml"
 
 
 def _locked_docling_version() -> str:
@@ -373,6 +387,78 @@ def _setup(docling_version: str, scratch: Path) -> Path:
     return python
 
 
+def _workflow_uv_version() -> str:
+    """
+    Read the version of uv that the workflows set up (`UV_VERSION`), which the image
+    of `--docker` installs.
+
+    :returns: The version, e.g. ``0.13.8``.
+    :rtype: str
+    """
+    text = FIXTURES_WORKFLOW.read_text(encoding="utf-8")
+    match = re.search(r'^\s*UV_VERSION:\s*"([^"]+)"', text, re.MULTILINE)
+    if match is None:
+        sys.exit(f"No UV_VERSION in {FIXTURES_WORKFLOW.relative_to(ROOT)}.")
+    return match.group(1)
+
+
+def _run_in_docker(write: bool, docling_version: str) -> int:
+    """
+    Check or write the Docling documents of the fixtures in a Linux container, as
+    the workflow does, with LibreOffice and ffmpeg in its image, so that the host
+    needs neither: the checkout is mounted at /repo, and this script runs there.
+    The image is built on the first run, and again when its Dockerfile or
+    the version of uv changes; the runs after the first reuse the caches of the
+    volume, the models of Docling too.
+
+    :param write: Whether to write the Docling documents and the outputs.
+    :type write: bool
+    :param docling_version: "locked", "latest" or a version of Docling.
+    :type docling_version: str
+    :returns: The exit code of the run in the container.
+    :rtype: int
+    """
+    docker = shutil.which("docker")
+    if docker is None:
+        sys.exit(
+            "Docker was not found, in which the fixtures are converted with "
+            "LibreOffice and ffmpeg. Install Docker Desktop, or run with --local, "
+            "with LibreOffice and ffmpeg installed."
+        )
+    if (
+        subprocess.run(  # nosec B603 - docker with arguments of its own, no shell
+            [docker, "info"], capture_output=True, check=False
+        ).returncode
+        != 0
+    ):
+        sys.exit("Docker is not running: start Docker Desktop, or run with --local.")
+    print("Building the image of the conversions...", flush=True)
+    # From the Dockerfile on stdin, without a build context: it copies no file
+    subprocess.run(  # nosec B603 - docker with arguments of its own, no shell
+        [
+            *(docker, "build", "--quiet", "--tag", DOCKER_IMAGE),
+            *("--build-arg", f"UV_VERSION={_workflow_uv_version()}", "-"),
+        ],
+        input=DOCKERFILE.read_bytes(),
+        stdout=subprocess.DEVNULL,
+        check=True,
+    )
+    result = subprocess.run(  # nosec B603 - docker with arguments of its own, no shell
+        [
+            *(docker, "run", "--rm"),
+            *("--volume", f"{ROOT}:/repo"),
+            *("--volume", f"{DOCKER_CACHE_VOLUME}:/cache"),
+            DOCKER_IMAGE,
+            # The environment of the project, synced from uv.lock, in the volume
+            *("uv", "run", "--locked", "python", "dev/docling_fixtures.py"),
+            *("--local", "--docling-version", docling_version),
+            *(["--write"] if write else []),
+        ],
+        check=False,
+    )
+    return result.returncode
+
+
 def _peak_memory() -> int | None:
     """
     Measure the peak memory of this process, i.e. of the conversions.
@@ -593,6 +679,19 @@ def main() -> int:
             "newest from before the cooldown of pyproject.toml) or X.Y.Z"
         ),
     )
+    where = parser.add_mutually_exclusive_group()
+    where.add_argument(
+        "--docker",
+        action="store_true",
+        help="convert in a Linux container, with LibreOffice and ffmpeg in its "
+        "image (the default on Windows)",
+    )
+    where.add_argument(
+        "--local",
+        action="store_true",
+        help="convert on this machine, with LibreOffice and ffmpeg installed (the "
+        "default elsewhere)",
+    )
     parser.add_argument("--inner", action="store_true", help=argparse.SUPPRESS)
     args = parser.parse_args()
     if args.inner:
@@ -601,6 +700,8 @@ def main() -> int:
     os.environ.setdefault("CONTEXTGEM_LOGGER_LEVEL", "ERROR")
     if args.outputs:
         return _write_outputs()
+    if args.docker or (os.name == "nt" and not args.local):
+        return _run_in_docker(args.write, args.docling_version)
     # Before the environment is created, which takes minutes
     libreoffice = _libreoffice()
     if libreoffice is None:

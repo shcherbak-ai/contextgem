@@ -467,6 +467,8 @@ def docling_fixtures(
     write: bool = False,
     outputs: bool = False,
     docling_version: str = "locked",
+    docker: bool = False,
+    local: bool = False,
 ) -> None:
     """
     Check or write the Docling documents of the test fixtures, with full Docling.
@@ -475,9 +477,12 @@ def docling_fixtures(
     a throwaway environment with the CPU-only PyTorch (dev/docling_fixtures.py),
     and checks that ContextGem makes the same paragraphs from it as from the
     committed Docling document, or writes the Docling documents and the outputs of
-    ContextGem from them (<file name>.contextgem.jsonl). Downloads the models of
-    Docling on the first run (about 0.5 GB), and sends no LLM request. Run it after
-    a Docling upgrade fails the tests, or before a release.
+    ContextGem from them (<file name>.contextgem.jsonl). On Windows, it converts
+    them in a Linux container (dev/docling_fixtures.Dockerfile), which has
+    LibreOffice and ffmpeg; elsewhere on this machine, which needs them installed.
+    Downloads the models of Docling on the first run (about 0.5 GB), and sends no
+    LLM request. Run it after a Docling upgrade fails the tests, or before
+    a release.
 
     Args:
         write: Write the Docling documents and the outputs instead of checking them
@@ -486,6 +491,8 @@ def docling_fixtures(
         docling_version: "locked" (uv.lock, default), "latest" (the newest from
             before the cooldown of pyproject.toml, `[tool.uv] exclude-newer`) or
             X.Y.Z
+        docker: Convert in the Linux container, also where it is not the default
+        local: Convert on this machine, also on Windows
 
     Example:
         uv run fab docling-fixtures
@@ -500,6 +507,10 @@ def docling_fixtures(
         command += " --write"
     if outputs:
         command += " --outputs"
+    if docker:
+        command += " --docker"
+    if local:
+        command += " --local"
     result = c.run(command, warn=True)
     if result is None or result.failed:
         raise Exit(code=result.exited if result else 1)
