@@ -643,6 +643,7 @@ _README_FORMAT_NAMES = {
     ".vtt": "WebVTT",
     ".eml": "Email",
     ".msg": "Email",
+    ".ics": "iCalendar",
     ".boxnote": "Box Notes",
     ".nxml": "JATS XML",
     ".xml": "USPTO XML",

@@ -90,9 +90,10 @@ TEST_CONVERTED_SUFFIXES = {
     # WebVTT subtitles, EPUB, JATS articles and USPTO patents
     *(".vtt", ".epub", ".nxml", ".xml"),
     # Web archives, Box Notes, DocLang (XML and archive), Apple iWork (Keynote,
-    # Numbers, Pages), mainframe records (EBCDIC) and print streams (AFP)
+    # Numbers, Pages), mainframe records (EBCDIC), print streams (AFP) and
+    # calendars (iCalendar)
     *(".mhtml", ".boxnote", ".dclg", ".dclx", ".key", ".numbers", ".pages"),
-    *(".ebc", ".afp"),
+    *(".ebc", ".afp", ".ics"),
 }
 # The formats of all the fixture files: also PDF, email (EML and Outlook),
 # OpenDocument (text, spreadsheet and presentation), legacy Office (Word, Excel

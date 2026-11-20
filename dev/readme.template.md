@@ -146,24 +146,29 @@ Your documents are files. [Docling](https://github.com/docling-project/docling) 
 <td align="center" valign="top"><img src="assets/icons/format-pptx.svg" alt="" width="32" height="32"><br><sub>PPTX, PPT,<br>ODP, Keynote</sub></td>
 <td align="center" valign="top"><img src="assets/icons/format-xlsx.svg" alt="" width="32" height="32"><br><sub>XLSX, XLS,<br>ODS, Numbers</sub></td>
 <td align="center" valign="top"><img src="assets/icons/format-csv.svg" alt="" width="32" height="32"><br><sub>CSV</sub></td>
-<td align="center" valign="top"><img src="assets/icons/format-epub.svg" alt="" width="32" height="32"><br><sub>EPUB</sub></td>
-<td align="center" valign="top"><img src="assets/icons/format-email.svg" alt="" width="32" height="32"><br><sub>Email</sub></td>
-<td align="center" valign="top"><img src="assets/icons/format-box-notes.svg" alt="" width="32" height="32"><br><sub>Box Notes</sub></td>
 </tr>
 <tr>
+<td align="center" valign="top"><img src="assets/icons/format-epub.svg" alt="" width="32" height="32"><br><sub>EPUB</sub></td>
+<td align="center" valign="top"><img src="assets/icons/format-email.svg" alt="" width="32" height="32"><br><sub>Email</sub></td>
+<td align="center" valign="top"><img src="assets/icons/format-calendar.svg" alt="" width="32" height="32"><br><sub>iCalendar</sub></td>
+<td align="center" valign="top"><img src="assets/icons/format-box-notes.svg" alt="" width="32" height="32"><br><sub>Box Notes</sub></td>
 <td align="center" valign="top"><img src="assets/icons/format-image.svg" alt="" width="32" height="32"><br><sub>Images</sub></td>
+</tr>
+<tr>
 <td align="center" valign="top"><img src="assets/icons/format-audio.svg" alt="" width="32" height="32"><br><sub>Audio</sub></td>
 <td align="center" valign="top"><img src="assets/icons/format-video.svg" alt="" width="32" height="32"><br><sub>Video</sub></td>
 <td align="center" valign="top"><img src="assets/icons/format-webvtt.svg" alt="" width="32" height="32"><br><sub>WebVTT</sub></td>
 <td align="center" valign="top"><img src="assets/icons/format-html.svg" alt="" width="32" height="32"><br><sub>HTML, MHTML</sub></td>
 <td align="center" valign="top"><img src="assets/icons/format-markdown.svg" alt="" width="32" height="32"><br><sub>Markdown</sub></td>
-<td align="center" valign="top"><img src="assets/icons/format-asciidoc.svg" alt="" width="32" height="32"><br><sub>AsciiDoc</sub></td>
-<td align="center" valign="top"><img src="assets/icons/format-latex.svg" alt="" width="32" height="32"><br><sub>LaTeX</sub></td>
 </tr>
 <tr>
+<td align="center" valign="top"><img src="assets/icons/format-asciidoc.svg" alt="" width="32" height="32"><br><sub>AsciiDoc</sub></td>
+<td align="center" valign="top"><img src="assets/icons/format-latex.svg" alt="" width="32" height="32"><br><sub>LaTeX</sub></td>
 <td align="center" valign="top"><img src="assets/icons/format-xbrl.svg" alt="" width="32" height="32"><br><sub>XBRL</sub></td>
 <td align="center" valign="top"><img src="assets/icons/format-jats.svg" alt="" width="32" height="32"><br><sub>JATS XML</sub></td>
 <td align="center" valign="top"><img src="assets/icons/format-uspto.svg" alt="" width="32" height="32"><br><sub>USPTO XML</sub></td>
+</tr>
+<tr>
 <td align="center" valign="top"><img src="assets/icons/format-doclang.svg" alt="" width="32" height="32"><br><sub>DocLang</sub></td>
 <td align="center" valign="top"><img src="assets/icons/format-docling-json.svg" alt="" width="32" height="32"><br><sub>Docling JSON</sub></td>
 <td align="center" valign="top"><img src="assets/icons/format-mets-gbs.svg" alt="" width="32" height="32"><br><sub>METS GBS</sub></td>

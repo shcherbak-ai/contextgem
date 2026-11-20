@@ -8,12 +8,16 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ## [Unreleased]
 
+### Added
+
+- `Document.from_docling()` supports calendar files (iCalendar, `.ics`), which Docling reads from 2.148.0: the calendar is the title, and each event or to-do is a heading with its times, place, organizer, status and description as paragraphs, and its attendees and reminders as lists.
+
 ### Changed
 
 - Upgraded pinned dependency versions: `litellm==1.108.8`, `openai==3.51.0`, `genai-prices==0.2.3`. ContextGem now requires openai 3: code of your own that uses the OpenAI SDK in the same environment must work with it. This `litellm` no longer holds installs on `filelock` 3, whose known vulnerabilities are fixed in `filelock` 4.
 - Decision models of Azure OpenAI (`azure/<deployment_name>`), Fireworks AI, Databricks, Bespoke and Laya are supported, which this `litellm` serves through its Decisions API (see "Supported Providers and Models" of the decision models page).
 - In a stand-in for `litellm.acompletion` in your tests, mock the refusal of an OpenAI model with `refusal` on the message, instead of `provider_specific_fields={"refusal": ...}`: this `litellm` keeps the refusal field of OpenAI there, where ContextGem now reads it.
-- The `docling` extra now requires Docling 2.147.0 or later and docling-core 2.106.0 or later, whose formatted text keeps the whitespace between its parts.
+- The `docling` extra now requires Docling 2.148.0 or later, which reads calendar files, and docling-core 2.106.0 or later, whose formatted text keeps the whitespace between its parts.
 - `Document.from_docling()` gives the state of a checkbox as Markdown does, with a box before its text: `[x] Express delivery`, `I agree to the terms: [x]` and `Options: [x] Tea [ ] Coffee`, instead of `checked` and `unchecked` after it. The additional context of the paragraph of a checkbox is `Checkbox`, without its state. A checkbox in a line of formatted text, which lost its state, now has its box too.
 
 ### Fixed

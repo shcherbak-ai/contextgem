@@ -331,6 +331,9 @@ The images of the pages of a PDF file, scanned or not, are not attached: with ``
    * - Email
      - ``.eml``, ``.msg``
      -
+   * - Calendars (iCalendar): events, to-dos, journal entries and free/busy times
+     - ``.ics``
+     -
    * - Box Notes
      - ``.boxnote``
      -
@@ -365,7 +368,7 @@ The images of the pages of a PDF file, scanned or not, are not attached: with ``
      - ``.json``
      -
 
-Docling also takes other extensions of these formats, e.g. ``.adoc`` for AsciiDoc, ``.markdown`` for Markdown, ``.jpg`` for images, ``.wav`` for audio and ``.mov`` for video. What the formats in the last column need:
+Docling also takes other extensions of these formats, e.g. ``.adoc`` for AsciiDoc, ``.markdown`` for Markdown, ``.ical`` for calendars, ``.jpg`` for images, ``.wav`` for audio and ``.mov`` for video. What the formats in the last column need:
 
 * **LibreOffice**: Docling converts a DOC, XLS, PPT or RTF file into DOCX, XLSX or PPTX with `LibreOffice <https://www.libreoffice.org>`_, and then converts that. It finds LibreOffice on the ``PATH``, or in its folder on macOS. The installer for Windows does not add it to the ``PATH``: add its ``program`` folder, e.g. ``C:\Program Files\LibreOffice\program``, or set ``DOCLING_LIBREOFFICE_CMD`` to its ``soffice.exe``. On Debian or Ubuntu: ``sudo apt-get install libreoffice-writer libreoffice-calc libreoffice-impress``.
 * **XBRL**: ``uv add "docling-slim[format-xml-xbrl]"`` installs Arelle, with which Docling reads a report. It reads the report with its taxonomy, from a folder that holds the schema and the linkbases that the report refers to, and only when it is allowed to read local files:

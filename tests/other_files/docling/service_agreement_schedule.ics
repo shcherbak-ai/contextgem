@@ -1,0 +1,47 @@
+BEGIN:VCALENDAR
+VERSION:2.0
+PRODID:-//ContextGem//Test fixtures//EN
+CALSCALE:GREGORIAN
+METHOD:PUBLISH
+X-WR-CALNAME:Service Agreement Schedule
+X-WR-CALDESC:Meetings and deadlines of the Service Agreement between Northwi
+ nd Analytics AS and Riverbank Logistics Ltd.
+BEGIN:VEVENT
+UID:kickoff-2026@northwind.example
+DTSTAMP:20260301T090000Z
+DTSTART:20260305T090000Z
+DTEND:20260305T103000Z
+SUMMARY:Kick-off meeting
+LOCATION:Northwind Analytics AS\, Oslo
+ORGANIZER;CN=Ingrid Berg:mailto:ingrid.berg@northwind.example
+ATTENDEE;CN=Ingrid Berg;ROLE=CHAIR:mailto:ingrid.berg@northwind.example
+ATTENDEE;CN=Tom Hale;ROLE=REQ-PARTICIPANT:mailto:tom.hale@riverbank.example
+DESCRIPTION:The teams introduce themselves and agree on the plan for the fi
+ rst quarter.\n\nThe Supplier presents the hosting and monitoring services.
+STATUS:CONFIRMED
+BEGIN:VALARM
+ACTION:DISPLAY
+TRIGGER:-PT30M
+DESCRIPTION:Kick-off meeting in 30 minutes
+END:VALARM
+END:VEVENT
+BEGIN:VEVENT
+UID:review-2026@northwind.example
+DTSTAMP:20260301T090000Z
+DTSTART:20260601T130000Z
+DURATION:PT1H
+RRULE:FREQ=MONTHLY;INTERVAL=3;COUNT=4
+SUMMARY:Quarterly service review
+DESCRIPTION:Review of the uptime and of the monthly fees of the quarter.
+CATEGORIES:Review,Fees
+END:VEVENT
+BEGIN:VTODO
+UID:invoice-2026@northwind.example
+DTSTAMP:20260301T090000Z
+DUE:20260331T170000Z
+SUMMARY:Send the first invoice
+DESCRIPTION:Invoices are payable within 30 days of the invoice date.
+PRIORITY:1
+STATUS:NEEDS-ACTION
+END:VTODO
+END:VCALENDAR
