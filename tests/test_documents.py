@@ -60,6 +60,7 @@ from docling_core.types.doc import (
 )
 from huggingface_hub import try_to_load_from_cache
 from PIL import Image as PILImage
+from pydantic import AnyUrl
 
 from contextgem.internal import utils as utils_module
 from contextgem.internal.base import documents as documents_module
@@ -3278,6 +3279,60 @@ class TestDocuments(BaseTest):
             docling_document.add_field_key(key, parent=field)
             value = docling_document.add_field_value("", parent=field)
             docling_document.add_text(checkbox_label, "", parent=value)
+        # A key and a value with formatted text, which is in an inline group
+        terms_field = docling_document.add_field_item(parent=region)
+        for item, parts in (
+            (
+                docling_document.add_field_key("", parent=terms_field),
+                ("Payment ", "terms"),
+            ),
+            (
+                docling_document.add_field_value("", parent=terms_field),
+                ("Net ", "30", " days"),
+            ),
+        ):
+            group = docling_document.add_inline_group(parent=item)
+            for part in parts:
+                docling_document.add_text(DocItemLabel.TEXT, part, parent=group)
+        # A part in a word, e.g. a subscript, touches the parts around it
+        coolant_field = docling_document.add_field_item(parent=region)
+        docling_document.add_field_key("Coolant", parent=coolant_field)
+        group = docling_document.add_inline_group(
+            parent=docling_document.add_field_value("", parent=coolant_field)
+        )
+        for part in ("H", "2", "O"):
+            docling_document.add_text(DocItemLabel.TEXT, part, parent=group)
+        # A checkbox in the formatted text of a value, as DocLang gives a checkbox
+        # of a value, with and without its own text
+        for key, checkbox_text in (("Marketing emails", ""), ("Plan", "Premium")):
+            field = docling_document.add_field_item(parent=region)
+            docling_document.add_field_key(key, parent=field)
+            group = docling_document.add_inline_group(
+                parent=docling_document.add_field_value("", parent=field)
+            )
+            docling_document.add_text(
+                DocItemLabel.CHECKBOX_SELECTED, checkbox_text, parent=group
+            )
+        # A key whose words are texts under it, as DocLang gives a key with a link
+        website_field = docling_document.add_field_item(parent=region)
+        website_key = docling_document.add_field_key("", parent=website_field)
+        docling_document.add_text(
+            DocItemLabel.TEXT,
+            "Website",
+            parent=website_key,
+            hyperlink=AnyUrl("https://example.com/"),
+        )
+        docling_document.add_text(DocItemLabel.TEXT, "address", parent=website_key)
+        docling_document.add_field_value("example.com", parent=website_field)
+        # A form field inside the value of another one
+        address_field = docling_document.add_field_item(parent=region)
+        docling_document.add_field_key("Address", parent=address_field)
+        docling_document.add_field_value("Registered office", parent=address_field)
+        city_field = docling_document.add_field_item(
+            parent=docling_document.add_field_value("", parent=address_field)
+        )
+        docling_document.add_field_key("City", parent=city_field)
+        docling_document.add_field_value("Oslo", parent=city_field)
         docling_document.add_key_values(
             graph=GraphData(
                 cells=[
@@ -3312,6 +3367,13 @@ class TestDocuments(BaseTest):
             ("Full name: Ada Lovelace", "Form field"),
             ("I agree to the terms: checked", "Form field"),
             ("Subscribe to the newsletter: unchecked", "Form field"),
+            ("Payment terms: Net 30 days", "Form field"),
+            ("Coolant: H2O", "Form field"),
+            ("Marketing emails: checked", "Form field"),
+            ("Plan: Premium (checked)", "Form field"),
+            ("Website address: example.com", "Form field"),
+            ("Address: Registered office", "Form field"),
+            ("City: Oslo", "Form field"),
             ("Invoice no.: INV-2026-042", "Key-value pair"),
             ("Paid", "Key-value pair"),
             ("Express delivery", "Checkbox, checked"),
@@ -3510,6 +3572,57 @@ class TestDocuments(BaseTest):
         assert _texts_and_contexts(
             Document.from_docling(DoclingDocument.load_from_doctags(doctags))
         ) == [("Net30 days", None)]
+
+    def test_from_docling_doclang_form_fields(self):
+        """
+        Tests the form fields of a DocLang file, as docling-core reads them: a key
+        and a value with formatted text, checkboxes, whose state follows their
+        label, also where formatted text goes on with it, a key with
+        a link, and a form field inside the value of another one, also in its
+        formatted text or in a line of text, keep all their text.
+        """
+        from docling_core.transforms.deserializer.doclang import (
+            DocLangDocDeserializer,
+        )
+
+        doclang = (
+            '<doclang version="0.9"><field_region>'
+            "<field_item><key><bold>Payment</bold> terms</key>"
+            "<value>Net <italic>30</italic> days</value></field_item>"
+            '<field_item><key>I agree to the terms</key><value><checkbox class="selected"/>'
+            "</value></field_item>"
+            "<field_item><key>Plan</key><value><checkbox/>Premium</value></field_item>"
+            '<field_item><key>Method</key><value><checkbox class="selected"/>'
+            "Bank<bold> transfer</bold></value></field_item>"
+            '<field_item><key>Renewal</key><value><checkbox class="selected"/>Yes '
+            "<checkbox/>No</value></field_item>"
+            '<field_item><key><text><href uri="https://example.com/"/>Website</text>'
+            "address</key><value>example.com</value></field_item>"
+            "<field_item><key>Contact</key><value>Head office"
+            "<field_item><key>City</key><value>Oslo</value></field_item>"
+            "and branches</value></field_item>"
+            "<field_item><key>Venue</key><value><bold>Meet in "
+            "<field_item><key>Room</key><value>4B</value></field_item></bold>"
+            " at noon</value></field_item>"
+            "</field_region>"
+            "<text>Deliver to <field_item><key>Dock</key><value>7</value></field_item>"
+            " by Friday</text></doclang>"
+        )
+        docling_document = DocLangDocDeserializer().deserialize_str(doclang)
+        assert _texts_and_contexts(Document.from_docling(docling_document)) == [
+            ("Payment terms: Net 30 days", "Form field"),
+            ("I agree to the terms: checked", "Form field"),
+            ("Plan: Premium (unchecked)", "Form field"),
+            ("Method: Bank transfer (checked)", "Form field"),
+            ("Renewal: Yes (checked) No (unchecked)", "Form field"),
+            ("Website address: example.com", "Form field"),
+            ("Contact: Head office and branches", "Form field"),
+            ("City: Oslo", "Form field"),
+            ("Venue: Meet in at noon", "Form field"),
+            ("Room: 4B", "Form field"),
+            ("Deliver to by Friday", None),
+            ("Dock: 7", "Form field"),
+        ]
 
     def test_from_docling_code_blocks(self):
         """

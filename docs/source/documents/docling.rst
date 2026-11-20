@@ -83,7 +83,7 @@ Each piece of text in the body of the file becomes a paragraph, in reading order
      - The text
      - e.g. ``Table caption``, ``Picture caption``, ``Footnote``, ``Code``, ``Checkbox, checked``
    * - Form field, key-value pair
-     - The key and the value, e.g. ``Full name: Ada Lovelace`` or ``I agree to the terms: checked``
+     - The key and the value, e.g. ``Full name: Ada Lovelace`` or ``I agree to the terms: checked``. A form field inside the value of another one is a paragraph of its own, after that of the outer field
      - ``Form field``, ``Key-value pair``
    * - Cue of a subtitle file, segment of the transcript of an audio or a video file
      - The text, with its start and end times in its custom data (``source``, see :ref:`docling-pages-label`)

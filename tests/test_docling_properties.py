@@ -17,7 +17,9 @@ or OpenDocument files: texts, checkboxes, formatted text, headings, lists, code
 blocks, nested tables and pictures, pictures,
 code blocks with items under them, key-value regions and forms with links of
 every kind, each with captions and footnotes, in the body or not, with items
-under them, form fields, sheets and slides, and the furniture and the notes of
+under them, form fields, with formatted text or several texts in their keys and
+values, checkboxes, and form fields in their values, as DocLang gives them,
+sheets and slides, and the furniture and the notes of
 the pages. Each item is on no page or in one or two boxes of the pages, and
 a text can be from the track of a subtitle file or a transcript, with its
 speaker. Each text is a word of its own, with whitespace around it, so that
@@ -369,15 +371,31 @@ class _Checkbox:
 
 
 @dataclass
-class _Field:
+class _FieldText:
     """
-    A form field in a field region: its key, its value and its checkbox, and its
-    number, which is left out.
+    The key or the value of a form field: its own text or none, formatted text
+    under it, e.g. a word in bold, or texts under it, as DocLang gives the words of
+    a key with a link, and a checkbox, under it or, as DocLang gives the checkbox of
+    a value, in formatted text under it.
     """
 
-    key: _Text
-    value: _Text | None
+    own: _Text | None
+    formatted: _Inline | None
+    texts: list[_Text]
     checkbox: _Checkbox | None
+    checkbox_formatted: bool
+
+
+@dataclass
+class _Field:
+    """
+    A form field: its key, its value, the form fields in its value, as DocLang
+    can give them, and its number, which is left out.
+    """
+
+    key: _FieldText
+    value: _FieldText | None
+    fields: list[_Field]
     number: bool
     prov: _Prov
     self_ref: str = ""
@@ -897,17 +915,61 @@ def _graphs(draw: st.DrawFn) -> _Graph:
     )
 
 
-_FIELDS = st.builds(
-    _Field,
-    key=_texts(),
-    value=st.one_of(st.none(), _texts()),
-    checkbox=st.one_of(
-        st.none(),
-        st.builds(_Checkbox, checked=st.booleans(), text=st.none() | _texts()),
-    ),
-    number=st.booleans(),
-    prov=_provs(),
-)
+# Where the text of a key or a value of a form field is: its own, in formatted text
+# under it, in texts under it, or nowhere
+_FIELD_TEXT_FORMS = ("own", "own", "own", "formatted", "texts", "none")
+_CHECKBOXES = st.builds(_Checkbox, checked=st.booleans(), text=st.none() | _texts())
+
+
+@st.composite
+def _field_texts(draw: st.DrawFn, checkbox_weight: int) -> _FieldText:
+    """
+    Generates the key or the value of a form field.
+
+    :param draw: Draws a value from a strategy.
+    :type draw: st.DrawFn
+    :param checkbox_weight: How often it has a checkbox: in 1 case of that number.
+    :type checkbox_weight: int
+    :return: The key or the value.
+    :rtype: _FieldText
+    """
+    form = draw(st.sampled_from(_FIELD_TEXT_FORMS))
+    has_checkbox = draw(st.integers(min_value=1, max_value=checkbox_weight)) == 1
+    return _FieldText(
+        own=draw(_texts()) if form == "own" else None,
+        formatted=draw(_INLINES) if form == "formatted" else None,
+        texts=draw(st.lists(_texts(), min_size=2, max_size=3))
+        if form == "texts"
+        else [],
+        checkbox=draw(_CHECKBOXES) if has_checkbox else None,
+        checkbox_formatted=draw(st.booleans()),
+    )
+
+
+@st.composite
+def _fields(draw: st.DrawFn, depth: int = 0) -> _Field:
+    """
+    Generates a form field, with form fields in its value up to two levels down.
+
+    :param draw: Draws a value from a strategy.
+    :type draw: st.DrawFn
+    :param depth: How many values the form field is in.
+    :type depth: int
+    :return: The form field.
+    :rtype: _Field
+    """
+    value = draw(st.one_of(st.none(), _field_texts(checkbox_weight=2)))
+    nested = value is not None and depth < 2 and draw(st.integers(0, 3)) == 0
+    return _Field(
+        key=draw(_field_texts(checkbox_weight=6)),
+        value=value,
+        fields=draw(st.lists(_fields(depth + 1), min_size=1, max_size=2))
+        if nested
+        else [],
+        number=draw(st.booleans()),
+        prov=draw(_provs()),
+    )
+
 
 # Where the text of a heading or a list item is: its own, in formatted text under
 # it, in a text under it, or nowhere, unless its first item gives it
@@ -1142,7 +1204,7 @@ _BLOCKS = st.recursive(
         _ANY_PICTURES,
         _codes(_NO_CHILDREN),
         _graphs(),
-        _FIELDS,
+        _fields(),
         _headings(_NO_CHILDREN),
         _lists(_NO_CHILDREN),
         _lone_list_items(),
@@ -1695,32 +1757,73 @@ class _Builder:
         :return: None
         :rtype: None
         """
+        region = self.document.add_field_region(parent=parent)
+        self._field_item(field_spec, region)
+
+    def _field_item(self, field_spec: _Field, parent: NodeItem) -> None:
+        """
+        Adds a form field, with its key, its value and the form fields in its
+        value.
+
+        :param field_spec: The form field.
+        :type field_spec: _Field
+        :param parent: The parent: a field region, or the value of a form field.
+        :type parent: NodeItem
+        :return: None
+        :rtype: None
+        """
         document = self.document
-        region = document.add_field_region(parent=parent)
-        item = document.add_field_item(parent=region)
+        item = document.add_field_item(parent=parent)
         self._locate(item, field_spec.prov)
         field_spec.self_ref = item.self_ref
         if field_spec.number:
             document.add_text(DocItemLabel.MARKER, "1", parent=item)
-        key = document.add_field_key(self._text(field_spec.key), parent=item)
-        self._locate(key, field_spec.key.prov)
-        if field_spec.value or field_spec.checkbox:
-            value = document.add_field_value(
-                self._text(field_spec.value) if field_spec.value else "", parent=item
+        key = field_spec.key
+        self._field_text(
+            key,
+            document.add_field_key(self._text(key.own) if key.own else "", parent=item),
+        )
+        value = field_spec.value
+        if value is not None:
+            value_item = document.add_field_value(
+                self._text(value.own) if value.own else "", parent=item
             )
-            if field_spec.value:
-                self._locate(value, field_spec.value.prov)
-            checkbox = field_spec.checkbox
-            if checkbox:
-                box = document.add_text(
-                    DocItemLabel.CHECKBOX_SELECTED
-                    if checkbox.checked
-                    else DocItemLabel.CHECKBOX_UNSELECTED,
-                    self._text(checkbox.text) if checkbox.text else "",
-                    parent=value,
-                )
-                if checkbox.text:
-                    self._locate(box, checkbox.text.prov)
+            self._field_text(value, value_item)
+            for nested in field_spec.fields:
+                self._field_item(nested, value_item)
+
+    def _field_text(self, field_text: _FieldText, item: DocItem) -> None:
+        """
+        Gives the key or the value item of a form field its place, and adds
+        the items under it: its formatted text, its texts and its checkbox.
+
+        :param field_text: The key or the value.
+        :type field_text: _FieldText
+        :param item: The key or the value item.
+        :type item: DocItem
+        :return: None
+        :rtype: None
+        """
+        document = self.document
+        if field_text.own:
+            self._locate(item, field_text.own.prov)
+        if field_text.formatted:
+            self._inline(field_text.formatted, item)
+        for text in field_text.texts:
+            self._add_text(text, item)
+        checkbox = field_text.checkbox
+        if checkbox:
+            box = document.add_text(
+                DocItemLabel.CHECKBOX_SELECTED
+                if checkbox.checked
+                else DocItemLabel.CHECKBOX_UNSELECTED,
+                self._text(checkbox.text) if checkbox.text else "",
+                parent=document.add_inline_group(parent=item)
+                if field_text.checkbox_formatted
+                else item,
+            )
+            if checkbox.text:
+                self._locate(box, checkbox.text.prov)
 
 
 # ---------------------------------------------------------------------------
@@ -2700,7 +2803,8 @@ class _Expected:
 
     def _field(self, field_spec: _Field) -> None:
         """
-        Converts a form field: its key, and its value and its checkbox.
+        Converts a form field: a paragraph with its key and its value, then
+        the pictures in their formatted text, and the form fields in its value.
 
         :param field_spec: The form field.
         :type field_spec: _Field
@@ -2708,27 +2812,82 @@ class _Expected:
         :rtype: None
         """
         self.structures.add("form field")
-        values = []
-        parts: list[_Located] = [field_spec, field_spec.key]
-        if field_spec.value:
-            values.append(field_spec.value.content)
-            parts.append(field_spec.value)
-        checkbox = field_spec.checkbox
-        if checkbox:
-            state = "checked" if checkbox.checked else "unchecked"
-            if checkbox.text:
-                values.append(f"{checkbox.text.content} ({state})")
-                parts.append(checkbox.text)
-            else:
-                values.append(state)
-        value = " ".join(values)
+        parts: list[_Located] = [field_spec]
+        texts: list[_Text] = []
+        pictures: list[_Picture] = []
+        key = self._field_text(field_spec.key, parts, texts, pictures)
+        value = (
+            self._field_text(field_spec.value, parts, texts, pictures)
+            if field_spec.value
+            else ""
+        )
         self._paragraph(
-            f"{field_spec.key.content}: {value}" if value else field_spec.key.content,
+            f"{key}: {value}" if key and value and key != value else value or key,
             "Form field",
             field_spec.self_ref,
             DocItemLabel.FIELD_ITEM.value,
             parts,
+            texts,
         )
+        for picture in pictures:
+            self.structures.add("picture in a key or a value of a form field")
+            self._picture(picture)
+        for nested in field_spec.fields:
+            self.structures.add("form field in a value")
+            self._field(nested)
+
+    def _field_text(
+        self,
+        field_text: _FieldText,
+        parts: list[_Located],
+        texts: list[_Text],
+        pictures: list[_Picture],
+    ) -> str:
+        """
+        Returns the key or the value of a form field: its own text, its formatted
+        text, its texts and its checkbox, with its state, each after a space.
+
+        :param field_text: The key or the value.
+        :type field_text: _FieldText
+        :param parts: The items of the paragraph of the field, which its items are
+            added to.
+        :type parts: list[_Located]
+        :param texts: The texts of the paragraph that can be from a track, which its
+            texts are added to.
+        :type texts: list[_Text]
+        :param pictures: The pictures to convert after the field, which the pictures
+            in its formatted text are added to.
+        :type pictures: list[_Picture]
+        :return: The text.
+        :rtype: str
+        """
+        words = []
+        if field_text.own:
+            words.append(field_text.own.content)
+            parts.append(field_text.own)
+        if field_text.formatted:
+            self.structures.add("formatted key or value of a form field")
+            inline = _inline_words(field_text.formatted)
+            words.append(_inline_text(inline))
+            parts.extend(inline)
+            texts.extend(inline)
+            pictures.extend(_inline_pictures(field_text.formatted))
+        if field_text.texts:
+            self.structures.add("texts under a key or a value of a form field")
+            words.extend(text.content for text in field_text.texts)
+            parts.extend(field_text.texts)
+            texts.extend(field_text.texts)
+        checkbox = field_text.checkbox
+        if checkbox:
+            if field_text.checkbox_formatted:
+                self.structures.add("checkbox in formatted text of a form field")
+            state = "checked" if checkbox.checked else "unchecked"
+            if checkbox.text:
+                words.append(f"{checkbox.text.content} ({state})")
+                parts.append(checkbox.text)
+            else:
+                words.append(state)
+        return " ".join(word for word in words if word)
 
 
 def _docling_data(custom_data: dict[str, Any]) -> dict[str, Any]:
