@@ -225,7 +225,7 @@ Without concurrency, the calls of an extraction are made one after another, also
 
 A model or its provider can decline to answer a request. ContextGem tells this apart from the other failures by what ``litellm`` reports for all the providers:
 
-- **The model refuses to answer**, e.g. a model of OpenAI with the ``refusal`` field of its message, which ``litellm`` keeps in ``provider_specific_fields`` of the message, or a decision model with a refused answer (see :ref:`decision-models-errors-label`). ``litellm`` also gives a refused answer for a question that a decision model leaves unanswered, or answers with an answer of another kind than the question, which ContextGem cannot tell apart from a refusal.
+- **The model refuses to answer**, e.g. a model of OpenAI with the ``refusal`` field of its message, or a decision model with a refused answer (see :ref:`decision-models-errors-label`). ``litellm`` also gives a refused answer for a question that a decision model leaves unanswered, or answers with an answer of another kind than the question, which ContextGem cannot tell apart from a refusal.
 - **The answer is stopped with the** ``content_filter`` **finish reason**, which ``litellm`` reports for the refusal of a Claude model as well as for the content filters of the providers, e.g. the safety filters of Gemini and of Azure OpenAI, and the guardrails of Amazon Bedrock. The finish reason does not tell which of the two it was.
 - **The provider blocks the request or its answer**, which ``litellm`` raises as ``ContentPolicyViolationError`` for both, e.g. for the content filter of Azure OpenAI on a prompt, or for a blocked answer of a Gemini or a Claude model on Vertex AI. The request is recorded in the usage without an answer and without tokens.
 

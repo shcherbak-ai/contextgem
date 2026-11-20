@@ -1864,8 +1864,8 @@ class _DocumentLLM(_DocumentModel):
         as the response of litellm reports it:
 
         - "refusal" if the message has the refusal of the model in OpenAI's
-          ``refusal`` field, which litellm keeps in the ``provider_specific_fields``
-          of the message, as a non-empty text;
+          ``refusal`` field, which litellm keeps in the ``refusal`` field of
+          the message, as a non-empty text;
         - "content_filter" if the response has the ``content_filter`` finish
           reason, which litellm gives for a refusal of a model (e.g. the ``refusal``
           stop reason of Anthropic) as well as for the content filter of a provider
@@ -1880,12 +1880,7 @@ class _DocumentLLM(_DocumentModel):
         choices = getattr(completion_obj, "choices", None) or []
         for choice in choices:
             message = getattr(choice, "message", None)
-            provider_fields = getattr(message, "provider_specific_fields", None)
-            refusal_text = (
-                provider_fields.get("refusal")
-                if isinstance(provider_fields, dict)
-                else None
-            )
+            refusal_text = getattr(message, "refusal", None)
             if isinstance(refusal_text, str) and refusal_text.strip():
                 return "refusal"
         if any(

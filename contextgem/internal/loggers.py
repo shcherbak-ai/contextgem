@@ -111,7 +111,7 @@ def _success(self, message, *args, **kwargs):
 
 
 # Add the custom method to the Logger class
-logging.Logger.success = _success  # type: ignore[attr-defined]  # ty: ignore[unresolved-attribute]
+logging.Logger.success = _success  # type: ignore[attr-defined]  # ty: ignore[missing-attribute]
 
 # Create a namespaced logger for ContextGem
 logger: _LoggerProtocol = logging.getLogger("contextgem")  # type: ignore[assignment]  # ty: ignore[invalid-assignment]

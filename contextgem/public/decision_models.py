@@ -42,8 +42,9 @@ class DocumentDecisionModel(_DocumentDecisionModel):
         ``"typesafe/jev-latest"``. The model has to be served by one of the providers
         of decision models that ``litellm`` supports: a model of another provider
         is rejected when the decision model is created. For a model deployed in
-        Microsoft Foundry, the name of the deployment takes the place of the model
-        name, i.e. ``"azure_ai/<deployment_name>"``.
+        Microsoft Foundry or in Azure OpenAI, the name of the deployment takes
+        the place of the model name, i.e. ``"azure_ai/<deployment_name>"`` or
+        ``"azure/<deployment_name>"``.
     :vartype model: str
     :ivar api_key: API key for authentication. Not required for self-hosted models.
         Not included in the serialized model data, i.e. to be set again after

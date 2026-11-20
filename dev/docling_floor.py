@@ -52,7 +52,7 @@ def _docling_core_lower_bound() -> str:
     ``pyproject.toml``.
 
     :returns: The requirement of docling-core at its lower bound, e.g.
-        ``docling-core==2.103.0``.
+        ``docling-core==2.106.0``.
     :rtype: str
     """
     project = tomllib.loads((ROOT / "pyproject.toml").read_text(encoding="utf-8"))
@@ -73,7 +73,7 @@ def _setup(scratch: Path, docling_core: str) -> Path:
     :param scratch: A folder to create the environment in, outside the checkout.
     :type scratch: Path
     :param docling_core: The requirement of docling-core, e.g.
-        ``docling-core==2.103.0``.
+        ``docling-core==2.106.0``.
     :type docling_core: str
     :returns: The Python of the environment.
     :rtype: Path

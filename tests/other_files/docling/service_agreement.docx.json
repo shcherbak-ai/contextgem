@@ -1,6 +1,6 @@
 {
   "schema_name": "DoclingDocument",
-  "version": "1.10.0",
+  "version": "1.11.0",
   "name": "service_agreement",
   "origin": {
     "mimetype": "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
@@ -63,9 +63,6 @@
         },
         {
           "$ref": "#/texts/9"
-        },
-        {
-          "$ref": "#/groups/2"
         }
       ],
       "content_layer": "body",
@@ -75,7 +72,7 @@
     {
       "self_ref": "#/groups/2",
       "parent": {
-        "$ref": "#/groups/1"
+        "$ref": "#/texts/9"
       },
       "children": [
         {
@@ -212,8 +209,8 @@
       "content_layer": "body",
       "label": "text",
       "prov": [],
-      "orig": "Invoices are payable within",
-      "text": "Invoices are payable within",
+      "orig": "Invoices are payable within ",
+      "text": "Invoices are payable within ",
       "formatting": {
         "bold": false,
         "italic": false,
@@ -250,8 +247,8 @@
       "content_layer": "body",
       "label": "text",
       "prov": [],
-      "orig": "of the invoice date.",
-      "text": "of the invoice date.",
+      "orig": " of the invoice date.",
+      "text": " of the invoice date.",
       "formatting": {
         "bold": false,
         "italic": false,
@@ -322,7 +319,11 @@
       "parent": {
         "$ref": "#/groups/1"
       },
-      "children": [],
+      "children": [
+        {
+          "$ref": "#/groups/2"
+        }
+      ],
       "content_layer": "body",
       "label": "list_item",
       "prov": [],

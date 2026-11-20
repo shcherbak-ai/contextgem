@@ -466,6 +466,7 @@ def _texts(
     layers: st.SearchStrategy[ContentLayer] = _BODY_LAYER,
     tracks: bool = False,
     max_boxes: int = 2,
+    before: st.SearchStrategy[str] = _NOISE,
 ) -> st.SearchStrategy[_Text]:
     """
     Returns a strategy for texts with one of the labels.
@@ -478,6 +479,8 @@ def _texts(
     :type tracks: bool
     :param max_boxes: The maximum number of boxes of a text.
     :type max_boxes: int
+    :param before: The strategy for the whitespace before its word.
+    :type before: st.SearchStrategy[str]
     :return: The strategy.
     :rtype: st.SearchStrategy[_Text]
     """
@@ -486,7 +489,7 @@ def _texts(
         label=st.sampled_from(labels or (DocItemLabel.TEXT,)),
         prov=_provs(max_boxes),
         layer=layers,
-        before=_NOISE,
+        before=before,
         after=_NOISE,
         tracked=st.booleans() if tracks else st.just(False),
         voice=_VOICES if tracks else st.none(),
@@ -706,29 +709,56 @@ _ANY_PICTURES = _pictures(
 )
 
 # The texts of formatted text: text, inline code and formulas, as in HTML or
-# Markdown
+# Markdown. Each has whitespace before its word, as the parts of formatted text
+# keep the whitespace between their words (the inline whitespace contract of
+# docling-core), which the converter joins them with
 _INLINE_TEXTS = _texts(
     DocItemLabel.TEXT,
     DocItemLabel.TEXT,
     DocItemLabel.CODE,
     DocItemLabel.FORMULA,
     tracks=True,
+    before=_NOISE.filter(bool),
 )
 
+
+@st.composite
+def _inlines(
+    draw: st.DrawFn, parts: st.SearchStrategy[list[_Text | _Picture | _Inline]]
+) -> _Inline:
+    """
+    Generates formatted text, two texts of which can touch, without whitespace
+    between them, as a word and its subscript do: the first then ends with
+    a hyphen, which keeps their words apart for the tests.
+
+    :param draw: Draws a value from a strategy.
+    :type draw: st.DrawFn
+    :param parts: The strategy for the parts of the formatted text.
+    :type parts: st.SearchStrategy[list[_Text | _Picture | _Inline]]
+    :return: The formatted text.
+    :rtype: _Inline
+    """
+    inline = _Inline(parts=draw(parts))
+    for previous, part in zip(inline.parts, inline.parts[1:], strict=False):
+        if (
+            isinstance(previous, _Text)
+            and isinstance(part, _Text)
+            and draw(st.booleans())
+        ):
+            previous.tail, previous.after, part.before = "-", "", ""
+    return inline
+
+
 _INLINES = st.recursive(
-    st.builds(
-        _Inline,
-        parts=st.lists(
-            st.one_of(_INLINE_TEXTS, _BODY_PICTURES), min_size=1, max_size=4
-        ),
+    _inlines(
+        st.lists(st.one_of(_INLINE_TEXTS, _BODY_PICTURES), min_size=1, max_size=4)
     ),
-    lambda inner: st.builds(
-        _Inline,
-        parts=st.lists(
+    lambda inner: _inlines(
+        st.lists(
             st.one_of(_INLINE_TEXTS, _BODY_PICTURES, inner),
             min_size=1,
             max_size=4,
-        ),
+        )
     ),
     max_leaves=6,
 )
@@ -1716,6 +1746,20 @@ def _inline_words(inline: _Inline) -> list[_Text]:
     return texts
 
 
+def _inline_text(texts: list[_Text]) -> str:
+    """
+    Returns formatted text: its texts joined as they are, with their own
+    whitespace, which is then collapsed to single spaces, so that texts that touch
+    are joined without a space.
+
+    :param texts: The texts of the formatted text, in order.
+    :type texts: list[_Text]
+    :return: The text.
+    :rtype: str
+    """
+    return " ".join("".join(f"{t.before}{t.content}{t.after}" for t in texts).split())
+
+
 def _inline_pictures(inline: _Inline) -> list[_Picture]:
     """
     Returns the pictures in formatted text, in order.
@@ -1940,7 +1984,7 @@ class _Expected:
             if any(text.label != DocItemLabel.TEXT for text in texts):
                 self.structures.add("code or formula in formatted text")
             self._paragraph(
-                " ".join(text.content for text in texts),
+                _inline_text(texts),
                 None,
                 block.self_ref,
                 GroupLabel.INLINE.value,
@@ -2062,7 +2106,7 @@ class _Expected:
             if _inline_pictures(first):
                 self.structures.add("picture in formatted text")
             return (
-                " ".join(text.content for text in texts),
+                _inline_text(texts),
                 texts,
                 [*_inline_pictures(first), *under[index + 1 :]],
             )
@@ -2535,7 +2579,7 @@ class _Expected:
             text = f"{block.content} ({state})" if state else block.content
             return [text, *self._cell_items(block.children, floating)]
         if isinstance(block, _Inline):
-            text = " ".join(part.content for part in _inline_words(block))
+            text = _inline_text(_inline_words(block))
             return [text, *self._cell_items(_inline_pictures(block), floating)]
         if isinstance(block, _Heading):
             self.structures.add("heading in a rich cell")

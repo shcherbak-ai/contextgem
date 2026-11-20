@@ -184,7 +184,7 @@ class TestModelGroups(BaseTest):
                 )
                 return json.dumps(answer), False
 
-            llm._send_messages_with_tools = types.MethodType(_send_messages_stub, llm)  # ty: ignore[invalid-assignment]
+            llm._send_messages_with_tools = types.MethodType(_send_messages_stub, llm)
 
         def check_all_extracted(document: Document) -> None:
             """
@@ -762,7 +762,7 @@ class TestModelGroups(BaseTest):
                     raise RuntimeError(f"Simulated API error for {self.model}")
                 return answer, False
 
-            llm._send_messages_with_tools = types.MethodType(_send_messages_stub, llm)  # ty: ignore[invalid-assignment]
+            llm._send_messages_with_tools = types.MethodType(_send_messages_stub, llm)
 
         # Chat: fallbacks are tried in the given order until one of them succeeds
         stub_model_api(primary, None)

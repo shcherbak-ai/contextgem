@@ -340,11 +340,10 @@ class _JsonObjectClassStruct:
                     hasattr(type_arg, "__origin__") or isinstance(type_arg, str)
                 ):
                     _raise_dict_class_type_error(type_name, field_name, type_arg)
-            elif isinstance(type_arg, str):
-                if type_arg in namespace:
-                    resolved_type = namespace[type_arg]
-                    if hasattr(resolved_type, "_as_dict_structure"):
-                        _raise_dict_class_type_error(type_name, field_name, type_arg)
+            elif isinstance(type_arg, str) and type_arg in namespace:
+                resolved_type = namespace[type_arg]
+                if hasattr(resolved_type, "_as_dict_structure"):
+                    _raise_dict_class_type_error(type_name, field_name, type_arg)
 
         # Keep dictionary type as is - structure is defined by key/value types
         return field_type

@@ -36,6 +36,7 @@ from docling_core.types.doc import (
     CoordOrigin,
     DocItemLabel,
     DoclingDocument,
+    DocTagsDocument,
     DocumentOrigin,
     FormItem,
     GraphCell,
@@ -337,16 +338,23 @@ def _check_docling_text_kept(
             text = clean(item.text)
             if not text or item.label == DocItemLabel.MARKER:
                 continue
-            # The text of an item in a rich cell is in a paragraph of its table, if
-            # the table is converted
-            tables = [node for node in chain[1:] if isinstance(node, TableItem)]
-            if item.self_ref not in paragraphs_of and tables:
-                if tables[0].self_ref in paragraphs_of:
-                    assert text in text_of(tables[0].self_ref), item.self_ref
-                continue
             owner = next(
                 (node for node in chain if node.self_ref in paragraphs_of), None
             )
+            # The text of an item in a rich cell is in a paragraph of its table, if
+            # the table is converted, unless it is under a caption or a footnote of
+            # the table, which Docling can also give under it, e.g. the text of
+            # a footnote in a text item under the footnote
+            tables = [node for node in chain[1:] if isinstance(node, TableItem)]
+            attached_to_table = bool(tables) and any(
+                node.self_ref
+                in {ref.cref for ref in (*tables[0].captions, *tables[0].footnotes)}
+                for node in chain[: chain.index(tables[0])]
+            )
+            if item.self_ref not in paragraphs_of and tables and not attached_to_table:
+                if tables[0].self_ref in paragraphs_of:
+                    assert text in text_of(tables[0].self_ref), item.self_ref
+                continue
             assert owner is not None, f"{item.self_ref} not converted: {text}"
             assert text in text_of(owner.self_ref), item.self_ref
         elif isinstance(item, TableItem):
@@ -2280,12 +2288,13 @@ class TestDocuments(BaseTest):
             DocItemLabel.PARAGRAPH, "The Supplier provides hosting."
         )
         docling_document.add_heading("1.1 Support", level=2)
-        # A sentence with formatted parts, e.g. a bold one, is an inline group
+        # A sentence with formatted parts, e.g. a bold one, is an inline group,
+        # whose parts keep the whitespace between them
         inline = docling_document.add_inline_group()
         for part in (
-            "Support is available",
+            "Support is available ",
             "on business days",
-            ", from 08:00",
+            ", from 08:00 ",
             "(CET)",
             ".",
         ):
@@ -2316,7 +2325,7 @@ class TestDocuments(BaseTest):
         formatted_text = docling_document.add_inline_group(parent=formatted_item)
         docling_document.add_text(DocItemLabel.TEXT, "Fees", parent=formatted_text)
         docling_document.add_text(
-            DocItemLabel.TEXT, "exclude VAT.", parent=formatted_text
+            DocItemLabel.TEXT, " exclude VAT.", parent=formatted_text
         )
         docling_document.add_code("total = sum(fees)")
         docling_document.add_formula("f = 1.08 x")
@@ -2327,7 +2336,7 @@ class TestDocuments(BaseTest):
         heading_text = docling_document.add_inline_group(parent=formatted_heading)
         docling_document.add_text(DocItemLabel.TEXT, "3. Term", parent=heading_text)
         docling_document.add_text(
-            DocItemLabel.TEXT, "and termination", parent=heading_text
+            DocItemLabel.TEXT, " and termination", parent=heading_text
         )
         docling_document.add_text(DocItemLabel.TEXT, "Either party may terminate.")
         # Not converted: the furniture of the pages, the notes, and a text with
@@ -2518,7 +2527,7 @@ class TestDocuments(BaseTest):
         )
         docling_document.add_text(
             DocItemLabel.TEXT,
-            "and Payment",
+            " and Payment",
             parent=heading_text,
             prov=_docling_prov(2, 750.0),
         )
@@ -2529,7 +2538,7 @@ class TestDocuments(BaseTest):
             DocItemLabel.TEXT, "Invoices are", parent=sentence, prov=_docling_prov(2)
         )
         docling_document.add_text(
-            DocItemLabel.TEXT, "payable", parent=sentence, prov=_docling_prov(2, 680.0)
+            DocItemLabel.TEXT, " payable", parent=sentence, prov=_docling_prov(2, 680.0)
         )
 
         document = Document.from_docling(docling_document)
@@ -2991,13 +3000,13 @@ class TestDocuments(BaseTest):
         docling_document.add_picture(
             image=_docling_image("green"), caption=trend_caption, parent=line
         )
-        docling_document.add_text(DocItemLabel.TEXT, "is stable.", parent=line)
+        docling_document.add_text(DocItemLabel.TEXT, " is stable.", parent=line)
         # Also in a list item with formatted text
         bullets = docling_document.add_list_group()
         logo_item = docling_document.add_list_item("", parent=bullets)
         logo_text = docling_document.add_inline_group(parent=logo_item)
         docling_document.add_text(DocItemLabel.TEXT, "Our", parent=logo_text)
-        docling_document.add_text(DocItemLabel.TEXT, "logo", parent=logo_text)
+        docling_document.add_text(DocItemLabel.TEXT, " logo", parent=logo_text)
         docling_document.add_picture(image=_docling_image("yellow"), parent=logo_text)
 
         with capture_logs() as logs:
@@ -3455,6 +3464,53 @@ class TestDocuments(BaseTest):
             ("INV-2026-042", "Key-value pair"),
         ]
 
+    def test_from_docling_inline_whitespace(self):
+        """
+        Tests that the parts of formatted text are joined as they are, as each has
+        its own whitespace (the inline whitespace contract of docling-core), e.g. a
+        subscript in a word, that a Docling document saved before the contract has
+        the space that docling-core adds between all its parts, also before
+        punctuation, and that formatted text from DocTags, which docling-core
+        reads without the whitespace between its parts, has its words run
+        together, as the Docling page of the documentation says.
+        """
+        docling_document = DoclingDocument(name="formatted")
+        for parts in (
+            ("Water is H", "2", "O."),
+            ("Growth is x", "2", " a year."),
+            ("Paid in ", "full", " ", "on time", "."),
+        ):
+            inline = docling_document.add_inline_group()
+            for part in parts:
+                docling_document.add_text(DocItemLabel.TEXT, part, parent=inline)
+        assert _texts_and_contexts(Document.from_docling(docling_document)) == [
+            ("Water is H2O.", None),
+            ("Growth is x2 a year.", None),
+            ("Paid in full on time.", None),
+        ]
+
+        # A document of an older schema, whose parts have no whitespace of their own
+        docling_document = DoclingDocument(name="saved")
+        inline = docling_document.add_inline_group()
+        for part in ("Fees", "exclude VAT", "."):
+            docling_document.add_text(DocItemLabel.TEXT, part, parent=inline)
+        data = docling_document.export_to_dict()
+        data["version"] = "1.10.0"
+        with pytest.warns(UserWarning, match="inline whitespace contract"):
+            saved = DoclingDocument.model_validate(data)
+        assert _texts_and_contexts(Document.from_docling(saved)) == [
+            ("Fees exclude VAT .", None)
+        ]
+
+        # Formatted text from DocTags, e.g. of Docling's VLM pipeline
+        doctags = DocTagsDocument.from_doctags_and_image_pairs(
+            ["<doctag><inline><text>Net </text><text>30 days</text></inline></doctag>"],
+            None,
+        )
+        assert _texts_and_contexts(
+            Document.from_docling(DoclingDocument.load_from_doctags(doctags))
+        ) == [("Net30 days", None)]
+
     def test_from_docling_code_blocks(self):
         """
         Tests that the caption of a code block is a paragraph before it, and its
@@ -3503,7 +3559,7 @@ class TestDocuments(BaseTest):
         # A cue with formatted text is an inline group, each part of it from
         # the track
         inline = docling_document.add_inline_group()
-        for part in ("The budget is", "approved", "."):
+        for part in ("The budget is ", "approved", "."):
             docling_document.add_text(
                 DocItemLabel.TEXT,
                 part,
@@ -3691,10 +3747,10 @@ class TestDocuments(BaseTest):
         for docling_core_version, message in (
             (None, r"requires docling-core, the document model of Docling"),
             (
-                "2.102.0",
+                "2.105.0",
                 (
-                    r"requires docling-core 2\.103\.0 or later, "
-                    r"and docling-core 2\.102\.0 is installed"
+                    r"requires docling-core 2\.106\.0 or later, "
+                    r"and docling-core 2\.105\.0 is installed"
                 ),
             ),
             ("2.48.0", r"docling-core 2\.48\.0 is installed"),
@@ -3714,7 +3770,7 @@ class TestDocuments(BaseTest):
                     Document.from_docling(DoclingDocument(name="any"))
                 assert 'uv add "contextgem[docling]"' in str(error.value)
         # A newer docling-core, or a pre-release of the oldest, is accepted
-        for docling_core_version in ("2.103.0rc1", "2.110.0", "3.0.0"):
+        for docling_core_version in ("2.106.0rc1", "2.110.0", "3.0.0"):
             with (
                 patch.dict(sys.modules),
                 patch_package,

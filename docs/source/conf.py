@@ -130,6 +130,11 @@ extensions = [
     "sphinx_llm.txt",
 ]
 
+# The header and the footer of a card are the `card-header` and `card-footer`
+# directives: the separators `^^^` and `+++` are deprecated in sphinx-design 0.8,
+# and with this setting a line of them is shown as text, i.e. caught in review
+sd_card_legacy_separators = False
+
 # llms.txt (https://llmstxt.org/): the index of the documentation for language
 # models and coding agents, at the root of the site, with a Markdown copy of
 # every page beside its HTML one. A page's line in it is its description.

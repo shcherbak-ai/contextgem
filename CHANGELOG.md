@@ -6,6 +6,19 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 - **Refactor**: Code reorganization that doesn't change functionality but improves structure or maintainability
 
+## [Unreleased]
+
+### Changed
+
+- Upgraded pinned dependency versions: `litellm==1.108.8`, `openai==3.51.0`, `genai-prices==0.2.3`. ContextGem now requires openai 3: code of your own that uses the OpenAI SDK in the same environment must work with it. This `litellm` no longer holds installs on `filelock` 3, whose known vulnerabilities are fixed in `filelock` 4.
+- Decision models of Azure OpenAI (`azure/<deployment_name>`), Fireworks AI, Databricks, Bespoke and Laya are supported, which this `litellm` serves through its Decisions API (see "Supported Providers and Models" of the decision models page).
+- In a stand-in for `litellm.acompletion` in your tests, mock the refusal of an OpenAI model with `refusal` on the message, instead of `provider_specific_fields={"refusal": ...}`: this `litellm` keeps the refusal field of OpenAI there, where ContextGem now reads it.
+- The `docling` extra now requires Docling 2.147.0 or later and docling-core 2.106.0 or later, whose formatted text keeps the whitespace between its parts.
+
+### Fixed
+
+- `Document.from_docling()` joins the parts of formatted text as Docling gives them, with their own whitespace, e.g. a word with a subscript or a superscript in it, which got a space inside it: `H2O` and `x2` instead of `H 2 O` and `x 2`. A Docling document saved with Docling before 2.147.0 has a space between all the parts of its formatted text, also before punctuation, e.g. `Ltd .`: convert the file again with a current Docling. Formatted text of Docling's VLM pipeline, from DocTags, has no whitespace between its parts, so the words around a formatted part run together (see "What the Document Is Made Of" of the Docling page).
+
 ## [1.5.1] - 2026-11-09
 
 ### Changed
@@ -742,6 +755,7 @@ See the [migration guide](https://contextgem.shcherbak.ai/migration_v1/) for upd
 
 - Added DocxConverter for converting DOCX files into ContextGem Document objects
 
+[Unreleased]: https://github.com/shcherbak-ai/contextgem/compare/v1.5.1...HEAD
 [1.5.1]: https://github.com/shcherbak-ai/contextgem/compare/v1.5.0...v1.5.1
 [1.5.0]: https://github.com/shcherbak-ai/contextgem/compare/v1.4.1...v1.5.0
 [1.4.1]: https://github.com/shcherbak-ai/contextgem/compare/v1.4.0...v1.4.1

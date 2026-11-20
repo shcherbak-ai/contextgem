@@ -707,7 +707,7 @@ def _run_sync(coro: Coroutine[Any, Any, T]) -> T:
         # Start a new loop in a fresh thread to avoid conflicts.
         with concurrent.futures.ThreadPoolExecutor() as pool:
             future = pool.submit(asyncio.run, _run_and_close_litellm_clients(coro))
-            return future.result()  # ty: ignore[invalid-return-type]
+            return future.result()  # ty: ignore[invalid-explicit-return]
     else:
         # No running loop, so just run it directly.
         return asyncio.run(_run_and_close_litellm_clients(coro))
@@ -993,7 +993,7 @@ def _is_rejected_by_sdk_before_sending(error: BaseException) -> bool:
 
     litellm raises such an error as a server error (500), e.g. ``InternalServerError``
     for a missing key of an OpenAI model and ``APIError`` for one of an Azure OpenAI
-    model (litellm 1.105.7, openai 2.54.0), as it no longer recognizes the message of
+    model (litellm 1.108.8, openai 3.50.0), as it no longer recognizes the message of
     the SDK, while the request would fail again in the same way. The error of the SDK
     is found among the errors that the error of litellm was raised from.
 

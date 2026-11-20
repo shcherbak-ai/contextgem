@@ -40,11 +40,13 @@ from contextgem.internal.utils import _is_text_content_empty
 
 # The oldest docling-core that the converter works with: the lower bound of
 # docling-core in the `docling` extra of pyproject.toml, which a test compares, and
-# with which `uv run fab docling-floor` runs the tests. It is the first that reads
-# the image of a picture from a local file, given by a path or a file:// URI, only
-# after an opt-in (`DoclingDocument.load_local_images()`): 2.102.0 reads one given
-# by a path, from a document that could come from anyone.
-_MIN_DOCLING_CORE_VERSION = "2.103.0"
+# with which `uv run fab docling-floor` runs the tests. It is the first with
+# the inline whitespace contract (schema 1.11.0): the parts of formatted text keep
+# their own whitespace, and a document saved with an older schema gets the spaces
+# that its readers added between the parts when it is loaded. It also reads
+# the image of a picture from a local file only after an opt-in
+# (`DoclingDocument.load_local_images()`), which 2.103.0 was the first to do.
+_MIN_DOCLING_CORE_VERSION = "2.106.0"
 
 # How to install or upgrade docling-core, with Docling, for the errors below
 _INSTALL_DOCLING_EXTRA = (
@@ -194,10 +196,6 @@ _MISSING_PAGE_IMAGES_REASON = (
     "`generate_page_images=True` in the pipeline options of its image format."
 )
 
-# The parts of an inline text are joined with a space, except before closing
-# punctuation and after an opening bracket
-_NO_SPACE_BEFORE = tuple(",.;:!?)]}")
-_NO_SPACE_AFTER = tuple("([{")
 
 # The name that Docling gives the group of a slide, e.g. "slide-0" for the first one
 _SLIDE_GROUP_NAME = re.compile(r"slide-(\d+)")
@@ -280,25 +278,18 @@ def _join_inline(parts: Iterable[str]) -> str:
     Joins the parts of an inline text, e.g. the differently formatted runs of
     a sentence, into one text.
 
+    Each part has its own whitespace, as docling-core requires of formatted text
+    (the inline whitespace contract, from 2.106.0), so the parts are joined as they
+    are: e.g. "Net ", "30" and " days" give "Net 30 days", and "H", "2" and "O"
+    give "H2O". A document saved before the contract gets the spaces that its
+    readers added between the parts when docling-core loads it.
+
     :param parts: The parts of the text, in order.
     :type parts: Iterable[str]
-    :return: The parts joined with a space, except before closing punctuation and
-        after an opening bracket.
+    :return: The text, on a single line.
     :rtype: str
     """
-    text = ""
-    for part in parts:
-        part = part.strip()
-        if not part:
-            continue
-        if (
-            text
-            and not part.startswith(_NO_SPACE_BEFORE)
-            and not text.endswith(_NO_SPACE_AFTER)
-        ):
-            text += " "
-        text += part
-    return text
+    return _clean("".join(parts))
 
 
 def _label_of(item: NodeItem) -> str:
@@ -877,9 +868,8 @@ class _DoclingConverter:
                 _provenance_of_items(texts),
                 _tracks_of_items(texts),
             )
-            # The tables and the pictures in the text, e.g. an image in a line of
-            # Markdown
-            for child in self._floating_items_in(item):
+            # The other items in the text, e.g. an image in a line of Markdown
+            for child in self._inline_items(item):
                 self._convert_item(child, list_level)
         elif isinstance(item, ListItem):
             self._convert_list_item(item, list_level)
@@ -1033,7 +1023,7 @@ class _DoclingConverter:
                 texts = self._inline_texts(first)
                 text = _join_inline(text_item.text for text_item in texts)
                 sources.extend(texts)
-                children = [*self._floating_items_in(first), *children[1:]]
+                children = [*self._inline_items(first), *children[1:]]
             elif isinstance(first, TextItem) and first.label in _BODY_TEXT_LABELS:
                 text = first.text.strip()
                 sources.append(first)
@@ -1134,12 +1124,13 @@ class _DoclingConverter:
 
         :param group: The inline group.
         :type group: NodeItem
-        :return: The text items with text, including those of the groups in it.
+        :return: The text items with text, including those of the groups in it, and
+            those with whitespace only, which separates the words of the others.
         :rtype: list[TextItem]
         """
         texts: list[TextItem] = []
         for child in self._children(group):
-            if isinstance(child, TextItem) and child.text.strip():
+            if isinstance(child, TextItem) and child.text:
                 texts.append(child)
             elif isinstance(child, GroupItem):
                 texts.extend(self._inline_texts(child))
@@ -1374,7 +1365,7 @@ class _DoclingConverter:
         if isinstance(item, InlineGroup):
             texts = self._inline_texts(item)
             parts = [_join_inline(text.text for text in texts)]
-            children = self._floating_items_in(item)
+            children = self._inline_items(item)
         elif isinstance(item, ListItem):
             text, _, children = self._list_item_text(item)
             parts = [text]
@@ -1428,6 +1419,27 @@ class _DoclingConverter:
                 items.append(child)
             else:
                 items.extend(self._floating_items_in(child))
+        return items
+
+    def _inline_items(self, group: NodeItem) -> list[NodeItem]:
+        """
+        Returns the items in an inline group that are not its text, which are
+        converted after it: e.g. a picture in a line of Markdown, or a form field
+        in a line of DocLang, and the tables and the pictures under its texts.
+
+        :param group: The inline group, or a group in it.
+        :type group: NodeItem
+        :return: The items, in order.
+        :rtype: list[NodeItem]
+        """
+        items: list[NodeItem] = []
+        for child in self._children(group):
+            if isinstance(child, TextItem):
+                items.extend(self._floating_items_in(child))
+            elif isinstance(child, GroupItem):
+                items.extend(self._inline_items(child))
+            else:
+                items.append(child)
         return items
 
     def _convert_picture(self, picture: PictureItem) -> None:

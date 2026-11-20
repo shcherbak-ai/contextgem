@@ -111,6 +111,8 @@ The additional context is sent to the models together with the paragraph, in the
 
    **A scanned PDF file** is converted the same way: Docling reads its text with OCR, and finds its structure with its layout and table models. Its paragraphs have pages too.
 
+   **Formatted text**, e.g. a sentence with a word in bold, is one paragraph, its parts joined as Docling gives them, each with its own whitespace: a subscript stays in its word, e.g. ``H2O``. A Docling document saved with Docling before 2.147.0 has a space between all its parts, also before punctuation, e.g. ``Ltd .``: convert the file again. Docling's VLM pipeline, with a model that answers in DocTags, e.g. Granite-Docling, gives the parts without the whitespace between them, so the words around a formatted part run together, as in Docling's own Markdown export.
+
 .. tip::
    Docling can also export its document as Markdown, which can be passed to a document as ``raw_text``. A document created with ``from_docling()`` differs in that its references hold no Markdown syntax, each table row keeps the headers of its table, and the page of each paragraph is known.
 

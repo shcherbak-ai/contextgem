@@ -35,7 +35,7 @@ def _post_init_method(func: Callable[[Any, Any], None]) -> Callable[[Any, Any], 
     :rtype: Callable[[Any, Any], None]
     """
     # Dynamically mark function as a post-init method for MRO collection
-    func.__post_init__ = True  # type: ignore[attr-defined]  # ty: ignore[unresolved-attribute]
+    func.__post_init__ = True  # type: ignore[attr-defined]  # ty: ignore[missing-attribute]
     return func
 
 

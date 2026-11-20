@@ -180,7 +180,7 @@ class _StringConcept(_Concept):
         description="Example strings illustrating how this concept should be extracted.",
     )
 
-    _extracted_items: list[_StringItem] = PrivateAttr(default_factory=list)  # ty: ignore[invalid-attribute-override]  # narrowed to the item class
+    _extracted_items: list[_StringItem] = PrivateAttr(default_factory=list)  # ty: ignore[incompatible-attribute-override]  # narrowed to the item class
 
     @property
     def _item_type_in_prompt(self) -> str:
@@ -232,7 +232,7 @@ class _BooleanConcept(_Concept):
         ),
     )
 
-    _extracted_items: list[_BooleanItem] = PrivateAttr(default_factory=list)  # ty: ignore[invalid-attribute-override]  # narrowed to the item class
+    _extracted_items: list[_BooleanItem] = PrivateAttr(default_factory=list)  # ty: ignore[incompatible-attribute-override]  # narrowed to the item class
 
     @property
     def _item_type_in_prompt(self) -> str:
@@ -279,7 +279,7 @@ class _NumericalConcept(_Concept):
         ),
     )
 
-    _extracted_items: list[_IntegerItem | _FloatItem | _IntegerOrFloatItem] = (  # ty: ignore[invalid-attribute-override]  # narrowed to the item class
+    _extracted_items: list[_IntegerItem | _FloatItem | _IntegerOrFloatItem] = (  # ty: ignore[incompatible-attribute-override]  # narrowed to the item class
         PrivateAttr(default_factory=list)
     )
 
@@ -336,7 +336,7 @@ class _RatingConcept(_Concept):
         description="Rating scale boundaries as a tuple of (start, end) integers.",
     )
 
-    _extracted_items: list[_IntegerItem] = PrivateAttr(default_factory=list)  # ty: ignore[invalid-attribute-override]  # narrowed to the item class
+    _extracted_items: list[_IntegerItem] = PrivateAttr(default_factory=list)  # ty: ignore[incompatible-attribute-override]  # narrowed to the item class
 
     @field_validator("rating_scale")
     @classmethod
@@ -409,7 +409,7 @@ class _RatingConcept(_Concept):
         return self._extracted_items
 
     @extracted_items.setter
-    def extracted_items(self, value: list[_IntegerItem]) -> None:  # ty: ignore[invalid-property-type-override]  # narrowed to the item class
+    def extracted_items(self, value: list[_IntegerItem]) -> None:  # ty: ignore[incompatible-property-override]  # narrowed to the item class
         """
         Validates that all values are within the rating scale range,
         in addition to the validation performed by the parent class.
@@ -495,7 +495,7 @@ class _JsonObjectConcept(_Concept):
         description="Example JSON objects illustrating how this concept should be extracted.",
     )
 
-    _extracted_items: list[_JsonObjectItem] = PrivateAttr(default_factory=list)  # ty: ignore[invalid-attribute-override]  # narrowed to the item class
+    _extracted_items: list[_JsonObjectItem] = PrivateAttr(default_factory=list)  # ty: ignore[incompatible-attribute-override]  # narrowed to the item class
 
     @property
     def _item_type_in_prompt(self) -> str:
@@ -886,7 +886,7 @@ class _DateConcept(_Concept):
     Internal implementation of the DateConcept class.
     """
 
-    _extracted_items: list[_DateItem] = PrivateAttr(default_factory=list)  # ty: ignore[invalid-attribute-override]  # narrowed to the item class
+    _extracted_items: list[_DateItem] = PrivateAttr(default_factory=list)  # ty: ignore[incompatible-attribute-override]  # narrowed to the item class
 
     @property
     def _date_format_in_prompt(self) -> str:
@@ -1001,7 +1001,7 @@ class _LabelConcept(_Concept):
         ),
     )
 
-    _extracted_items: list[_LabelItem] = PrivateAttr(default_factory=list)  # ty: ignore[invalid-attribute-override]  # narrowed to the item class
+    _extracted_items: list[_LabelItem] = PrivateAttr(default_factory=list)  # ty: ignore[incompatible-attribute-override]  # narrowed to the item class
 
     @model_validator(mode="after")
     def _validate_decision_threshold_applicable(self) -> Self:
@@ -1083,7 +1083,7 @@ class _LabelConcept(_Concept):
         return self._extracted_items
 
     @extracted_items.setter
-    def extracted_items(self, value: list[_LabelItem]) -> None:  # ty: ignore[invalid-property-type-override]  # narrowed to the item class
+    def extracted_items(self, value: list[_LabelItem]) -> None:  # ty: ignore[incompatible-property-override]  # narrowed to the item class
         """
         Validates that all label values are from the predefined set and conform
         to classification type constraints, in addition to the validation

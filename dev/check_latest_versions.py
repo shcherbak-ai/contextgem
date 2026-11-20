@@ -107,72 +107,23 @@ ACCEPTED_ADVISORIES: dict[str, str] = {
         "katex 0.16, which markdownlint's math parser allows (^0.16): fixed in 0.18 "
         "only; markdownlint parses math and renders none"
     ),
-    "GHSA-gg6h-894w-4m9c": (
-        "re2js 2.8.6, which markdownlint 0.42.0 requires exactly, as markdownlint-cli2 "
-        "0.24.0, the latest, requires that markdownlint: fixed in 2.8.7; it needs "
-        "the LOOKBEHINDS flag, with which markdownlint compiles no pattern"
+    # soupsieve: Beautiful Soup brings it with Docling (the HTML backend) and with
+    # the theme of the documentation; 2.10 is its last release for Python before
+    # 3.11.5, which ContextGem supports
+    "GHSA-6655-6qjp-jx7x": (
+        "soupsieve 2.10, locked for Python before 3.11.5: fixed in 3.0.2 only, which "
+        "requires Python 3.11.5; in the compilation of a selector, and Docling "
+        "compiles a selector of its own only"
     ),
-    # filelock: the soft locks are those that huggingface_hub falls back to where
-    # the file system has no file locking; its lock files are in its cache, in the
-    # user's home folder unless HF_HOME names another
-    "GHSA-v4x8-3wr5-3wq8": (
-        "filelock 3.x, which the pinned litellm 1.105.7 requires (<4.0): fixed in "
-        "4.2.1 only; it is in ReadWriteLock, which no installed package uses"
+    "GHSA-7g44-g9rc-x53w": (
+        "soupsieve 2.10, locked for Python before 3.11.5: fixed in 3.0.2 only, which "
+        "requires Python 3.11.5; in the parsing of nested pseudo-classes of "
+        "a selector, and Docling parses a selector of its own only"
     ),
-    "GHSA-9vhv-jxww-xfm5": (
-        "filelock 3.x, which the pinned litellm 1.105.7 requires (<4.0): fixed in "
-        "4.2.1 only; Windows only, in ReadWriteLock, which no installed package uses"
-    ),
-    "GHSA-567q-5qvw-pf92": (
-        "filelock 3.x, which the pinned litellm 1.105.7 requires (<4.0): fixed in "
-        "4.2.1 only; Windows only, in the soft locks of huggingface_hub, and a lock "
-        "is only held up"
-    ),
-    "GHSA-6627-m3xw-93mp": (
-        "filelock 3.x, which the pinned litellm 1.105.7 requires (<4.0): fixed in "
-        "4.2.1 only; it is in StrictSoftFileLock, which no installed package uses"
-    ),
-    "GHSA-69hj-f68j-2879": (
-        "filelock 3.x, which the pinned litellm 1.105.7 requires (<4.0): fixed in "
-        "4.2.1 only; Unix only, it needs another local user who can rename a file "
-        "into the folder of the lock, i.e. a cache of huggingface_hub that users share"
-    ),
-    "GHSA-8mx5-7m5m-r77g": (
-        "filelock 3.x, which the pinned litellm 1.105.7 requires (<4.0): fixed in "
-        "4.2.1 only; Windows only, a lock file takes the access list of its folder, "
-        "which in the user's profile grants no other user access"
-    ),
-    "GHSA-9c4x-gm8v-wgc4": (
-        "filelock 3.x, which the pinned litellm 1.105.7 requires (<4.0): fixed in "
-        "4.2.1 only; it is in StrictSoftFileLock and SoftReadWriteLock, which no "
-        "installed package uses"
-    ),
-    "GHSA-9j6q-wvj5-jgjg": (
-        "filelock 3.x, which the pinned litellm 1.105.7 requires (<4.0): fixed in "
-        "4.2.1 only; in the soft locks of huggingface_hub, and it tells another local "
-        "user only whether a path exists and is writable"
-    ),
-    "GHSA-cwqr-hh33-gh44": (
-        "filelock 3.x, which the pinned litellm 1.105.7 requires (<4.0): fixed in "
-        "4.2.1 only; it is in ReadWriteLock, which no installed package uses"
-    ),
-    "GHSA-fq56-3cx3-fjxp": (
-        "filelock 3.x, which the pinned litellm 1.105.7 requires (<4.0): fixed in "
-        "4.2.1 only; in the soft locks of huggingface_hub, where two processes can "
-        "then hold the lock of a download at once"
-    ),
-    "GHSA-j8f7-rjxc-mr56": (
-        "filelock 3.x, which the pinned litellm 1.105.7 requires (<4.0): fixed in "
-        "4.0.9 only; it is in ReadWriteLock, which no installed package uses"
-    ),
-    "GHSA-m462-7rxw-wvpg": (
-        "filelock 3.x, which the pinned litellm 1.105.7 requires (<4.0): fixed in "
-        "4.2.1 only; it is in StrictSoftFileLock, which no installed package uses"
-    ),
-    "GHSA-rfpc-qcw5-3pc4": (
-        "filelock 3.x, which the pinned litellm 1.105.7 requires (<4.0): fixed in "
-        "4.2.1 only; in the soft locks of huggingface_hub, and it needs another local "
-        "user who can write the lock file"
+    "GHSA-mmhr-3c5m-f64f": (
+        "soupsieve 2.10, locked for Python before 3.11.5: fixed in 4.0.0 only, which "
+        "requires Python 3.11.5; a deeply nested HTML file can slow the conversion "
+        "with Docling, whose selector looks for blocks in paragraphs"
     ),
 }
 

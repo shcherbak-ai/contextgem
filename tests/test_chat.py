@@ -3043,7 +3043,7 @@ class TestChat(BaseTest):
         for fallback_tools in [tools, tuple(tools), tools[::-1]]:
             llm = create_llm(tools=tools)
             llm.fallback_models = [create_fallback_llm(tools=fallback_tools)]
-            assert llm.fallback_models[0].tools == list(fallback_tools)  # ty: ignore[unresolved-attribute]
+            assert llm.fallback_models[0].tools == list(fallback_tools)  # ty: ignore[missing-attribute]
 
         # Different tools, or tools of only one of the LLMs
         for main_tools, fallback_tools in [
@@ -3454,16 +3454,14 @@ class TestChat(BaseTest):
         ) -> Any:
             """
             Creates a completion of a refused answer: with OpenAI's refusal field,
-            which litellm keeps in the provider-specific fields of the message, if
-            it is given, and with the ``content_filter`` finish reason otherwise.
+            which litellm keeps in the refusal field of the message, if it is
+            given, and with the ``content_filter`` finish reason otherwise.
             """
             completion = _create_completion(
                 content,
                 finish_reason="stop" if openai_refusal else "content_filter",
             )
-            completion.choices[0].message.provider_specific_fields = {
-                "refusal": openai_refusal
-            }
+            completion.choices[0].message.refusal = openai_refusal
             return completion
 
         # A refused answer with a text is returned as it is, with a warning, and

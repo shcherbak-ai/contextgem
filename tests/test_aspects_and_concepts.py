@@ -723,7 +723,9 @@ class TestAspectsAndConcepts(BaseTest):
         """
         # Base class direct initialization
         with pytest.raises(TypeError):
-            _Concept(name="Test", description="Test")  # ty: ignore[call-non-callable]
+            _Concept(  # ty: ignore[abstract-class-instantiation]  # checks the refusal
+                name="Test", description="Test"
+            )
         with pytest.raises(ValueError):
             JsonObjectConcept()  # ty: ignore[missing-argument]
         with pytest.raises(ValueError):

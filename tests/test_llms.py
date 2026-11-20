@@ -3502,8 +3502,8 @@ class TestLLMs(BaseTest):
         """
         Tests that a refusal is read from the responses as litellm builds them
         from the responses of the providers: OpenAI's ``refusal`` field of
-        the message, which litellm keeps in the provider-specific fields of
-        the message, and the ``content_filter`` finish reason, to which litellm
+        the message, which litellm keeps in the ``refusal`` field of its message,
+        and the ``content_filter`` finish reason, to which litellm
         maps e.g. the ``refusal`` stop reason of Anthropic. A response without
         either is not a refusal, also one cut off at the max output tokens.
 

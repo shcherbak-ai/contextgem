@@ -151,7 +151,7 @@ class TestExtraction(BaseTest):
             return "<<<not-json>>>", _ModelUsage()
 
         _orig_query_llm = llm._query_llm
-        llm._query_llm = types.MethodType(_invalid_json_query_stub, llm)  # ty: ignore[invalid-assignment]
+        llm._query_llm = types.MethodType(_invalid_json_query_stub, llm)
         try:
             with pytest.raises(ModelExtractionError, match=r"invalid data.*1 retries"):
                 llm.extract_aspects_from_document(
@@ -231,7 +231,7 @@ class TestExtraction(BaseTest):
                     for log in captured_logs
                 ), captured_logs
         finally:
-            llm._query_llm = _orig_query_llm  # ty: ignore[invalid-assignment]
+            llm._query_llm = _orig_query_llm
 
         # === Without retries ===
         # raise_exception_on_extraction_error is True by default
@@ -242,7 +242,7 @@ class TestExtraction(BaseTest):
         )
 
         _orig_query_llm_no_retry = llm._query_llm
-        llm._query_llm = types.MethodType(_invalid_json_query_stub, llm)  # ty: ignore[invalid-assignment]
+        llm._query_llm = types.MethodType(_invalid_json_query_stub, llm)
         try:
             with pytest.raises(ModelExtractionError, match=r"invalid data.*0 retries"):
                 llm.extract_aspects_from_document(
@@ -322,7 +322,7 @@ class TestExtraction(BaseTest):
                     for log in captured_logs
                 ), captured_logs
         finally:
-            llm._query_llm = _orig_query_llm_no_retry  # ty: ignore[invalid-assignment]
+            llm._query_llm = _orig_query_llm_no_retry
 
         # === Test invalid LLM without fallback LLM ===
         # raise_exception_on_extraction_error is True by default
@@ -6377,16 +6377,13 @@ class TestExtraction(BaseTest):
         ) -> Any:
             """
             Creates a completion as litellm returns it, with the text, the finish
-            reason, and OpenAI's refusal field, which litellm keeps in
-            the provider-specific fields of the message.
+            reason, and OpenAI's refusal field, which litellm keeps in the refusal
+            field of the message.
             """
             return types.SimpleNamespace(
                 choices=[
                     types.SimpleNamespace(
-                        message=types.SimpleNamespace(
-                            content=content,
-                            provider_specific_fields={"refusal": refusal},
-                        ),
+                        message=types.SimpleNamespace(content=content, refusal=refusal),
                         finish_reason=finish_reason,
                     )
                 ],

@@ -1,6 +1,6 @@
 {
   "schema_name": "DoclingDocument",
-  "version": "1.10.0",
+  "version": "1.11.0",
   "name": "field_study",
   "origin": {
     "mimetype": "application/xml",
@@ -24,7 +24,7 @@
         "$ref": "#/texts/17"
       },
       {
-        "$ref": "#/texts/18"
+        "$ref": "#/texts/20"
       }
     ],
     "content_layer": "body",
@@ -55,11 +55,25 @@
     {
       "self_ref": "#/groups/1",
       "parent": {
-        "$ref": "#/texts/23"
+        "$ref": "#/texts/18"
       },
       "children": [
         {
-          "$ref": "#/texts/24"
+          "$ref": "#/texts/19"
+        }
+      ],
+      "content_layer": "body",
+      "name": "group",
+      "label": "inline"
+    },
+    {
+      "self_ref": "#/groups/2",
+      "parent": {
+        "$ref": "#/texts/25"
+      },
+      "children": [
+        {
+          "$ref": "#/texts/26"
         }
       ],
       "content_layer": "body",
@@ -93,13 +107,13 @@
           "$ref": "#/texts/15"
         },
         {
-          "$ref": "#/texts/19"
-        },
-        {
           "$ref": "#/texts/21"
         },
         {
           "$ref": "#/texts/23"
+        },
+        {
+          "$ref": "#/texts/25"
         }
       ],
       "content_layer": "body",
@@ -363,6 +377,34 @@
     {
       "self_ref": "#/texts/18",
       "parent": {
+        "$ref": "#/tables/0"
+      },
+      "children": [
+        {
+          "$ref": "#/groups/1"
+        }
+      ],
+      "content_layer": "body",
+      "label": "footnote",
+      "prov": [],
+      "orig": "",
+      "text": ""
+    },
+    {
+      "self_ref": "#/texts/19",
+      "parent": {
+        "$ref": "#/groups/1"
+      },
+      "children": [],
+      "content_layer": "body",
+      "label": "footnote",
+      "prov": [],
+      "orig": "Water use includes the rainfall of the season.",
+      "text": "Water use includes the rainfall of the season."
+    },
+    {
+      "self_ref": "#/texts/20",
+      "parent": {
         "$ref": "#/body"
       },
       "children": [],
@@ -371,35 +413,6 @@
       "prov": [],
       "orig": "Figure 1. Water productivity of the three treatments in each season.",
       "text": "Figure 1. Water productivity of the three treatments in each season."
-    },
-    {
-      "self_ref": "#/texts/19",
-      "parent": {
-        "$ref": "#/texts/0"
-      },
-      "children": [
-        {
-          "$ref": "#/texts/20"
-        }
-      ],
-      "content_layer": "body",
-      "label": "section_header",
-      "prov": [],
-      "orig": "Discussion",
-      "text": "Discussion",
-      "level": 1
-    },
-    {
-      "self_ref": "#/texts/20",
-      "parent": {
-        "$ref": "#/texts/19"
-      },
-      "children": [],
-      "content_layer": "body",
-      "label": "text",
-      "prov": [],
-      "orig": "The loss of yield under deficit irrigation was small against the water saved, and the fruit of the deficit plots had a higher sugar content.",
-      "text": "The loss of yield under deficit irrigation was small against the water saved, and the fruit of the deficit plots had a higher sugar content."
     },
     {
       "self_ref": "#/texts/21",
@@ -414,8 +427,8 @@
       "content_layer": "body",
       "label": "section_header",
       "prov": [],
-      "orig": "Acknowledgements",
-      "text": "Acknowledgements",
+      "orig": "Discussion",
+      "text": "Discussion",
       "level": 1
     },
     {
@@ -427,8 +440,8 @@
       "content_layer": "body",
       "label": "text",
       "prov": [],
-      "orig": "The trial was funded by the regional water board.",
-      "text": "The trial was funded by the regional water board."
+      "orig": "The loss of yield under deficit irrigation was small against the water saved, and the fruit of the deficit plots had a higher sugar content.",
+      "text": "The loss of yield under deficit irrigation was small against the water saved, and the fruit of the deficit plots had a higher sugar content."
     },
     {
       "self_ref": "#/texts/23",
@@ -437,7 +450,36 @@
       },
       "children": [
         {
-          "$ref": "#/groups/1"
+          "$ref": "#/texts/24"
+        }
+      ],
+      "content_layer": "body",
+      "label": "section_header",
+      "prov": [],
+      "orig": "Acknowledgements",
+      "text": "Acknowledgements",
+      "level": 1
+    },
+    {
+      "self_ref": "#/texts/24",
+      "parent": {
+        "$ref": "#/texts/23"
+      },
+      "children": [],
+      "content_layer": "body",
+      "label": "text",
+      "prov": [],
+      "orig": "The trial was funded by the regional water board.",
+      "text": "The trial was funded by the regional water board."
+    },
+    {
+      "self_ref": "#/texts/25",
+      "parent": {
+        "$ref": "#/texts/0"
+      },
+      "children": [
+        {
+          "$ref": "#/groups/2"
         }
       ],
       "content_layer": "body",
@@ -448,9 +490,9 @@
       "level": 1
     },
     {
-      "self_ref": "#/texts/24",
+      "self_ref": "#/texts/26",
       "parent": {
-        "$ref": "#/groups/1"
+        "$ref": "#/groups/2"
       },
       "children": [],
       "content_layer": "body",
@@ -474,7 +516,7 @@
       "prov": [],
       "captions": [
         {
-          "$ref": "#/texts/18"
+          "$ref": "#/texts/20"
         }
       ],
       "references": [],
@@ -488,7 +530,11 @@
       "parent": {
         "$ref": "#/texts/15"
       },
-      "children": [],
+      "children": [
+        {
+          "$ref": "#/texts/18"
+        }
+      ],
       "content_layer": "body",
       "label": "table",
       "prov": [],
@@ -498,7 +544,11 @@
         }
       ],
       "references": [],
-      "footnotes": [],
+      "footnotes": [
+        {
+          "$ref": "#/texts/18"
+        }
+      ],
       "data": {
         "table_cells": [
           {

@@ -112,7 +112,7 @@ if TYPE_CHECKING:
     # later in this module (cast("_DocumentModelGroup", self), etc.). ty doesn't
     # recognise the self-import idiom, but pyright/mypy do — keep it for them.
     from contextgem.internal.base.models import (
-        _DocumentModelGroup,  # ty: ignore[unresolved-import]
+        _DocumentModelGroup,  # ty: ignore[import-not-found]
     )
 
     # Used only in annotations
@@ -809,7 +809,7 @@ class _GenericModelProcessor(_AbstractGenericModelProcessor):
             # the aspect, with the paragraphs and sentences that they reference
             document._relink_references()
 
-        return document_aspects  # ty: ignore[invalid-return-type]
+        return document_aspects  # ty: ignore[invalid-explicit-return]
 
     def extract_concepts_from_aspect(
         self,
@@ -3975,7 +3975,7 @@ class _GenericModelProcessor(_AbstractGenericModelProcessor):
         info_containers = []
         # For individual model, use self and its fallbacks
         # For group, iterate through all models in self.models
-        llms_to_process = self.models if self.is_group else [self]  # type: ignore[attr-defined]  # ty: ignore[unresolved-attribute]
+        llms_to_process = self.models if self.is_group else [self]  # type: ignore[attr-defined]  # ty: ignore[missing-attribute]
         # Safe cast: llms_to_process contains only single models, of any kind
         llms_to_process = cast(list["_DocumentModel"], llms_to_process)
 

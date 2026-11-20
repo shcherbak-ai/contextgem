@@ -34,15 +34,16 @@ ContextGem is a free, open-source framework that makes it radically easier to ex
 
         Learn about the motivation behind ContextGem and how it works.
 
-        +++
-        .. button-ref:: motivation
-            :ref-type: doc
-            :click-parent:
-            :color: primary
-            :outline:
-            :expand:
+        .. card-footer::
 
-            Learn More
+            .. button-ref:: motivation
+                :ref-type: doc
+                :click-parent:
+                :color: primary
+                :outline:
+                :expand:
+
+                Learn More
 
     .. grid-item-card:: 🚀 Getting Started
         :link: installation
@@ -51,15 +52,16 @@ ContextGem is a free, open-source framework that makes it radically easier to ex
 
         Instructions to install ContextGem and quickly start using it.
 
-        +++
-        .. button-ref:: installation
-            :ref-type: doc
-            :click-parent:
-            :color: primary
-            :outline:
-            :expand:
+        .. card-footer::
 
-            Get Started
+            .. button-ref:: installation
+                :ref-type: doc
+                :click-parent:
+                :color: primary
+                :outline:
+                :expand:
+
+                Get Started
 
     .. grid-item-card:: 📄 Documents
         :link: documents/document_config
@@ -68,15 +70,16 @@ ContextGem is a free, open-source framework that makes it radically easier to ex
 
         Learn how to create and configure documents to extract information (aspects and concepts) from.
 
-        +++
-        .. button-ref:: documents/document_config
-            :ref-type: doc
-            :click-parent:
-            :color: primary
-            :outline:
-            :expand:
+        .. card-footer::
 
-            Create Documents
+            .. button-ref:: documents/document_config
+                :ref-type: doc
+                :click-parent:
+                :color: primary
+                :outline:
+                :expand:
+
+                Create Documents
 
     .. grid-item-card:: 📑 Files Converted with Docling
         :link: documents/docling
@@ -85,15 +88,16 @@ ContextGem is a free, open-source framework that makes it radically easier to ex
 
         Learn how to extract from files converted with Docling, e.g. PDF, DOCX, PPTX, XLSX and HTML, with the structure of each file and the pages that the extracted items refer to.
 
-        +++
-        .. button-ref:: documents/docling
-            :ref-type: doc
-            :click-parent:
-            :color: primary
-            :outline:
-            :expand:
+        .. card-footer::
 
-            Convert Files
+            .. button-ref:: documents/docling
+                :ref-type: doc
+                :click-parent:
+                :color: primary
+                :outline:
+                :expand:
+
+                Convert Files
 
     .. grid-item-card:: 📋 Extracting Aspects
         :link: aspects/aspects
@@ -102,15 +106,16 @@ ContextGem is a free, open-source framework that makes it radically easier to ex
 
         Learn how to identify and extract specific document sections like clauses, chapters, or terms using ContextGem's Aspects API.
 
-        +++
-        .. button-ref:: aspects/aspects
-            :ref-type: doc
-            :click-parent:
-            :color: primary
-            :outline:
-            :expand:
+        .. card-footer::
 
-            Extract Aspects
+            .. button-ref:: aspects/aspects
+                :ref-type: doc
+                :click-parent:
+                :color: primary
+                :outline:
+                :expand:
+
+                Extract Aspects
 
     .. grid-item-card:: 🎯 Extracting Concepts
         :link: concepts/supported_concepts
@@ -119,15 +124,16 @@ ContextGem is a free, open-source framework that makes it radically easier to ex
 
         Learn how to extract and infer structured data like JSON objects, strings, numbers, dates, booleans, ratings, and labels from documents using ContextGem's Concepts API.
 
-        +++
-        .. button-ref:: concepts/supported_concepts
-            :ref-type: doc
-            :click-parent:
-            :color: primary
-            :outline:
-            :expand:
+        .. card-footer::
 
-            Extract Concepts
+            .. button-ref:: concepts/supported_concepts
+                :ref-type: doc
+                :click-parent:
+                :color: primary
+                :outline:
+                :expand:
+
+                Extract Concepts
 
     .. grid-item-card:: 🔀 Extraction Pipelines
         :link: pipelines/extraction_pipelines
@@ -136,15 +142,16 @@ ContextGem is a free, open-source framework that makes it radically easier to ex
 
         Learn how to create reusable extraction pipelines that combine aspects and concepts for consistent document analysis across multiple files.
 
-        +++
-        .. button-ref:: pipelines/extraction_pipelines
-            :ref-type: doc
-            :click-parent:
-            :color: primary
-            :outline:
-            :expand:
+        .. card-footer::
 
-            Build Pipelines
+            .. button-ref:: pipelines/extraction_pipelines
+                :ref-type: doc
+                :click-parent:
+                :color: primary
+                :outline:
+                :expand:
+
+                Build Pipelines
 
     .. grid-item-card:: 🤖 Large Language Models
         :link: llms/supported_llms
@@ -153,15 +160,16 @@ ContextGem is a free, open-source framework that makes it radically easier to ex
 
         Learn about supported cloud LLM providers and local models, and how to configure and use them for extraction.
 
-        +++
-        .. button-ref:: llms/supported_llms
-            :ref-type: doc
-            :click-parent:
-            :color: primary
-            :outline:
-            :expand:
+        .. card-footer::
 
-            Explore LLMs
+            .. button-ref:: llms/supported_llms
+                :ref-type: doc
+                :click-parent:
+                :color: primary
+                :outline:
+                :expand:
+
+                Explore LLMs
 
     .. grid-item-card:: ⚖️ Decision Models
         :link: decision_models/decision_models
@@ -170,15 +178,16 @@ ContextGem is a free, open-source framework that makes it radically easier to ex
 
         Learn how to extract yes/no, label and rating concepts, as well as aspects, with decision models, which return probabilities instead of generating text.
 
-        +++
-        .. button-ref:: decision_models/decision_models
-            :ref-type: doc
-            :click-parent:
-            :color: primary
-            :outline:
-            :expand:
+        .. card-footer::
 
-            Explore Decision Models
+            .. button-ref:: decision_models/decision_models
+                :ref-type: doc
+                :click-parent:
+                :color: primary
+                :outline:
+                :expand:
+
+                Explore Decision Models
 
     .. grid-item-card:: 🔗 Agentic Workflows
         :link: agentic_workflows
@@ -187,15 +196,16 @@ ContextGem is a free, open-source framework that makes it radically easier to ex
 
         Learn how to use ContextGem in agentic workflows: at the ingestion of documents, in a tool that an agent calls, and at the decision points of a workflow.
 
-        +++
-        .. button-ref:: agentic_workflows
-            :ref-type: doc
-            :click-parent:
-            :color: primary
-            :outline:
-            :expand:
+        .. card-footer::
 
-            Use with Agents
+            .. button-ref:: agentic_workflows
+                :ref-type: doc
+                :click-parent:
+                :color: primary
+                :outline:
+                :expand:
+
+                Use with Agents
 
     .. grid-item-card:: ⚡ Advanced Usage
         :link: advanced_usage
@@ -204,15 +214,16 @@ ContextGem is a free, open-source framework that makes it radically easier to ex
 
         Explore advanced features and techniques for extracting data from documents.
 
-        +++
-        .. button-ref:: advanced_usage
-            :ref-type: doc
-            :click-parent:
-            :color: primary
-            :outline:
-            :expand:
+        .. card-footer::
 
-            Learn More
+            .. button-ref:: advanced_usage
+                :ref-type: doc
+                :click-parent:
+                :color: primary
+                :outline:
+                :expand:
+
+                Learn More
 
     .. grid-item-card:: ⚙️ Optimization Guide
         :link: optimizations/optimization_choosing_llm
@@ -221,15 +232,16 @@ ContextGem is a free, open-source framework that makes it radically easier to ex
 
         Learn how to optimize your extraction pipeline for accuracy, cost, and performance.
 
-        +++
-        .. button-ref:: optimizations/optimization_choosing_llm
-            :ref-type: doc
-            :click-parent:
-            :color: primary
-            :outline:
-            :expand:
+        .. card-footer::
 
-            Optimize
+            .. button-ref:: optimizations/optimization_choosing_llm
+                :ref-type: doc
+                :click-parent:
+                :color: primary
+                :outline:
+                :expand:
+
+                Optimize
 
     .. grid-item-card:: 💾 Serialization
         :link: serialization
@@ -238,15 +250,16 @@ ContextGem is a free, open-source framework that makes it radically easier to ex
 
         Learn how to serialize and deserialize ContextGem objects for storage and transfer.
 
-        +++
-        .. button-ref:: serialization
-            :ref-type: doc
-            :click-parent:
-            :color: primary
-            :outline:
-            :expand:
+        .. card-footer::
 
-            Save & Load
+            .. button-ref:: serialization
+                :ref-type: doc
+                :click-parent:
+                :color: primary
+                :outline:
+                :expand:
+
+                Save & Load
 
     .. grid-item-card:: 📖 API Reference
         :link: api/documents
@@ -255,15 +268,16 @@ ContextGem is a free, open-source framework that makes it radically easier to ex
 
         Complete API documentation for all ContextGem modules and classes.
 
-        +++
-        .. button-ref:: api/documents
-            :ref-type: doc
-            :click-parent:
-            :color: primary
-            :outline:
-            :expand:
+        .. card-footer::
 
-            View API
+            .. button-ref:: api/documents
+                :ref-type: doc
+                :click-parent:
+                :color: primary
+                :outline:
+                :expand:
+
+                View API
 
 |
 

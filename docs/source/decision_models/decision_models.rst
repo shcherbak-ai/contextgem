@@ -87,7 +87,7 @@ The example below extracts four concepts from a document with a decision model, 
 🔌 Supported Providers and Models
 -----------------------------------
 
-A decision model is identified in the same way as an LLM, in the format ``<provider>/<model_name>``. ContextGem supports the providers that LiteLLM serves through its Decisions API. With the pinned ``litellm`` version (1.105.7), these are:
+A decision model is identified in the same way as an LLM, in the format ``<provider>/<model_name>``. ContextGem supports the providers that LiteLLM serves through its Decisions API. With the pinned ``litellm`` version (1.108.8), these are:
 
 .. list-table:: Providers of decision models
    :header-rows: 1
@@ -97,23 +97,38 @@ A decision model is identified in the same way as an LLM, in the format ``<provi
      - ``model``
      - What it needs
    * - TypeSafe
-     - ``typesafe/jev-latest``, ``typesafe/jev-1.13.0``, ``typesafe/jev-preview``
+     - ``typesafe/jev-latest``, ``typesafe/jev-1.14.0``, ``typesafe/jev-1.13.0``, ``typesafe/jev-preview``
      - ``api_key``.
    * - OpenAI
      - ``openai/gpt-6-luna``
      - ``api_key``. The requests go to the Decisions API of OpenAI. The same model name is used for chat and extraction with :class:`~contextgem.public.llms.DocumentLLM`: it is the class, not the model name, that makes it a decision model.
+   * - Azure OpenAI
+     - ``azure/<deployment_name>``
+     - ``api_key``, and ``api_base``: the endpoint of your Azure OpenAI resource. The part after ``azure/`` is the name of your deployment of the model. The requests go to the Decisions API of Azure OpenAI, at ``<api_base>/openai/v1/decisions``.
    * - Microsoft Foundry
      - ``azure_ai/<deployment_name>``
      - ``api_key``, and ``api_base``: the endpoint of your Foundry resource, as ``https://<resource>.services.ai.azure.com``. The part after ``azure_ai/`` is the name of your deployment of the model, not the name of the model, see :ref:`decision-models-foundry-label`.
    * - Perplexity
-     - ``perplexity/pplx-decider-v1-27b``
+     - ``perplexity/pplx-decider-latest``, ``perplexity/pplx-decider-v1.2``, ``perplexity/pplx-decider-v1.1-27b``, ``perplexity/pplx-decider-v1-27b``, ``perplexity/pplx-decider-flash-latest``, ``perplexity/pplx-decider-flash-v1.2``
      - ``api_key``.
    * - OpenRouter
      - ``openrouter/typesafe/jev-1.13``
      - ``api_key``.
    * - Cloudflare
-     - ``cloudflare/clef``, ``cloudflare/clef-flash``
+     - ``cloudflare/clef``, ``cloudflare/clef-flash``, ``cloudflare/clef-omni``
      - ``api_key``, and the ID of your account: either in ``api_base``, as ``https://api.cloudflare.com/client/v4/accounts/<account_id>/ai/run``, or in the ``CLOUDFLARE_ACCOUNT_ID`` environment variable.
+   * - Fireworks AI
+     - ``fireworks_ai/accounts/fireworks/routers/rune``
+     - ``api_key``.
+   * - Databricks
+     - ``databricks/ai_decide``, ``databricks/<serving_endpoint_name>``, e.g. ``databricks/databricks-openjev-qwen35-4b``
+     - ``api_key``: a token of your workspace, and ``api_base``: ``https://<workspace-host>/serving-endpoints``, or the ``DATABRICKS_API_KEY`` and ``DATABRICKS_API_BASE`` environment variables. ``databricks/ai_decide`` calls the ``ai_decide`` AI Function of the workspace; another name after ``databricks/`` is the name of a serving endpoint.
+   * - Bespoke
+     - ``bespoke/nimble-latest``, ``bespoke/nimble``, ``bespoke/bespokelabs/Bespoke-Nimble-9B``
+     - ``api_base``: the address of the server that serves the model, or the ``BESPOKE_API_BASE`` environment variable. An API key is not required. The requests are sent to ``POST <api_base>/v1/systemone``. ``litellm`` accepts only these model names.
+   * - Laya
+     - ``laya/english``, ``laya/multilingual``, ``laya/typed-decisions``
+     - ``api_base``: the address of the server that serves the model, or the ``LAYA_API_BASE`` environment variable. An API key is not required. The requests are sent to ``POST <api_base>/v1/systemone``. ``litellm`` accepts only these model names.
    * - Local or self-hosted server
      - ``strands_decider/<model_name>``
      - ``api_base``: the address of the server. No API key is needed. The requests are sent to ``POST <api_base>/v1/systemone``. This is how a decision model served by Ollama or LM Studio is reached, see :ref:`decision-models-local-label`.
@@ -131,7 +146,7 @@ What to know about the providers:
 
 - **The provider is checked when a decision model is created.** A model of a provider that the installed LiteLLM version serves no decision models of, e.g. ``anthropic/...``, is rejected with a validation error (a ``ValueError``) that lists the supported providers, also when ``model`` is assigned later. The model name is not checked: a name that the provider does not serve, a missing API key and a missing API base all fail at the first request, with ``ModelAPIError`` (see :ref:`decision-models-errors-label`).
 - **API keys in the environment.** If ``api_key`` is not passed, LiteLLM reads the key from the environment variable of the provider, if it is set, e.g. ``TYPESAFE_API_KEY`` or ``OPENAI_API_KEY``.
-- **What is tested.** The tests of ContextGem send requests to TypeSafe (``typesafe/jev-latest``), to the Decisions API of OpenAI (``openai/gpt-6-luna``), to a deployment of Microsoft-Decision-1 in Microsoft Foundry, and to the local servers of Ollama (``strands_decider/nimble``) and LM Studio (``strands_decider/kev-4b``). The other providers (Perplexity, OpenRouter, Cloudflare and a self-hosted vLLM server) are reached through the same LiteLLM call and are not tested with ContextGem.
+- **What is tested.** The tests of ContextGem send requests to TypeSafe (``typesafe/jev-latest``), to the Decisions API of OpenAI (``openai/gpt-6-luna``), to a deployment of Microsoft-Decision-1 in Microsoft Foundry, and to the local servers of Ollama (``strands_decider/nimble``) and LM Studio (``strands_decider/kev-4b``). The other providers (Azure OpenAI, Perplexity, OpenRouter, Cloudflare, Fireworks AI, Databricks, Bespoke, Laya and a self-hosted vLLM server) are reached through the same LiteLLM call and are not tested with ContextGem.
 
 ContextGem sends only text to a decision model. Concepts with the ``"image"`` or ``"multimodal"`` modality are not supported, whichever provider is used.
 
@@ -160,7 +175,7 @@ In Foundry, a model is called through a deployment, which you create and name. D
 What to know about decision models in Microsoft Foundry:
 
 - **The model is identified by the name of your deployment, not by the name of the model.** With a deployment named ``my-decision-model``, the model is ``azure_ai/my-decision-model``. With the name of the model in its place (``azure_ai/Microsoft-Decision-1``), Foundry answers that the deployment does not exist (HTTP 404), and the extraction fails with ``ModelAPIError``. The name is not checked when the decision model is created.
-- **The prefix is** ``azure_ai/``, **not** ``azure/``. LiteLLM serves no decision models under the ``azure/`` prefix: a decision model created with it is rejected with a validation error (a ``ValueError``) that lists the supported providers.
+- **The prefix is** ``azure_ai/``, **not** ``azure/``. The ``azure/`` prefix is that of Azure OpenAI, whose requests go to its own Decisions API, at ``/openai/v1/decisions`` of an Azure OpenAI resource (see the table above), not to a Foundry deployment of Microsoft-Decision-1.
 - **The API base is the endpoint of the Foundry resource**, as ``https://<resource>.services.ai.azure.com``. LiteLLM sends the requests to ``POST <resource endpoint>/providers/microsoft/v1/systemone``, with the API key as a bearer token. An endpoint as Foundry shows it for other APIs, e.g. ending with ``/models`` or ``/openai/v1``, works too.
 - **The key and the endpoint in the environment.** LiteLLM reads the key from the ``AZURE_AI_API_KEY`` environment variable if ``api_key`` is not passed, and the endpoint from ``AZURE_AI_API_BASE`` if ``api_base`` is not passed. Without an API base, passed or in the environment, the first request fails with ``ModelAPIError``: the message of LiteLLM names ``AZURE_AI_API_BASE``.
 - **Set the prices with** ``pricing_details``. ``genai-prices`` has no prices for a model deployed in Foundry, and the name of the deployment is your own. With ``auto_pricing=True``, a warning is therefore issued, and the costs stay at zero: set ``pricing_details`` to the prices that Microsoft lists for the model (see :ref:`decision-models-cost-label`).
@@ -589,10 +604,10 @@ Token usage is tracked for every decision model, while costs are calculated only
 
 **How pricing is set:**
 
-- ``auto_pricing=True`` works for the models whose prices of decision requests ``genai-prices`` has, i.e. prices of input tokens without a price of output tokens. With the pinned ``genai-prices`` version (0.2.1), these are the TypeSafe models listed above, ``openai/gpt-6-luna``, ``perplexity/pplx-decider-v1-27b``, ``openrouter/typesafe/jev-1.13``, ``cloudflare/clef`` and ``cloudflare/clef-flash``.
+- ``auto_pricing=True`` works for the models whose prices of decision requests ``genai-prices`` has, i.e. prices of input tokens without a price of output tokens. With the pinned ``genai-prices`` version (0.2.3), these include the TypeSafe, Perplexity and Cloudflare models listed above, ``openai/gpt-6-luna``, and models of these providers through OpenRouter, e.g. ``openrouter/typesafe/jev-1.13`` and ``openrouter/typesafe/jev-1.14``.
 - For an OpenAI model (``openai/``), ``genai-prices`` has the prices of the decision requests apart from the prices of the chat requests to the model of the same name, and the prices of the decision requests are used. Each request is priced on its own, so a price that depends on the number of input tokens in a request is applied to each request as it is charged.
-- For a model that ``genai-prices`` has no price for, a warning is issued when the model is created with ``auto_pricing=True`` and when its usage is recorded, and the costs stay at zero. With ``genai-prices`` 0.2.1, this is the case for a model deployed in Microsoft Foundry (``azure_ai/``) and for a model of a self-hosted vLLM server (``hosted_vllm/``): set ``pricing_details`` to get the costs of these models (for the prices of the model in Foundry, see :ref:`decision-models-foundry-label`). To have such a model raise an error instead, e.g. for a budget, see :ref:`llm-unknown-prices-label`.
-- ``auto_pricing=True`` is rejected with a validation error (a ``ValueError``) for a decision model for which ``genai-prices`` has the prices of a text-generating model, i.e. prices that include a price of output tokens, when the model is created and when ``auto_pricing`` or ``model`` is assigned. A decision model is billed for its input only, so such prices are those of the chat requests to a model of the same name, and the costs would be calculated with the wrong prices without any notice. With ``genai-prices`` 0.2.1, this is the case for ``openrouter/openai/gpt-6-luna``: ``genai-prices`` has the prices of the decision requests to ``gpt-6-luna`` for OpenAI only. ``auto_pricing=True`` is also rejected for self-hosted models (``strands_decider/``), which have no prices. Set ``pricing_details`` for such a model instead.
+- For a model that ``genai-prices`` has no price for, a warning is issued when the model is created with ``auto_pricing=True`` and when its usage is recorded, and the costs stay at zero. With ``genai-prices`` 0.2.3, this is the case for a model deployed in Microsoft Foundry (``azure_ai/``), for a deployment of Azure OpenAI (``azure/``) whose name ``genai-prices`` does not know, for the models of Fireworks AI, Databricks, Bespoke and Laya, and for a model of a self-hosted vLLM server (``hosted_vllm/``): set ``pricing_details`` to get the costs of these models (for the prices of the model in Foundry, see :ref:`decision-models-foundry-label`). To have such a model raise an error instead, e.g. for a budget, see :ref:`llm-unknown-prices-label`.
+- ``auto_pricing=True`` is rejected with a validation error (a ``ValueError``) for a decision model for which ``genai-prices`` has the prices of a text-generating model, i.e. prices that include a price of output tokens, when the model is created and when ``auto_pricing`` or ``model`` is assigned. A decision model is billed for its input only, so such prices are those of the chat requests to a model of the same name, and the costs would be calculated with the wrong prices without any notice. With ``genai-prices`` 0.2.3, this is the case for ``openrouter/openai/gpt-6-luna``, and for a deployment of Azure OpenAI named after a model that ``genai-prices`` has the chat prices of for Azure, e.g. ``azure/gpt-6-luna``: ``genai-prices`` has the prices of the decision requests to ``gpt-6-luna`` for OpenAI only. ``auto_pricing=True`` is also rejected for self-hosted models (``strands_decider/``), which have no prices. Set ``pricing_details`` for such a model instead.
 - With ``pricing_details``, :class:`~contextgem.public.data_models.ModelPricing` requires both ``input_per_1m_tokens`` and ``output_per_1m_tokens``. Set ``output_per_1m_tokens=0.0`` for a provider that does not charge for output.
 
 For the prices of a model, see the pricing page of its provider, e.g. `TypeSafe models <https://docs.typesafe.ai/models>`_ or the `OpenAI Decisions guide <https://developers.openai.com/api/docs/guides/decisions>`_.
@@ -634,7 +649,7 @@ These were single tests on one short document: they show that the effect exists,
 📏 Limits
 -----------
 
-**Limits of litellm.** ``litellm`` accepts a request only within its limits. With the pinned ``litellm`` version (1.105.7), these are:
+**Limits of litellm.** ``litellm`` accepts a request only within its limits. With the pinned ``litellm`` version (1.108.8), these are:
 
 .. list-table::
    :header-rows: 1
