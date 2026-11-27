@@ -153,6 +153,35 @@ def test_strict_schema_supports_contextgem_concept_value_types() -> None:
     ]
 
 
+@pytest.mark.parametrize("with_metadata", [False, True])
+def test_strict_schema_does_not_constrain_user_concept_id(with_metadata: bool) -> None:
+    """User data fields named concept_id are not ContextGem extraction IDs."""
+    concept = JsonObjectConcept(
+        name="details",
+        description="Details",
+        structure={"concept_id": str, "asset": str},
+    )
+    response_format = _build_strict_extraction_response_format(
+        extracted_item_type="concept",
+        concepts=[concept],
+        identifiers=["C0"],
+        add_justifications=with_metadata,
+        add_references=with_metadata,
+        reference_depth="paragraphs",
+    )
+
+    schema = response_format["json_schema"]["schema"]
+    if with_metadata:
+        user_value_schema = schema["$defs"]["ExtractedItemModel"]["properties"]["value"]
+    else:
+        user_value_schema = schema["$defs"]["ConceptModel"]["properties"][
+            "extracted_items"
+        ]["items"]
+
+    assert user_value_schema["properties"]["concept_id"] == {"type": "string"}
+    assert schema["$defs"]["ConceptModel"]["properties"]["concept_id"]["enum"] == ["C0"]
+
+
 def test_strict_aspect_schema_constrains_ids() -> None:
     """Aspect extraction uses the same strict object envelope and ID bounds."""
     response_format = _build_strict_extraction_response_format(
@@ -284,6 +313,26 @@ def test_query_llm_keeps_response_format_in_litellm_request(monkeypatch) -> None
     )
 
     assert captured["response_format"] == response_format
+
+
+def test_strict_response_format_rejects_global_litellm_drop_params(monkeypatch) -> None:
+    """Strict output fails before sending when LiteLLM globally drops params."""
+    llm = DocumentLLM(model="openai/gpt-4o-mini", auto_pricing=False)
+    monkeypatch.setattr(llms_module.litellm, "drop_params", True)
+
+    async def unexpected_send(**kwargs):
+        raise AssertionError("strict request must fail before reaching LiteLLM")
+
+    monkeypatch.setattr(llm, "_send_messages_with_tools", unexpected_send)
+
+    with pytest.raises(ValueError, match="global `drop_params` setting"):
+        asyncio.run(
+            llm._query_llm(
+                messages=[llm._build_user_message("test")],
+                model_call_obj=_ModelCall(prompt_kwargs={}, prompt="test"),
+                response_format=_strict_format(with_metadata=False),
+            )
+        )
 
 
 def test_strict_unsupported_params_are_not_retried_without_response_format(

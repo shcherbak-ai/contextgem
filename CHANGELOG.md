@@ -10,7 +10,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 ### Added
 
-- `DocumentLLM(strict_structured_output=True)` requests a strict JSON Schema response through LiteLLM for LLM concept and aspect extraction. The default remains off. ContextGem still validates the response, and the setting cannot be silently dropped if a provider does not support it. See the documentation on strict JSON Schema responses for limitations on user-defined JSON object concepts.
+- `DocumentLLM(strict_structured_output=True)` requests a strict JSON Schema response through LiteLLM for LLM concept and aspect extraction. The default remains off. ContextGem still validates the response and fails if a provider rejects the format or LiteLLM's in-process global `drop_params` setting is enabled. A LiteLLM proxy must also be configured not to drop `response_format`. See the documentation on strict JSON Schema responses for limitations on user-defined JSON object concepts.
 
 ## [1.6.0] - 2026-11-21
 

@@ -2452,6 +2452,8 @@ class _DocumentLLM(_DocumentModel):
         :rtype: tuple[str | None, _ModelUsage]
         :raises ValueError: If the messages exceed the context window of the model,
             and no fallback model is yet to be tried.
+        :raises ValueError: If strict response formatting is requested while LiteLLM's
+            global ``drop_params`` setting is enabled.
         :raises ModelAPIError: If the LLM call fails due to an error in the LLM API,
             no fallback model is yet to be tried, and exceptions are to be raised.
         :raises LLMToolLoopLimitError: If the LLM keeps requesting tool calls after
@@ -2460,6 +2462,13 @@ class _DocumentLLM(_DocumentModel):
             other than ``ToolCallError``, or the ``TypeError`` or ``ValueError`` for
             a value other than a non-empty string that it returns.
         """
+
+        if response_format is not None and litellm.drop_params:
+            raise ValueError(
+                "Strict structured output cannot be used while LiteLLM's global "
+                "`drop_params` setting is enabled; disable it so `response_format` "
+                "cannot be removed before the provider receives the request."
+            )
 
         # Validate vision support and convert messages
         self._ensure_vision_support_for_messages(messages)

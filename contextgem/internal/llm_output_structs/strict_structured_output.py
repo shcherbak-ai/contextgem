@@ -140,19 +140,12 @@ def _normalize_strict_schema(schema: dict[str, Any], path: str = "schema") -> No
 def _set_identifier_enum(
     schema: dict[str, Any], field_name: str, identifiers: Sequence[str]
 ) -> None:
-    """Constrain IDs in the remote schema to those shown in the prompt."""
+    """Constrain the extraction model's identifier field to IDs in the prompt."""
     properties = schema.get("properties")
     if isinstance(properties, dict):
         field_schema = properties.get(field_name)
         if isinstance(field_schema, dict):
             field_schema["enum"] = list(identifiers)
-    for value in schema.values():
-        if isinstance(value, dict):
-            _set_identifier_enum(value, field_name, identifiers)
-        elif isinstance(value, list):
-            for item in value:
-                if isinstance(item, dict):
-                    _set_identifier_enum(item, field_name, identifiers)
 
 
 def _build_strict_extraction_response_format(
@@ -199,7 +192,6 @@ def _build_strict_extraction_response_format(
         raise ValueError("ContextGem extraction schema must have an array at its root")
 
     definitions = root_schema.pop("$defs", {})
-    root_definition_names = set(definitions)
     if value_schema is not None:
         value_definitions = value_schema.pop("$defs", {})
         if value_definitions:
@@ -212,9 +204,10 @@ def _build_strict_extraction_response_format(
             _replace_value_schemas(definition, value_schema)
 
     id_field = "aspect_id" if extracted_item_type == "aspect" else "concept_id"
-    _set_identifier_enum(root_schema["items"], id_field, identifiers)
-    for name in root_definition_names:
-        _set_identifier_enum(definitions[name], id_field, identifiers)
+    identifier_model_name = (
+        "AspectModel" if extracted_item_type == "aspect" else "ConceptModel"
+    )
+    _set_identifier_enum(definitions[identifier_model_name], id_field, identifiers)
 
     schema: dict[str, Any] = {
         "type": "object",

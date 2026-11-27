@@ -28,6 +28,10 @@ This setting is opt-in and does not apply to ``chat()``. Keep it disabled for pr
 that do not support strict JSON Schema responses. If the provider rejects the schema,
 ContextGem reports the request failure; it does not retry after dropping
 ``response_format``. Every LLM in a fallback chain must use the same setting.
+LiteLLM's global ``drop_params`` setting must be disabled; ContextGem raises
+``ValueError`` before the request if that in-process setting is enabled. If the
+request goes through a LiteLLM proxy, configure the proxy with ``drop_params: false``
+as well, so the proxy does not remove ``response_format`` before forwarding the call.
 
 Some user-defined ``JsonObjectConcept`` shapes cannot be expressed by strict JSON Schema:
 objects with arbitrary keys or optional fields are rejected before the request is sent.
