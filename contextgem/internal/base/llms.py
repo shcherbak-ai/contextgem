@@ -191,6 +191,14 @@ class _DocumentLLM(_DocumentModel):
             "whose answer is empty or refused without a text is sent again."
         ),
     )
+    strict_structured_output: StrictBool = Field(
+        default=False,
+        description=(
+            "Whether to request a strict JSON Schema response for concept and aspect "
+            "extraction through LiteLLM. The response is still validated by ContextGem. "
+            "Unsupported schemas and models fail without dropping this parameter."
+        ),
+    )
     output_language: LanguageRequirement = Field(
         default="en",
         description=(
@@ -1221,8 +1229,20 @@ class _DocumentLLM(_DocumentModel):
         """
         # These params exist only for LLMs, i.e. are compared with a fallback
         # that is an LLM itself
+        if self.strict_structured_output and not isinstance(
+            fallback_model, _DocumentLLM
+        ):
+            raise ValueError(
+                "A fallback model used with `strict_structured_output=True` "
+                "must be a DocumentLLM with strict structured output enabled"
+            )
         if isinstance(fallback_model, _DocumentLLM):
             fallback_llm = fallback_model
+            if fallback_llm.strict_structured_output != self.strict_structured_output:
+                raise ValueError(
+                    "Fallback LLM must have the same `strict_structured_output` "
+                    "configuration as the main LLM"
+                )
             # Check for the consistency of the fallback LLM output language
             if fallback_llm.output_language != self.output_language:
                 raise ValueError(
@@ -2373,6 +2393,7 @@ class _DocumentLLM(_DocumentModel):
         has_fallback_pending: bool = False,
         use_tools: bool = False,
         max_retries_unusable_answer: int = 0,
+        response_format: dict[str, Any] | None = None,
     ) -> tuple[str | None, _ModelUsage]:
         """
         Generates a response from an LLM based on the provided messages and system
@@ -2473,6 +2494,8 @@ class _DocumentLLM(_DocumentModel):
 
         # Prepare request configuration with common parameters
         request_config = self._build_request_config(use_tools=use_tools)
+        if response_format is not None:
+            request_config["response_format"] = response_format
 
         def record_failed_call() -> None:
             """
@@ -2527,9 +2550,9 @@ class _DocumentLLM(_DocumentModel):
 
         except litellm.UnsupportedParamsError as e:  # type: ignore[attr-defined]
             # Handle unsupported model parameters error
-            if (
-                not drop_params
-            ):  # only retry if we haven't already tried with drop_params
+            if not drop_params and response_format is None:
+                # only retry if we haven't already tried with drop_params. A strict
+                # response format must never be silently removed from the request.
                 # litellm raises this error before the request is sent, e.g. for
                 # a temperature set for a model that accepts only its default one
                 logger.warning(
@@ -2560,8 +2583,13 @@ class _DocumentLLM(_DocumentModel):
                 # the unsupported params, and a warning is logged only
                 # instead of the exception, i.e. not when a fallback model is
                 # yet to be tried and not when the exception is raised
+                request_mode = (
+                    " strict structured response_format"
+                    if response_format is not None
+                    else " with drop_params=True"
+                )
                 logger.error(
-                    f"Exception occurred while calling LLM API with drop_params=True: {e}"
+                    f"Exception occurred while calling LLM API{request_mode}: {e}"
                 )
                 if has_fallback_pending:
                     logger.info("The call will be retried with a fallback model.")
@@ -2576,7 +2604,7 @@ class _DocumentLLM(_DocumentModel):
                         ) from e
                     else:
                         warning_msg = (
-                            f"Exception occurred while calling LLM API with drop_params=True: {e}"
+                            f"Exception occurred while calling LLM API{request_mode}: {e}"
                             + f" ({n_retries} retries)."
                         )
                         logger.warning(warning_msg)

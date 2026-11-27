@@ -118,6 +118,12 @@ class DocumentLLM(_DocumentLLM):
         is returned as it is, and an answer cut off at the max output tokens is not
         requested again. Defaults to 3.
     :vartype max_retries_invalid_data: int
+    :ivar strict_structured_output: Whether concept and aspect extraction requests use
+        a strict JSON Schema response format through LiteLLM. Defaults to ``False``.
+        The response is still checked against ContextGem's extraction contract. If the
+        schema cannot be represented by the provider's strict JSON Schema subset, or
+        the provider rejects the format, the request fails instead of being sent without it.
+    :vartype strict_structured_output: bool
     :ivar timeout: Timeout in seconds for LLM API calls. As responses are not streamed,
         the whole response has to be received within the timeout. Defaults to 600 seconds.
     :vartype timeout: int

@@ -48,7 +48,11 @@ Follow this internal three-stage process:
     - Ensure justifications align with the item's evidence and stance, and comply with length and language constraints.
     {% endif %}
 
+{% if strict_structured_output %}
+Never disclose any plan, evidence, or internal notes - only the JSON response defined within <answer_format></answer_format> tags.
+{% else %}
 Never disclose any plan, evidence, or internal notes - only the JSON array defined within <answer_format></answer_format> tags.
+{% endif %}
 </private_reasoning>
 {% endif %}
 
@@ -109,7 +113,11 @@ Your task is to:
         {% endif %}
     - Favor precision over recall; when uncertain, avoid speculative extractions or derivations.
 {% endif %}
+{% if strict_structured_output %}
+4. Produce the JSON response containing your extracted data, in the provided format.
+{% else %}
 4. Produce a JSON array containing your extracted data, in the provided format.
+{% endif %}
 {% if supports_reasoning %}
     - Internally verify before finalizing:
         -- Each provided concept appears once, in order, with the correct "concept_id".
@@ -311,18 +319,18 @@ Follow these additional rules:
 
 <output_constraints>
 - No additional text:
-    -- Do not include any headers, explanations, or text outside of the JSON array.
+    -- Do not include any headers, explanations, or text outside of the {% if strict_structured_output %}JSON response{% else %}JSON array{% endif %}.
     -- Do not wrap your JSON response in backticks or any other formatting characters.
 {% if supports_reasoning %}
 - Private deliberation only:
     -- Do not output any analysis, plan, scratchpad, thoughts, or chain-of-thought.
-    -- Only output the JSON array according to the format specified within <answer_format></answer_format> tags.
+    -- Only output the {% if strict_structured_output %}JSON response{% else %}JSON array{% endif %} according to the format specified within <answer_format></answer_format> tags.
 {% endif %}
 </output_constraints>
 
 <answer_format>
 ANSWER FORMAT (MANDATORY):
-[
+{{ structured_output_prefix }}
     {
         "concept_id": str,
         "extracted_items": [
@@ -363,7 +371,7 @@ ANSWER FORMAT (MANDATORY):
         ],
     },
     ...
-]
+{{ structured_output_suffix }}
 </answer_format>
 
 <concepts>
