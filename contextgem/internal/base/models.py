@@ -62,6 +62,10 @@ from contextgem.internal.exceptions import (
     UnknownPricesWarning,
 )
 from contextgem.internal.items import _ExtractedItem, _StringItem
+from contextgem.internal.llm_output_structs.strict_structured_output import (
+    _build_strict_extraction_response_format,
+    _unwrap_strict_extraction_response,
+)
 from contextgem.internal.loggers import logger
 from contextgem.internal.registry import _publicize
 from contextgem.internal.typings.types import (
@@ -2501,6 +2505,13 @@ class _GenericModelProcessor(_AbstractGenericModelProcessor):
             # Extract prompt_kwargs and remove it from message_kwargs
             # Safe cast: prompt_kwargs key always contains a dict
             prompt_kwargs = cast(dict, message_kwargs.pop("prompt_kwargs"))
+            prompt_kwargs["strict_structured_output"] = llm.strict_structured_output
+            prompt_kwargs["structured_output_prefix"] = (
+                '{"items": [' if llm.strict_structured_output else "["
+            )
+            prompt_kwargs["structured_output_suffix"] = (
+                "]}" if llm.strict_structured_output else "]"
+            )
 
             # Extract paragraphs and remove them from message_kwargs
             # Safe cast: "paragraphs_chunk" key, when present, always contains list[_Paragraph]
@@ -2587,6 +2598,31 @@ class _GenericModelProcessor(_AbstractGenericModelProcessor):
                 prompt=rendered_prompt,
             )
 
+            response_format = None
+            if llm.strict_structured_output:
+                response_format = _build_strict_extraction_response_format(
+                    extracted_item_type=extracted_item_type,
+                    concepts=(
+                        cast(list[_Concept], prompt_kwargs.get("concepts", []))
+                        if extracted_item_type == "concept"
+                        else []
+                    ),
+                    identifiers=[
+                        f"{'A' if extracted_item_type == 'aspect' else 'C'}{index}"
+                        for index, _ in enumerate(
+                            prompt_kwargs.get(
+                                "aspects"
+                                if extracted_item_type == "aspect"
+                                else "concepts",
+                                [],
+                            )
+                        )
+                    ],
+                    add_justifications=add_justifications,
+                    add_references=references_apply,
+                    reference_depth=reference_depth,
+                )
+
             # Update the usage and cost of the LLM with the calls made for the previous
             # chunks before the next call. No usage data is returned if an exception is
             # raised later on, i.e. the usage of these calls would be lost otherwise.
@@ -2596,15 +2632,18 @@ class _GenericModelProcessor(_AbstractGenericModelProcessor):
                 unrecorded_usage.clear()
 
             # Query LLM, process and validate results
-            extracted_data, usage_data = await llm._query_llm(
-                messages=messages,
-                model_call_obj=model_call_obj,
-                num_retries_failed_request=num_retries_failed_request,
-                max_retries_failed_request=max_retries_failed_request,
-                async_limiter=async_limiter,
-                raise_exception_on_model_api_error=raise_exception_on_extraction_error,
-                has_fallback_pending=has_fallback_pending,
-            )
+            query_kwargs: dict[str, Any] = {
+                "messages": messages,
+                "model_call_obj": model_call_obj,
+                "num_retries_failed_request": num_retries_failed_request,
+                "max_retries_failed_request": max_retries_failed_request,
+                "async_limiter": async_limiter,
+                "raise_exception_on_model_api_error": raise_exception_on_extraction_error,
+                "has_fallback_pending": has_fallback_pending,
+            }
+            if response_format is not None:
+                query_kwargs["response_format"] = response_format
+            extracted_data, usage_data = await llm._query_llm(**query_kwargs)
             # The usage of the response is kept for the calling code as well, which
             # updates the usage and cost of the LLM with it if an exception is raised
             # while the response is processed, or before the next call is made
@@ -2639,6 +2678,8 @@ class _GenericModelProcessor(_AbstractGenericModelProcessor):
             parsed_data = _parse_llm_output_as_json(
                 _remove_thinking_content_from_llm_output(extracted_data)
             )
+            if llm.strict_structured_output:
+                parsed_data = _unwrap_strict_extraction_response(parsed_data)
             if parsed_data is None and model_call_obj._output_truncated:
                 # A response cut off at the max output tokens is not a valid JSON
                 # as a rule. It is reported as cut off below, and not as a JSON

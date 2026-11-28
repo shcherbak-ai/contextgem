@@ -6,6 +6,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 
 - **Refactor**: Code reorganization that doesn't change functionality but improves structure or maintainability
 
+## [Unreleased]
+
+### Added
+
+- `DocumentLLM(strict_structured_output=True)` requests a strict JSON Schema response through LiteLLM for LLM concept and aspect extraction. The default remains off. ContextGem still validates the response and fails if a provider rejects the format or LiteLLM's in-process global `drop_params` setting is enabled. A LiteLLM proxy must also be configured not to drop `response_format`. See the documentation on strict JSON Schema responses for limitations on user-defined JSON object concepts.
+
 ## [1.6.0] - 2026-11-21
 
 ### Added
@@ -761,6 +767,7 @@ See the [migration guide](https://contextgem.shcherbak.ai/migration_v1/) for upd
 
 - Added DocxConverter for converting DOCX files into ContextGem Document objects
 
+[Unreleased]: https://github.com/shcherbak-ai/contextgem/compare/v1.6.0...HEAD
 [1.6.0]: https://github.com/shcherbak-ai/contextgem/compare/v1.5.1...v1.6.0
 [1.5.1]: https://github.com/shcherbak-ai/contextgem/compare/v1.5.0...v1.5.1
 [1.5.0]: https://github.com/shcherbak-ai/contextgem/compare/v1.4.1...v1.5.0

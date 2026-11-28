@@ -352,6 +352,7 @@ Indices and tables
    llms/supported_llms
    llms/llm_config
    llms/llm_extraction_methods
+   llms/strict_structured_output
    llms/chat_with_tools
 
 .. toctree::
