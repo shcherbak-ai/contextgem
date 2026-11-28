@@ -20,6 +20,7 @@ import functools
 import hashlib
 import inspect
 import json
+import re
 import threading
 from collections.abc import Generator, Sequence
 from pathlib import Path
@@ -1217,8 +1218,9 @@ class _DocumentLLM(_DocumentModel):
 
     def _validate_kind_specific_fallback(self, fallback_model: _DocumentModel) -> None:
         """
-        Validates that a fallback LLM has the same output language, system message
-        and tool-calling configuration as the current LLM.
+        Validates that a fallback LLM has the same strict structured output
+        setting, output language, system message and tool-calling configuration
+        as the current LLM.
 
         :param fallback_model: The fallback model to validate.
         :type fallback_model: _DocumentModel
@@ -1229,13 +1231,6 @@ class _DocumentLLM(_DocumentModel):
         """
         # These params exist only for LLMs, i.e. are compared with a fallback
         # that is an LLM itself
-        if self.strict_structured_output and not isinstance(
-            fallback_model, _DocumentLLM
-        ):
-            raise ValueError(
-                "A fallback model used with `strict_structured_output=True` "
-                "must be a DocumentLLM with strict structured output enabled"
-            )
         if isinstance(fallback_model, _DocumentLLM):
             fallback_llm = fallback_model
             if fallback_llm.strict_structured_output != self.strict_structured_output:
@@ -1717,10 +1712,8 @@ class _DocumentLLM(_DocumentModel):
                 if "reasoning_effort" in model_params and self.reasoning_effort:
                     request_config["reasoning_effort"] = self.reasoning_effort
 
-        # The sampling params, the seed and the output token limit are sent only
-        # if set, i.e. the defaults of the model apply otherwise. Whether a value
-        # is supported for the model is left to litellm and the model provider: a param
-        # reported by litellm as unsupported is dropped when the request is sent.
+        # When these parameters are omitted, the provider uses its defaults.
+        # LiteLLM checks whether the model supports the supplied values.
         if self.temperature is not None:
             request_config["temperature"] = self.temperature
         if self.top_p is not None:
@@ -1769,11 +1762,11 @@ class _DocumentLLM(_DocumentModel):
         Sends a single non-streaming chat completion request, retrying it if it fails
         with a transient error.
 
-        Only transient errors (request timeouts, rate limits, server and connection errors)
-        are retried, with capped exponential backoff and jitter between the retries.
-        Non-transient errors (e.g. an invalid request or a failed authentication) are
-        raised right away. The number of retries attempted is recorded on the raised
-        exception.
+        Transient errors (request timeouts, rate limits, server and connection errors)
+        are retried with capped exponential backoff and jitter. A strict extraction
+        can also retry once after LiteLLM rejects an optional request parameter before
+        sending the request. Other non-transient errors are raised right away. The
+        number of transient retries attempted is recorded on the raised exception.
 
         :param request_config: Base request configuration
         :type request_config: dict[str, Any]
@@ -1804,6 +1797,7 @@ class _DocumentLLM(_DocumentModel):
         # retries any error, including non-transient ones, and applies backoff only
         # to rate limit errors, with no jitter.
         retries_attempted = 0
+        retried_without_unsupported_params = False
         while True:
             try:
                 return await litellm.acompletion(
@@ -1823,6 +1817,23 @@ class _DocumentLLM(_DocumentModel):
                 )
             except Exception as e:
                 if (
+                    not retried_without_unsupported_params
+                    and payload.get("response_format") is not None
+                    and isinstance(e, litellm.UnsupportedParamsError)  # type: ignore[attr-defined]
+                ):
+                    unsupported_params = self._get_rejected_strict_request_params(
+                        payload, e.message
+                    )
+                    if unsupported_params:
+                        for param in unsupported_params:
+                            del payload[param]
+                        retried_without_unsupported_params = True
+                        logger.warning(
+                            f"Strict request to LLM `{self.model}` is sent without "
+                            f"unsupported params: {', '.join(unsupported_params)}"
+                        )
+                        continue
+                if (
                     retries_attempted >= num_retries_failed_request
                     or not _is_retryable_model_api_error(e)
                 ):
@@ -1836,6 +1847,53 @@ class _DocumentLLM(_DocumentModel):
                     f"({retries_attempted}/{num_retries_failed_request})"
                 )
                 await asyncio.sleep(delay)
+
+    @staticmethod
+    def _get_rejected_strict_request_params(
+        payload: dict[str, Any], error_message: str
+    ) -> tuple[str, ...]:
+        """
+        Identifies optional parameters rejected by LiteLLM before a strict request
+        is sent. LiteLLM 1.108.8 reports parameter names in the error text only.
+
+        :param payload: Request arguments passed to LiteLLM.
+        :type payload: dict[str, Any]
+        :param error_message: The UnsupportedParamsError message from LiteLLM.
+        :type error_message: str
+        :return: Rejected parameters that can be removed together, or an empty tuple.
+        :rtype: tuple[str, ...]
+        """
+        message = error_message.removeprefix("litellm.UnsupportedParamsError: ")
+        model = payload["model"].split("/", 1)[-1]
+        # LiteLLM's OpenAI GPT-5 mapper reports unsupported sampling values
+        # separately from the generic list of unsupported parameter names.
+        if "temperature" in payload and message.startswith(
+            f"{model} doesn't support temperature={payload['temperature']} "
+            "while reasoning is active."
+        ):
+            return ("temperature",)
+        if "top_p" in payload and message.startswith(
+            f"{model} only supports logprobs, top_p, top_logprobs when reasoning_effort "
+            "resolves to 'none',"
+        ):
+            return ("top_p",)
+
+        match = re.match(
+            r"[a-z0-9_]+ does not support parameters: "
+            r"\[('[a-z0-9_]+'(?:, '[a-z0-9_]+')*)\], for model=",
+            message,
+        )
+        if match is None:
+            return ()
+        parameters = tuple(
+            dict.fromkeys(name.strip("'") for name in match[1].split(", "))
+        )
+        # Keep the schema and request limits in place even if LiteLLM reports
+        # them along with a sampling option.
+        droppable = {"temperature", "top_p", "seed", "reasoning_effort"}
+        if all(name in droppable and name in payload for name in parameters):
+            return parameters
+        return ()
 
     def _record_usage_call(
         self,
@@ -2560,10 +2618,8 @@ class _DocumentLLM(_DocumentModel):
         except litellm.UnsupportedParamsError as e:  # type: ignore[attr-defined]
             # Handle unsupported model parameters error
             if not drop_params and response_format is None:
-                # only retry if we haven't already tried with drop_params. A strict
-                # response format must never be silently removed from the request.
-                # litellm raises this error before the request is sent, e.g. for
-                # a temperature set for a model that accepts only its default one
+                # Strict requests can only retry with selected parameters removed
+                # by _send_non_streaming_completion, preserving response_format.
                 logger.warning(
                     f"The request to LLM `{self.model}` has params that are not "
                     f"supported for the model, and is sent without them: {e}"
@@ -2584,8 +2640,6 @@ class _DocumentLLM(_DocumentModel):
                     max_retries_unusable_answer=max_retries_unusable_answer,
                 )
             else:
-                # If drop_params was already True and we still got UnsupportedParamsError,
-                # fall through to regular error handling
                 record_failed_call()
                 # Logged as any other failed request is: the log would
                 # otherwise say only that the request is sent without

@@ -7,14 +7,22 @@ from __future__ import annotations
 
 import asyncio
 import json
+from typing import Any
 
+import httpx
 import pytest
 from litellm import UnsupportedParamsError
+from litellm.types.decisions import (
+    OpenAIDecisionResponse,
+    OpenAIDecisionUsage,
+    OpenAIPredicateAnswer,
+)
 
 from contextgem import (
     BooleanConcept,
     DateConcept,
     Document,
+    DocumentDecisionModel,
     DocumentLLM,
     JsonObjectConcept,
     LabelConcept,
@@ -335,13 +343,165 @@ def test_strict_response_format_rejects_global_litellm_drop_params(monkeypatch) 
         )
 
 
+@pytest.mark.parametrize("strict", [False, True])
+def test_gpt5_mini_discards_rejected_temperature(monkeypatch, strict: bool) -> None:
+    """GPT-5 mini reaches HTTP without temperature and retains strict output if set."""
+    llm = DocumentLLM(
+        model="openai/gpt-5-mini",
+        api_key="DUMMY",
+        temperature=0.3,
+        strict_structured_output=strict,
+        auto_pricing=False,
+    )
+    document = Document(raw_text="The title is A title.")
+    document.add_concepts([StringConcept(name="Title", description="The title")])
+    requests: list[dict[str, Any]] = []
+    extracted_items = [{"concept_id": "C0", "extracted_items": ["A title"]}]
+
+    async def send_stub(
+        client: httpx.AsyncClient, request: httpx.Request, **kwargs: Any
+    ) -> httpx.Response:
+        """Capture the body after LiteLLM and the OpenAI SDK transform it."""
+        assert request.url.host == "api.openai.com"
+        requests.append(json.loads(request.content))
+        return httpx.Response(
+            200,
+            request=request,
+            json={
+                "id": "chatcmpl-test",
+                "object": "chat.completion",
+                "created": 1,
+                "model": "gpt-5-mini",
+                "choices": [
+                    {
+                        "index": 0,
+                        "finish_reason": "stop",
+                        "message": {
+                            "role": "assistant",
+                            "content": json.dumps(
+                                {"items": extracted_items}
+                                if strict
+                                else extracted_items
+                            ),
+                        },
+                    }
+                ],
+                "usage": {
+                    "prompt_tokens": 10,
+                    "completion_tokens": 5,
+                    "total_tokens": 15,
+                },
+            },
+        )
+
+    monkeypatch.setattr(httpx.AsyncClient, "send", send_stub)
+    llm.extract_concepts_from_document(document)
+
+    assert document.concepts[0].extracted_items[0].value == "A title"
+    (request,) = requests
+    assert "temperature" not in request
+    if strict:
+        assert request["response_format"] == _build_strict_extraction_response_format(
+            extracted_item_type="concept",
+            concepts=document.concepts,
+            identifiers=["C0"],
+            add_justifications=False,
+            add_references=False,
+            reference_depth="paragraphs",
+        )
+    else:
+        assert "response_format" not in request
+    (record,) = llm.get_usage()
+    assert (record.usage.input, record.usage.output) == (10, 5)
+    assert len(record.usage.calls) == 1
+
+
+@pytest.mark.parametrize("reject_retry", [False, True])
+def test_strict_retry_drops_only_rejected_sampling_params(
+    monkeypatch, reject_retry: bool
+) -> None:
+    """LiteLLM's list of unsupported kwargs permits a single selective retry."""
+    llm = DocumentLLM(
+        model="openai/gpt-4o-mini",
+        auto_pricing=False,
+        temperature=0.3,
+        top_p=0.8,
+        seed=13,
+        max_tokens=128,
+    )
+    request = llm._build_request_config()
+    request["response_format"] = _strict_format(with_metadata=False)
+    calls: list[dict[str, Any]] = []
+    answer = object()
+
+    async def completion_stub(**kwargs: Any) -> object:
+        """Reject a list of sampling options using the pinned LiteLLM message."""
+        calls.append(kwargs)
+        if len(calls) == 1:
+            raise UnsupportedParamsError(
+                message=(
+                    "openai does not support parameters: ['temperature', 'seed'], "
+                    "for model=gpt-4o-mini. To drop these, set `litellm.drop_params=True`"
+                ),
+                llm_provider="openai",
+                model="gpt-4o-mini",
+            )
+        if reject_retry:
+            raise UnsupportedParamsError(
+                message=(
+                    "openai does not support parameters: ['top_p'], "
+                    "for model=gpt-4o-mini. To drop these, set `litellm.drop_params=True`"
+                ),
+                llm_provider="openai",
+                model="gpt-4o-mini",
+            )
+        return answer
+
+    monkeypatch.setattr(llms_module.litellm, "acompletion", completion_stub)
+    completion = llm._send_non_streaming_completion(
+        request_config=request,
+        messages_payload=[{"role": "user", "content": "test"}],
+    )
+    if reject_retry:
+        with pytest.raises(UnsupportedParamsError, match="top_p"):
+            asyncio.run(completion)
+    else:
+        assert asyncio.run(completion) is answer
+
+    first, second = calls
+    assert second == {
+        key: value for key, value in first.items() if key not in {"temperature", "seed"}
+    }
+    assert second["drop_params"] is False
+    assert second["max_tokens"] == 128
+    assert second["response_format"] == request["response_format"]
+
+
+@pytest.mark.parametrize(
+    "message",
+    [
+        "response_format is not supported",
+        (
+            "openai does not support parameters: ['temperature', 'response_format'], "
+            "for model=gpt-4o-mini."
+        ),
+        (
+            "openai does not support parameters: ['temperature', 'max_tokens'], "
+            "for model=gpt-4o-mini."
+        ),
+        "Unsupported combination of request parameters",
+    ],
+)
 def test_strict_unsupported_params_are_not_retried_without_response_format(
     monkeypatch,
+    message: str,
 ) -> None:
-    """A strict response-format error is surfaced, never retried with dropped params."""
+    """Fail when a rejected parameter is required or cannot be identified."""
     from contextgem.internal.exceptions import ModelAPIError
 
-    llm = DocumentLLM(model="openai/gpt-4o-mini", auto_pricing=False)
+    llm = DocumentLLM(
+        model="openai/gpt-4o-mini", auto_pricing=False, temperature=0.3, max_tokens=128
+    )
     response_format = _strict_format(with_metadata=False)
     drop_params_values: list[bool] = []
 
@@ -349,7 +509,7 @@ def test_strict_unsupported_params_are_not_retried_without_response_format(
         """Simulate a provider rejecting a strict response format."""
         drop_params_values.append(kwargs["drop_params"])
         raise UnsupportedParamsError(
-            message="response_format is not supported",
+            message=message,
             llm_provider="openai",
             model="gpt-4o-mini",
         )
@@ -362,7 +522,7 @@ def test_strict_unsupported_params_are_not_retried_without_response_format(
         "_messages_to_request",
         lambda messages, thinking_blocks_key: [{"role": "user", "content": "test"}],
     )
-    monkeypatch.setattr(llm, "_send_messages_with_tools", reject_strict_format)
+    monkeypatch.setattr(llms_module.litellm, "acompletion", reject_strict_format)
 
     with pytest.raises(ModelAPIError):
         asyncio.run(
@@ -437,3 +597,53 @@ def test_fallback_llm_must_match_strict_structured_output_setting() -> None:
 
     with pytest.raises(ValueError, match="same `strict_structured_output`"):
         main._validate_kind_specific_fallback(fallback)
+
+
+def test_strict_extraction_uses_decision_model_fallback(monkeypatch) -> None:
+    """A decision model can still extract a boolean after a strict LLM call fails."""
+    fallback = DocumentDecisionModel(
+        model="typesafe/jev-latest", api_key="DUMMY", is_fallback=True
+    )
+    llm = DocumentLLM(
+        model="openai/gpt-4o-mini",
+        api_key="DUMMY",
+        auto_pricing=False,
+        strict_structured_output=True,
+        fallback_models=[fallback],
+    )
+    document = Document(raw_text="The application is enabled.")
+    document.add_concepts(
+        [BooleanConcept(name="Enabled", description="The application is enabled.")]
+    )
+    requests: list[str] = []
+
+    async def reject_strict_format(**kwargs: Any) -> None:
+        """Reject the schema so ContextGem proceeds to the decision endpoint."""
+        requests.append(kwargs["model"])
+        assert kwargs["response_format"]["json_schema"]["strict"] is True
+        raise UnsupportedParamsError(
+            message="response_format is not supported",
+            llm_provider="openai",
+            model="gpt-4o-mini",
+        )
+
+    async def decisions_stub(**kwargs: Any) -> OpenAIDecisionResponse:
+        """Return the expected predicate answer using the Decisions API's types."""
+        requests.append(kwargs["model"])
+        assert "response_format" not in kwargs
+        (question,) = kwargs["questions"]
+        assert question["type"] == "predicate"
+        return OpenAIDecisionResponse(
+            model="jev-1.13.0",
+            answers=(OpenAIPredicateAnswer(name=question["name"], probability=0.93),),
+            usage=OpenAIDecisionUsage(
+                input_tokens=100, output_tokens=2, total_tokens=102
+            ),
+        )
+
+    monkeypatch.setattr(llms_module.litellm, "acompletion", reject_strict_format)
+    monkeypatch.setattr(llms_module.litellm, "adecisions", decisions_stub)
+    llm.extract_concepts_from_document(document)
+
+    assert requests == ["openai/gpt-4o-mini", "typesafe/jev-latest"]
+    assert document.concepts[0].extracted_items[0].value is True
